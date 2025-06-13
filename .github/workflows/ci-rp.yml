@@ -1,0 +1,34 @@
+name: CI - PR
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    environment: develop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Crea archivo .env con secretos
+        run: |
+          echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
+
+      - name: Docker compose build
+        run: docker compose -f docker-compose.yml build
+
+      - name: Start services with docker compose
+        run: docker compose -f docker-compose.yml up -d
+
+      - name: run linter
+        run: |
+          docker compose -f docker-compose.yml run --rm api-gateway npm run lint --max-warnings=0 || exit 1
+          docker compose -f docker-compose.yml run --rm users npm run lint --max-warnings=0 || exit 1

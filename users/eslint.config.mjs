@@ -36,9 +36,13 @@ export default tseslint.config(
         'error',
         {
           endOfLine: 'auto',
+          tabWidth: 2,
+          useTabs: false,
+          singleQuote: true,
+          trailingComma: 'all',
         },
       ],
-      indent: ['error', 2],
+      indent: 'off',
     },
   },
 );

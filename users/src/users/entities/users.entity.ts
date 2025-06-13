@@ -14,9 +14,9 @@ export class Users {
   @Column()
   password: string;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP' })
+  @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;
 
-  @Column()
+  @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   updatedAt: Date;
 }
