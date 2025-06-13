@@ -17,6 +17,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Crea archivo .env con secretos
+        run: |
+          echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
 
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build
