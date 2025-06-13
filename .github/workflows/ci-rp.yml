@@ -21,9 +21,9 @@ jobs:
         run: docker compose -f docker-compose.yml build
 
       - name: Start services with docker compose
-        uses: hovercraft/docker-compose-action@v2.0.1
+        uses: docker/setup-buildx-action@v3
         with:
-          compose-file: ./docker-compose.yml
+          driver-opts: network=host
 
       - name: run linter
         run: |
