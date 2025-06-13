@@ -1,0 +1,31 @@
+name: CI - PR
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Docker compose build
+        run: docker compose -f docker-compose.yml build
+
+      - name: Start services with docker compose
+        uses: hovercraft/docker-compose-action@v2.0.1
+        with:
+          compose-file: ./docker-compose.yml
+
+      - name: run linter
+        run: |
+          docker compose -f docker-compose.yml run --rm api-gateway npm run lint
+          docker compose -f docker-compose.yml run --rm users npm run lint
