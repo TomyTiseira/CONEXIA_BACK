@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { UsersService } from './users.service';
+import { UsersService } from '../service/users.service';
 // import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -10,7 +10,7 @@ export class UsersController {
 
   @MessagePattern('ping')
   ping() {
-    return 'pong';
+    return this.usersService.ping();
   }
 
   // @MessagePattern('createUser')

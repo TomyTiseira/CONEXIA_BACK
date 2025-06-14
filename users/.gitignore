@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# postgres data
+postgres-data/
+
 # Logs
 logs
 *.log

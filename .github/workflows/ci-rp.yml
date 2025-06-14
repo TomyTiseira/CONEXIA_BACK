@@ -21,6 +21,11 @@ jobs:
         run: |
           echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
           echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
+          echo "USERS_DB_USER=${{ secrets.USERS_DB_USER }}" >> .env
+          echo "USERS_DB_PASSWORD=${{ secrets.USERS_DB_PASSWORD }}" >> .env
+          echo "USERS_DB_NAME=${{ secrets.USERS_DB_NAME }}" >> .env
+          echo "USERS_DB_HOST=${{ secrets.USERS_DB_HOST }}" >> .env
+          echo "USERS_DB_PORT=${{ secrets.USERS_DB_PORT }}" >> .env
 
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build
