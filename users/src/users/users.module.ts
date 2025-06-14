@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { NatsModule } from 'src/transports/nats.module';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
+import { UsersController } from './controller/users.controller';
+import { Users } from './entities/users.entity';
+import { UserRepository } from './repository/users.repository';
+import { PingUseCase } from './service/use-cases/ping';
+import { UsersService } from './service/users.service';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService],
-  imports: [NatsModule],
+  providers: [UsersService, PingUseCase, UserRepository],
+  imports: [NatsModule, TypeOrmModule.forFeature([Users])],
 })
 export class UsersModule {}
