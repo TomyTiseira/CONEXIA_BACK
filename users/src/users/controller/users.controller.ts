@@ -10,7 +10,10 @@ export class UsersController {
 
   @MessagePattern('ping')
   ping() {
-    return this.usersService.ping();
+    const response = this.usersService.ping();
+    return {
+      response,
+    };
   }
 
   // @MessagePattern('createUser')
