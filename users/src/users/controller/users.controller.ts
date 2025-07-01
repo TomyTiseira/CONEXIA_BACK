@@ -1,7 +1,9 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { VerifyUserDto } from '../dto/verify-user.dto';
 import { UsersService } from '../service/users.service';
-// import { CreateUserDto } from './dto/create-user.dto';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller()
@@ -10,16 +12,49 @@ export class UsersController {
 
   @MessagePattern('ping')
   ping() {
-    const response = this.usersService.ping();
+    return this.usersService.ping();
+  }
+
+  @MessagePattern('createUser')
+  async create(@Payload() createUserDto: CreateUserDto) {
+    const user = await this.usersService.createUser(createUserDto);
     return {
-      response,
+      id: user.id,
+      email: user.email,
+      isValidate: user.isValidate,
+      message:
+        'User created successfully. Please check your email for verification code.',
     };
   }
 
-  // @MessagePattern('createUser')
-  // create(@Payload() createUserDto: CreateUserDto) {
-  //   return this.usersService.create(createUserDto);
-  // }
+  @MessagePattern('verifyUser')
+  async verify(@Payload() verifyUserDto: VerifyUserDto) {
+    const user = await this.usersService.verifyUser(
+      verifyUserDto.email,
+      verifyUserDto.verificationCode,
+    );
+    return {
+      id: user.id,
+      email: user.email,
+      isValidate: user.isValidate,
+      message: 'User verified successfully.',
+    };
+  }
+
+  @MessagePattern('resendVerification')
+  async resendVerification(
+    @Payload() resendVerificationDto: ResendVerificationDto,
+  ) {
+    const user = await this.usersService.resendVerification(
+      resendVerificationDto.email,
+    );
+    return {
+      id: user.id,
+      email: user.email,
+      isValidate: user.isValidate,
+      message: 'Verification code sent successfully.',
+    };
+  }
 
   // @MessagePattern('findAllUsers')
   // findAll() {

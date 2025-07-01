@@ -16,6 +16,11 @@ export class UserRepository {
     return this.ormRepository.save(entity);
   }
 
+  async update(id: number, user: Partial<Users>): Promise<Users | null> {
+    await this.ormRepository.update(id, user);
+    return this.ormRepository.findOne({ where: { id } });
+  }
+
   async findByEmail(email: string): Promise<Users | null> {
     return this.ormRepository.findOne({ where: { email } });
   }
