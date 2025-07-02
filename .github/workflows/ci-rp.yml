@@ -26,6 +26,12 @@ jobs:
           echo "USERS_DB_NAME=${{ secrets.USERS_DB_NAME }}" >> .env
           echo "USERS_DB_HOST=${{ secrets.USERS_DB_HOST }}" >> .env
           echo "USERS_DB_PORT=${{ secrets.USERS_DB_PORT }}" >> .env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
+          echo "SMTP_SECURE=${{ secrets.SMTP_SECURE }}" >> .env
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
+          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
+          echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
 
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build

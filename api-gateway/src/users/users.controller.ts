@@ -23,7 +23,6 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.client.send('createUser', createUserDto).pipe(
       catchError((error) => {
-        console.log(error);
         throw new RpcException(error);
       }),
     );

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NatsModule } from 'src/transports/nats.module';
 import { MockEmailService } from '../common/services/mock-email.service';
+import { NodemailerService } from '../common/services/nodemailer.service';
 import { UserBaseService } from '../common/services/user-base.service';
 import { UsersController } from './controller/users.controller';
 import { Role } from './entities/role.entity';
@@ -22,8 +23,11 @@ import { UsersService } from './service/users.service';
     VerifyUserUseCase,
     ResendVerificationUseCase,
     UserBaseService,
-    MockEmailService,
     UserRepository,
+    {
+      provide: MockEmailService,
+      useClass: NodemailerService,
+    },
   ],
   imports: [NatsModule, TypeOrmModule.forFeature([Users, Role])],
 })
