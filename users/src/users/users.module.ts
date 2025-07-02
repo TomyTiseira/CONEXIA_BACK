@@ -4,6 +4,7 @@ import { NatsModule } from 'src/transports/nats.module';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { UserBaseService } from '../common/services/user-base.service';
 import { UsersController } from './controller/users.controller';
+import { Role } from './entities/role.entity';
 import { Users } from './entities/users.entity';
 import { UserRepository } from './repository/users.repository';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
@@ -24,6 +25,6 @@ import { UsersService } from './service/users.service';
     MockEmailService,
     UserRepository,
   ],
-  imports: [NatsModule, TypeOrmModule.forFeature([Users])],
+  imports: [NatsModule, TypeOrmModule.forFeature([Users, Role])],
 })
 export class UsersModule {}

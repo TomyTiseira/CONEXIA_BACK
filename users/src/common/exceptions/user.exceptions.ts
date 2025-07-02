@@ -71,3 +71,12 @@ export class VerificationCodeUpdateFailedException extends RpcException {
     });
   }
 }
+
+export class RoleNotFoundException extends RpcException {
+  constructor(roleName: string) {
+    super({
+      status: 500,
+      message: `Role "${roleName}" not found in database`,
+    });
+  }
+}

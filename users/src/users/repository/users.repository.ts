@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Role } from '../entities/role.entity';
 import { Users } from '../entities/users.entity';
 
 @Injectable()
@@ -31,6 +32,10 @@ export class UserRepository {
 
   async findById(id: number): Promise<Users | null> {
     return this.ormRepository.findOne({ where: { id } });
+  }
+
+  async findRoleByName(name: string): Promise<Role | null> {
+    return this.ormRepository.manager.findOne(Role, { where: { name } });
   }
 
   ping(): string {

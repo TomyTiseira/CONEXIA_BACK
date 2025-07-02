@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { ROLES } from '../../users/constants';
 import { Users } from '../../users/entities/users.entity';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
+  RoleNotFoundException,
   UserActivationFailedException,
   UserAlreadyActiveException,
   UserAlreadyExistsException,
@@ -109,12 +111,19 @@ export class UserBaseService {
       this.generateVerificationData();
     const hashedPassword = await CryptoUtils.hashPassword(userData.password);
 
+    // Obtener el ID del rol "user" dinámicamente
+    const userRole = await this.userRepository.findRoleByName(ROLES.USER);
+    if (!userRole) {
+      throw new RoleNotFoundException(ROLES.USER);
+    }
+
     return {
       ...userData,
       password: hashedPassword,
       isValidate: false,
       verificationCode,
       verificationCodeExpires,
+      roleId: userRole.id, // Asignar rol de usuario regular por defecto
     };
   }
 

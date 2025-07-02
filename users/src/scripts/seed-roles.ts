@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
+import { ROLES } from '../users/constants';
 import { Role } from '../users/entities/role.entity';
 
 dotenv.config();
@@ -16,9 +17,9 @@ const AppDataSource = new DataSource({
 });
 
 const roles = [
-  { id: 1, name: 'admin', description: 'Administrador del sistema' },
-  { id: 2, name: 'user', description: 'Usuario regular' },
-  { id: 3, name: 'moderador', description: 'Moderador del sistema' },
+  { id: 1, name: ROLES.ADMIN, description: 'Administrador del sistema' },
+  { id: 2, name: ROLES.USER, description: 'Usuario regular' },
+  { id: 3, name: ROLES.MODERATOR, description: 'Moderador del sistema' },
 ];
 
 async function seedRoles() {
