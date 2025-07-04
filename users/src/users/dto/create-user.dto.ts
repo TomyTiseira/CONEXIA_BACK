@@ -1,12 +1,29 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  Validate,
+} from 'class-validator';
+import { MatchConstraint } from '../../validators/match.validator';
 
 export class CreateUserDto {
-  @IsEmail({}, { message: 'El email debe tener un formato válido' })
-  @IsNotEmpty({ message: 'El email es requerido' })
+  @IsEmail({}, { message: 'email is not valid' })
+  @IsNotEmpty({ message: 'email is required' })
   email: string;
 
-  @IsString({ message: 'La contraseña debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'La contraseña es requerida' })
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @IsString({ message: 'password must be a string' })
+  @IsNotEmpty({ message: 'password is required' })
+  @MinLength(6, { message: 'password must be at least 6 characters long' })
   password: string;
+
+  @IsString({ message: 'confirmPassword must be a string' })
+  @IsNotEmpty({ message: 'confirmPassword is required' })
+  @MinLength(6, {
+    message: 'confirmPassword must be at least 6 characters long',
+  })
+  @Validate(MatchConstraint, ['password'], {
+    message: 'passwords do not match',
+  })
+  confirmPassword: string;
 }
