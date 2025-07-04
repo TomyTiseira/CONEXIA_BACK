@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Users } from 'src/users/entities/users.entity';
 import { MockEmailService } from '../../../common/services/mock-email.service';
 import { UserBaseService } from '../../../common/services/user-base.service';
+import { User } from '../../../shared/entities/user.entity';
 import { CreateUserDto } from '../../dto/create-user.dto';
 import { UserRepository } from '../../repository/users.repository';
 
@@ -13,7 +13,7 @@ export class CreateUserUseCase {
     private readonly emailService: MockEmailService,
   ) {}
 
-  async execute(userData: CreateUserDto): Promise<Users> {
+  async execute(userData: CreateUserDto): Promise<User> {
     // Validar que el usuario no exista
     await this.userBaseService.validateUserDoesNotExist(userData.email);
 

@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
+import { Role } from '../shared/entities/role.entity';
 import { ROLES } from '../users/constants';
-import { Role } from '../users/entities/role.entity';
 
 dotenv.config();
 

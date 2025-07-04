@@ -4,14 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Perfil } from './perfil.entity';
 import { Role } from './role.entity';
 
-@Entity()
-export class Users {
+@Entity('users')
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -38,11 +36,7 @@ export class Users {
   role: Role;
 
   @Column({ nullable: true })
-  perfilId: number;
-
-  @OneToOne(() => Perfil, (perfil) => perfil.user)
-  @JoinColumn({ name: 'perfilId' })
-  perfil: Perfil;
+  profileId: number;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;

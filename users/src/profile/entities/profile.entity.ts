@@ -2,13 +2,16 @@ import {
   Column,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Users } from './users.entity';
+import { DocumentType } from '../../shared/entities/document-type.entity';
+import { User } from '../../shared/entities/user.entity';
 
-@Entity()
-export class Perfil {
+@Entity('profiles')
+export class Profile {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -22,16 +25,14 @@ export class Perfil {
   documentNumber: string;
 
   @Column()
-  documentType: string;
+  documentTypeId: number;
+
+  @ManyToOne(() => DocumentType)
+  @JoinColumn({ name: 'documentTypeId' })
+  documentType: DocumentType;
 
   @Column()
-  phone: string;
-
-  @Column()
-  address: string;
-
-  @Column()
-  city: string;
+  phoneNumber: string;
 
   @Column()
   country: string;
@@ -40,10 +41,11 @@ export class Perfil {
   state: string;
 
   @Column()
-  zipCode: string;
+  userId: number;
 
-  @OneToOne(() => Users, (user) => user.perfil)
-  user: Users;
+  @OneToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;

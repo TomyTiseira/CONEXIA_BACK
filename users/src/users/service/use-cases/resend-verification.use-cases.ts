@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Users } from 'src/users/entities/users.entity';
 import { MockEmailService } from '../../../common/services/mock-email.service';
 import { UserBaseService } from '../../../common/services/user-base.service';
+import { User } from '../../../shared/entities/user.entity';
 import { UserRepository } from '../../repository/users.repository';
 
 @Injectable()
@@ -12,21 +12,22 @@ export class ResendVerificationUseCase {
     private readonly emailService: MockEmailService,
   ) {}
 
-  async execute(email: string): Promise<Users> {
-    // Buscar y validar que el usuario exista
+  async execute(email: string): Promise<User> {
+    // Validar que el usuario exista
     const user = await this.userBaseService.validateUserExists(email);
 
-    // Validar que no esté activo
+    // Validar que el usuario no esté activo
     this.userBaseService.validateUserNotActive(user);
 
     // Generar nuevos datos de verificación
-    const verificationData = this.userBaseService.generateVerificationData();
+    const { verificationCode, verificationCodeExpires } =
+      this.userBaseService.generateVerificationData();
 
-    // Actualizar usuario con nuevo código
-    const updatedUser = await this.userRepository.update(
-      user.id,
-      verificationData,
-    );
+    // Actualizar usuario con nuevo código de verificación
+    const updatedUser = await this.userRepository.update(user.id, {
+      verificationCode,
+      verificationCodeExpires,
+    });
 
     // Validar que la actualización fue exitosa
     const validatedUser =
@@ -34,8 +35,8 @@ export class ResendVerificationUseCase {
 
     // Enviar email con nuevo código de verificación
     await this.emailService.sendVerificationEmail(
-      user.email,
-      verificationData.verificationCode,
+      validatedUser.email,
+      validatedUser.verificationCode,
     );
 
     return validatedUser;

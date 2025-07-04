@@ -11,4 +11,7 @@ COPY . .
 
 RUN npm install -g ts-node
 
-CMD npm run seed:roles && npm run start:prod
+COPY entrypoint.sh /usr/src/app/entrypoint.sh
+RUN chmod +x /usr/src/app/entrypoint.sh
+
+CMD ["/usr/src/app/entrypoint.sh"]

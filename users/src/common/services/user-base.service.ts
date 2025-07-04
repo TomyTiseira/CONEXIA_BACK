@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
-import { Users } from '../../users/entities/users.entity';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
   InvalidVerificationCodeException,
@@ -22,14 +22,14 @@ export class UserBaseService {
   /**
    * Busca un usuario por email
    */
-  async findByEmail(email: string): Promise<Users | null> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
   }
 
   /**
    * Busca un usuario por ID
    */
-  async findById(id: number): Promise<Users | null> {
+  async findById(id: number): Promise<User | null> {
     return this.userRepository.findById(id);
   }
 
@@ -54,7 +54,7 @@ export class UserBaseService {
   /**
    * Valida que un usuario exista
    */
-  async validateUserExists(email: string): Promise<Users> {
+  async validateUserExists(email: string): Promise<User> {
     const user = await this.findByEmail(email);
     if (!user) {
       throw new UserNotFoundException(email);
@@ -65,7 +65,7 @@ export class UserBaseService {
   /**
    * Valida que un usuario no esté activo
    */
-  validateUserNotActive(user: Users): void {
+  validateUserNotActive(user: User): void {
     if (user.isValidate) {
       throw new UserAlreadyActiveException(user.email);
     }
@@ -74,7 +74,7 @@ export class UserBaseService {
   /**
    * Valida un código de verificación
    */
-  validateVerificationCode(user: Users, verificationCode: string): void {
+  validateVerificationCode(user: User, verificationCode: string): void {
     if (user.verificationCode !== verificationCode) {
       throw new InvalidVerificationCodeException();
     }
@@ -83,7 +83,7 @@ export class UserBaseService {
   /**
    * Valida que un código de verificación no haya expirado
    */
-  validateVerificationCodeNotExpired(user: Users): void {
+  validateVerificationCodeNotExpired(user: User): void {
     if (user.verificationCodeExpires < new Date()) {
       throw new VerificationCodeExpiredException();
     }
@@ -102,7 +102,9 @@ export class UserBaseService {
   /**
    * Prepara datos de usuario para creación con verificación
    */
-  async prepareUserForCreation(userData: Partial<Users>) {
+  async prepareUserForCreation(
+    userData: Partial<User> & { confirmPassword?: string },
+  ) {
     if (!userData.password) {
       throw new MissingRequiredFieldsException(['password']);
     }
@@ -117,8 +119,12 @@ export class UserBaseService {
       throw new RoleNotFoundException(ROLES.USER);
     }
 
+    // Extraer solo los campos necesarios para la entidad User, excluyendo confirmPassword
+    const userDataWithoutConfirm = { ...userData };
+    delete userDataWithoutConfirm.confirmPassword;
+
     return {
-      ...userData,
+      ...userDataWithoutConfirm,
       password: hashedPassword,
       isValidate: false,
       verificationCode,
@@ -141,7 +147,7 @@ export class UserBaseService {
   /**
    * Valida que la activación del usuario fue exitosa
    */
-  validateUserActivation(updatedUser: Users | null): Users {
+  validateUserActivation(updatedUser: User | null): User {
     if (!updatedUser) {
       throw new UserActivationFailedException();
     }
@@ -151,7 +157,7 @@ export class UserBaseService {
   /**
    * Valida que la actualización del código de verificación fue exitosa
    */
-  validateVerificationCodeUpdate(updatedUser: Users | null): Users {
+  validateVerificationCodeUpdate(updatedUser: User | null): User {
     if (!updatedUser) {
       throw new VerificationCodeUpdateFailedException();
     }

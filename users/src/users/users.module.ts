@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { NatsModule } from 'src/transports/nats.module';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
 import { UserBaseService } from '../common/services/user-base.service';
+import { ProfileModule } from '../profile/profile.module';
+import { SharedModule } from '../shared/shared.module';
 import { UsersController } from './controller/users.controller';
-import { Role } from './entities/role.entity';
-import { Users } from './entities/users.entity';
 import { UserRepository } from './repository/users.repository';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
@@ -29,6 +28,6 @@ import { UsersService } from './service/users.service';
       useClass: NodemailerService,
     },
   ],
-  imports: [NatsModule, TypeOrmModule.forFeature([Users, Role])],
+  imports: [NatsModule, SharedModule, ProfileModule],
 })
 export class UsersModule {}

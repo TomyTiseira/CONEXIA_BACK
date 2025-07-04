@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { Users } from '../entities/users.entity';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
@@ -19,15 +19,15 @@ export class UsersService {
     return this.pingUseCase.execute();
   }
 
-  async createUser(userData: CreateUserDto): Promise<Users> {
+  async createUser(userData: CreateUserDto): Promise<User> {
     return this.createUserUseCase.execute(userData);
   }
 
-  async verifyUser(email: string, verificationCode: string): Promise<Users> {
+  async verifyUser(email: string, verificationCode: string): Promise<User> {
     return this.verifyUserUseCase.execute(email, verificationCode);
   }
 
-  async resendVerification(email: string): Promise<Users> {
+  async resendVerification(email: string): Promise<User> {
     return this.resendVerificationUseCase.execute(email);
   }
 

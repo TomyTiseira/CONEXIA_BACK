@@ -2,35 +2,35 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Role } from '../entities/role.entity';
-import { Users } from '../entities/users.entity';
+import { Role } from '../../shared/entities/role.entity';
+import { User } from '../../shared/entities/user.entity';
 
 @Injectable()
 export class UserRepository {
   constructor(
-    @InjectRepository(Users)
-    private readonly ormRepository: Repository<Users>,
+    @InjectRepository(User)
+    private readonly ormRepository: Repository<User>,
   ) {}
 
-  async create(user: Partial<Users>): Promise<Users> {
+  async create(user: Partial<User>): Promise<User> {
     const entity = this.ormRepository.create(user);
     return this.ormRepository.save(entity);
   }
 
-  async update(id: number, user: Partial<Users>): Promise<Users | null> {
+  async update(id: number, user: Partial<User>): Promise<User | null> {
     await this.ormRepository.update(id, user);
     return this.ormRepository.findOne({ where: { id } });
   }
 
-  async findByEmail(email: string): Promise<Users | null> {
+  async findByEmail(email: string): Promise<User | null> {
     return this.ormRepository.findOne({ where: { email } });
   }
 
-  async findAll(): Promise<Users[]> {
+  async findAll(): Promise<User[]> {
     return this.ormRepository.find();
   }
 
-  async findById(id: number): Promise<Users | null> {
+  async findById(id: number): Promise<User | null> {
     return this.ormRepository.findOne({ where: { id } });
   }
 

@@ -23,8 +23,6 @@ const envSchema = joi
   })
   .unknown(true);
 
-console.log('EMAIL_FROM:', process.env.EMAIL_FROM);
-
 const result = envSchema.validate({
   NATS_SERVERS: process.env.NATS_SERVERS?.split(',') || [],
   SMTP_HOST: process.env.SMTP_HOST,

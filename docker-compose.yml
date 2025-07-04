@@ -19,7 +19,6 @@ services:
     build: ./users
     volumes:
       - ./users/src:/src/app/src
-    command: npm run start:dev
     depends_on:
       users-db:
         condition: service_healthy
