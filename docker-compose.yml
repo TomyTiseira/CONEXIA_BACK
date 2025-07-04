@@ -19,7 +19,6 @@ services:
     build: ./users
     volumes:
       - ./users/src:/src/app/src
-    command: npm run start:dev
     depends_on:
       users-db:
         condition: service_healthy
@@ -30,6 +29,12 @@ services:
       - DB_USERNAME=${USERS_DB_USER}
       - DB_PASSWORD=${USERS_DB_PASSWORD}
       - DB_DATABASE=${USERS_DB_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
 
   users-db:
     image: postgres:16.5-alpine

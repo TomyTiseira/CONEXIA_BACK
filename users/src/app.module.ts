@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Profile } from './profile/entities/profile.entity';
+import { ProfileModule } from './profile/profile.module';
+import { DocumentType } from './shared/entities/document-type.entity';
+import { Role } from './shared/entities/role.entity';
+import { User } from './shared/entities/user.entity';
 import { NatsModule } from './transports/nats.module';
 import { UsersModule } from './users/users.module';
 
@@ -12,11 +17,12 @@ import { UsersModule } from './users/users.module';
       username: process.env.DB_USERNAME ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       database: process.env.DB_DATABASE ?? 'users',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      entities: [User, Role, DocumentType, Profile],
       synchronize: true,
     }),
     UsersModule,
     NatsModule,
+    ProfileModule,
   ],
   controllers: [],
   providers: [],

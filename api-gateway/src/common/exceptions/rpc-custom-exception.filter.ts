@@ -10,6 +10,8 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
 
     const rpcError = exception.getError();
 
+    console.log('RPC Error:', rpcError);
+
     if (
       typeof rpcError === 'object' &&
       'status' in rpcError &&
@@ -19,9 +21,27 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
         ? 500
         : Number(rpcError.status);
 
-      return response.status(status).json({
+      const errorResponse: any = {
         status,
         message: rpcError.message,
+      };
+
+      // Si hay errores de validación específicos, los incluimos
+      if ('errors' in rpcError && Array.isArray(rpcError.errors)) {
+        errorResponse.errors = rpcError.errors;
+      }
+
+      return response.status(status).json(errorResponse);
+    }
+
+    // Si es un error de validación de class-validator
+    if (
+      typeof rpcError === 'string' &&
+      rpcError.includes('Validation failed')
+    ) {
+      return response.status(400).json({
+        status: 400,
+        message: rpcError,
       });
     }
 
