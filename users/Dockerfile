@@ -11,7 +11,9 @@ COPY . .
 
 RUN npm install -g ts-node
 
-COPY entrypoint.sh /usr/src/app/entrypoint.sh
-RUN chmod +x /usr/src/app/entrypoint.sh
+# Copiar entrypoint y asegurar que funcione en todos los SO
+COPY entrypoint.sh /src/app/entrypoint.sh
+RUN chmod +x /src/app/entrypoint.sh && \
+    dos2unix /src/app/entrypoint.sh 2>/dev/null || true
 
-CMD ["/usr/src/app/entrypoint.sh"]
+CMD ["/src/app/entrypoint.sh"]
