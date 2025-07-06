@@ -13,10 +13,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
       - name: Crea archivo .env con secretos
         run: |
           echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
@@ -36,10 +38,10 @@ jobs:
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build
 
-      - name: Start services with docker compose
-        run: docker compose -f docker-compose.yml up -d
-
-      - name: run linter
+      - name: Run linter for API Gateway
         run: |
-          docker compose -f docker-compose.yml run --rm api-gateway npm run lint --max-warnings=0 || exit 1
-          docker compose -f docker-compose.yml run --rm users npm run lint --max-warnings=0 || exit 1
+          docker compose -f docker-compose.yml run --rm --no-deps api-gateway npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Users service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps users npm run lint --max-warnings=0 || exit 1
