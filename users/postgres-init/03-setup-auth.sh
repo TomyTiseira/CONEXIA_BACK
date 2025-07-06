@@ -25,10 +25,12 @@ local   replication     all                                     trust
 host    replication     all             127.0.0.1/32            trust
 host    replication     all             ::1/128                 trust
 
-# Allow connections from Docker containers
+# Allow connections from Docker containers - all possible Docker networks
 host    all             all             172.16.0.0/12           trust
 host    all             all             192.168.0.0/16          trust
 host    all             all             10.0.0.0/8              trust
+
+# Allow connections from any IP (for development purposes)
 host    all             all             0.0.0.0/0               trust
 EOF
 
