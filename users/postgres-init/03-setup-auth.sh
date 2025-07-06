@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e
+
+echo "Iniciando configuración de PostgreSQL..."
 
 # Esperar a que PostgreSQL esté listo
 until pg_isready -U postgres; do
@@ -6,8 +9,10 @@ until pg_isready -U postgres; do
   sleep 2
 done
 
+echo "PostgreSQL está listo. Configurando pg_hba.conf..."
+
 # Configurar pg_hba.conf para permitir conexiones desde contenedores Docker
-cat > /var/lib/postgresql/data/pg_hba.conf << EOF
+cat > /var/lib/postgresql/data/pg_hba.conf << 'EOF'
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 
 # "local" is for Unix domain socket connections only
@@ -34,7 +39,9 @@ host    all             all             10.0.0.0/8              trust
 host    all             all             0.0.0.0/0               trust
 EOF
 
+echo "Configuración de pg_hba.conf aplicada."
+
 # Recargar la configuración
 pg_ctl reload
 
-echo "Configuración de PostgreSQL completada" 
+echo "Configuración de PostgreSQL completada exitosamente." 
