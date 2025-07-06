@@ -1,0 +1,10 @@
+FROM postgres:16.5-alpine
+
+# Copiar archivos de configuración
+COPY postgres-init/02-pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Configurar permisos
+RUN chmod 600 /etc/postgresql/pg_hba.conf
+
+# Configurar variables de entorno
+ENV POSTGRES_HOST_AUTH_METHOD=trust 

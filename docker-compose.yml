@@ -37,7 +37,9 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
 
   users-db:
-    image: postgres:16.5-alpine
+    build:
+      context: ./users
+      dockerfile: Dockerfile.postgres
     ports:
       - "${USERS_DB_PORT}:${USERS_DB_PORT}"
     environment:
@@ -46,6 +48,11 @@ services:
       - POSTGRES_DB=${USERS_DB_NAME}
     volumes:
       - ./users/postgres-data:/var/lib/postgresql/data
+      - ./users/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${USERS_DB_USER} -d ${USERS_DB_NAME}"]
       interval: 5s
