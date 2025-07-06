@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Esperar a que PostgreSQL esté listo
+until pg_isready -U postgres; do
+  echo "Esperando a que PostgreSQL esté listo..."
+  sleep 2
+done
+
 # Configurar pg_hba.conf para permitir conexiones desde contenedores Docker
 cat > /var/lib/postgresql/data/pg_hba.conf << EOF
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
@@ -27,4 +33,6 @@ host    all             all             0.0.0.0/0               trust
 EOF
 
 # Recargar la configuración
-pg_ctl reload 
+pg_ctl reload
+
+echo "Configuración de PostgreSQL completada" 
