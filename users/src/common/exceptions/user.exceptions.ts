@@ -80,3 +80,21 @@ export class RoleNotFoundException extends RpcException {
     });
   }
 }
+
+export class UserNotVerifiedException extends RpcException {
+  constructor() {
+    super({
+      status: 401,
+      message: 'The account is not verified',
+    });
+  }
+}
+
+export class InvalidCredentialsException extends RpcException {
+  constructor() {
+    super({
+      status: 401,
+      message: 'Invalid credentials',
+    });
+  }
+}
