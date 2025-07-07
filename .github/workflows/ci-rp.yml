@@ -34,6 +34,8 @@ jobs:
           echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
           echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
           echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "NATS_SERVERS=${{ secrets.NATS_SERVERS }}" >> .env
 
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build
