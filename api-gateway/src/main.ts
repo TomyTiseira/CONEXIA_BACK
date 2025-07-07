@@ -1,5 +1,6 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { RpcCustomExceptionFilter } from './common/exceptions/rpc-custom-exception.filter';
 import { ResponseFormatInterceptor } from './common/interceptors/transform.interceptor';
@@ -17,6 +18,8 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
