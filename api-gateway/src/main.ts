@@ -11,15 +11,16 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  logger.log(envs.corsOrigins);
+  logger.log(envs.corsOrigins.includes('http://localhost:3000'));
   app.enableCors({
     origin: (origin, callback) => {
+      if (!origin || envs.corsOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-    if (!origin || envs.corsOrigins.includes(origin)) {
-      return callback(null, true)
-    }
-
-    return callback(new Error(`CORS not allowed for origin ${origin}`))
-  },
+      return callback(new Error(`CORS not allowed for origin ${origin}`));
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

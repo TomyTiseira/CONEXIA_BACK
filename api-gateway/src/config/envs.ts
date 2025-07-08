@@ -6,14 +6,15 @@ interface EnvVars {
   PORT: number;
   JWT_SECRET: string;
   CORS_ORIGINS?: string[];
-}0
+}
 
 const envSchema = joi
   .object({
     NATS_SERVERS: joi.array().items(joi.string()).required(),
     PORT: joi.number().required(),
     JWT_SECRET: joi.string().required(),
-    CORS_ORIGINS: joi.string().optional()})
+    CORS_ORIGINS: joi.array().items(joi.string()).optional(),
+  })
   .unknown(true);
 
 const result = envSchema.validate({
