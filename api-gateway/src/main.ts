@@ -11,8 +11,6 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  logger.log(envs.corsOrigins);
-  logger.log(envs.corsOrigins.includes('http://localhost:3000'));
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || envs.corsOrigins.includes(origin)) {
