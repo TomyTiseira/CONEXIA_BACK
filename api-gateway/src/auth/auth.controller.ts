@@ -111,6 +111,13 @@ export class AuthController {
     }
   }
 
+  @Post('logout')
+  logout(@Res() res: Response) {
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+    res.json({ success: true, message: 'Logged out successfully' });
+  }
+
   // Para probar la autenticación
   // TODO: Eliminar este endpoint
   @Get('me')
