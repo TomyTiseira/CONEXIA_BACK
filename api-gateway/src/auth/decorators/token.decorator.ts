@@ -26,9 +26,6 @@ export const Token = createParamDecorator(
     const cookies = request.cookies as Record<string, string> | undefined;
     const token = cookies?.[tokenName];
 
-    console.log('token', token);
-    console.log('cookies', cookies);
-
     if (!token) {
       throw new UnauthorizedException(`${tokenName} not found in cookies`);
     }
