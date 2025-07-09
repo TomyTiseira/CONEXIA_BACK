@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ForgotPasswordUseCase } from '../../auth/service/use-cases/forgot-password.use-cases';
 import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
-import { ForgotPasswordUseCase } from './use-cases/forgot-password.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
 import { VerifyUserUseCase } from './use-cases/verify-user.use-cases';

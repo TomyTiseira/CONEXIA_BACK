@@ -21,6 +21,22 @@ export class UserRepository {
     return this.ormRepository.findOne({ where: { id } });
   }
 
+  async clearPasswordResetFields(id: number): Promise<User | null> {
+    await this.ormRepository.update(id, {
+      passwordResetCode: '',
+      passwordResetCodeExpires: new Date('1970-01-01'),
+    });
+    return this.ormRepository.findOne({ where: { id } });
+  }
+
+  async clearVerificationFields(id: number): Promise<User | null> {
+    await this.ormRepository.update(id, {
+      verificationCode: '',
+      verificationCodeExpires: new Date('1970-01-01'),
+    });
+    return this.ormRepository.findOne({ where: { id } });
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.ormRepository.findOne({ where: { email } });
   }
