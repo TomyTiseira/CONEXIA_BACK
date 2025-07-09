@@ -38,6 +38,12 @@ export class User {
   @Column({ nullable: true })
   profileId: number;
 
+  @Column({ nullable: true })
+  passwordResetCode: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  passwordResetCodeExpires: Date;
+
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;
 

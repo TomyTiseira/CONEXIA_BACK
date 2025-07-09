@@ -100,6 +100,16 @@ export class UserBaseService {
   }
 
   /**
+   * Genera datos de verificación para un usuario
+   */
+  generatePasswordResetData() {
+    return {
+      passwordResetCode: CryptoUtils.generateVerificationCode(),
+      passwordResetCodeExpires: CryptoUtils.calculateExpirationDate(),
+    };
+  }
+
+  /**
    * Prepara datos de usuario para creación con verificación
    */
   async prepareUserForCreation(
@@ -130,6 +140,16 @@ export class UserBaseService {
       verificationCode,
       verificationCodeExpires,
       roleId: userRole.id, // Asignar rol de usuario regular por defecto
+    };
+  }
+
+  prepareUserForPasswordReset(user: User) {
+    const { passwordResetCode, passwordResetCodeExpires } =
+      this.generatePasswordResetData();
+    return {
+      ...user,
+      passwordResetCode,
+      passwordResetCodeExpires,
     };
   }
 

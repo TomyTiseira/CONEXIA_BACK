@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import { UsersService } from '../service/users.service';
@@ -53,6 +54,14 @@ export class UsersController {
       email: user.email,
       isValidate: user.isValidate,
       message: 'Verification code sent successfully.',
+    };
+  }
+
+  @MessagePattern('forgotPassword')
+  async forgotPassword(@Payload() forgotPasswordDto: ForgotPasswordDto) {
+    await this.usersService.forgotPassword(forgotPasswordDto.email);
+    return {
+      message: 'Password reset email sent successfully.',
     };
   }
 

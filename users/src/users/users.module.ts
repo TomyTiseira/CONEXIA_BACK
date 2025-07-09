@@ -8,6 +8,7 @@ import { SharedModule } from '../shared/shared.module';
 import { UsersController } from './controller/users.controller';
 import { UserRepository } from './repository/users.repository';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
+import { ForgotPasswordUseCase } from './service/use-cases/forgot-password.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
 import { VerifyUserUseCase } from './service/use-cases/verify-user.use-cases';
@@ -21,6 +22,7 @@ import { UsersService } from './service/users.service';
     CreateUserUseCase,
     VerifyUserUseCase,
     ResendVerificationUseCase,
+    ForgotPasswordUseCase,
     UserBaseService,
     UserRepository,
     {
