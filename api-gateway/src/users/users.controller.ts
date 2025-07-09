@@ -4,9 +4,7 @@ import { catchError } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { VerifyCodeResetDto } from './dto/verift-code-reset.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 
 @Controller('users')
@@ -43,24 +41,6 @@ export class UsersController {
   @Post('resend-verification')
   resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.client.send('resendVerification', resendVerificationDto).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
-  }
-
-  @Post('forgot-password')
-  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.client.send('forgotPassword', forgotPasswordDto).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
-  }
-
-  @Post('verify-code-reset')
-  verifyCodeReset(@Body() verifyCodeResetDto: VerifyCodeResetDto) {
-    return this.client.send('verifyCodeReset', verifyCodeResetDto).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
