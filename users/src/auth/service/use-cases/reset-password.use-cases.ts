@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EmailService } from '../../../common/services/email.service';
 import { UserBaseService } from '../../../common/services/user-base.service';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { ResetPasswordDto } from '../../dto/reset-password.dto';
@@ -10,6 +11,7 @@ export class ResetPasswordUseCase {
     private readonly userBaseService: UserBaseService,
     private readonly userRepository: UserRepository,
     private readonly tokenService: TokenService,
+    private readonly emailService: EmailService,
   ) {}
 
   async execute(resetPasswordDto: ResetPasswordDto) {
@@ -43,6 +45,11 @@ export class ResetPasswordUseCase {
       );
 
     // Actualizar contraseña del usuario
-    return this.userRepository.update(user.id, userToUpdate);
+    const updatedUser = await this.userRepository.update(user.id, userToUpdate);
+
+    // Enviar email de confirmación de cambio de contraseña
+    await this.emailService.sendPasswordChangedEmail(user.email);
+
+    return updatedUser;
   }
 }

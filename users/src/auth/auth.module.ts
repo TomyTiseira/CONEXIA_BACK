@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { MockEmailService } from 'src/common/services/mock-email.service';
+import { EmailService } from '../common/services/email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
 import { jwtConfig } from '../config/jwt.config';
 import { SharedModule } from '../shared/shared.module';
@@ -29,6 +30,10 @@ import { VerifyCodeResetUseCase } from './service/use-cases/verify-code-reset.us
     ResetPasswordUseCase,
     {
       provide: MockEmailService,
+      useClass: NodemailerService,
+    },
+    {
+      provide: EmailService,
       useClass: NodemailerService,
     },
   ],
