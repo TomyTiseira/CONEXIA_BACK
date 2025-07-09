@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import {
   JwtPayload,
   LoginResponse,
+  PasswordResetTokenPayload,
   RefreshTokenResponse,
 } from '../interfaces/auth.interface';
 
@@ -71,5 +72,17 @@ export class TokenService {
       accessToken,
       expiresIn: 15 * 60, // 15 minutos en segundos
     };
+  }
+
+  generatePasswordResetToken(userId: number, email: string): string {
+    const payload: Omit<PasswordResetTokenPayload, 'iat' | 'exp'> = {
+      sub: userId,
+      email,
+      type: 'access',
+    };
+
+    return this.jwtService.sign(payload, {
+      expiresIn: '5m', // 5 minutos para password reset token
+    });
   }
 }
