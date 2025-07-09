@@ -47,6 +47,27 @@ export class Profile {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
+
+  @Column({ nullable: true })
+  profilePicture: string;
+
+  @Column({ nullable: true })
+  coverPicture: string;
+
+  @Column('simple-array', { nullable: true })
+  skills: string[];
+
+  @Column({ length: 500, nullable: true })
+  description: string;
+
+  @Column('simple-json', { nullable: true })
+  experience: { title: string; project: string }[];
+
+  @Column('simple-json', { nullable: true })
+  socialLinks: { platform: string; url: string }[];
+
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;
 
