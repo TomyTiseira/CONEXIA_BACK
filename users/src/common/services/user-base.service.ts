@@ -3,13 +3,16 @@ import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
+  InvalidPasswordResetCodeException,
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
+  PasswordResetCodeExpiredException,
   RoleNotFoundException,
   UserActivationFailedException,
   UserAlreadyActiveException,
   UserAlreadyExistsException,
   UserNotFoundException,
+  UserNotVerifiedException,
   VerificationCodeExpiredException,
   VerificationCodeUpdateFailedException,
 } from '../exceptions/user.exceptions';
@@ -72,6 +75,15 @@ export class UserBaseService {
   }
 
   /**
+   * Valida que un usuario esté activo
+   */
+  validateUserActive(user: User): void {
+    if (!user.isValidate) {
+      throw new UserNotVerifiedException();
+    }
+  }
+
+  /**
    * Valida un código de verificación
    */
   validateVerificationCode(user: User, verificationCode: string): void {
@@ -86,6 +98,24 @@ export class UserBaseService {
   validateVerificationCodeNotExpired(user: User): void {
     if (user.verificationCodeExpires < new Date()) {
       throw new VerificationCodeExpiredException();
+    }
+  }
+
+  /**
+   * Valida que un código de verificación sea correcto para el usuario
+   */
+  validatePasswordResetCode(user: User, passwordResetCode: string): void {
+    if (user.passwordResetCode !== passwordResetCode) {
+      throw new InvalidPasswordResetCodeException();
+    }
+  }
+
+  /**
+   * Valida que un código de verificación no haya expirado
+   */
+  validatePasswordResetCodeNotExpired(user: User): void {
+    if (user.passwordResetCodeExpires < new Date()) {
+      throw new PasswordResetCodeExpiredException();
     }
   }
 
@@ -150,6 +180,14 @@ export class UserBaseService {
       ...user,
       passwordResetCode,
       passwordResetCodeExpires,
+    };
+  }
+
+  async prepareUserForUpdatePassword(user: User, password: string) {
+    const hashedPassword = await CryptoUtils.hashPassword(password);
+    return {
+      ...user,
+      password: hashedPassword,
     };
   }
 
