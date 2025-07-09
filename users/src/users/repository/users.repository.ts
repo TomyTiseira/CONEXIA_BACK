@@ -1,4 +1,3 @@
-// src/users/repository/user.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -41,6 +40,4 @@ export class UserRepository {
   ping(): string {
     return 'pong';
   }
-
-  // Otros métodos según necesites
 }
