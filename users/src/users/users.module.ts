@@ -31,5 +31,6 @@ import { UsersService } from './service/users.service';
     },
   ],
   imports: [NatsModule, SharedModule, ProfileModule],
+  exports: [UserRepository],
 })
 export class UsersModule {}
