@@ -15,6 +15,7 @@ services:
       - NATS_SERVERS=nats://nats-server:4222
       - PORT=${API_GATEWAY_PORT}
       - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
 
   users:
     build: ./users
