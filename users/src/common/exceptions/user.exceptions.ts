@@ -98,3 +98,21 @@ export class InvalidCredentialsException extends RpcException {
     });
   }
 }
+
+export class InvalidPasswordResetCodeException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Invalid password reset code',
+    });
+  }
+}
+
+export class PasswordResetCodeExpiredException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Password reset code has expired',
+    });
+  }
+}
