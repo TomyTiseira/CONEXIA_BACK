@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ForgotPasswordUseCase } from '../../auth/service/use-cases/forgot-password.use-cases';
 import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
@@ -14,7 +13,6 @@ export class UsersService {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly verifyUserUseCase: VerifyUserUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
-    private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
   ) {}
 
   ping() {
@@ -31,10 +29,6 @@ export class UsersService {
 
   async resendVerification(email: string): Promise<User> {
     return this.resendVerificationUseCase.execute(email);
-  }
-
-  async forgotPassword(email: string): Promise<void> {
-    return this.forgotPasswordUseCase.execute(email);
   }
 
   // create(createUserDto: CreateUserDto) {

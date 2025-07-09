@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { NatsModule } from 'src/transports/nats.module';
-import { ForgotPasswordUseCase } from '../auth/service/use-cases/forgot-password.use-cases';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
 import { UserBaseService } from '../common/services/user-base.service';
@@ -22,7 +21,6 @@ import { UsersService } from './service/users.service';
     CreateUserUseCase,
     VerifyUserUseCase,
     ResendVerificationUseCase,
-    ForgotPasswordUseCase,
     UserBaseService,
     UserRepository,
     {
