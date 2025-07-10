@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -168,6 +169,19 @@ export class AuthController {
         throw new RpcException(error as string | object);
       }),
     );
+  }
+
+  @Post('logout')
+  logout(@Res() res: Response) {
+    res.clearCookie('access_token', {
+      ...jwtConfig.cookieOptions,
+      maxAge: 0,
+    });
+    res.clearCookie('refresh_token', {
+      ...jwtConfig.cookieOptions,
+      maxAge: 0,
+    });
+    res.json({ success: true, message: 'Logged out successfully' });
   }
 
   // Para probar la autenticación
