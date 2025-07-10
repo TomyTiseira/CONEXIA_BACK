@@ -7,8 +7,6 @@ import {
   Post,
   UploadedFiles,
   UseInterceptors,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -60,36 +58,34 @@ export class UsersController {
   }
 
   @Post(':userId/profile')
-@UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-@UseInterceptors(
-  FileFieldsInterceptor(
-    [
-      { name: 'profilePicture', maxCount: 1 },
-      { name: 'coverPicture',   maxCount: 1 },
-    ],
-    { limits: { fileSize: 5 * 1024 * 1024 } }
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profilePicture', maxCount: 1 },
+        { name: 'coverPicture', maxCount: 1 },
+      ],
+      { limits: { fileSize: 5 * 1024 * 1024 } },
+    ),
   )
-)
-createProfile(
-  @Param('userId') userId: string,
-  @Body() dto: CreateProfileHttpDto,
-  @UploadedFiles()
-  files: {
-    profilePicture?: Express.Multer.File[];
-    coverPicture?:   Express.Multer.File[];
+  createProfile(
+    @Param('userId') userId: string,
+    @Body() dto: CreateProfileHttpDto,
+    @UploadedFiles()
+    files: {
+      profilePicture?: Express.Multer.File[];
+      coverPicture?: Express.Multer.File[];
+    },
+  ) {
+    const payload = {
+      userId: +userId,
+      ...dto,
+      profilePicture: files.profilePicture?.[0]?.filename,
+      coverPicture: files.coverPicture?.[0]?.filename,
+    };
+    return this.client.send('createProfile', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
-) {
-  const payload = {
-    userId: +userId,
-    ...dto,
-    profilePicture: files.profilePicture?.[0]?.filename,
-    coverPicture:   files.coverPicture?.[0]?.filename,
-  };
-  return this.client.send('createProfile', payload).pipe(
-    catchError(error => {
-      throw new RpcException(error);
-    }),
-  );
-}
-
 }

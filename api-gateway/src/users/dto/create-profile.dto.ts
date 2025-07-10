@@ -1,12 +1,12 @@
 import { Type } from 'class-transformer';
 import {
-    ArrayMaxSize,
-    IsDateString,
-    IsNotEmpty,
-    IsOptional,
-    IsString,
-    MaxLength,
-    ValidateNested,
+  ArrayMaxSize,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
 } from 'class-validator';
 
 class ExperienceItem {

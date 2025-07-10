@@ -11,7 +11,12 @@ import { CreateProfileUseCase } from './service/use-cases/create-profile.use-cas
 @Module({
   imports: [SharedModule, TypeOrmModule.forFeature([Profile])],
   controllers: [ProfileController],
-  providers: [ProfileService, ProfileRepository, CreateProfileUseCase, UserRepository],
+  providers: [
+    ProfileService,
+    ProfileRepository,
+    CreateProfileUseCase,
+    UserRepository,
+  ],
   exports: [ProfileRepository],
 })
 export class ProfileModule {}

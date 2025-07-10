@@ -1,9 +1,12 @@
 import { Type } from 'class-transformer';
 import {
-    ArrayMaxSize,
-    IsDateString, IsNotEmpty, IsOptional, IsString,
-    MaxLength,
-    ValidateNested
+  ArrayMaxSize,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
 } from 'class-validator';
 
 class ExperienceItem {
@@ -22,26 +25,34 @@ export class CreateProfileDto {
   @IsString() @IsNotEmpty() name: string;
   @IsString() @IsNotEmpty() lastName: string;
 
-  @IsDateString() @IsNotEmpty()
+  @IsDateString()
+  @IsNotEmpty()
   birthDate: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   profilePicture?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   coverPicture?: string;
 
-  @IsOptional() @ArrayMaxSize(20) @IsString({ each: true })
+  @IsOptional()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
   skills?: string[];
 
-  @IsOptional() @MaxLength(500)
+  @IsOptional()
+  @MaxLength(500)
   description?: string;
 
-  @IsOptional() @ValidateNested({ each: true })
+  @IsOptional()
+  @ValidateNested({ each: true })
   @Type(() => ExperienceItem)
   experience?: ExperienceItem[];
 
-  @IsOptional() @ValidateNested({ each: true })
+  @IsOptional()
+  @ValidateNested({ each: true })
   @Type(() => SocialLink)
   socialLinks?: SocialLink[];
 }
