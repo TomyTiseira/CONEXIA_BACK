@@ -17,12 +17,12 @@ export class MockEmailService extends EmailService {
     });
   }
 
-  async sendWelcomeEmail(email: string, userName?: string): Promise<void> {
+  async sendWelcomeEmail(email: string): Promise<void> {
     await this.sendEmail({
       to: email,
-      subject: '¡Bienvenido a nuestra plataforma!',
-      html: `<h1>¡Bienvenido${userName ? ` ${userName}` : ''}!</h1><p>Tu cuenta ha sido verificada exitosamente.</p>`,
-      text: `¡Bienvenido${userName ? ` ${userName}` : ''}! Tu cuenta ha sido verificada exitosamente.`,
+      subject: '🎉 ¡Ya eres parte de Conexia!',
+      html: `<h1>🎉 ¡Ya eres parte de Conexia!</h1><p>¡Hola! 👋</p><p>¡Excelente! Tu cuenta ha sido verificada exitosamente y ahora eres parte de nuestra comunidad Conexia. ¡Tu viaje con Conexia acaba de comenzar!</p>`,
+      text: `🎉 ¡Ya eres parte de Conexia!\n\n¡Hola! 👋\n\n¡Excelente! Tu cuenta ha sido verificada exitosamente y ahora eres parte de nuestra comunidad Conexia. ¡Tu viaje con Conexia acaba de comenzar!`,
     });
   }
 
