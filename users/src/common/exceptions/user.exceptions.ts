@@ -18,6 +18,15 @@ export class UserNotFoundException extends RpcException {
   }
 }
 
+export class UserNotFoundByIdException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 404,
+      message: `User with id ${id} not found`,
+    });
+  }
+}
+
 export class UserAlreadyActiveException extends RpcException {
   constructor(email: string) {
     super({

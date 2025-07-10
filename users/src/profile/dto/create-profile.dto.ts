@@ -1,58 +1,100 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  IsArray,
   IsDateString,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
 
 class ExperienceItem {
-  @IsString() title: string;
-  @IsString() project: string;
+  @IsString()
+  title: string;
+
+  @IsString()
+  project: string;
 }
 
 class SocialLink {
-  @IsString() platform: string;
-  @IsString() url: string;
+  @IsString()
+  platform: string;
+
+  @IsString()
+  url: string;
 }
 
 export class CreateProfileDto {
-  @IsNotEmpty() userId: number;
-
-  @IsString() @IsNotEmpty() name: string;
-  @IsString() @IsNotEmpty() lastName: string;
-
-  @IsDateString()
+  // Campos obligatorios (según tu entidad)
   @IsNotEmpty()
-  birthDate: string;
+  @IsNumber()
+  userId: number;
 
-  @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  documentNumber: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  documentTypeId: number;
+
+  @IsPhoneNumber()
+  @IsNotEmpty()
+  phoneNumber: string;
+
+  @IsString()
+  @IsNotEmpty()
+  country: string;
+
+  @IsString()
+  @IsNotEmpty()
+  state: string;
+
+  // Campos opcionales
+  @IsDateString()
+  @IsOptional()
+  birthDate?: string;
+
+  @IsString()
+  @IsOptional()
   profilePicture?: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   coverPicture?: string;
 
-  @IsOptional()
-  @ArrayMaxSize(20)
+  @IsArray()
   @IsString({ each: true })
+  @ArrayMaxSize(20)
+  @IsOptional()
   skills?: string[];
 
-  @IsOptional()
+  @IsString()
   @MaxLength(500)
+  @IsOptional()
   description?: string;
 
-  @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ExperienceItem)
+  @IsOptional()
   experience?: ExperienceItem[];
 
-  @IsOptional()
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SocialLink)
+  @IsOptional()
   socialLinks?: SocialLink[];
 }

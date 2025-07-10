@@ -74,13 +74,13 @@ export class UsersController {
     files: {
       profilePicture?: Express.Multer.File[];
       coverPicture?: Express.Multer.File[];
-    },
+    } = {}, // Valor por defecto para evitar undefined
   ) {
     const payload = {
       userId: +userId,
       ...dto,
-      profilePicture: files.profilePicture?.[0]?.filename,
-      coverPicture: files.coverPicture?.[0]?.filename,
+      profilePicture: files?.profilePicture?.[0]?.filename,
+      coverPicture: files?.coverPicture?.[0]?.filename,
     };
     return this.client.send('createProfile', payload).pipe(
       catchError((error) => {
