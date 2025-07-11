@@ -1,5 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserNotFoundByIdException } from '../../../common/exceptions/user.exceptions';
+import { Injectable } from '@nestjs/common';
+import {
+  UserBadRequestException,
+  UserNotFoundByIdException,
+} from '../../../common/exceptions/user.exceptions';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { CreateProfileDto } from '../../dto/create-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
@@ -17,7 +20,7 @@ export class CreateProfileUseCase {
     if (birth) {
       const age = new Date().getFullYear() - birth.getFullYear();
       if (age < 18) {
-        throw new BadRequestException('Debe tener al menos 18 años');
+        throw new UserBadRequestException('must be at least 18 years old');
       }
     }
 
@@ -36,9 +39,16 @@ export class CreateProfileUseCase {
     }
 
     // Crear perfil (ignore campos nullables omitidos)
-    return this.profileRepo.create({
+    const newProfile = await this.profileRepo.create({
       ...dto,
       birthDate: birth,
     });
+
+    // Actualizar el usuario con el id del perfil
+    await this.userRepo.update(dto.userId, {
+      profileId: newProfile.id,
+    });
+
+    return newProfile;
   }
 }
