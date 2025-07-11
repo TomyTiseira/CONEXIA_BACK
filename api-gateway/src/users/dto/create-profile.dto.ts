@@ -14,91 +14,94 @@ import {
 } from 'class-validator';
 
 class ExperienceItem {
-  @IsString({ message: 'Title must be a string' })
-  @IsNotEmpty({ message: 'Title is required' })
+  @IsString({ message: 'title must be a string' })
+  @IsNotEmpty({ message: 'title is required' })
   title: string;
 
-  @IsString({ message: 'Project must be a string' })
-  @IsNotEmpty({ message: 'Project is required' })
+  @IsString({ message: 'project must be a string' })
+  @IsNotEmpty({ message: 'project is required' })
   project: string;
 }
 
 class SocialLink {
-  @IsString({ message: 'Platform must be a string' })
-  @IsNotEmpty({ message: 'Platform is required' })
+  @IsString({ message: 'platform must be a string' })
+  @IsNotEmpty({ message: 'platform is required' })
   platform: string;
 
-  @IsString({ message: 'URL must be a string' })
-  @IsUrl({}, { message: 'URL must be valid (e.g. https://example.com)' })
+  @IsString({ message: 'url must be a string' })
+  @IsUrl({}, { message: 'url must be valid (e.g. https://example.com)' })
   url: string;
 }
 
 export class CreateProfileHttpDto {
   // Required fields
-  @IsString({ message: 'Name must be a string' })
-  @IsNotEmpty({ message: 'Name is required' })
+  @IsString({ message: 'name must be a string' })
+  @IsNotEmpty({ message: 'name is required' })
   name: string;
 
-  @IsString({ message: 'Last name must be a string' })
-  @IsNotEmpty({ message: 'Last name is required' })
+  @IsString({ message: 'lastName must be a string' })
+  @IsNotEmpty({ message: 'lastName is required' })
   lastName: string;
 
-  @IsString({ message: 'Document number must be a string' })
-  @IsNotEmpty({ message: 'Document number is required' })
+  @IsString({ message: 'documentNumber must be a string' })
+  @IsNotEmpty({ message: 'documentNumber is required' })
   documentNumber: string;
 
-  @IsNumber({}, { message: 'Document type must be a number' })
-  @IsNotEmpty({ message: 'Document type ID is required' })
+  @IsNumber({}, { message: 'documentTypeId must be a number' })
+  @IsNotEmpty({ message: 'documentTypeId is required' })
   documentTypeId: number;
 
   @IsPhoneNumber('AR', {
     message: 'Invalid phone number format (e.g. +5491122334455)',
   })
-  @IsNotEmpty({ message: 'Phone number is required' })
+  @IsOptional()
   phoneNumber: string;
 
-  @IsString({ message: 'Country must be a string' })
-  @IsNotEmpty({ message: 'Country is required' })
+  @IsString({ message: 'country must be a string' })
+  @IsOptional()
   country: string;
 
-  @IsString({ message: 'State must be a string' })
-  @IsNotEmpty({ message: 'State is required' })
+  @IsString({ message: 'state must be a string' })
+  @IsOptional()
   state: string;
 
   // Optional fields
   @IsDateString(undefined, {
-    message: 'Birth date must be a valid ISO date (YYYY-MM-DD)',
+    message: 'birthDate must be a valid ISO date (YYYY-MM-DD)',
   })
-  @IsOptional()
-  birthDate?: string;
+  @IsNotEmpty({ message: 'birthDate is required' })
+  birthDate: string;
 
-  @IsString({ message: 'Profile picture must be a filename string' })
+  @IsString({ message: 'profilePicture must be a filename string' })
   @IsOptional()
   profilePicture?: string;
 
-  @IsString({ message: 'Cover picture must be a filename string' })
+  @IsString({ message: 'coverPicture must be a filename string' })
   @IsOptional()
   coverPicture?: string;
 
-  @IsArray({ message: 'Skills must be an array' })
-  @ArrayMaxSize(20, { message: 'Skills cannot exceed 20 items' })
-  @IsString({ each: true, message: 'Each skill must be a string' })
+  @IsArray({ message: 'skills must be an array' })
+  @ArrayMaxSize(20, { message: 'skills cannot exceed 20 items' })
+  @IsString({ each: true, message: 'each skill must be a string' })
   @IsOptional()
   skills?: string[];
 
-  @IsString({ message: 'Description must be a string' })
-  @MaxLength(500, { message: 'Description cannot exceed 500 characters' })
+  @IsString({ message: 'description must be a string' })
+  @MaxLength(500, { message: 'description cannot exceed 500 characters' })
   @IsOptional()
   description?: string;
 
-  @IsArray({ message: 'Experience must be an array' })
-  @ValidateNested({ each: true })
+  @IsArray({ message: 'experience must be an array' })
+  @ValidateNested({ each: true, message: 'each experience must be an object' })
   @Type(() => ExperienceItem)
   @IsOptional()
   experience?: ExperienceItem[];
 
-  @IsArray({ message: 'Social links must be an array' })
-  @ValidateNested({ each: true })
+  @IsArray({ message: 'socialLinks must be an array' })
+  @ValidateNested({
+    each: true,
+    message: 'each socialLink must be an object',
+  })
   @Type(() => SocialLink)
   @IsOptional()
   socialLinks?: SocialLink[];
