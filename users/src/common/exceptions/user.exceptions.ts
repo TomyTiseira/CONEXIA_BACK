@@ -89,3 +89,12 @@ export class RoleNotFoundException extends RpcException {
     });
   }
 }
+
+export class UserBadRequestException extends RpcException {
+  constructor(message: string) {
+    super({
+      status: 400,
+      message,
+    });
+  }
+}
