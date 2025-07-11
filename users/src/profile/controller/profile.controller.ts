@@ -8,7 +8,7 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @MessagePattern('createProfile')
-  async create(@Payload() dto: CreateProfileDto) {
+  create(@Payload() dto: CreateProfileDto) {
     return this.profileService.createProfile(dto);
   }
 }
