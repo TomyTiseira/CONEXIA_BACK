@@ -7,7 +7,6 @@ import {
   LoginResponse,
   RefreshTokenResponse,
 } from '../interfaces/auth.interface';
-import { TokenService } from './token.service';
 import { ForgotPasswordUseCase } from './use-cases/forgot-password.use-cases';
 import { LoginUseCase } from './use-cases/login.use-cases';
 import { RefreshTokenUseCase } from './use-cases/refresh-token.use-cases';
@@ -22,7 +21,6 @@ export class AuthService {
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly verifyCodeResetUseCase: VerifyCodeResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
-    private readonly tokenService: TokenService,
   ) {}
 
   async login(loginData: LoginDto): Promise<LoginResponse> {

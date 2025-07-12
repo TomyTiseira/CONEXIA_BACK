@@ -6,6 +6,7 @@ import {
   InvalidPasswordResetCodeException,
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
+  NewPasswordSameAsCurrentException,
   PasswordResetCodeExpiredException,
   RoleNotFoundException,
   UserActivationFailedException,
@@ -181,6 +182,22 @@ export class UserBaseService {
       passwordResetCode,
       passwordResetCodeExpires,
     };
+  }
+
+  /**
+   * Valida que la nueva contraseña no sea igual a la actual
+   */
+  async validateNewPasswordNotSameAsCurrent(
+    user: User,
+    newPassword: string,
+  ): Promise<void> {
+    const isSamePassword = await CryptoUtils.comparePassword(
+      newPassword,
+      user.password,
+    );
+    if (isSamePassword) {
+      throw new NewPasswordSameAsCurrentException();
+    }
   }
 
   async prepareUserForUpdatePassword(user: User, password: string) {

@@ -37,6 +37,12 @@ export class ResetPasswordUseCase {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
+    // Validar que la nueva contraseña no sea igual a la actual
+    await this.userBaseService.validateNewPasswordNotSameAsCurrent(
+      user,
+      resetPasswordDto.password,
+    );
+
     // Preparar datos del usuario para actualización
     const userToUpdate =
       await this.userBaseService.prepareUserForUpdatePassword(

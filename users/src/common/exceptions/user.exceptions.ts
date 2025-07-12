@@ -116,3 +116,12 @@ export class PasswordResetCodeExpiredException extends RpcException {
     });
   }
 }
+
+export class NewPasswordSameAsCurrentException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'New password cannot be the same as the current password',
+    });
+  }
+}
