@@ -51,6 +51,7 @@ export class CreateProfileDto {
 
   @IsNumber({}, { message: 'documentTypeId must be a number' })
   @IsNotEmpty({ message: 'documentTypeId is required' })
+  @Type(() => Number)
   documentTypeId: number;
 
   @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })

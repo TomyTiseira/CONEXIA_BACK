@@ -49,11 +49,10 @@ export class CreateProfileHttpDto {
 
   @IsNumber({}, { message: 'documentTypeId must be a number' })
   @IsNotEmpty({ message: 'documentTypeId is required' })
+  @Type(() => Number)
   documentTypeId: number;
 
-  @IsPhoneNumber('AR', {
-    message: 'Invalid phone number format (e.g. +5491122334455)',
-  })
+  @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
   @IsOptional()
   phoneNumber: string;
 

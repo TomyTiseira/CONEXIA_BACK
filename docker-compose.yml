@@ -10,6 +10,7 @@ services:
       - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
     volumes:
       - ./api-gateway/src:/src/app/src
+      - ./api-gateway/uploads:/src/app/uploads
     command: npm run start:dev
     environment:
       - NATS_SERVERS=nats://nats-server:4222
