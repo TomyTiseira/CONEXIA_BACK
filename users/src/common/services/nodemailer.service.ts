@@ -68,6 +68,15 @@ export class NodemailerService extends EmailService {
     });
   }
 
+  async sendPasswordChangedEmail(email: string): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Contraseña Cambiada Exitosamente - Conexia',
+      html: this.generatePasswordChangedEmailHTML(),
+      text: this.generatePasswordChangedEmailText(),
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     // Enviar email de forma asíncrona sin bloquear la respuesta
     this.transporter
@@ -190,6 +199,53 @@ export class NodemailerService extends EmailService {
       Este código expirará en 15 minutos por seguridad.
 
       Si no solicitaste este código, puedes ignorar este email de forma segura.
+
+      Saludos,
+      El equipo de Conexia
+    `;
+  }
+
+  /**
+   * Genera el HTML para el email de confirmación de cambio de contraseña
+   */
+  private generatePasswordChangedEmailHTML(): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h1 style="color: #28a745; text-align: center; margin-bottom: 30px;">Contraseña Cambiada Exitosamente</h1>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Tu contraseña ha sido actualizada exitosamente.
+          </p>
+          <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
+            <p style="color: #155724; margin: 0; font-weight: bold;">
+              ✅ Cambio de contraseña confirmado
+            </p>
+          </div>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte.
+          </p>
+          <p style="font-size: 14px; color: #666; text-align: center;">
+            Por seguridad, te recomendamos mantener tu contraseña segura y no compartirla con nadie.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Genera el texto plano para el email de confirmación de cambio de contraseña
+   */
+  private generatePasswordChangedEmailText(): string {
+    return `
+      Contraseña Cambiada Exitosamente
+
+      Tu contraseña ha sido actualizada exitosamente.
+
+      ✅ Cambio de contraseña confirmado
+
+      Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte.
+
+      Por seguridad, te recomendamos mantener tu contraseña segura y no compartirla con nadie.
 
       Saludos,
       El equipo de Conexia

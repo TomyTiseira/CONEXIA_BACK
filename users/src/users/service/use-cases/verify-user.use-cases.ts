@@ -36,12 +36,14 @@ export class VerifyUserUseCase {
     const activationData = this.userBaseService.prepareUserForActivation();
 
     // Actualizar usuario
-    const updatedUser = await this.userRepository.update(user.id, {
+    await this.userRepository.update(user.id, {
       isValidate: activationData.isValidate,
-      verificationCode: activationData.verificationCode || undefined,
-      verificationCodeExpires:
-        activationData.verificationCodeExpires || undefined,
     });
+
+    // Limpiar campos de verificación
+    const updatedUser = await this.userRepository.clearVerificationFields(
+      user.id,
+    );
 
     // Validar que la activación fue exitosa
     const validatedUser =

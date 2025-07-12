@@ -31,6 +31,11 @@ export abstract class EmailService {
   ): Promise<void>;
 
   /**
+   * Envía un email de confirmación de cambio de contraseña
+   */
+  abstract sendPasswordChangedEmail(email: string): Promise<void>;
+
+  /**
    * Método genérico para enviar emails
    */
   protected abstract sendEmail(options: EmailOptions): Promise<void>;

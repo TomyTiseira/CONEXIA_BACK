@@ -38,6 +38,15 @@ export class MockEmailService extends EmailService {
     });
   }
 
+  async sendPasswordChangedEmail(email: string): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Contraseña Cambiada Exitosamente',
+      html: `<h1>Contraseña Actualizada</h1><p>Tu contraseña ha sido cambiada exitosamente.</p><p>Si no realizaste este cambio, contacta inmediatamente con soporte.</p>`,
+      text: `Contraseña Actualizada\n\nTu contraseña ha sido cambiada exitosamente.\n\nSi no realizaste este cambio, contacta inmediatamente con soporte.`,
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     this.logger.log(`[MOCK EMAIL] Email would be sent to ${options.to}`);
     this.logger.log(`[MOCK EMAIL] Subject: ${options.subject}`);

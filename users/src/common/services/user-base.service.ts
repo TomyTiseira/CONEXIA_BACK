@@ -3,13 +3,17 @@ import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
+  InvalidPasswordResetCodeException,
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
+  NewPasswordSameAsCurrentException,
+  PasswordResetCodeExpiredException,
   RoleNotFoundException,
   UserActivationFailedException,
   UserAlreadyActiveException,
   UserAlreadyExistsException,
   UserNotFoundException,
+  UserNotVerifiedException,
   VerificationCodeExpiredException,
   VerificationCodeUpdateFailedException,
 } from '../exceptions/user.exceptions';
@@ -72,6 +76,15 @@ export class UserBaseService {
   }
 
   /**
+   * Valida que un usuario esté activo
+   */
+  validateUserActive(user: User): void {
+    if (!user.isValidate) {
+      throw new UserNotVerifiedException();
+    }
+  }
+
+  /**
    * Valida un código de verificación
    */
   validateVerificationCode(user: User, verificationCode: string): void {
@@ -90,12 +103,40 @@ export class UserBaseService {
   }
 
   /**
+   * Valida que un código de verificación sea correcto para el usuario
+   */
+  validatePasswordResetCode(user: User, passwordResetCode: string): void {
+    if (user.passwordResetCode !== passwordResetCode) {
+      throw new InvalidPasswordResetCodeException();
+    }
+  }
+
+  /**
+   * Valida que un código de verificación no haya expirado
+   */
+  validatePasswordResetCodeNotExpired(user: User): void {
+    if (user.passwordResetCodeExpires < new Date()) {
+      throw new PasswordResetCodeExpiredException();
+    }
+  }
+
+  /**
    * Genera datos de verificación para un usuario
    */
   generateVerificationData() {
     return {
       verificationCode: CryptoUtils.generateVerificationCode(),
       verificationCodeExpires: CryptoUtils.calculateExpirationDate(),
+    };
+  }
+
+  /**
+   * Genera datos de verificación para un usuario
+   */
+  generatePasswordResetData() {
+    return {
+      passwordResetCode: CryptoUtils.generateVerificationCode(),
+      passwordResetCodeExpires: CryptoUtils.calculateExpirationDate(),
     };
   }
 
@@ -130,6 +171,40 @@ export class UserBaseService {
       verificationCode,
       verificationCodeExpires,
       roleId: userRole.id, // Asignar rol de usuario regular por defecto
+    };
+  }
+
+  prepareUserForPasswordReset(user: User) {
+    const { passwordResetCode, passwordResetCodeExpires } =
+      this.generatePasswordResetData();
+    return {
+      ...user,
+      passwordResetCode,
+      passwordResetCodeExpires,
+    };
+  }
+
+  /**
+   * Valida que la nueva contraseña no sea igual a la actual
+   */
+  async validateNewPasswordNotSameAsCurrent(
+    user: User,
+    newPassword: string,
+  ): Promise<void> {
+    const isSamePassword = await CryptoUtils.comparePassword(
+      newPassword,
+      user.password,
+    );
+    if (isSamePassword) {
+      throw new NewPasswordSameAsCurrentException();
+    }
+  }
+
+  async prepareUserForUpdatePassword(user: User, password: string) {
+    const hashedPassword = await CryptoUtils.hashPassword(password);
+    return {
+      ...user,
+      password: hashedPassword,
     };
   }
 

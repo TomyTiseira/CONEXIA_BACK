@@ -22,6 +22,14 @@ export interface RefreshTokenResponse {
   };
 }
 
+export interface VerifyCodeResetResponse {
+  success: boolean;
+  message: string;
+  data: {
+    token: string;
+  };
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
