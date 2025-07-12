@@ -1,3 +1,4 @@
+import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import {
   Body,
   Controller,
@@ -9,12 +10,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
-import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
@@ -57,6 +54,20 @@ export class UsersController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  // TODO: Eliminar este endpoint
+  // Para probar la autenticación
+  @Get('protected')
+  @UseGuards(JwtAuthGuard)
+  getProtectedData() {
+    return {
+      success: true,
+      message: 'This is protected data',
+      data: {
+        message: 'You have access to this protected endpoint',
+      },
+    };
   }
 
   @Get('document-types')
