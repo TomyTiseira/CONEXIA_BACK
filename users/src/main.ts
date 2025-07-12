@@ -27,4 +27,4 @@ async function bootstrap() {
   await app.listen();
   logger.log('Users microservice is running');
 }
-bootstrap();
+void bootstrap();

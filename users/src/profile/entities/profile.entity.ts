@@ -31,13 +31,13 @@ export class Profile {
   @JoinColumn({ name: 'documentTypeId' })
   documentType: DocumentType;
 
-  @Column()
+  @Column({ nullable: true })
   phoneNumber: string;
 
-  @Column()
+  @Column({ nullable: true })
   country: string;
 
-  @Column()
+  @Column({ nullable: true })
   state: string;
 
   @Column()
@@ -46,6 +46,27 @@ export class Profile {
   @OneToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
+
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  profilePicture?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  coverPicture?: string;
+
+  @Column('simple-array', { nullable: true })
+  skills: string[];
+
+  @Column({ length: 500, nullable: true })
+  description: string;
+
+  @Column('simple-json', { nullable: true })
+  experience: { title: string; project: string }[];
+
+  @Column('simple-json', { nullable: true })
+  socialLinks: { platform: string; url: string }[];
 
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;

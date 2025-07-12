@@ -18,6 +18,15 @@ export class UserNotFoundException extends RpcException {
   }
 }
 
+export class UserNotFoundByIdException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 404,
+      message: `User with id ${id} not found`,
+    });
+  }
+}
+
 export class UserAlreadyActiveException extends RpcException {
   constructor(email: string) {
     super({
@@ -77,6 +86,15 @@ export class RoleNotFoundException extends RpcException {
     super({
       status: 500,
       message: `Role "${roleName}" not found in database`,
+    });
+  }
+}
+
+export class UserBadRequestException extends RpcException {
+  constructor(message: string) {
+    super({
+      status: 400,
+      message,
     });
   }
 }
