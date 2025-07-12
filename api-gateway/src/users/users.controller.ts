@@ -59,6 +59,15 @@ export class UsersController {
     );
   }
 
+  @Get('document-types')
+  getDocumentTypes() {
+    return this.client.send('findAllDocumentTypes', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
   @Post(':userId/profile')
   @UseInterceptors(
     FileFieldsInterceptor(
