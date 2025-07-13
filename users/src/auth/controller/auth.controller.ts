@@ -1,7 +1,10 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { VerifyCodeResetDto } from '../dto/verify-code-reset.dto';
 import { AuthService } from '../service/auth.service';
 
 @Controller()
@@ -35,6 +38,33 @@ export class AuthController {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
       },
+    };
+  }
+
+  @MessagePattern('forgotPassword')
+  async forgotPassword(@Payload() forgotPasswordDto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(forgotPasswordDto.email);
+    return {
+      message: 'Password reset email sent successfully.',
+    };
+  }
+
+  @MessagePattern('verifyCodeReset')
+  async verifyCodeReset(@Payload() verifyCodeResetDto: VerifyCodeResetDto) {
+    const result = await this.authService.verifyCodeReset(verifyCodeResetDto);
+    return {
+      message: 'Code verified successfully.',
+      data: {
+        token: result.token,
+      },
+    };
+  }
+
+  @MessagePattern('resetPassword')
+  async resetPassword(@Payload() resetPasswordDto: ResetPasswordDto) {
+    await this.authService.resetPassword(resetPasswordDto);
+    return {
+      message: 'Password reset successfully.',
     };
   }
 }

@@ -28,3 +28,11 @@ export interface UserWithoutSensitiveData {
   email: string;
   roleId: number;
 }
+
+export interface PasswordResetTokenPayload {
+  sub: number;
+  email: string;
+  type: 'access';
+  iat?: number;
+  exp?: number;
+}
