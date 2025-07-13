@@ -3,19 +3,22 @@ import {
   Controller,
   Get,
   Inject,
-  Param,
   Post,
+  Res,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { catchError } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
+import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { NATS_SERVICE } from 'src/config';
+import { jwtConfig } from 'src/config/jwt.config';
 import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
@@ -44,12 +47,46 @@ export class UsersController {
   }
 
   @Post('verify')
-  verify(@Body() verifyUserDto: VerifyUserDto) {
-    return this.client.send('verifyUser', verifyUserDto).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
+  async verify(@Body() verifyUserDto: VerifyUserDto, @Res() res: Response) {
+    try {
+      const result = (await firstValueFrom(
+        this.client.send('verifyUser', verifyUserDto).pipe(
+          catchError((error) => {
+            throw new RpcException(error);
+          }),
+        ),
+      )) as {
+        id: number;
+        email: string;
+        isValidate: boolean;
+        message: string;
+      };
+
+      // Configurar cookie con el token de verificación
+      res.cookie('user_verification_token', result.id.toString(), {
+        ...jwtConfig.cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutos
+      });
+
+      res.json({
+        success: true,
+        message: result.message,
+        data: {
+          user: {
+            id: result.id,
+            email: result.email,
+            isValidate: result.isValidate,
+          },
+        },
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      res.status(400).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
   }
 
   @Post('resend-verification')
@@ -84,7 +121,7 @@ export class UsersController {
     );
   }
 
-  @Post(':userId/profile')
+  @Post('profile')
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -120,8 +157,8 @@ export class UsersController {
     ),
   )
   async createProfile(
-    @Param('userId') userId: string,
     @Body() dto: CreateProfileHttpDto,
+    @VerificationToken() userId: string,
     @UploadedFiles()
     files: {
       profilePicture?: Express.Multer.File[];
