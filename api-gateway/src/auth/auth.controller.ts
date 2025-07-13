@@ -1,25 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
 import { jwtConfig } from 'src/config/jwt.config';
 import { NATS_SERVICE } from '../config';
+import { AutoRefreshAuth } from './decorators/auto-refresh-auth.decorator';
 import { RefreshToken, ResetToken } from './decorators/token.decorator';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyCodeResetDto } from './dto/verify-code-reset.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {
   AuthenticatedRequest,
   LoginResponse,
@@ -184,10 +174,10 @@ export class AuthController {
     res.json({ success: true, message: 'Logged out successfully' });
   }
 
-  // Para probar la autenticación
+  // Para probar la autenticación con auto-refresh
   // TODO: Eliminar este endpoint
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @AutoRefreshAuth()
   getProfile(@Req() req: AuthenticatedRequest) {
     return {
       success: true,
