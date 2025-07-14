@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -60,10 +61,11 @@ export class UsersController {
         email: string;
         isValidate: boolean;
         message: string;
+        token: string;
       };
 
-      // Configurar cookie con el token de verificación
-      res.cookie('user_verification_token', result.id.toString(), {
+      // Configurar cookie con el token de verificación JWT
+      res.cookie('user_verification_token', result.token, {
         ...jwtConfig.cookieOptions,
         maxAge: 15 * 60 * 1000, // 15 minutos
       });
@@ -158,7 +160,7 @@ export class UsersController {
   )
   async createProfile(
     @Body() dto: CreateProfileHttpDto,
-    @VerificationToken() userId: string,
+    @VerificationToken() token: string,
     @UploadedFiles()
     files: {
       profilePicture?: Express.Multer.File[];
@@ -204,7 +206,7 @@ export class UsersController {
     }
 
     const payload = {
-      userId: +userId,
+      token,
       ...dto,
       profilePicture: files?.profilePicture?.[0]?.filename,
       coverPicture: files?.coverPicture?.[0]?.filename,

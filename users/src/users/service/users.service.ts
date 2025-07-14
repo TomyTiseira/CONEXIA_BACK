@@ -23,7 +23,10 @@ export class UsersService {
     return this.createUserUseCase.execute(userData);
   }
 
-  async verifyUser(email: string, verificationCode: string): Promise<User> {
+  async verifyUser(
+    email: string,
+    verificationCode: string,
+  ): Promise<{ user: User; token: string }> {
     return this.verifyUserUseCase.execute(email, verificationCode);
   }
 

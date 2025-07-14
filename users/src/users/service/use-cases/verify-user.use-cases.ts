@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { TokenService } from '../../../auth/service/token.service';
 import { MockEmailService } from '../../../common/services/mock-email.service';
 import { UserBaseService } from '../../../common/services/user-base.service';
 import { ProfileRepository } from '../../../profile/repository/profile.repository';
@@ -15,11 +16,15 @@ export class VerifyUserUseCase {
     private readonly userBaseService: UserBaseService,
     private readonly profileRepository: ProfileRepository,
     private readonly emailService: MockEmailService,
+    private readonly tokenService: TokenService,
     @InjectRepository(DocumentType)
     private readonly documentTypeRepository: Repository<DocumentType>,
   ) {}
 
-  async execute(email: string, verificationCode: string): Promise<User> {
+  async execute(
+    email: string,
+    verificationCode: string,
+  ): Promise<{ user: User; token: string }> {
     // Validar que el usuario exista
     const user = await this.userBaseService.validateUserExists(email);
 
@@ -79,7 +84,21 @@ export class VerifyUserUseCase {
       // Enviar email de bienvenida después de activar la cuenta exitosamente
       await this.emailService.sendWelcomeEmail(validatedUser.email);
 
-      return finalUser || validatedUser;
+      // Generar token de verificación de usuario
+      // Validar que finalUser no sea nulo antes de acceder a sus propiedades
+      if (!finalUser) {
+        throw new Error('Failed to update user with empty profile');
+      }
+
+      const token = this.tokenService.generateUserVerificationToken(
+        finalUser.id,
+        finalUser.email,
+      );
+
+      return {
+        user: finalUser,
+        token,
+      };
     } catch (error) {
       console.error('error creating profile:', error);
       throw error;

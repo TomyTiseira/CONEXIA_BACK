@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { TokenService } from '../../../auth/service/token.service';
 import {
   UserBadRequestException,
   UserNotFoundByIdException,
@@ -12,6 +13,7 @@ export class CreateProfileUseCase {
   constructor(
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
+    private readonly tokenService: TokenService,
   ) {}
 
   async execute(dto: CreateProfileDto) {
@@ -24,28 +26,68 @@ export class CreateProfileUseCase {
       }
     }
 
-    // Confirmar existencia de usuario
-    const user = await this.userRepo.findById(dto.userId);
-    if (!user) throw new UserNotFoundByIdException(dto.userId);
+    // Verificar el token JWT y extraer el ID del usuario
+    let userId: number;
+    try {
+      const payload = this.tokenService.verifyToken(dto.token);
 
-    const profile = await this.profileRepo.findByUserId(dto.userId);
+      // Verificar que sea un token de verificación válido
+      if (payload.type !== 'access') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      userId = payload.sub;
+    } catch {
+      throw new UnauthorizedException('Invalid or expired verification token');
+    }
+
+    // Confirmar existencia de usuario
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new UserNotFoundByIdException(userId);
+
+    const profile = await this.profileRepo.findByUserId(userId);
+
+    // Extraer datos del perfil del DTO (excluyendo el token)
+    const profileData = {
+      name: dto.name,
+      lastName: dto.lastName,
+      documentNumber: dto.documentNumber,
+      documentTypeId: dto.documentTypeId,
+      phoneNumber: dto.phoneNumber,
+      country: dto.country,
+      state: dto.state,
+      birthDate: dto.birthDate,
+      profilePicture: dto.profilePicture,
+      coverPicture: dto.coverPicture,
+      skills: dto.skills,
+      description: dto.description,
+      experience: dto.experience,
+      socialLinks: dto.socialLinks,
+    };
 
     if (profile) {
-      // Si existe, actualizar el perfil
+      // Si ya tiene el número de documento, no se puede actualizar
+      if (profile.documentNumber) {
+        throw new UserBadRequestException(
+          'documentNumber already exists, you cannot update it',
+        );
+      }
+
       return this.profileRepo.update(profile.id, {
-        ...dto,
+        ...profileData,
         birthDate: birth,
       });
     }
 
     // Crear perfil (ignore campos nullables omitidos)
     const newProfile = await this.profileRepo.create({
-      ...dto,
+      ...profileData,
+      userId,
       birthDate: birth,
     });
 
     // Actualizar el usuario con el id del perfil
-    await this.userRepo.update(dto.userId, {
+    await this.userRepo.update(userId, {
       profileId: newProfile.id,
     });
 

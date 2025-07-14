@@ -85,4 +85,16 @@ export class TokenService {
       expiresIn: '5m', // 5 minutos para password reset token
     });
   }
+
+  generateUserVerificationToken(userId: number, email: string): string {
+    const payload: Omit<PasswordResetTokenPayload, 'iat' | 'exp'> = {
+      sub: userId,
+      email,
+      type: 'access',
+    };
+
+    return this.jwtService.sign(payload, {
+      expiresIn: '15m', // 15 minutos para user verification token
+    });
+  }
 }
