@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EmailService } from 'src/common/services/email.service';
 import { NatsModule } from 'src/transports/nats.module';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
@@ -10,6 +11,7 @@ import { UserRepository } from './repository/users.repository';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
+import { UpdateUserUseCase } from './service/use-cases/update-user.use-cases';
 import { VerifyUserUseCase } from './service/use-cases/verify-user.use-cases';
 import { UsersService } from './service/users.service';
 
@@ -20,11 +22,16 @@ import { UsersService } from './service/users.service';
     PingUseCase,
     CreateUserUseCase,
     VerifyUserUseCase,
+    UpdateUserUseCase,
     ResendVerificationUseCase,
     UserBaseService,
     UserRepository,
     {
       provide: MockEmailService,
+      useClass: NodemailerService,
+    },
+    {
+      provide: EmailService,
       useClass: NodemailerService,
     },
   ],
