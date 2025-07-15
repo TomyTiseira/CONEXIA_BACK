@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Req } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
+import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
+import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 
 @Controller('users')
@@ -47,17 +49,21 @@ export class UsersController {
     );
   }
 
-  // TODO: Eliminar este endpoint
-  // Para probar la autenticación
-  @Get('protected')
-  @UseGuards(JwtAuthGuard)
-  getProtectedData() {
-    return {
-      success: true,
-      message: 'This is protected data',
-      data: {
-        message: 'You have access to this protected endpoint',
-      },
-    };
+  @Post('update')
+  @AutoRefreshAuth()
+  update(
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.client
+      .send('updateUser', {
+        ...updateUserDto,
+        userId: req.user?.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }
