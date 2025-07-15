@@ -2,6 +2,7 @@ import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
+import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { jwtConfig } from 'src/config/jwt.config';
 import { NATS_SERVICE } from '../config';
 import { AutoRefreshAuth } from './decorators/auto-refresh-auth.decorator';
@@ -11,7 +12,6 @@ import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyCodeResetDto } from './dto/verify-code-reset.dto';
 import {
-  AuthenticatedRequest,
   LoginResponse,
   RefreshTokenResponse,
   VerifyCodeResetResponse,
@@ -174,8 +174,6 @@ export class AuthController {
     res.json({ success: true, message: 'Logged out successfully' });
   }
 
-  // Para probar la autenticación con auto-refresh
-  // TODO: Eliminar este endpoint
   @Get('me')
   @AutoRefreshAuth()
   getProfile(@Req() req: AuthenticatedRequest) {
