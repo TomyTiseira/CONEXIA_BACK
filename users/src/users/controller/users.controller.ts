@@ -70,4 +70,14 @@ export class UsersController {
       message: 'User updated successfully.',
     };
   }
+
+  @MessagePattern('getRoleById')
+  async getRoleById(@Payload() id: string) {
+    const role = await this.usersService.getRoleById(id);
+    return {
+      id: role.id,
+      name: role.name,
+      message: 'Role retrieved successfully.',
+    };
+  }
 }

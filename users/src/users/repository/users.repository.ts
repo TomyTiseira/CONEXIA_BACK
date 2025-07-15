@@ -70,6 +70,10 @@ export class UserRepository {
     return this.ormRepository.manager.findOne(Role, { where: { name } });
   }
 
+  async findRoleById(id: number): Promise<Role | null> {
+    return this.ormRepository.manager.findOne(Role, { where: { id } });
+  }
+
   ping(): string {
     return 'pong';
   }

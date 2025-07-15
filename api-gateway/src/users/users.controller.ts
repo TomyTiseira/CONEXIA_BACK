@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
@@ -65,5 +73,14 @@ export class UsersController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Get('get-role-by-id')
+  getRoleById(@Query('id') id: number) {
+    return this.client.send('getRoleById', id).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }
