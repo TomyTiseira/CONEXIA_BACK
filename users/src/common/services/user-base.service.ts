@@ -13,6 +13,7 @@ import {
   UserAlreadyActiveException,
   UserAlreadyExistsException,
   UserNotFoundException,
+  UserNotFoundExceptionById,
   UserNotVerifiedException,
   VerificationCodeExpiredException,
   VerificationCodeUpdateFailedException,
@@ -53,6 +54,17 @@ export class UserBaseService {
     if (userExists) {
       throw new UserAlreadyExistsException(email);
     }
+  }
+
+  /**
+   * Valida que un usuario exista por ID
+   */
+  async validateUserExistsById(id: number): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new UserNotFoundExceptionById(id);
+    }
+    return user;
   }
 
   /**
