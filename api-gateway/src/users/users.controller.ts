@@ -1,12 +1,23 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { User } from '../auth/decorators/user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
+import { AuthenticatedUser } from './interfaces/user.interfaces';
 
 @Controller('users')
 export class UsersController {
@@ -100,5 +111,25 @@ export class UsersController {
         role: 'user',
       },
     };
+  }
+
+  @Get('profile/:userId')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@Param('userId') userId: string, @User() user: AuthenticatedUser) {
+    // Enviamos tanto el userId del parámetro como los datos del usuario autenticado
+    const payload = {
+      targetUserId: parseInt(userId),
+      authenticatedUser: {
+        id: user.id,
+        email: user.email,
+        roleId: user.roleId,
+      },
+    };
+
+    return this.client.send('getProfile', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

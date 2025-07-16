@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Profile } from '../entities/profile.entity';
 
 @Injectable()
@@ -21,7 +21,23 @@ export class ProfileRepository {
   }
 
   async findByUserId(userId: number): Promise<Profile | null> {
-    return this.ormRepository.findOne({ where: { userId } });
+    return this.ormRepository.findOne({
+      select: {
+        name: true,
+        lastName: true,
+        phoneNumber: true,
+        country: true,
+        state: true,
+        birthDate: true,
+        profilePicture: true,
+        coverPicture: true,
+        skills: true,
+        description: true,
+        experience: true,
+        socialLinks: true,
+      },
+      where: { userId, deletedAt: IsNull() },
+    });
   }
 
   async findById(id: number): Promise<Profile | null> {
