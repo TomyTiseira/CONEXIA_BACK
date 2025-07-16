@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Inject,
+  Patch,
   Post,
   Query,
   Req,
@@ -57,7 +58,7 @@ export class UsersController {
     );
   }
 
-  @Post('update')
+  @Patch('update')
   @AutoRefreshAuth()
   update(
     @Body() updateUserDto: UpdateUserDto,
