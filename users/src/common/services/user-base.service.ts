@@ -3,6 +3,7 @@ import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
+  InvalidCurrentPasswordException,
   InvalidPasswordResetCodeException,
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
@@ -209,6 +210,19 @@ export class UserBaseService {
     );
     if (isSamePassword) {
       throw new NewPasswordSameAsCurrentException();
+    }
+  }
+
+  /**
+   * Valida que la contraseña actual sea correcta
+   */
+  async validateCurrentPassword(user: User, password: string): Promise<void> {
+    const isSamePassword = await CryptoUtils.comparePassword(
+      password,
+      user.password,
+    );
+    if (!isSamePassword) {
+      throw new InvalidCurrentPasswordException();
     }
   }
 
