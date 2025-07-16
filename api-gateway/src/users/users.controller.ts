@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Body, Controller, Get, Inject, Param, Post, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -8,6 +9,7 @@ import { catchError, firstValueFrom } from 'rxjs';
 import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { NATS_SERVICE } from 'src/config';
+import { jwtConfig } from 'src/config/jwt.config';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
@@ -15,6 +17,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
+import { CreateProfileHttpDto } from './dto/create-profile.dto';
 
 @Controller('users')
 export class UsersController {
