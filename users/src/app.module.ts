@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { envs } from './config';
+import { InternalUsersModule } from './internal-users/internal-users.module';
 import { Profile } from './profile/entities/profile.entity';
 import { ProfileModule } from './profile/profile.module';
 import { DocumentType } from './shared/entities/document-type.entity';
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     NatsModule,
     ProfileModule,
+    InternalUsersModule,
   ],
   controllers: [],
   providers: [],
