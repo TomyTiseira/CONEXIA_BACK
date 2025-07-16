@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MockEmailService } from '../../../common/services/mock-email.service';
 import { UserBaseService } from '../../../common/services/user-base.service';
 import { ProfileRepository } from '../../../profile/repository/profile.repository';
 import { DocumentType } from '../../../shared/entities/document-type.entity';
@@ -13,6 +14,7 @@ export class VerifyUserUseCase {
     private readonly userRepository: UserRepository,
     private readonly userBaseService: UserBaseService,
     private readonly profileRepository: ProfileRepository,
+    private readonly emailService: MockEmailService,
     @InjectRepository(DocumentType)
     private readonly documentTypeRepository: Repository<DocumentType>,
   ) {}
@@ -34,12 +36,14 @@ export class VerifyUserUseCase {
     const activationData = this.userBaseService.prepareUserForActivation();
 
     // Actualizar usuario
-    const updatedUser = await this.userRepository.update(user.id, {
+    await this.userRepository.update(user.id, {
       isValidate: activationData.isValidate,
-      verificationCode: activationData.verificationCode || undefined,
-      verificationCodeExpires:
-        activationData.verificationCodeExpires || undefined,
     });
+
+    // Limpiar campos de verificación
+    const updatedUser = await this.userRepository.clearVerificationFields(
+      user.id,
+    );
 
     // Validar que la activación fue exitosa
     const validatedUser =
@@ -57,8 +61,6 @@ export class VerifyUserUseCase {
         );
       }
 
-      // Crear perfil vacío para el usuario
-      console.log('creating profile for user:', validatedUser.id);
       const emptyProfile = await this.profileRepository.create({
         userId: validatedUser.id,
         name: '',
@@ -69,13 +71,13 @@ export class VerifyUserUseCase {
         country: '',
         state: '',
       });
-      console.log('profile created successfully:', emptyProfile.id);
 
-      // Actualizar el usuario con el ID del perfil creado
       const finalUser = await this.userRepository.update(validatedUser.id, {
         profileId: emptyProfile.id,
       });
-      console.log('user updated with profile:', finalUser?.id);
+
+      // Enviar email de bienvenida después de activar la cuenta exitosamente
+      await this.emailService.sendWelcomeEmail(validatedUser.email);
 
       return finalUser || validatedUser;
     } catch (error) {

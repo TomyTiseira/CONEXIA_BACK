@@ -1,0 +1,61 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EmailService } from '../../../common/services/email.service';
+import { UserBaseService } from '../../../common/services/user-base.service';
+import { UserRepository } from '../../../users/repository/users.repository';
+import { ResetPasswordDto } from '../../dto/reset-password.dto';
+import { TokenService } from '../token.service';
+
+@Injectable()
+export class ResetPasswordUseCase {
+  constructor(
+    private readonly userBaseService: UserBaseService,
+    private readonly userRepository: UserRepository,
+    private readonly tokenService: TokenService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  async execute(resetPasswordDto: ResetPasswordDto) {
+    // Validar que el usuario exista
+    const user = await this.userBaseService.validateUserExists(
+      resetPasswordDto.email,
+    );
+
+    // Validar que el usuario esté activo
+    this.userBaseService.validateUserActive(user);
+
+    // Validar el token de reset de contraseña
+    try {
+      const payload = this.tokenService.verifyToken(
+        resetPasswordDto.resetToken,
+      );
+
+      // Verificar que el token corresponda al usuario
+      if (payload.sub !== user.id || payload.email !== user.email) {
+        throw new UnauthorizedException('Invalid reset token for this user');
+      }
+    } catch {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    // Validar que la nueva contraseña no sea igual a la actual
+    await this.userBaseService.validateNewPasswordNotSameAsCurrent(
+      user,
+      resetPasswordDto.password,
+    );
+
+    // Preparar datos del usuario para actualización
+    const userToUpdate =
+      await this.userBaseService.prepareUserForUpdatePassword(
+        user,
+        resetPasswordDto.password,
+      );
+
+    // Actualizar contraseña del usuario
+    const updatedUser = await this.userRepository.update(user.id, userToUpdate);
+
+    // Enviar email de confirmación de cambio de contraseña
+    await this.emailService.sendPasswordChangedEmail(user.email);
+
+    return updatedUser;
+  }
+}

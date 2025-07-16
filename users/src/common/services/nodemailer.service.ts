@@ -47,12 +47,12 @@ export class NodemailerService extends EmailService {
     });
   }
 
-  async sendWelcomeEmail(email: string, userName?: string): Promise<void> {
+  async sendWelcomeEmail(email: string): Promise<void> {
     await this.sendEmail({
       to: email,
       subject: '¡Bienvenido a Conexia!',
-      html: this.generateWelcomeEmailHTML(userName),
-      text: this.generateWelcomeEmailText(userName),
+      html: this.generateWelcomeEmailHTML(),
+      text: this.generateWelcomeEmailText(),
     });
   }
 
@@ -65,6 +65,15 @@ export class NodemailerService extends EmailService {
       subject: 'Recuperación de Contraseña - Conexia',
       html: this.generatePasswordResetEmailHTML(resetCode),
       text: this.generatePasswordResetEmailText(resetCode),
+    });
+  }
+
+  async sendPasswordChangedEmail(email: string): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Contraseña Cambiada Exitosamente - Conexia',
+      html: this.generatePasswordChangedEmailHTML(),
+      text: this.generatePasswordChangedEmailText(),
     });
   }
 
@@ -94,25 +103,33 @@ export class NodemailerService extends EmailService {
   /**
    * Genera el HTML para el email de bienvenida
    */
-  private generateWelcomeEmailHTML(userName?: string): string {
+  private generateWelcomeEmailHTML(): string {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <h1 style="color: #007bff; text-align: center; margin-bottom: 30px;">¡Bienvenido a Conexia!</h1>
+          <h1 style="color: #007bff; text-align: center; margin-bottom: 30px;">🎉 ¡Ya eres parte de Conexia!</h1>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            ¡Hola${userName ? ` ${userName}` : ''}!
+            ¡Hola! 👋
           </p>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Tu cuenta ha sido verificada exitosamente y ya puedes comenzar a usar nuestra plataforma.
+            ¡Excelente! Tu cuenta ha sido verificada exitosamente y ahora eres parte de nuestra comunidad Conexia. 
+            Estamos muy emocionados de tenerte con nosotros.
+          </p>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Ya puedes comenzar a explorar todas las funcionalidades que tenemos preparadas para ti. 
+            ¡Tu viaje con Conexia acaba de comenzar!
           </p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.FRONTEND_URL || 'https://conexia.com'}" 
-               style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Ir a Conexia
+               style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              🚀 Comenzar mi experiencia
             </a>
           </div>
           <p style="font-size: 14px; color: #666; text-align: center;">
-            Si tienes alguna pregunta, no dudes en contactarnos.
+            Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Estamos aquí para ti!
+          </p>
+          <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
+            ¡Bienvenido a la familia Conexia! 💙
           </p>
         </div>
       </div>
@@ -122,17 +139,21 @@ export class NodemailerService extends EmailService {
   /**
    * Genera el texto plano para el email de bienvenida
    */
-  private generateWelcomeEmailText(userName?: string): string {
+  private generateWelcomeEmailText(): string {
     return `
-      ¡Bienvenido a Conexia!
+      🎉 ¡Ya eres parte de Conexia!
 
-      ¡Hola${userName ? ` ${userName}` : ''}!
+      ¡Hola! 👋
 
-      Tu cuenta ha sido verificada exitosamente y ya puedes comenzar a usar nuestra plataforma.
+      ¡Excelente! Tu cuenta ha sido verificada exitosamente y ahora eres parte de nuestra comunidad Conexia. 
+      Estamos muy emocionados de tenerte con nosotros.
 
-      Visita: ${process.env.FRONTEND_URL || 'https://conexia.com'}
+      Ya puedes comenzar a explorar todas las funcionalidades que tenemos preparadas para ti. 
+      ¡Tu viaje con Conexia acaba de comenzar
 
-      Si tienes alguna pregunta, no dudes en contactarnos.
+      Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Estamos aquí para ti!
+
+      ¡Bienvenido a la familia Conexia! 💙
 
       Saludos,
       El equipo de Conexia
@@ -178,6 +199,53 @@ export class NodemailerService extends EmailService {
       Este código expirará en 15 minutos por seguridad.
 
       Si no solicitaste este código, puedes ignorar este email de forma segura.
+
+      Saludos,
+      El equipo de Conexia
+    `;
+  }
+
+  /**
+   * Genera el HTML para el email de confirmación de cambio de contraseña
+   */
+  private generatePasswordChangedEmailHTML(): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h1 style="color: #28a745; text-align: center; margin-bottom: 30px;">Contraseña Cambiada Exitosamente</h1>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Tu contraseña ha sido actualizada exitosamente.
+          </p>
+          <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
+            <p style="color: #155724; margin: 0; font-weight: bold;">
+              ✅ Cambio de contraseña confirmado
+            </p>
+          </div>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte.
+          </p>
+          <p style="font-size: 14px; color: #666; text-align: center;">
+            Por seguridad, te recomendamos mantener tu contraseña segura y no compartirla con nadie.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Genera el texto plano para el email de confirmación de cambio de contraseña
+   */
+  private generatePasswordChangedEmailText(): string {
+    return `
+      Contraseña Cambiada Exitosamente
+
+      Tu contraseña ha sido actualizada exitosamente.
+
+      ✅ Cambio de contraseña confirmado
+
+      Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte.
+
+      Por seguridad, te recomendamos mantener tu contraseña segura y no compartirla con nadie.
 
       Saludos,
       El equipo de Conexia

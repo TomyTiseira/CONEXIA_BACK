@@ -1,29 +1,20 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
 import { jwtConfig } from 'src/config/jwt.config';
 import { NATS_SERVICE } from '../config';
+import { AutoRefreshAuth } from './decorators/auto-refresh-auth.decorator';
+import { RefreshToken, ResetToken } from './decorators/token.decorator';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import {
-  RefreshTokenInterceptor,
-  RequestWithRefreshToken,
-} from './interceptors/refresh-token.interceptor';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyCodeResetDto } from './dto/verify-code-reset.dto';
 import {
   AuthenticatedRequest,
   LoginResponse,
   RefreshTokenResponse,
+  VerifyCodeResetResponse,
 } from './interfaces/auth.interface';
 
 @Controller('auth')
@@ -72,20 +63,17 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @UseInterceptors(RefreshTokenInterceptor)
   async refreshToken(
-    @Req() req: RequestWithRefreshToken,
+    @RefreshToken() refreshToken: string,
     @Res() res: Response,
   ) {
     try {
       const result = (await firstValueFrom(
-        this.client
-          .send('refreshToken', { refreshToken: req.refreshToken })
-          .pipe(
-            catchError((error) => {
-              throw new RpcException(error);
-            }),
-          ),
+        this.client.send('refreshToken', { refreshToken }).pipe(
+          catchError((error) => {
+            throw new RpcException(error);
+          }),
+        ),
       )) as RefreshTokenResponse;
 
       // Configurar nueva cookie de access token
@@ -111,6 +99,68 @@ export class AuthController {
     }
   }
 
+  @Post('forgot-password')
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.client.send('forgotPassword', forgotPasswordDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Post('verify-code-reset')
+  async verifyCodeReset(
+    @Body() verifyCodeResetDto: VerifyCodeResetDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = (await firstValueFrom(
+        this.client.send('verifyCodeReset', verifyCodeResetDto).pipe(
+          catchError((error) => {
+            throw new RpcException(error);
+          }),
+        ),
+      )) as VerifyCodeResetResponse;
+
+      // Configurar cookie con el token de reset
+      res.cookie('password_reset_token', result.data.token, {
+        ...jwtConfig.cookieOptions,
+        maxAge: 5 * 60 * 1000, // 5 minutos
+      });
+
+      res.json({
+        success: true,
+        message: 'Code verified successfully. You can now reset your password.',
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error in verify-code-reset:', errorMessage);
+      res.status(400).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
+  }
+
+  @Post('reset-password')
+  resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @ResetToken() resetToken: string,
+  ) {
+    // Agregar el token al DTO
+    const resetData = {
+      ...resetPasswordDto,
+      resetToken,
+    };
+
+    return this.client.send('resetPassword', resetData).pipe(
+      catchError((error: unknown) => {
+        throw new RpcException(error as string | object);
+      }),
+    );
+  }
+
   @Post('logout')
   logout(@Res() res: Response) {
     res.clearCookie('access_token', {
@@ -124,10 +174,10 @@ export class AuthController {
     res.json({ success: true, message: 'Logged out successfully' });
   }
 
-  // Para probar la autenticación
+  // Para probar la autenticación con auto-refresh
   // TODO: Eliminar este endpoint
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @AutoRefreshAuth()
   getProfile(@Req() req: AuthenticatedRequest) {
     return {
       success: true,
