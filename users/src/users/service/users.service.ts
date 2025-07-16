@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
+import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
 import { VerifyUserUseCase } from './use-cases/verify-user.use-cases';
@@ -13,6 +14,7 @@ export class UsersService {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly verifyUserUseCase: VerifyUserUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
   ) {}
 
   ping() {
@@ -31,8 +33,8 @@ export class UsersService {
     return this.resendVerificationUseCase.execute(email);
   }
 
-  async deleteUser(reason: string): Promise<User> {
-    return this.deleteUserUseCase.execute(reason);
+  async deleteUser(userId: number, reason: string): Promise<User> {
+    return this.deleteUserUseCase.execute(userId, reason);
   }
 
   // create(createUserDto: CreateUserDto) {
