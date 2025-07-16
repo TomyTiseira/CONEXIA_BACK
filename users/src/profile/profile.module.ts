@@ -9,6 +9,7 @@ import { ProfileController } from './controller/profile.controller';
 import { Profile } from './entities/profile.entity';
 import { ProfileRepository } from './repository/profile.repository';
 import { ProfileService } from './service/profile.service';
+import { GetProfileUseCase } from './service/use-cases/get-profile.use-cases';
 import { CreateProfileUseCase } from './service/use-cases/create-profile.use-cases';
 
 @Module({
@@ -18,13 +19,7 @@ import { CreateProfileUseCase } from './service/use-cases/create-profile.use-cas
     JwtModule.register(jwtConfig),
   ],
   controllers: [ProfileController],
-  providers: [
-    ProfileService,
-    ProfileRepository,
-    CreateProfileUseCase,
-    UserRepository,
-    TokenService,
-  ],
+  providers: [ProfileService, ProfileRepository],
   exports: [ProfileRepository],
 })
 export class ProfileModule {}

@@ -1,15 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Post,
-  Res,
-  UploadedFiles,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -19,11 +8,14 @@ import { catchError, firstValueFrom } from 'rxjs';
 import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { NATS_SERVICE } from 'src/config';
-import { jwtConfig } from 'src/config/jwt.config';
-import { CreateProfileHttpDto } from './dto/create-profile.dto';
+import { ROLES } from '../auth/constants/role-ids';
+import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { User } from '../auth/decorators/user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
+import { AuthenticatedUser } from './interfaces/user.interfaces';
 
 @Controller('users')
 export class UsersController {
@@ -100,18 +92,78 @@ export class UsersController {
     );
   }
 
-  // TODO: Eliminar este endpoint
-  // Para probar la autenticación
-  @Get('protected')
-  @UseGuards(JwtAuthGuard)
-  getProtectedData() {
+  // TODO: Eliminar estos endpoints
+  // Ejemplos de endpoints con validación de roles
+  @Get('admin-only')
+  @AuthRoles([ROLES.ADMIN])
+  getAdminOnlyData() {
     return {
       success: true,
-      message: 'This is protected data',
+      message: 'Admin only data',
       data: {
-        message: 'You have access to this protected endpoint',
+        message: 'Only admins can access this endpoint',
+        role: 'admin',
       },
     };
+  }
+
+  @Get('moderator-only')
+  @AuthRoles([ROLES.MODERATOR])
+  getModeratorOnlyData() {
+    return {
+      success: true,
+      message: 'Moderator only data',
+      data: {
+        message: 'Only moderators can access this endpoint',
+        role: 'moderator',
+      },
+    };
+  }
+
+  @Get('admin-or-moderator')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getAdminOrModeratorData() {
+    return {
+      success: true,
+      message: 'Admin or Moderator data',
+      data: {
+        message: 'Admins or moderators can access this endpoint',
+        roles: ['admin', 'moderator'],
+      },
+    };
+  }
+
+  @Get('user-data')
+  @AuthRoles([ROLES.USER])
+  getUserData() {
+    return {
+      success: true,
+      message: 'User data',
+      data: {
+        message: 'Regular users can access this endpoint',
+        role: 'user',
+      },
+    };
+  }
+
+  @Get('profile/:userId')
+  @UseGuards(JwtAuthGuard)
+  getProfile(@Param('userId') userId: string, @User() user: AuthenticatedUser) {
+    // Enviamos tanto el userId del parámetro como los datos del usuario autenticado
+    const payload = {
+      targetUserId: parseInt(userId),
+      authenticatedUser: {
+        id: user.id,
+        email: user.email,
+        roleId: user.roleId,
+      },
+    };
+
+    return this.client.send('getProfile', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 
   @Get('document-types')
