@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ROLES } from '../auth/constants/role-ids';
+import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
@@ -47,16 +48,56 @@ export class UsersController {
     );
   }
 
-  // TODO: Eliminar este endpoint
-  // Para probar la autenticación
-  @Get('protected')
-  @UseGuards(JwtAuthGuard)
-  getProtectedData() {
+  // TODO: Eliminar estos endpoints
+  // Ejemplos de endpoints con validación de roles
+  @Get('admin-only')
+  @AuthRoles([ROLES.ADMIN])
+  getAdminOnlyData() {
     return {
       success: true,
-      message: 'This is protected data',
+      message: 'Admin only data',
       data: {
-        message: 'You have access to this protected endpoint',
+        message: 'Only admins can access this endpoint',
+        role: 'admin',
+      },
+    };
+  }
+
+  @Get('moderator-only')
+  @AuthRoles([ROLES.MODERATOR])
+  getModeratorOnlyData() {
+    return {
+      success: true,
+      message: 'Moderator only data',
+      data: {
+        message: 'Only moderators can access this endpoint',
+        role: 'moderator',
+      },
+    };
+  }
+
+  @Get('admin-or-moderator')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getAdminOrModeratorData() {
+    return {
+      success: true,
+      message: 'Admin or Moderator data',
+      data: {
+        message: 'Admins or moderators can access this endpoint',
+        roles: ['admin', 'moderator'],
+      },
+    };
+  }
+
+  @Get('user-data')
+  @AuthRoles([ROLES.USER])
+  getUserData() {
+    return {
+      success: true,
+      message: 'User data',
+      data: {
+        message: 'Regular users can access this endpoint',
+        role: 'user',
       },
     };
   }
