@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Profile } from 'src/profile/entities/profile.entity';
 import { Repository } from 'typeorm';
 import { Role } from '../../shared/entities/role.entity';
 import { User } from '../../shared/entities/user.entity';
@@ -51,6 +52,34 @@ export class UserRepository {
 
   async findRoleByName(name: string): Promise<Role | null> {
     return this.ormRepository.manager.findOne(Role, { where: { name } });
+  }
+
+  async findRoleByUserId(userId: number): Promise<Role | null> {
+    const user = await this.ormRepository.findOne({
+      where: { id: userId },
+      relations: ['role'],
+    });
+
+    return user?.role || null;
+  }
+
+  async findProfileByUserId(userId: number): Promise<Profile | null> {
+    const user = await this.ormRepository.findOne({
+      where: { id: userId },
+      relations: ['profile'],
+    });
+    return user?.profile || null;
+  }
+
+  async deleteUser(user: User, reason: string): Promise<void> {
+    await this.ormRepository.update(user.id, {
+      deletedAt: new Date(),
+      deletedReason: reason || 'No reason provided',
+    });
+  }
+
+  async deleteProfile(profile: Profile): Promise<void> {
+    await this.ormRepository.manager.softDelete(Profile, profile.id);
   }
 
   ping(): string {

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -15,6 +16,7 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { DeleteUserDto } from './dto/delete-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
@@ -57,6 +59,24 @@ export class UsersController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Delete()
+  @AuthRoles([ROLES.USER])
+  delete(
+    @Body() deleteUserDto: DeleteUserDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('deleteUser', {
+        ...deleteUserDto,
+        userId: +user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   // TODO: Eliminar estos endpoints

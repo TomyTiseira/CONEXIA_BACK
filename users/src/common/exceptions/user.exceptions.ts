@@ -18,6 +18,33 @@ export class UserNotFoundException extends RpcException {
   }
 }
 
+export class UserNotFoundByIdException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 404,
+      message: `User with id ${id} not found`,
+    });
+  }
+}
+
+export class UserAlreadyDeletedException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `User with id ${id} is already deleted`,
+    });
+  }
+}
+
+export class UserNotAllowedToDeleteException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `User with id ${id} is not allowed to delete`,
+    });
+  }
+}
+
 export class UserAlreadyActiveException extends RpcException {
   constructor(email: string) {
     super({
