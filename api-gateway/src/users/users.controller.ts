@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Post } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
+import { DeleteUserDto } from './dto/delete-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 
@@ -42,6 +43,19 @@ export class UsersController {
   @Post('resend-verification')
   resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.client.send('resendVerification', resendVerificationDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Delete()
+  @AuthRoles([ROLES.USER])
+  delete(
+    @Body() deleteUserDto: DeleteUserDto,
+    //@Request() req: RequestAuthenticated,
+  ) {
+    return this.client.send('deleteUser', deleteUserDto, user).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
