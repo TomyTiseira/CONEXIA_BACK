@@ -65,13 +65,18 @@ export class UsersController {
   @AuthRoles([ROLES.USER])
   delete(
     @Body() deleteUserDto: DeleteUserDto,
-    //@Request() req: RequestAuthenticated,
+    @User() user: AuthenticatedUser,
   ) {
-    return this.client.send('deleteUser', deleteUserDto, user).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
+    return this.client
+      .send('deleteUser', {
+        ...deleteUserDto,
+        userId: +user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   // TODO: Eliminar estos endpoints
