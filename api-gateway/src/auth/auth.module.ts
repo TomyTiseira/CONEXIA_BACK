@@ -6,6 +6,7 @@ import { NatsModule } from '../transports/nats.module';
 import { AuthController } from './auth.controller';
 import { AutoRefreshJwtGuard } from './guards/auto-refresh-jwt.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RoleGuard } from './guards/role.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -18,7 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [JwtStrategy, JwtAuthGuard, AutoRefreshJwtGuard],
-  exports: [JwtAuthGuard, AutoRefreshJwtGuard],
+  providers: [JwtStrategy, JwtAuthGuard, AutoRefreshJwtGuard, RoleGuard],
+  exports: [JwtAuthGuard, AutoRefreshJwtGuard, RoleGuard],
 })
 export class AuthModule {}
