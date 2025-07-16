@@ -31,6 +31,10 @@ export class UsersService {
     return this.resendVerificationUseCase.execute(email);
   }
 
+  async deleteUser(reason: string): Promise<User> {
+    return this.deleteUserUseCase.execute(reason);
+  }
+
   // create(createUserDto: CreateUserDto) {
   //   return 'This action adds a new user';
   // }

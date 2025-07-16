@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { DeleteUserDto } from '../dto/delete-user.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import { UsersService } from '../service/users.service';
@@ -53,6 +54,16 @@ export class UsersController {
       email: user.email,
       isValidate: user.isValidate,
       message: 'Verification code sent successfully.',
+    };
+  }
+
+  @MessagePattern('deleteUser')
+  async delete(@Payload() deleteUserDto: DeleteUserDto) {
+    const user = await this.usersService.deleteUser(deleteUserDto.reason);
+    return {
+      id: user.id,
+      email: user.email,
+      message: 'User deleted successfully.',
     };
   }
 
