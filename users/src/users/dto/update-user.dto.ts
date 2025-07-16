@@ -3,17 +3,20 @@ import {
   IsNumber,
   IsString,
   IsStrongPassword,
-  Validate,
 } from 'class-validator';
-import { MatchConstraint } from '../../validators/match.validator';
+import { Match } from '../../validators/match.validator';
 
 export class UpdateUserDto {
   @IsNumber({}, { message: 'userId must be a number' })
   @IsNotEmpty({ message: 'userId is required' })
   userId: number;
 
-  @IsString({ message: 'password must be a string' })
-  @IsNotEmpty({ message: 'password is required' })
+  @IsString({ message: 'actualPassword must be a string' })
+  @IsNotEmpty({ message: 'actualPassword is required' })
+  actualPassword: string;
+
+  @IsString({ message: 'newPassword must be a string' })
+  @IsNotEmpty({ message: 'newPassword is required' })
   @IsStrongPassword({
     minLength: 12,
     minLowercase: 1,
@@ -21,7 +24,7 @@ export class UpdateUserDto {
     minNumbers: 1,
     minSymbols: 1,
   })
-  password: string;
+  newPassword: string;
 
   @IsString({ message: 'confirmPassword must be a string' })
   @IsNotEmpty({ message: 'confirmPassword is required' })
@@ -38,7 +41,7 @@ export class UpdateUserDto {
         'confirmPassword must contain at least one uppercase letter, one lowercase letter, one number and one special character',
     },
   )
-  @Validate(MatchConstraint, ['password'], {
+  @Match('newPassword', {
     message: 'passwords do not match',
   })
   confirmPassword: string;
