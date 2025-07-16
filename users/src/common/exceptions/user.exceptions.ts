@@ -143,3 +143,12 @@ export class NewPasswordSameAsCurrentException extends RpcException {
     });
   }
 }
+
+export class InvalidCurrentPasswordException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Invalid current password',
+    });
+  }
+}
