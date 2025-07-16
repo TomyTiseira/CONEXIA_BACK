@@ -108,6 +108,15 @@ export class InvalidCredentialsException extends RpcException {
   }
 }
 
+export class ProfileNotFoundException extends RpcException {
+  constructor() {
+    super({
+      status: 404,
+      message: 'Profile not found',
+    });
+  }
+}
+
 export class InvalidPasswordResetCodeException extends RpcException {
   constructor() {
     super({
