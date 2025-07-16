@@ -19,17 +19,23 @@ export class UpdateUserUseCase {
     // Validar que el usuario esté activo
     this.userBaseService.validateUserActive(user);
 
+    // Validar que la contraseña actual sea correcta
+    await this.userBaseService.validateCurrentPassword(
+      user,
+      updateUserDto.actualPassword,
+    );
+
     // Validar que la contraseña no sea la misma que la actual
     await this.userBaseService.validateNewPasswordNotSameAsCurrent(
       user,
-      updateUserDto.password,
+      updateUserDto.newPassword,
     );
 
     // Preparar los datos para actualizar el usuario
     const userToUpdate =
       await this.userBaseService.prepareUserForUpdatePassword(
         user,
-        updateUserDto.password,
+        updateUserDto.newPassword,
       );
 
     // Actualizar el usuario
