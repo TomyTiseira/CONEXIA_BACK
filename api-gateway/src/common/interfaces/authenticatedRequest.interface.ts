@@ -3,5 +3,6 @@ export interface AuthenticatedRequest extends Request {
     id: number;
     email: string;
     roleId: number;
+    profileId: number;
   };
 }
