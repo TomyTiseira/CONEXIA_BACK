@@ -1,7 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Body, Controller, Get, Inject, Param, Post, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Req,
+  Res,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { Response } from 'express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -13,11 +27,11 @@ import { jwtConfig } from 'src/config/jwt.config';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
+import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
-import { CreateProfileHttpDto } from './dto/create-profile.dto';
 
 @Controller('users')
 export class UsersController {
@@ -213,7 +227,7 @@ export class UsersController {
     ),
   )
   async createProfile(
-    @Body() dto: CreateProfileHttpDto,
+    @Req() req: Request,
     @VerificationToken() token: string,
     @UploadedFiles()
     files: {
@@ -221,7 +235,53 @@ export class UsersController {
       coverPicture?: Express.Multer.File[];
     } = {},
   ) {
-    // Validación de tipos de archivo
+    const body =
+      (req.body as {
+        experience?: unknown;
+        socialLinks?: unknown;
+        skills?: unknown;
+        [key: string]: any;
+      }) ?? {};
+
+    // Parsear manualmente los arrays que vienen como strings JSON
+    if (typeof body.experience === 'string') {
+      try {
+        body.experience = JSON.parse(body.experience);
+      } catch {
+        body.experience = [];
+      }
+    }
+    if (typeof body.socialLinks === 'string') {
+      try {
+        body.socialLinks = JSON.parse(body.socialLinks);
+      } catch {
+        body.socialLinks = [];
+      }
+    }
+    if (typeof body.skills === 'string') {
+      try {
+        body.skills = JSON.parse(body.skills);
+      } catch {
+        body.skills = [];
+      }
+    }
+
+    const dto = plainToInstance(CreateProfileHttpDto, body);
+    const errors = await validate(dto);
+
+    if (errors.length > 0) {
+      // Lanzamos una excepción HTTP con los errores de validación
+      throw new RpcException({
+        status: 400,
+        message: 'Validation failed',
+        errors: errors.map((e) => ({
+          property: e.property,
+          constraints: e.constraints,
+        })),
+      });
+    }
+
+    // Validación manual de tipos de archivo
     const allowedTypes = ['image/jpeg', 'image/png'];
     let isValid = true;
     const filesToDelete: string[] = [];
@@ -265,6 +325,10 @@ export class UsersController {
       profilePicture: files?.profilePicture?.[0]?.filename,
       coverPicture: files?.coverPicture?.[0]?.filename,
     };
+
+    console.log('Payload for createProfile:', payload);
+
+    // Retornamos el observable sin usar @Res()
     return this.client.send('createProfile', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);

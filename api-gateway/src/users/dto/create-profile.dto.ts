@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -83,6 +83,16 @@ export class CreateProfileHttpDto {
   @ArrayMaxSize(20, { message: 'skills cannot exceed 20 items' })
   @IsString({ each: true, message: 'each skill must be a string' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   skills?: string[];
 
   @IsString({ message: 'description must be a string' })
@@ -94,14 +104,31 @@ export class CreateProfileHttpDto {
   @ValidateNested({ each: true, message: 'each experience must be an object' })
   @Type(() => ExperienceItem)
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   experience?: ExperienceItem[];
 
   @IsArray({ message: 'socialLinks must be an array' })
-  @ValidateNested({
-    each: true,
-    message: 'each socialLink must be an object',
-  })
+  @ValidateNested({ each: true, message: 'each socialLink must be an object' })
   @Type(() => SocialLink)
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   socialLinks?: SocialLink[];
 }
