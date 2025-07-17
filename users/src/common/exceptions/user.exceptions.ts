@@ -18,6 +18,15 @@ export class UserNotFoundException extends RpcException {
   }
 }
 
+export class UserNotFoundExceptionById extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 404,
+      message: `User with id ${id} not found`,
+    });
+  }
+}
+
 export class UserAlreadyActiveException extends RpcException {
   constructor(email: string) {
     super({
@@ -75,8 +84,17 @@ export class VerificationCodeUpdateFailedException extends RpcException {
 export class RoleNotFoundException extends RpcException {
   constructor(roleName: string) {
     super({
-      status: 500,
+      status: 404,
       message: `Role "${roleName}" not found in database`,
+    });
+  }
+}
+
+export class RoleIdInvalidException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Role ID must be a number',
     });
   }
 }
@@ -131,6 +149,15 @@ export class NewPasswordSameAsCurrentException extends RpcException {
     super({
       status: 400,
       message: 'New password cannot be the same as the current password',
+    });
+  }
+}
+
+export class InvalidCurrentPasswordException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Invalid current password',
     });
   }
 }

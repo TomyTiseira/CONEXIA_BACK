@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import { UsersService } from '../service/users.service';
 // import { UpdateUserDto } from './dto/update-user.dto';
@@ -56,23 +57,27 @@ export class UsersController {
     };
   }
 
-  // @MessagePattern('findAllUsers')
-  // findAll() {
-  //   return this.usersService.findAll();
-  // }
+  @MessagePattern('updateUser')
+  async update(@Payload() updateUserDto: UpdateUserDto) {
+    const user = await this.usersService.update(
+      updateUserDto.userId,
+      updateUserDto,
+    );
+    return {
+      id: user.id,
+      email: user.email,
+      isValidate: user.isValidate,
+      message: 'User updated successfully.',
+    };
+  }
 
-  // @MessagePattern('findOneUser')
-  // findOne(@Payload() id: number) {
-  //   return this.usersService.findOne(id);
-  // }
-
-  // @MessagePattern('updateUser')
-  // update(@Payload() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(updateUserDto.id, updateUserDto);
-  // }
-
-  // @MessagePattern('removeUser')
-  // remove(@Payload() id: number) {
-  //   return this.usersService.remove(id);
-  // }
+  @MessagePattern('getRoleById')
+  async getRoleById(@Payload() id: string) {
+    const role = await this.usersService.getRoleById(id);
+    return {
+      id: role.id,
+      name: role.name,
+      message: 'Role retrieved successfully.',
+    };
+  }
 }

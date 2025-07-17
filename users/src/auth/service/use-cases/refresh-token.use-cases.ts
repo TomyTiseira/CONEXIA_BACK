@@ -24,6 +24,7 @@ export class RefreshTokenUseCase {
         payload.sub,
         payload.email,
         payload.roleId,
+        payload.profileId,
       );
     } catch (error) {
       // Log the error for debugging purposes

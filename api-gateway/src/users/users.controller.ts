@@ -4,11 +4,16 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
+  Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
+import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
+import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
@@ -16,6 +21,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
 
@@ -53,6 +59,33 @@ export class UsersController {
   @Post('resend-verification')
   resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.client.send('resendVerification', resendVerificationDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Patch('update')
+  @AutoRefreshAuth()
+  update(
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.client
+      .send('updateUser', {
+        ...updateUserDto,
+        userId: req.user?.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('get-role-by-id')
+  getRoleById(@Query('id') id: number) {
+    return this.client.send('getRoleById', id).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

@@ -45,6 +45,7 @@ export class LoginUseCase {
       user.id,
       user.email,
       user.roleId,
+      user.profileId,
     );
   }
 }
