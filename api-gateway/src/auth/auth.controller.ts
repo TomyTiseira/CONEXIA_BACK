@@ -178,10 +178,7 @@ export class AuthController {
   @AutoRefreshAuth()
   getProfile(@Req() req: AuthenticatedRequest) {
     return {
-      success: true,
-      data: {
-        user: req.user,
-      },
+      user: req.user,
     };
   }
 }
