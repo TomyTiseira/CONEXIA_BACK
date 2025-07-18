@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 
@@ -47,7 +48,7 @@ export class User {
   @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
   createdAt: Date;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
   @DeleteDateColumn({ type: 'timestamp', nullable: true })

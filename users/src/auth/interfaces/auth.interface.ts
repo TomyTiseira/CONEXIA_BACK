@@ -2,6 +2,7 @@ export interface JwtPayload {
   sub: number; // user id
   email: string;
   roleId: number;
+  profileId: number;
   type: 'access' | 'refresh';
   iat?: number;
   exp?: number;
@@ -12,6 +13,7 @@ export interface LoginResponse {
     id: number;
     email: string;
     roleId: number;
+    profileId: number;
   };
   accessToken: string;
   refreshToken: string;
