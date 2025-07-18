@@ -26,6 +26,18 @@ export class CreateProfileUseCase {
       }
     }
 
+    // Validar que cuando isCurrent sea true, endDate debe estar vacío
+    if (dto.experience && dto.experience.length > 0) {
+      for (let i = 0; i < dto.experience.length; i++) {
+        const exp = dto.experience[i];
+        if (exp.isCurrent && exp.endDate) {
+          throw new UserBadRequestException(
+            `Experience item ${i + 1}: endDate must be empty when isCurrent is true`,
+          );
+        }
+      }
+    }
+
     // Verificar el token JWT y extraer el ID del usuario
     let userId: number;
     try {
