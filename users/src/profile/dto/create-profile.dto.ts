@@ -31,7 +31,7 @@ class ExperienceItem {
   @IsDateString(undefined, {
     message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
   })
-  @IsNotEmpty({ message: 'endDate is required' })
+  @IsOptional()
   endDate: string;
 
   @IsBoolean({ message: 'isCurrent must be a boolean' })
