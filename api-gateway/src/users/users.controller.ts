@@ -84,7 +84,7 @@ export class UsersController {
   }
 
   @Get('get-role-by-id')
-  getRoleById(@Query('id') id: number) {
+  getRoleById(@Query('id') id: string) {
     return this.client.send('getRoleById', id).pipe(
       catchError((error) => {
         throw new RpcException(error);
