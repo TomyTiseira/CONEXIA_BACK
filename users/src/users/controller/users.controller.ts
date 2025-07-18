@@ -17,7 +17,6 @@ export class UsersController {
 
   @MessagePattern('createUser')
   async create(@Payload() createUserDto: CreateUserDto) {
-    console.log(1);
     const user = await this.usersService.createUser(createUserDto);
     return {
       id: user.id,
