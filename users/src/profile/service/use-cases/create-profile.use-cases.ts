@@ -40,15 +40,12 @@ export class CreateProfileUseCase {
     } catch {
       throw new UnauthorizedException('Invalid or expired verification token');
     }
-    console.log('userId', userId);
 
     // Confirmar existencia de usuario
     const user = await this.userRepo.findById(userId);
     if (!user) throw new UserNotFoundByIdException(userId);
 
-    console.log('user', user);
     const profile = await this.profileRepo.findByUserId(userId);
-    console.log('profile', profile);
 
     // Extraer datos del perfil del DTO (excluyendo el token)
     const profileData = {

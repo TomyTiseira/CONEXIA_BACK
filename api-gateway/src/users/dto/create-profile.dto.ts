@@ -2,6 +2,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsNumber,
@@ -21,6 +22,22 @@ class ExperienceItem {
   @IsString({ message: 'project must be a string' })
   @IsNotEmpty({ message: 'project is required' })
   project: string;
+
+  @IsDateString(undefined, {
+    message: 'startDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsNotEmpty({ message: 'startDate is required' })
+  startDate: string;
+
+  @IsDateString(undefined, {
+    message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsNotEmpty({ message: 'endDate is required' })
+  endDate: string;
+
+  @IsBoolean({ message: 'isCurrent must be a boolean' })
+  @IsNotEmpty({ message: 'isCurrent is required' })
+  isCurrent: boolean;
 }
 
 class SocialLink {

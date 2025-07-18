@@ -326,8 +326,6 @@ export class UsersController {
       coverPicture: files?.coverPicture?.[0]?.filename,
     };
 
-    console.log('Payload for createProfile:', payload);
-
     // Retornamos el observable sin usar @Res()
     return this.client.send('createProfile', payload).pipe(
       catchError((error) => {
