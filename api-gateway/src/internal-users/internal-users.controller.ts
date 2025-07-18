@@ -1,19 +1,29 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { catchError } from 'rxjs';
+import { NATS_SERVICE } from 'src/config';
 import { CreateInternalUserDto } from './dto/create-internal-user.dto';
-import { InternalUsersService } from './internal-users.service';
 
 @Controller('internal-users')
 export class InternalUsersController {
-  constructor(private readonly internalUsersService: InternalUsersService) {}
+  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   @Get('roles')
-  async getRoles() {
+  getRoles() {
     // Llama al microservicio para obtener los roles en formato key/value
-    return this.internalUsersService.getInternalRoles();
+    return this.client.send('internal-users_get_roles ', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 
   @Post()
-  async createInternalUser(@Body() createUserDto: CreateInternalUserDto) {
-    return this.internalUsersService.createInternalUser(createUserDto);
+  createInternalUser(@Body() createUserDto: CreateInternalUserDto) {
+    return this.client.send('internal-users_create', createUserDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

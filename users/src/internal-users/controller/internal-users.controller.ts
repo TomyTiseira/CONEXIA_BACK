@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { CreateInternalUserDto } from './dto/create-internal-user.dto';
-import { InternalUsersService } from './internal-users.service';
+import { CreateInternalUserDto } from '../dto/create-internal-user.dto';
+import { InternalUsersService } from '../service/internal-users.service';
 
 @Controller('internal-users')
 export class InternalUsersController {

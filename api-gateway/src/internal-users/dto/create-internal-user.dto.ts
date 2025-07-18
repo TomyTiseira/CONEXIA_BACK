@@ -28,7 +28,7 @@ export class CreateInternalUserDto {
   )
   password: string;
 
-  @IsInt({ message: 'Role must be a number' })
-  @IsNotEmpty({ message: 'Role is required' })
+  @IsInt({ message: 'roleId must be a number' })
+  @IsNotEmpty({ message: 'roleId is required' })
   roleId: number;
 }
