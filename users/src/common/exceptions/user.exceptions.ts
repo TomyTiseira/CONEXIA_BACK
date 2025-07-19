@@ -18,7 +18,7 @@ export class UserNotFoundException extends RpcException {
   }
 }
 
-export class UserNotFoundExceptionById extends RpcException {
+export class UserNotFoundByIdException extends RpcException {
   constructor(id: number) {
     super({
       status: 404,
@@ -86,6 +86,15 @@ export class RoleNotFoundException extends RpcException {
     super({
       status: 404,
       message: `Role "${roleName}" not found in database`,
+    });
+  }
+}
+
+export class UserBadRequestException extends RpcException {
+  constructor(message: string) {
+    super({
+      status: 400,
+      message,
     });
   }
 }

@@ -51,3 +51,9 @@ export const RefreshToken = () => Token('refresh_token');
  * @returns El token de reset de contraseña
  */
 export const ResetToken = () => Token('password_reset_token');
+
+/**
+ * Decorador para extraer el token de verificación de usuario de las cookies
+ * @returns El token de verificación de usuario
+ */
+export const VerificationToken = () => Token('user_verification_token');

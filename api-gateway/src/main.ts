@@ -37,6 +37,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      transform: true,
       forbidNonWhitelisted: true,
     }),
   );
@@ -48,4 +49,5 @@ async function bootstrap() {
 
   logger.log(`Server is running on port ${envs.port}`);
 }
-bootstrap();
+
+void bootstrap();

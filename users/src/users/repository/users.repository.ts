@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserNotFoundExceptionById } from 'src/common/exceptions/user.exceptions';
+import { UserNotFoundByIdException } from 'src/common/exceptions/user.exceptions';
 import { Repository } from 'typeorm';
 import { Role } from '../../shared/entities/role.entity';
 import { User } from '../../shared/entities/user.entity';
@@ -20,7 +20,7 @@ export class UserRepository {
   async update(id: number, user: Partial<User>): Promise<User> {
     const existingUser = await this.ormRepository.findOne({ where: { id } });
     if (!existingUser) {
-      throw new UserNotFoundExceptionById(id);
+      throw new UserNotFoundByIdException(id);
     }
 
     // Merge los datos existentes con los nuevos datos
@@ -31,7 +31,7 @@ export class UserRepository {
   async clearPasswordResetFields(id: number): Promise<User> {
     const existingUser = await this.ormRepository.findOne({ where: { id } });
     if (!existingUser) {
-      throw new UserNotFoundExceptionById(id);
+      throw new UserNotFoundByIdException(id);
     }
 
     const updatedUser = this.ormRepository.merge(existingUser, {
@@ -44,7 +44,7 @@ export class UserRepository {
   async clearVerificationFields(id: number): Promise<User> {
     const existingUser = await this.ormRepository.findOne({ where: { id } });
     if (!existingUser) {
-      throw new UserNotFoundExceptionById(id);
+      throw new UserNotFoundByIdException(id);
     }
 
     const updatedUser = this.ormRepository.merge(existingUser, {
