@@ -99,6 +99,15 @@ export class RoleIdInvalidException extends RpcException {
   }
 }
 
+export class InvalidRoleException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 400,
+      message: `Role with id ${roleId} is invalid`,
+    });
+  }
+}
+
 export class UserNotVerifiedException extends RpcException {
   constructor() {
     super({
