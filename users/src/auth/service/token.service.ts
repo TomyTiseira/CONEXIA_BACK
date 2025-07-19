@@ -11,11 +11,17 @@ import {
 export class TokenService {
   constructor(private readonly jwtService: JwtService) {}
 
-  generateAccessToken(userId: number, email: string, roleId: number): string {
+  generateAccessToken(
+    userId: number,
+    email: string,
+    roleId: number,
+    profileId: number,
+  ): string {
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
       sub: userId,
       email,
       roleId,
+      profileId,
       type: 'access',
     };
 
@@ -24,11 +30,17 @@ export class TokenService {
     });
   }
 
-  generateRefreshToken(userId: number, email: string, roleId: number): string {
+  generateRefreshToken(
+    userId: number,
+    email: string,
+    roleId: number,
+    profileId: number,
+  ): string {
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
       sub: userId,
       email,
       roleId,
+      profileId,
       type: 'refresh',
     };
 
@@ -45,15 +57,27 @@ export class TokenService {
     userId: number,
     email: string,
     roleId: number,
+    profileId: number,
   ): LoginResponse {
-    const accessToken = this.generateAccessToken(userId, email, roleId);
-    const refreshToken = this.generateRefreshToken(userId, email, roleId);
+    const accessToken = this.generateAccessToken(
+      userId,
+      email,
+      roleId,
+      profileId,
+    );
+    const refreshToken = this.generateRefreshToken(
+      userId,
+      email,
+      roleId,
+      profileId,
+    );
 
     return {
       user: {
         id: userId,
         email,
         roleId,
+        profileId,
       },
       accessToken,
       refreshToken,
@@ -65,8 +89,14 @@ export class TokenService {
     userId: number,
     email: string,
     roleId: number,
+    profileId: number,
   ): RefreshTokenResponse {
-    const accessToken = this.generateAccessToken(userId, email, roleId);
+    const accessToken = this.generateAccessToken(
+      userId,
+      email,
+      roleId,
+      profileId,
+    );
 
     return {
       accessToken,

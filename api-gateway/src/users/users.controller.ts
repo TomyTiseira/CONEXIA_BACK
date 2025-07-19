@@ -5,7 +5,9 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
+  Query,
   Req,
   Res,
   UploadedFiles,
@@ -22,6 +24,8 @@ import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
+import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { jwtConfig } from 'src/config/jwt.config';
 import { ROLES } from '../auth/constants/role-ids';
@@ -30,6 +34,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
 
@@ -102,6 +107,33 @@ export class UsersController {
   @Post('resend-verification')
   resendVerification(@Body() resendVerificationDto: ResendVerificationDto) {
     return this.client.send('resendVerification', resendVerificationDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Patch('update')
+  @AutoRefreshAuth()
+  update(
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.client
+      .send('updateUser', {
+        ...updateUserDto,
+        userId: req.user?.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('get-role-by-id')
+  getRoleById(@Query('id') id: string) {
+    return this.client.send('getRoleById', id).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
