@@ -8,6 +8,7 @@ import { InternalUsersController } from './controller/internal-users.controller'
 import { InternalUserRepository } from './repository/internal-user.repository';
 import { InternalUsersService } from './service/internal-users.service';
 import { CreateInternalUserUseCase } from './service/use-cases/create-internal-user.use-cases';
+import { GetInternalUserUseCases } from './service/use-cases/get-internal-user.use-cases';
 import { GetRolesByNamesUseCases } from './service/use-cases/get-roles-by-names.use-cases.dto';
 
 @Module({
@@ -19,6 +20,7 @@ import { GetRolesByNamesUseCases } from './service/use-cases/get-roles-by-names.
     UserBaseService,
     InternalUserRepository,
     GetRolesByNamesUseCases,
+    GetInternalUserUseCases,
   ],
 })
 export class InternalUsersModule {}

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateInternalUserDto } from '../dto/create-internal-user.dto';
+import { GetInternalUsersDto } from '../dto/get-internal-users.dto';
 import { InternalUsersService } from '../service/internal-users.service';
 
 @Controller('internal-users')
@@ -25,5 +26,12 @@ export class InternalUsersController {
   @MessagePattern('internal-users_get_roles')
   async getInternalRolesRpc() {
     return this.internalUsersService.getInternalRoles();
+  }
+
+  @MessagePattern('internal-users_get_all')
+  async getInternalUsersRpc(
+    @Payload() getInternalUsersDto: GetInternalUsersDto,
+  ) {
+    return this.internalUsersService.getInternalUsers(getInternalUsersDto);
   }
 }
