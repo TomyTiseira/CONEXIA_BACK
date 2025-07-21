@@ -38,8 +38,6 @@ export class InternalUserRepository extends UserRepository {
       includeDeleted,
     } = getInternalUsersDto;
 
-    console.log('includeDeleted value:', includeDeleted, typeof includeDeleted);
-
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
