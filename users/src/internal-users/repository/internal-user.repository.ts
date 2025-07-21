@@ -38,12 +38,19 @@ export class InternalUserRepository extends UserRepository {
       includeDeleted,
     } = getInternalUsersDto;
 
+    console.log('includeDeleted value:', includeDeleted, typeof includeDeleted);
+
     const queryBuilder = this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.role', 'role')
       .where('role.name IN (:...roleNames)', {
         roleNames: ['admin', 'moderador'],
       });
+
+    // Incluir registros eliminados si se solicita
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
 
     // Aplicar filtros de búsqueda
     if (email) {
@@ -57,13 +64,6 @@ export class InternalUserRepository extends UserRepository {
 
     if (endDate) {
       queryBuilder.andWhere('user.createdAt <= :endDate', { endDate });
-    }
-
-    // Aplicar filtro de usuarios eliminados
-    if (includeDeleted) {
-      queryBuilder.andWhere('user.isDeleted = :includeDeleted', {
-        includeDeleted,
-      });
     }
 
     // Aplicar paginación
