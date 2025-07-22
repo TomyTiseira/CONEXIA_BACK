@@ -3,6 +3,7 @@ import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
+import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
@@ -16,6 +17,7 @@ export class UsersService {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly verifyUserUseCase: VerifyUserUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
   ) {}
@@ -34,6 +36,10 @@ export class UsersService {
 
   async resendVerification(email: string): Promise<User> {
     return this.resendVerificationUseCase.execute(email);
+  }
+
+  async deleteUser(userId: number, reason: string): Promise<User> {
+    return this.deleteUserUseCase.execute(userId, reason);
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
