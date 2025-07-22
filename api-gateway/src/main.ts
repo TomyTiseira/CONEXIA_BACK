@@ -38,6 +38,7 @@ async function bootstrap() {
     new ValidationPipe({
       transform: true,
       whitelist: true,
+      transform: true,
       forbidNonWhitelisted: true,
     }),
   );
@@ -49,4 +50,5 @@ async function bootstrap() {
 
   logger.log(`Server is running on port ${envs.port}`);
 }
-bootstrap();
+
+void bootstrap();
