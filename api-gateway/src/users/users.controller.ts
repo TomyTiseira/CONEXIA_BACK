@@ -85,8 +85,6 @@ export class UsersController {
       );
   }
 
-
-
   @Patch('update')
   @AutoRefreshAuth()
   update(
