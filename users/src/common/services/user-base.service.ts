@@ -3,6 +3,7 @@ import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
+  InvalidCurrentPasswordException,
   InvalidPasswordResetCodeException,
   InvalidVerificationCodeException,
   MissingRequiredFieldsException,
@@ -12,6 +13,7 @@ import {
   UserActivationFailedException,
   UserAlreadyActiveException,
   UserAlreadyExistsException,
+  UserNotFoundByIdException,
   UserNotFoundException,
   UserNotVerifiedException,
   VerificationCodeExpiredException,
@@ -53,6 +55,17 @@ export class UserBaseService {
     if (userExists) {
       throw new UserAlreadyExistsException(email);
     }
+  }
+
+  /**
+   * Valida que un usuario exista por ID
+   */
+  async validateUserExistsById(id: number): Promise<User> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new UserNotFoundByIdException(id);
+    }
+    return user;
   }
 
   /**
@@ -197,6 +210,19 @@ export class UserBaseService {
     );
     if (isSamePassword) {
       throw new NewPasswordSameAsCurrentException();
+    }
+  }
+
+  /**
+   * Valida que la contraseña actual sea correcta
+   */
+  async validateCurrentPassword(user: User, password: string): Promise<void> {
+    const isSamePassword = await CryptoUtils.comparePassword(
+      password,
+      user.password,
+    );
+    if (!isSamePassword) {
+      throw new InvalidCurrentPasswordException();
     }
   }
 

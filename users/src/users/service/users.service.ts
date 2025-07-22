@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '../../shared/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
+import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
+import { UpdateUserUseCase } from './use-cases/update-user.use-cases';
 import { VerifyUserUseCase } from './use-cases/verify-user.use-cases';
 
 @Injectable()
@@ -15,6 +18,8 @@ export class UsersService {
     private readonly verifyUserUseCase: VerifyUserUseCase,
     private readonly resendVerificationUseCase: ResendVerificationUseCase,
     private readonly deleteUserUseCase: DeleteUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
   ) {}
 
   ping() {
@@ -37,19 +42,11 @@ export class UsersService {
     return this.deleteUserUseCase.execute(userId, reason);
   }
 
-  // create(createUserDto: CreateUserDto) {
-  //   return 'This action adds a new user';
-  // }
-  // findAll() {
-  //   return `This action returns all users`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    return this.updateUserUseCase.execute(id, updateUserDto);
+  }
+
+  async getRoleById(roleId: string) {
+    return this.getRoleByIdUseCase.execute(roleId);
+  }
 }
