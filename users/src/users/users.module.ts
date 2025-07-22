@@ -14,6 +14,7 @@ import { UsersController } from './controller/users.controller';
 import { UserRepository } from './repository/users.repository';
 import { DocumentTypesService } from './service/document-types.service';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
+import { DeleteUserUseCase } from './service/use-cases/delate-user.use-cases';
 import { GetRoleByIdUseCase } from './service/use-cases/get-role-by-id.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
@@ -31,6 +32,7 @@ import { UsersService } from './service/users.service';
     VerifyUserUseCase,
     UpdateUserUseCase,
     ResendVerificationUseCase,
+    DeleteUserUseCase,
     GetRoleByIdUseCase,
     UserBaseService,
     UserRepository,
