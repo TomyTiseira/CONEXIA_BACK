@@ -81,4 +81,8 @@ export class InternalUserRepository extends UserRepository {
 
     return [transformedUsers, total];
   }
+
+  async deleteInternalUser(id: number) {
+    return this.userRepository.softDelete(id);
+  }
 }

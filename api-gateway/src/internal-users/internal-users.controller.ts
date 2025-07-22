@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
@@ -35,6 +44,16 @@ export class InternalUsersController {
   @AuthRoles([ROLES.ADMIN])
   getInternalUsers(@Query() getInternalUsersDto: GetInternalUsersDto) {
     return this.client.send('internal-users_get_all', getInternalUsersDto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Delete(':id')
+  @AuthRoles([ROLES.ADMIN])
+  deleteInternalUser(@Param('id') id: string) {
+    return this.client.send('internal-users_delete', id).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
