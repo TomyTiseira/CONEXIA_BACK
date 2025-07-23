@@ -31,15 +31,16 @@ export class UsersController {
 
   @MessagePattern('verifyUser')
   async verify(@Payload() verifyUserDto: VerifyUserDto) {
-    const user = await this.usersService.verifyUser(
+    const result = await this.usersService.verifyUser(
       verifyUserDto.email,
       verifyUserDto.verificationCode,
     );
     return {
-      id: user.id,
-      email: user.email,
-      isValidate: user.isValidate,
+      id: result.user.id,
+      email: result.user.email,
+      isValidate: result.user.isValidate,
       message: 'User verified successfully.',
+      token: result.token,
     };
   }
 

@@ -23,6 +23,7 @@ export class ProfileRepository {
   async findByUserId(userId: number): Promise<Profile | null> {
     return this.ormRepository.findOne({
       select: {
+        id: true,
         name: true,
         lastName: true,
         phoneNumber: true,
