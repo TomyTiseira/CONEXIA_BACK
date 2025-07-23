@@ -1,8 +1,19 @@
-import { Body, Controller, Get, Inject, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { CreateInternalUserDto } from './dto/create-internal-user.dto';
 import { GetInternalUsersDto } from './dto/get-internal-users.dto';
@@ -39,5 +50,17 @@ export class InternalUsersController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Delete(':id')
+  @AuthRoles([ROLES.ADMIN])
+  deleteInternalUser(@Param('id') id: string, @User() user: AuthenticatedUser) {
+    return this.client
+      .send('internal-users_delete', { id: +id, userId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }

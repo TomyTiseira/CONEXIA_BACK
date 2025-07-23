@@ -27,15 +27,6 @@ export class UserNotFoundByIdException extends RpcException {
   }
 }
 
-export class UserAlreadyDeletedException extends RpcException {
-  constructor(id: number) {
-    super({
-      status: 400,
-      message: `User with id ${id} is already deleted`,
-    });
-  }
-}
-
 export class UserNotAllowedToDeleteException extends RpcException {
   constructor(id: number) {
     super({
@@ -45,11 +36,29 @@ export class UserNotAllowedToDeleteException extends RpcException {
   }
 }
 
+export class UserNotAdminOrModeratorException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `User with id ${id} is not admin or moderator`,
+    });
+  }
+}
+
 export class UserAlreadyActiveException extends RpcException {
   constructor(email: string) {
     super({
       status: 400,
       message: `User with email ${email} is already active`,
+    });
+  }
+}
+
+export class UserAlreadyDeletedException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `User with id ${id} is already deleted`,
     });
   }
 }
@@ -113,6 +122,15 @@ export class UserBadRequestException extends RpcException {
     super({
       status: 400,
       message,
+    });
+  }
+}
+
+export class RoleIdNotFoundException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 404,
+      message: `Role with id ${roleId} not found in database`,
     });
   }
 }

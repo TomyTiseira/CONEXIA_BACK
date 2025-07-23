@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RoleName, ROLES } from 'src/common/constants/roles';
+import { DeleteInternalUserDto } from '../dto/delete-internal-user.dto';
 import { GetInternalUsersDto } from '../dto/get-internal-users.dto';
 import { CreateInternalUserUseCase } from './use-cases/create-internal-user.use-cases';
+import { DeleteInternalUserUseCase } from './use-cases/delete-internal-user.use-cases';
 import { GetInternalUserUseCases } from './use-cases/get-internal-user.use-cases';
 import { GetRolesByNamesUseCases } from './use-cases/get-roles-by-names.use-cases.dto';
 
@@ -17,6 +19,7 @@ export class InternalUsersService {
     private readonly createInternalUserUseCase: CreateInternalUserUseCase,
     private readonly getRolesByNamesUseCases: GetRolesByNamesUseCases,
     private readonly getInternalUserUseCases: GetInternalUserUseCases,
+    private readonly deleteInternalUserUseCase: DeleteInternalUserUseCase,
   ) {}
 
   async createInternalUser(createUserDto: CreateInternalUserDto) {
@@ -36,5 +39,12 @@ export class InternalUsersService {
 
   async getInternalUsers(getInternalUsersDto: GetInternalUsersDto) {
     return this.getInternalUserUseCases.execute(getInternalUsersDto);
+  }
+
+  async deleteInternalUser(deleteInternalUserDto: DeleteInternalUserDto) {
+    return this.deleteInternalUserUseCase.execute(
+      deleteInternalUserDto.id,
+      deleteInternalUserDto.userId,
+    );
   }
 }

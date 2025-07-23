@@ -6,3 +6,10 @@ export interface AuthenticatedRequest extends Request {
     profileId: number;
   };
 }
+
+export interface AuthenticatedUser {
+  id: number;
+  email: string;
+  roleId: number;
+  profileId: number;
+}
