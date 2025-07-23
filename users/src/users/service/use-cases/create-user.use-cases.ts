@@ -15,7 +15,9 @@ export class CreateUserUseCase {
 
   async execute(userData: CreateUserDto): Promise<User> {
     // Validar que el usuario no exista
-    await this.userBaseService.validateUserDoesNotExist(userData.email);
+    await this.userBaseService.validateUserDoesNotExistWithDeleted(
+      userData.email,
+    );
 
     // Preparar datos del usuario para creación
     const userToCreate =

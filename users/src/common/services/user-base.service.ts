@@ -33,6 +33,13 @@ export class UserBaseService {
   }
 
   /**
+   * Busca un usuario por email con soft delete
+   */
+  async findByEmailWithDeleted(email: string): Promise<User | null> {
+    return this.userRepository.findByEmailWithDeleted(email);
+  }
+
+  /**
    * Busca un usuario por ID
    */
   async findById(id: number): Promise<User | null> {
@@ -48,10 +55,28 @@ export class UserBaseService {
   }
 
   /**
+   * Verifica si un usuario existe por email con soft delete
+   */
+  async userExistsWithDeleted(email: string): Promise<boolean> {
+    const user = await this.findByEmailWithDeleted(email);
+    return !!user;
+  }
+
+  /**
    * Valida que un usuario no exista
    */
   async validateUserDoesNotExist(email: string): Promise<void> {
     const userExists = await this.userExists(email);
+    if (userExists) {
+      throw new UserAlreadyExistsException(email);
+    }
+  }
+
+  /**
+   * Valida que un usuario no exista con soft delete
+   */
+  async validateUserDoesNotExistWithDeleted(email: string): Promise<void> {
+    const userExists = await this.userExistsWithDeleted(email);
     if (userExists) {
       throw new UserAlreadyExistsException(email);
     }

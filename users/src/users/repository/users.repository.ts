@@ -59,6 +59,13 @@ export class UserRepository {
     return this.ormRepository.findOne({ where: { email } });
   }
 
+  async findByEmailWithDeleted(email: string): Promise<User | null> {
+    return this.ormRepository.findOne({
+      where: { email },
+      withDeleted: true,
+    });
+  }
+
   async findAll(): Promise<User[]> {
     return this.ormRepository.find();
   }
