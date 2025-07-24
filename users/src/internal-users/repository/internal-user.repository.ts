@@ -22,6 +22,13 @@ export class InternalUserRepository extends UserRepository {
     });
   }
 
+  async findByIdWithRole(id: number) {
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ['role'],
+    });
+  }
+
   async findRolesByNames(names: RoleName[]) {
     return this.userRepository.manager.find(Role, {
       where: { name: In(names) },
@@ -84,5 +91,9 @@ export class InternalUserRepository extends UserRepository {
 
   async deleteInternalUser(id: number) {
     return this.userRepository.softDelete(id);
+  }
+
+  async update(id: number, user: Partial<User>): Promise<User> {
+    return super.update(id, user);
   }
 }

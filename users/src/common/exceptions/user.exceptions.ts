@@ -36,11 +36,29 @@ export class UserNotAllowedToDeleteException extends RpcException {
   }
 }
 
+export class UserNotAllowedToUpdateException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `User with id ${id} is not allowed to update`,
+    });
+  }
+}
+
 export class UserNotAdminOrModeratorException extends RpcException {
   constructor(id: number) {
     super({
       status: 400,
       message: `User with id ${id} is not admin or moderator`,
+    });
+  }
+}
+
+export class RoleNotAdminOrModeratorException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 400,
+      message: `Role with id ${id} is not admin or moderator`,
     });
   }
 }
@@ -212,6 +230,15 @@ export class InvalidCurrentPasswordException extends RpcException {
     super({
       status: 400,
       message: 'Invalid current password',
+    });
+  }
+}
+
+export class RoleModificationException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 400,
+      message: `Role with id ${roleId} cannot be modified to a lower role`,
     });
   }
 }

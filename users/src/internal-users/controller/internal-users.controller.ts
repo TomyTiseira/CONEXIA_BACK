@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateInternalUserDto } from '../dto/create-internal-user.dto';
 import { DeleteInternalUserDto } from '../dto/delete-internal-user.dto';
 import { GetInternalUsersDto } from '../dto/get-internal-users.dto';
+import { UpdateInternalUserDto } from '../dto/update-internal-user.dto';
 import { InternalUsersService } from '../service/internal-users.service';
 
 @Controller('internal-users')
@@ -41,5 +42,12 @@ export class InternalUsersController {
     @Payload() deleteInternalUserDto: DeleteInternalUserDto,
   ) {
     return this.internalUsersService.deleteInternalUser(deleteInternalUserDto);
+  }
+
+  @MessagePattern('internal-users_update')
+  async updateInternalUserRpc(
+    @Payload() updateInternalUserDto: UpdateInternalUserDto,
+  ) {
+    return this.internalUsersService.updateInternalUser(updateInternalUserDto);
   }
 }
