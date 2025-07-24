@@ -75,7 +75,7 @@ export class InternalUsersController {
   ) {
     return this.client
       .send('internal-users_update', {
-        userId: id,
+        userId: +id,
         ...updateUserDto,
         authenticatedUserId: user.id,
       })
