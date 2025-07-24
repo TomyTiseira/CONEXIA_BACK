@@ -36,6 +36,12 @@ export class UpdateInternalUserUseCase {
       throw new UserNotAdminOrModeratorException(userId);
     }
 
+    // Validar que la contraseña no sea la misma que la actual
+    await this.userBaseService.validateNewPasswordNotSameAsCurrent(
+      user,
+      updateUserDto.password,
+    );
+
     let userToUpdate = { ...user };
 
     // Actualizar contraseña si se proporciona
