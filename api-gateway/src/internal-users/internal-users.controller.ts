@@ -5,6 +5,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.in
 import { NATS_SERVICE } from 'src/config';
 import { CreateInternalUserDto } from './dto/create-internal-user.dto';
 import { GetInternalUsersDto } from './dto/get-internal-users.dto';
+import { UpdateInternalUserDto } from './dto/update-internal-user.dto';
 
 @Controller('internal-users')
 export class InternalUsersController {
@@ -57,6 +59,26 @@ export class InternalUsersController {
   deleteInternalUser(@Param('id') id: string, @User() user: AuthenticatedUser) {
     return this.client
       .send('internal-users_delete', { id: +id, userId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Patch(':id')
+  @AuthRoles([ROLES.ADMIN])
+  updateInternalUser(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateInternalUserDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('internal-users_update', {
+        userId: id,
+        ...updateUserDto,
+        authenticatedUserId: user.id,
+      })
       .pipe(
         catchError((error) => {
           throw new RpcException(error);
