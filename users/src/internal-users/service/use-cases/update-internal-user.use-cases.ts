@@ -82,8 +82,9 @@ export class UpdateInternalUserUseCase {
         throw new RoleModificationException(updateUserDto.roleId);
       }
 
-      // Actualizar el roleId en el objeto userToUpdate
+      // Actualizar el roleId y el objeto role en el objeto userToUpdate
       userToUpdate.roleId = updateUserDto.roleId;
+      userToUpdate.role = newRole;
     }
 
     const userUpdated = await this.internalUsersRepository.update(
