@@ -388,8 +388,7 @@ export class UsersController {
   }
 
   @Patch('profile')
-  @UseGuards(JwtAuthGuard)
-  @AutoRefreshAuth()
+  @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -527,21 +526,8 @@ export class UsersController {
       });
     }
 
-    // Extraer token del header Authorization
-    const authHeader = req.headers['authorization'];
-    const token = authHeader?.startsWith('Bearer ')
-      ? authHeader.split(' ')[1]
-      : null;
-
-    if (!token) {
-      throw new RpcException({
-        status: 401,
-        message: 'Authorization token is required',
-      });
-    }
-
     const payload = {
-      token,
+      userId: req.user?.id,
       ...dto,
       profilePicture: files?.profilePicture?.[0]?.filename,
       coverPicture: files?.coverPicture?.[0]?.filename,
