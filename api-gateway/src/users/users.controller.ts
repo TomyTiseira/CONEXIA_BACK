@@ -23,9 +23,9 @@ import { Response } from 'express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
+import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
 import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
 import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { jwtConfig } from 'src/config/jwt.config';
@@ -36,6 +36,7 @@ import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { UpdateProfileHttpDto } from './dto/update-profile.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyUserDto } from './dto/verify-user.dto';
 import { AuthenticatedUser } from './interfaces/user.interfaces';
@@ -380,6 +381,173 @@ export class UsersController {
 
     // Retornamos el observable sin usar @Res()
     return this.client.send('createProfile', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @AutoRefreshAuth()
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profilePicture', maxCount: 1 },
+        { name: 'coverPicture', maxCount: 1 },
+      ],
+      {
+        storage: diskStorage({
+          destination: join(process.cwd(), 'uploads'),
+          filename: (req, file, cb) => {
+            const uniqueSuffix =
+              Date.now() + '-' + Math.round(Math.random() * 1e9);
+            const name = uniqueSuffix + extname(file.originalname);
+            cb(null, name);
+          },
+        }),
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+          const allowedTypes = ['image/jpeg', 'image/png'];
+          if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+          } else {
+            cb(
+              new RpcException({
+                status: 400,
+                message: 'Only images in JPEG or PNG format are allowed.',
+              }),
+              false,
+            );
+          }
+        },
+      },
+    ),
+  )
+  async updateProfile(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFiles()
+    files: {
+      profilePicture?: Express.Multer.File[];
+      coverPicture?: Express.Multer.File[];
+    } = {},
+  ) {
+    const body =
+      (req.body as {
+        experience?: unknown;
+        socialLinks?: unknown;
+        skills?: unknown;
+        [key: string]: any;
+      }) ?? {};
+
+    // Parsear manualmente los arrays que vienen como strings JSON
+    if (typeof body.experience === 'string') {
+      try {
+        body.experience = JSON.parse(body.experience);
+      } catch {
+        body.experience = [];
+      }
+    }
+    if (typeof body.socialLinks === 'string') {
+      try {
+        body.socialLinks = JSON.parse(body.socialLinks);
+      } catch {
+        body.socialLinks = [];
+      }
+    }
+    if (typeof body.skills === 'string') {
+      try {
+        body.skills = JSON.parse(body.skills);
+      } catch {
+        body.skills = [];
+      }
+    }
+
+    const dto = plainToInstance(UpdateProfileHttpDto, body);
+    const errors = await validate(dto);
+
+    if (errors.length > 0) {
+      throw new RpcException({
+        status: 400,
+        message: 'Validation failed',
+        errors: errors.map((e) => ({
+          property: e.property,
+          constraints: e.constraints,
+          children: e.children,
+        })),
+      });
+    }
+
+    // Verificar si se envió una petición completamente vacía (sin archivos ni datos)
+    const hasFiles = files.profilePicture?.[0] || files.coverPicture?.[0];
+    const hasData = Object.keys(dto).some((key) => dto[key] !== undefined);
+
+    if (!hasFiles && !hasData) {
+      throw new RpcException({
+        status: 400,
+        message: 'No data provided for update',
+      });
+    }
+
+    // Validación manual de tipos de archivo
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    let isValid = true;
+    const filesToDelete: string[] = [];
+
+    if (files.profilePicture?.[0]) {
+      if (!allowedTypes.includes(files.profilePicture[0].mimetype)) {
+        isValid = false;
+      } else {
+        filesToDelete.push(files.profilePicture[0].path);
+      }
+    }
+    if (files.coverPicture?.[0]) {
+      if (!allowedTypes.includes(files.coverPicture[0].mimetype)) {
+        isValid = false;
+      } else {
+        filesToDelete.push(files.coverPicture[0].path);
+      }
+    }
+
+    if (!isValid) {
+      // Borra todos los archivos guardados
+      await Promise.all(
+        filesToDelete.map(async (filePath) => {
+          try {
+            await import('fs/promises').then((fs) => fs.unlink(filePath));
+          } catch {
+            // ignorar errores
+          }
+        }),
+      );
+      throw new RpcException({
+        status: 400,
+        message:
+          'Only images in JPEG or PNG format are allowed in both fields.',
+      });
+    }
+
+    // Extraer token del header Authorization
+    const authHeader = req.headers['authorization'];
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
+
+    if (!token) {
+      throw new RpcException({
+        status: 401,
+        message: 'Authorization token is required',
+      });
+    }
+
+    const payload = {
+      token,
+      ...dto,
+      profilePicture: files?.profilePicture?.[0]?.filename,
+      coverPicture: files?.coverPicture?.[0]?.filename,
+    };
+
+    return this.client.send('updateProfile', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

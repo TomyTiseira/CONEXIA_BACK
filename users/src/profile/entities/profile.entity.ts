@@ -1,11 +1,13 @@
 import {
   Column,
+  CreateDateColumn,
   DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { DocumentType } from '../../shared/entities/document-type.entity';
 import { User } from '../../shared/entities/user.entity';
@@ -68,10 +70,10 @@ export class Profile {
   @Column('simple-json', { nullable: true })
   socialLinks: { platform: string; url: string }[];
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @Column({ default: () => 'CURRENT_TIMESTAMP', type: 'timestamp' })
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
   @DeleteDateColumn({ type: 'timestamp', nullable: true })

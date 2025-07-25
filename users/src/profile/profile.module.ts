@@ -11,6 +11,7 @@ import { ProfileRepository } from './repository/profile.repository';
 import { ProfileService } from './service/profile.service';
 import { CreateProfileUseCase } from './service/use-cases/create-profile.use-cases';
 import { GetProfileUseCase } from './service/use-cases/get-profile.use-cases';
+import { UpdateProfileUseCase } from './service/use-cases/update-profile.use-cases';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GetProfileUseCase } from './service/use-cases/get-profile.use-cases';
     ProfileRepository,
     CreateProfileUseCase,
     GetProfileUseCase,
+    UpdateProfileUseCase,
     UserRepository,
     TokenService,
   ],
