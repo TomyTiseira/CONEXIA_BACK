@@ -74,6 +74,13 @@ export class UserRepository {
     return this.ormRepository.findOne({ where: { id } });
   }
 
+  async findByIdWithRelations(id: number): Promise<User | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      relations: ['role', 'profile'],
+    });
+  }
+
   async findRoleByName(name: string): Promise<Role | null> {
     return this.ormRepository.manager.findOne(Role, { where: { name } });
   }

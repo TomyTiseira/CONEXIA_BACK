@@ -5,6 +5,7 @@ import {
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
 import { UserRepository } from '../../../users/repository/users.repository';
+import { CreateProfileResponseDto } from '../../dto/create-profile-response.dto';
 import { CreateProfileDto } from '../../dto/create-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
 
@@ -16,7 +17,7 @@ export class CreateProfileUseCase {
     private readonly tokenService: TokenService,
   ) {}
 
-  async execute(dto: CreateProfileDto) {
+  async execute(dto: CreateProfileDto): Promise<CreateProfileResponseDto> {
     // Validar ≥18 años
     const birth = dto.birthDate ? new Date(dto.birthDate) : undefined;
     if (birth) {
@@ -84,10 +85,28 @@ export class CreateProfileUseCase {
           'documentNumber already exists, you cannot update it',
         );
       }
-      return this.profileRepo.update(profile.id, {
+      const updatedProfile = await this.profileRepo.update(profile.id, {
         ...profileData,
         birthDate: birth,
       });
+
+      // Obtener el usuario completo actualizado con todas sus relaciones
+      const updatedUser = await this.userRepo.findByIdWithRelations(userId);
+
+      if (!updatedProfile) {
+        throw new UserBadRequestException('Failed to update profile');
+      }
+
+      if (!updatedUser) {
+        throw new UserNotFoundByIdException(userId);
+      }
+
+      return {
+        success: true,
+        message: 'Perfil actualizado exitosamente',
+        profile: updatedProfile,
+        user: updatedUser,
+      };
     }
 
     // Crear perfil (ignore campos nullables omitidos)
@@ -102,6 +121,18 @@ export class CreateProfileUseCase {
       profileId: newProfile.id,
     });
 
-    return newProfile;
+    // Obtener el usuario completo actualizado con todas sus relaciones
+    const updatedUser = await this.userRepo.findByIdWithRelations(userId);
+
+    if (!updatedUser) {
+      throw new UserNotFoundByIdException(userId);
+    }
+
+    return {
+      success: true,
+      message: 'Perfil creado exitosamente',
+      profile: newProfile,
+      user: updatedUser,
+    };
   }
 }
