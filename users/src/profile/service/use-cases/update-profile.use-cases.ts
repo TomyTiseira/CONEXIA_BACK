@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TokenService } from '../../../auth/service/token.service';
 import {
   UserBadRequestException,
@@ -17,12 +17,8 @@ export class UpdateProfileUseCase {
   ) {}
 
   async execute(dto: UpdateProfileDto) {
-    // Validar token y obtener usuario
-    const payload = this.tokenService.verifyToken(dto.token);
-    if (!payload || !payload.sub) {
-      throw new UnauthorizedException('Invalid token');
-    }
-    const userId = payload.sub;
+    // Obtener userId
+    const userId = dto.userId;
 
     // Buscar perfil existente
     const profile = await this.profileRepo.findByUserId(userId);

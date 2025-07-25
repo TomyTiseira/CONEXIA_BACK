@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -49,9 +50,9 @@ export class SocialLink {
 }
 
 export class UpdateProfileDto {
-  @IsNotEmpty({ message: 'token is required' })
-  @IsString({ message: 'token must be a string' })
-  token: string;
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber({}, { message: 'userId must be a number' })
+  userId: number;
 
   @IsString({ message: 'name must be a string' })
   @IsOptional()
