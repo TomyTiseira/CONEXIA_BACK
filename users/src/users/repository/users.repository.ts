@@ -59,12 +59,26 @@ export class UserRepository {
     return this.ormRepository.findOne({ where: { email } });
   }
 
+  async findByEmailWithDeleted(email: string): Promise<User | null> {
+    return this.ormRepository.findOne({
+      where: { email },
+      withDeleted: true,
+    });
+  }
+
   async findAll(): Promise<User[]> {
     return this.ormRepository.find();
   }
 
   async findById(id: number): Promise<User | null> {
     return this.ormRepository.findOne({ where: { id } });
+  }
+
+  async findByIdWithRelations(id: number): Promise<User | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      relations: ['role', 'profile'],
+    });
   }
 
   async findRoleByName(name: string): Promise<Role | null> {

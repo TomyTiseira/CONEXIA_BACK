@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CreateProfileResponseDto } from '../dto/create-profile-response.dto';
 import { CreateProfileDto } from '../dto/create-profile.dto';
 import { GetProfileDto } from '../dto/get-profile.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
@@ -18,7 +19,7 @@ export class ProfileService {
     return this.getProfileUseCase.execute(getProfileDto);
   }
 
-  createProfile(dto: CreateProfileDto) {
+  createProfile(dto: CreateProfileDto): Promise<CreateProfileResponseDto> {
     return this.createUseCase.execute(dto);
   }
 
