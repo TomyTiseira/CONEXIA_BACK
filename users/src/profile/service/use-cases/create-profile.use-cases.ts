@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UserBaseService } from 'src/common/services/user-base.service';
 import { TokenService } from '../../../auth/service/token.service';
 import {
   UserBadRequestException,
@@ -15,9 +16,15 @@ export class CreateProfileUseCase {
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
     private readonly tokenService: TokenService,
+    private readonly userBaseService: UserBaseService,
   ) {}
 
   async execute(dto: CreateProfileDto): Promise<CreateProfileResponseDto> {
+    await this.userBaseService.existsProfileByDocumentNumber(
+      dto.documentTypeId,
+      dto.documentNumber,
+    );
+
     // Validar ≥18 años
     const birth = dto.birthDate ? new Date(dto.birthDate) : undefined;
     if (birth) {

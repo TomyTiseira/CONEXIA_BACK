@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import { Role } from 'src/shared/entities/role.entity';
 import { User } from 'src/shared/entities/user.entity';
+import { ProfileModule } from '../profile/profile.module';
 import { UsersModule } from '../users/users.module';
 import { InternalUsersController } from './controller/internal-users.controller';
 import { InternalUserRepository } from './repository/internal-user.repository';
@@ -14,7 +15,7 @@ import { GetRolesByNamesUseCases } from './service/use-cases/get-roles-by-names.
 import { UpdateInternalUserUseCase } from './service/use-cases/update-internal-user.use-cases';
 
 @Module({
-  imports: [UsersModule, TypeOrmModule.forFeature([User, Role])],
+  imports: [UsersModule, ProfileModule, TypeOrmModule.forFeature([User, Role])],
   controllers: [InternalUsersController],
   providers: [
     InternalUsersService,

@@ -242,3 +242,12 @@ export class RoleModificationException extends RpcException {
     });
   }
 }
+
+export class ProfileAlreadyExistsException extends RpcException {
+  constructor(documentNumber: string) {
+    super({
+      status: 409,
+      message: `Profile with document number ${documentNumber} already exists`,
+    });
+  }
+}
