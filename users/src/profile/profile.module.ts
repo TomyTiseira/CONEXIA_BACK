@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserBaseService } from 'src/common/services/user-base.service';
 import { TokenService } from '../auth/service/token.service';
 import { jwtConfig } from '../config/jwt.config';
 import { SharedModule } from '../shared/shared.module';
@@ -28,6 +29,7 @@ import { UpdateProfileUseCase } from './service/use-cases/update-profile.use-cas
     UpdateProfileUseCase,
     UserRepository,
     TokenService,
+    UserBaseService,
   ],
   exports: [ProfileRepository, ProfileService],
 })

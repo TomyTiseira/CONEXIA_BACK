@@ -48,4 +48,14 @@ export class ProfileRepository {
   async findAll(): Promise<Profile[]> {
     return this.ormRepository.find();
   }
+
+  async findByDocumentNumber(
+    documentTypeId: number,
+    documentNumber: string,
+  ): Promise<Profile | null> {
+    return this.ormRepository.findOne({
+      where: { documentTypeId, documentNumber },
+      withDeleted: true,
+    });
+  }
 }

@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Profile } from 'src/profile/entities/profile.entity';
+import { ProfileRepository } from '../../profile/repository/profile.repository';
 import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
@@ -9,6 +11,7 @@ import {
   MissingRequiredFieldsException,
   NewPasswordSameAsCurrentException,
   PasswordResetCodeExpiredException,
+  ProfileAlreadyExistsException,
   RoleNotFoundException,
   UserActivationFailedException,
   UserAlreadyActiveException,
@@ -23,13 +26,45 @@ import { CryptoUtils } from '../utils/crypto.utils';
 
 @Injectable()
 export class UserBaseService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly profileRepository: ProfileRepository,
+  ) {}
 
   /**
    * Busca un usuario por email
    */
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
+  }
+
+  /**
+   * Busca un perfil por número de documento
+   */
+  async findProfileByDocumentNumber(
+    documentTypeId: number,
+    documentNumber: string,
+  ): Promise<Profile | null> {
+    return this.profileRepository.findByDocumentNumber(
+      documentTypeId,
+      documentNumber,
+    );
+  }
+
+  /**
+   * Validar si existe un perfil con el mismo número de documento
+   */
+  async existsProfileByDocumentNumber(
+    documentTypeId: number,
+    documentNumber: string,
+  ): Promise<void> {
+    const profile = await this.findProfileByDocumentNumber(
+      documentTypeId,
+      documentNumber,
+    );
+    if (profile) {
+      throw new ProfileAlreadyExistsException(documentNumber);
+    }
   }
 
   /**

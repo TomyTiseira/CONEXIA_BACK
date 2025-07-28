@@ -65,7 +65,13 @@ export class Profile {
   description: string;
 
   @Column('simple-json', { nullable: true })
-  experience: { title: string; project: string }[];
+  experience: {
+    title: string;
+    project: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+  }[];
 
   @Column('simple-json', { nullable: true })
   socialLinks: { platform: string; url: string }[];
