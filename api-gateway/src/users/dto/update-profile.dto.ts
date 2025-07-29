@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPhoneNumber,
   IsString,
@@ -83,10 +84,11 @@ export class UpdateProfileHttpDto {
     return value;
   })
   @IsArray()
-  @IsString({ each: true, message: 'skills must be an array of strings' })
+  @IsNumber({}, { each: true, message: 'each skill must be a number' })
   @ArrayMaxSize(20, { message: 'skills must have at most 20 items' })
   @IsOptional()
-  skills?: string[];
+  @Transform(({ value }) => value.map((v: string) => Number(v)))
+  skills?: number[];
 
   @IsString({ message: 'description must be a string' })
   @MaxLength(500, { message: 'description must have at most 500 characters' })

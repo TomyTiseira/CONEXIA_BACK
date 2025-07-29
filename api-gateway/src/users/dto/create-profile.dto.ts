@@ -98,19 +98,10 @@ export class CreateProfileHttpDto {
 
   @IsArray({ message: 'skills must be an array' })
   @ArrayMaxSize(20, { message: 'skills cannot exceed 20 items' })
-  @IsString({ each: true, message: 'each skill must be a string' })
+  @IsNumber({}, { each: true, message: 'each skill must be a number' })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return [];
-      }
-    }
-    return value;
-  })
-  skills?: string[];
+  @Transform(({ value }) => value.map((v: string) => Number(v)))
+  skills?: number[];
 
   @IsString({ message: 'description must be a string' })
   @MaxLength(500, { message: 'description cannot exceed 500 characters' })
