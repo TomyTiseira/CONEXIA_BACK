@@ -50,9 +50,10 @@ class SocialLink {
 }
 
 export class CreateProfileDto {
-  @IsNotEmpty({ message: 'token is required' })
-  @IsString({ message: 'token must be a string' })
-  token: string;
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber({}, { message: 'userId must be a number' })
+  @Type(() => Number)
+  userId: number;
 
   @IsString({ message: 'name must be a string' })
   @IsNotEmpty({ message: 'name is required' })
