@@ -27,6 +27,8 @@ export class ProfileRepository {
         name: true,
         lastName: true,
         phoneNumber: true,
+        documentTypeId: true,
+        documentNumber: true,
         country: true,
         state: true,
         birthDate: true,
