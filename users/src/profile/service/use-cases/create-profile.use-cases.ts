@@ -1,12 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserBaseService } from 'src/common/services/user-base.service';
-import { TokenService } from '../../../auth/service/token.service';
 import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
 import { UserRepository } from '../../../users/repository/users.repository';
-import { CreateProfileResponseDto } from '../../dto/create-profile-response.dto';
 import { CreateProfileDto } from '../../dto/create-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
 
@@ -15,11 +13,10 @@ export class CreateProfileUseCase {
   constructor(
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
-    private readonly tokenService: TokenService,
     private readonly userBaseService: UserBaseService,
   ) {}
 
-  async execute(dto: CreateProfileDto): Promise<CreateProfileResponseDto> {
+  async execute(dto: CreateProfileDto) {
     await this.userBaseService.existsProfileByDocumentNumber(
       dto.documentTypeId,
       dto.documentNumber,
@@ -46,26 +43,13 @@ export class CreateProfileUseCase {
       }
     }
 
-    // Verificar el token JWT y extraer el ID del usuario
-    let userId: number;
-    try {
-      const payload = this.tokenService.verifyToken(dto.token);
-
-      // Verificar que sea un token de verificación válido
-      if (payload.type !== 'access') {
-        throw new UnauthorizedException('Invalid token type');
-      }
-
-      userId = payload.sub;
-    } catch {
-      throw new UnauthorizedException('Invalid or expired verification token');
-    }
-
+    const userId = dto.userId;
     // Confirmar existencia de usuario
     const user = await this.userRepo.findById(userId);
     if (!user) throw new UserNotFoundByIdException(userId);
 
     const profile = await this.profileRepo.findByUserId(userId);
+    console.log(profile);
 
     // Extraer datos del perfil del DTO (excluyendo el token)
     const profileData = {
@@ -112,7 +96,6 @@ export class CreateProfileUseCase {
         success: true,
         message: 'Perfil actualizado exitosamente',
         profile: updatedProfile,
-        user: updatedUser,
       };
     }
 
@@ -128,18 +111,10 @@ export class CreateProfileUseCase {
       profileId: newProfile.id,
     });
 
-    // Obtener el usuario completo actualizado con todas sus relaciones
-    const updatedUser = await this.userRepo.findByIdWithRelations(userId);
-
-    if (!updatedUser) {
-      throw new UserNotFoundByIdException(userId);
-    }
-
     return {
       success: true,
       message: 'Perfil creado exitosamente',
       profile: newProfile,
-      user: updatedUser,
     };
   }
 }
