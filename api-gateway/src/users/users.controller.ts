@@ -547,4 +547,13 @@ export class UsersController {
       }),
     );
   }
+
+  @Get('skills')
+  getSkills() {
+    return this.client.send('getSkills', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }
