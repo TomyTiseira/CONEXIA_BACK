@@ -24,7 +24,10 @@ export class VerifyUserUseCase {
   async execute(
     email: string,
     verificationCode: string,
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{
+    user: User;
+    data: { accessToken: string; refreshToken: string; expiresIn: number };
+  }> {
     // Validar que el usuario exista
     const user = await this.userBaseService.validateUserExists(email);
 
@@ -90,14 +93,20 @@ export class VerifyUserUseCase {
         throw new Error('Failed to update user with empty profile');
       }
 
-      const token = this.tokenService.generateUserVerificationToken(
+      const token = this.tokenService.createLoginResponse(
         finalUser.id,
         finalUser.email,
+        finalUser.roleId,
+        finalUser.profileId,
       );
 
       return {
         user: finalUser,
-        token,
+        data: {
+          accessToken: token.accessToken,
+          refreshToken: token.refreshToken,
+          expiresIn: token.expiresIn,
+        },
       };
     } catch (error) {
       console.error('error creating profile:', error);
