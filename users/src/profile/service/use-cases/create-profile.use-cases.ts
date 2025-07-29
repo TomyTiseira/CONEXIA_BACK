@@ -4,6 +4,8 @@ import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
+import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
+import { SkillRepository } from '../../../shared/repository/skill.repository';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { CreateProfileDto } from '../../dto/create-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
@@ -14,6 +16,8 @@ export class CreateProfileUseCase {
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
     private readonly userBaseService: UserBaseService,
+    private readonly skillRepo: SkillRepository,
+    private readonly profileSkillRepo: ProfileSkillRepository,
   ) {}
 
   async execute(dto: CreateProfileDto) {
@@ -43,15 +47,26 @@ export class CreateProfileUseCase {
       }
     }
 
+    // Validar que las habilidades existan si se proporcionan
+    if (dto.skills && dto.skills.length > 0) {
+      const skills = await this.skillRepo.findByIds(dto.skills);
+      if (skills.length !== dto.skills.length) {
+        const foundIds = skills.map((skill) => skill.id);
+        const missingIds = dto.skills.filter((id) => !foundIds.includes(id));
+        throw new UserBadRequestException(
+          `Skills with IDs [${missingIds.join(', ')}] do not exist`,
+        );
+      }
+    }
+
     const userId = dto.userId;
     // Confirmar existencia de usuario
     const user = await this.userRepo.findById(userId);
     if (!user) throw new UserNotFoundByIdException(userId);
 
     const profile = await this.profileRepo.findByUserId(userId);
-    console.log(profile);
 
-    // Extraer datos del perfil del DTO (excluyendo el token)
+    // Extraer datos del perfil del DTO (excluyendo el token y skillIds)
     const profileData = {
       name: dto.name,
       lastName: dto.lastName,
@@ -63,7 +78,6 @@ export class CreateProfileUseCase {
       birthDate: dto.birthDate,
       profilePicture: dto.profilePicture,
       coverPicture: dto.coverPicture,
-      skills: dto.skills,
       description: dto.description,
       experience: dto.experience,
       socialLinks: dto.socialLinks,
@@ -80,6 +94,11 @@ export class CreateProfileUseCase {
         ...profileData,
         birthDate: birth,
       });
+
+      // Actualizar habilidades si se proporcionan
+      if (dto.skills && dto.skills.length > 0) {
+        await this.profileSkillRepo.createProfileSkills(profile.id, dto.skills);
+      }
 
       // Obtener el usuario completo actualizado con todas sus relaciones
       const updatedUser = await this.userRepo.findByIdWithRelations(userId);
@@ -105,6 +124,14 @@ export class CreateProfileUseCase {
       userId,
       birthDate: birth,
     });
+
+    // Crear relaciones de habilidades si se proporcionan
+    if (dto.skills && dto.skills.length > 0) {
+      await this.profileSkillRepo.createProfileSkills(
+        newProfile.id,
+        dto.skills,
+      );
+    }
 
     // Actualizar el usuario con el id del perfil
     await this.userRepo.update(userId, {
