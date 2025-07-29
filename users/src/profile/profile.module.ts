@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import { TokenService } from '../auth/service/token.service';
 import { jwtConfig } from '../config/jwt.config';
+import { ProfileSkillRepository } from '../shared/repository/profile-skill.repository';
+import { SkillRepository } from '../shared/repository/skill.repository';
 import { SharedModule } from '../shared/shared.module';
 import { UserRepository } from '../users/repository/users.repository';
 import { ProfileController } from './controller/profile.controller';
@@ -30,6 +32,8 @@ import { UpdateProfileUseCase } from './service/use-cases/update-profile.use-cas
     UserRepository,
     TokenService,
     UserBaseService,
+    SkillRepository,
+    ProfileSkillRepository,
   ],
   exports: [ProfileRepository, ProfileService],
 })

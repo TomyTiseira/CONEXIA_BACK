@@ -4,6 +4,8 @@ import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
+import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
+import { SkillRepository } from '../../../shared/repository/skill.repository';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { UpdateProfileDto } from '../../dto/update-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
@@ -14,6 +16,8 @@ export class UpdateProfileUseCase {
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
     private readonly tokenService: TokenService,
+    private readonly skillRepo: SkillRepository,
+    private readonly profileSkillRepo: ProfileSkillRepository,
   ) {}
 
   async execute(dto: UpdateProfileDto) {
@@ -46,6 +50,18 @@ export class UpdateProfileUseCase {
       }
     }
 
+    // Validar que las habilidades existan si se proporcionan
+    if (dto.skills && dto.skills.length > 0) {
+      const skills = await this.skillRepo.findByIds(dto.skills);
+      if (skills.length !== dto.skills.length) {
+        const foundIds = skills.map((skill) => skill.id);
+        const missingIds = dto.skills.filter((id) => !foundIds.includes(id));
+        throw new UserBadRequestException(
+          `Skills with IDs [${missingIds.join(', ')}] do not exist`,
+        );
+      }
+    }
+
     // Solo actualizar campos permitidos
     const updateData: any = {};
     if (dto.name !== undefined) {
@@ -59,9 +75,6 @@ export class UpdateProfileUseCase {
     }
     if (dto.coverPicture !== undefined) {
       updateData.coverPicture = dto.coverPicture;
-    }
-    if (dto.skills !== undefined) {
-      updateData.skills = dto.skills;
     }
     if (dto.description !== undefined) {
       updateData.description = dto.description;
@@ -83,6 +96,15 @@ export class UpdateProfileUseCase {
     }
 
     const updated = await this.profileRepo.update(profile.id, updateData);
+
+    // Actualizar habilidades si se proporcionan
+    if (dto.skills && dto.skills.length > 0) {
+      // Primero eliminar las habilidades existentes
+      await this.profileSkillRepo.deleteByProfileId(profile.id);
+      // Luego crear las nuevas relaciones
+      await this.profileSkillRepo.createProfileSkills(profile.id, dto.skills);
+    }
+
     return updated;
   }
 

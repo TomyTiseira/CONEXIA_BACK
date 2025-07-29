@@ -50,9 +50,10 @@ class SocialLink {
 }
 
 export class CreateProfileDto {
-  @IsNotEmpty({ message: 'token is required' })
-  @IsString({ message: 'token must be a string' })
-  token: string;
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber({}, { message: 'userId must be a number' })
+  @Type(() => Number)
+  userId: number;
 
   @IsString({ message: 'name must be a string' })
   @IsNotEmpty({ message: 'name is required' })
@@ -97,10 +98,10 @@ export class CreateProfileDto {
   coverPicture?: string;
 
   @IsArray()
-  @IsString({ each: true, message: 'skills must be an array of strings' })
-  @ArrayMaxSize(20, { message: 'skills must have at most 20 items' })
+  @IsNumber({}, { each: true, message: 'skillIds must be an array of numbers' })
+  @ArrayMaxSize(20, { message: 'skillIds must have at most 20 items' })
   @IsOptional()
-  skills?: string[];
+  skills?: number[];
 
   @IsString({ message: 'description must be a string' })
   @MaxLength(500, { message: 'description must have at most 500 characters' })

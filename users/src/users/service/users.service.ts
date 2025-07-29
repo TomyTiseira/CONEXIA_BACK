@@ -33,7 +33,10 @@ export class UsersService {
   async verifyUser(
     email: string,
     verificationCode: string,
-  ): Promise<{ user: User; token: string }> {
+  ): Promise<{
+    user: User;
+    data: { accessToken: string; refreshToken: string; expiresIn: number };
+  }> {
     return this.verifyUserUseCase.execute(email, verificationCode);
   }
 
