@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-class ExperienceItem {
+export class ExperienceItem {
   @IsString({ message: 'title must be a string' })
   @IsNotEmpty({ message: 'title is required' })
   title: string;
@@ -32,17 +32,65 @@ class ExperienceItem {
     message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
   })
   @IsOptional()
-  endDate: string;
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
+  })
+  endDate?: string;
 
   @IsBoolean({ message: 'isCurrent must be a boolean' })
   @IsNotEmpty({ message: 'isCurrent is required' })
   isCurrent: boolean;
 }
 
-class SocialLink {
+export class SocialLink {
   @IsString({ message: 'platform must be a string' })
   @IsNotEmpty({ message: 'platform is required' })
   platform: string;
+
+  @IsString({ message: 'url must be a string' })
+  @IsNotEmpty({ message: 'url is required' })
+  url: string;
+}
+
+export class EducationItem {
+  @IsString({ message: 'institution must be a string' })
+  @IsNotEmpty({ message: 'institution is required' })
+  institution: string;
+
+  @IsString({ message: 'title must be a string' })
+  @IsNotEmpty({ message: 'title is required' })
+  title: string;
+
+  @IsDateString(undefined, {
+    message: 'startDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsNotEmpty({ message: 'startDate is required' })
+  startDate: string;
+
+  @IsDateString(undefined, {
+    message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
+  })
+  endDate?: string;
+
+  @IsBoolean({ message: 'isCurrent must be a boolean' })
+  @IsNotEmpty({ message: 'isCurrent is required' })
+  isCurrent: boolean;
+}
+
+export class Certification {
+  @IsString({ message: 'name must be a string' })
+  @IsNotEmpty({ message: 'name is required' })
+  name: string;
 
   @IsString({ message: 'url must be a string' })
   @IsNotEmpty({ message: 'url is required' })
@@ -71,6 +119,10 @@ export class CreateProfileDto {
   @Type(() => Number)
   documentTypeId: number;
 
+  @IsString({ message: 'profession must be a string' })
+  @IsNotEmpty({ message: 'profession is required' })
+  profession: string;
+
   @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
   @IsOptional()
   phoneNumber: string;
@@ -96,10 +148,20 @@ export class CreateProfileDto {
   @IsOptional()
   coverPicture?: string;
 
-  @IsArray()
-  @IsString({ each: true, message: 'skills must be an array of strings' })
-  @ArrayMaxSize(20, { message: 'skills must have at most 20 items' })
+  @IsArray({ message: 'skills must be an array' })
+  @ArrayMaxSize(20, { message: 'skills cannot exceed 20 items' })
+  @IsString({ each: true, message: 'each skill must be a string' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   skills?: string[];
 
   @IsString({ message: 'description must be a string' })
@@ -107,21 +169,79 @@ export class CreateProfileDto {
   @IsOptional()
   description?: string;
 
-  @IsArray()
+  @IsArray({ message: 'experience must be an array' })
   @ValidateNested({
     each: true,
-    message: 'experience must be an array of objects',
+    message: 'each experience must be an object',
   })
   @Type(() => ExperienceItem)
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   experience?: ExperienceItem[];
 
-  @IsArray()
+  @IsArray({ message: 'socialLinks must be an array' })
   @ValidateNested({
     each: true,
-    message: 'socialLinks must be an array of objects',
+    message: 'each socialLink must be an object',
   })
   @Type(() => SocialLink)
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   socialLinks?: SocialLink[];
+
+  @IsArray({ message: 'education must be an array' })
+  @ValidateNested({
+    each: true,
+    message: 'each education must be an object',
+  })
+  @Type(() => EducationItem)
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
+  education?: EducationItem[];
+
+  @IsArray({ message: 'certifications must be an array' })
+  @ValidateNested({
+    each: true,
+    message: 'each certification must be an object',
+  })
+  @Type(() => Certification)
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
+  certifications?: Certification[];
 }

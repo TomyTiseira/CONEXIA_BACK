@@ -46,6 +46,18 @@ export class CreateProfileUseCase {
       }
     }
 
+    // Validar educación con las mismas reglas que experiencia
+    if (dto.education && dto.education.length > 0) {
+      for (let i = 0; i < dto.education.length; i++) {
+        const edu = dto.education[i];
+        if (edu.isCurrent && edu.endDate) {
+          throw new UserBadRequestException(
+            `Education item ${i + 1}: endDate must be empty when isCurrent is true`,
+          );
+        }
+      }
+    }
+
     // Verificar el token JWT y extraer el ID del usuario
     let userId: number;
     try {
@@ -73,6 +85,7 @@ export class CreateProfileUseCase {
       lastName: dto.lastName,
       documentNumber: dto.documentNumber,
       documentTypeId: dto.documentTypeId,
+      profession: dto.profession,
       phoneNumber: dto.phoneNumber,
       country: dto.country,
       state: dto.state,
@@ -83,6 +96,8 @@ export class CreateProfileUseCase {
       description: dto.description,
       experience: dto.experience,
       socialLinks: dto.socialLinks,
+      education: dto.education,
+      certifications: dto.certifications,
     };
 
     if (profile) {

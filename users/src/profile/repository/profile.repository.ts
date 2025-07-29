@@ -26,6 +26,7 @@ export class ProfileRepository {
         id: true,
         name: true,
         lastName: true,
+        profession: true,
         phoneNumber: true,
         country: true,
         state: true,
@@ -36,6 +37,8 @@ export class ProfileRepository {
         description: true,
         experience: true,
         socialLinks: true,
+        education: true,
+        certifications: true,
       },
       where: { userId, deletedAt: IsNull() },
     });

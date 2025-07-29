@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -293,6 +292,8 @@ export class UsersController {
         experience?: unknown;
         socialLinks?: unknown;
         skills?: unknown;
+        education?: unknown;
+        certifications?: unknown;
         [key: string]: any;
       }) ?? {};
 
@@ -316,6 +317,20 @@ export class UsersController {
         body.skills = JSON.parse(body.skills);
       } catch {
         body.skills = [];
+      }
+    }
+    if (typeof body.education === 'string') {
+      try {
+        body.education = JSON.parse(body.education);
+      } catch {
+        body.education = [];
+      }
+    }
+    if (typeof body.certifications === 'string') {
+      try {
+        body.certifications = JSON.parse(body.certifications);
+      } catch {
+        body.certifications = [];
       }
     }
 
@@ -436,6 +451,8 @@ export class UsersController {
         experience?: unknown;
         socialLinks?: unknown;
         skills?: unknown;
+        education?: unknown;
+        certifications?: unknown;
         [key: string]: any;
       }) ?? {};
 
@@ -459,6 +476,20 @@ export class UsersController {
         body.skills = JSON.parse(body.skills);
       } catch {
         body.skills = [];
+      }
+    }
+    if (typeof body.education === 'string') {
+      try {
+        body.education = JSON.parse(body.education);
+      } catch {
+        body.education = [];
+      }
+    }
+    if (typeof body.certifications === 'string') {
+      try {
+        body.certifications = JSON.parse(body.certifications);
+      } catch {
+        body.certifications = [];
       }
     }
 
