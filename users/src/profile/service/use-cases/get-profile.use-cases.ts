@@ -17,12 +17,27 @@ export class GetProfileUseCase {
       throw new ProfileNotFoundException();
     }
 
+    // Transformar profileSkills en skills
+    const transformedProfile = {
+      ...profile,
+      skills:
+        profile.profileSkills?.map((ps) => ({
+          id: ps.skill.id,
+          name: ps.skill.name,
+        })) || [],
+    };
+
+    // Eliminar profileSkills de la respuesta de forma segura
+    if ('profileSkills' in transformedProfile) {
+      (transformedProfile as any).profileSkills = undefined;
+    }
+
     // Determinar si el usuario autenticado es el propietario del perfil
     const isOwner =
       getProfileDto.authenticatedUser.id === getProfileDto.targetUserId;
 
     return {
-      profile,
+      profile: transformedProfile,
       isOwner,
     };
   }
