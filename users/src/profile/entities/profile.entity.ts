@@ -5,11 +5,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { DocumentType } from '../../shared/entities/document-type.entity';
+import { ProfileSkill } from '../../shared/entities/profile-skill.entity';
 import { User } from '../../shared/entities/user.entity';
 
 @Entity('profiles')
@@ -61,8 +63,8 @@ export class Profile {
   @Column({ type: 'varchar', nullable: true })
   coverPicture?: string;
 
-  @Column('simple-array', { nullable: true })
-  skills: string[];
+  @OneToMany(() => ProfileSkill, (profileSkill) => profileSkill.profile)
+  profileSkills: ProfileSkill[];
 
   @Column({ length: 500, nullable: true })
   description: string;

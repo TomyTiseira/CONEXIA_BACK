@@ -23,7 +23,6 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
-import { VerificationToken } from 'src/auth/decorators/token.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
@@ -72,17 +71,26 @@ export class UsersController {
           }),
         ),
       )) as {
+        data: {
+          accessToken: string;
+          refreshToken: string;
+          expiresIn: number;
+        };
         id: number;
         email: string;
         isValidate: boolean;
         message: string;
-        token: string;
       };
 
-      // Configurar cookie con el token de verificación JWT
-      res.cookie('user_verification_token', result.token, {
+      // Configurar cookies
+      res.cookie('access_token', result.data.accessToken, {
         ...jwtConfig.cookieOptions,
-        maxAge: 15 * 60 * 1000, // 15 minutos
+        maxAge: result.data.expiresIn * 1000,
+      });
+
+      res.cookie('refresh_token', result.data.refreshToken, {
+        ...jwtConfig.cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
       });
 
       res.json({
@@ -244,6 +252,7 @@ export class UsersController {
   }
 
   @Post('profile')
+  @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -279,8 +288,7 @@ export class UsersController {
     ),
   )
   async createProfile(
-    @Req() req: Request,
-    @VerificationToken() token: string,
+    @Req() req: AuthenticatedRequest,
     @UploadedFiles()
     files: {
       profilePicture?: Express.Multer.File[];
@@ -388,7 +396,7 @@ export class UsersController {
     }
 
     const payload = {
-      token,
+      userId: req.user?.id,
       ...dto,
       profilePicture: files?.profilePicture?.[0]?.filename,
       coverPicture: files?.coverPicture?.[0]?.filename,
@@ -565,6 +573,15 @@ export class UsersController {
     };
 
     return this.client.send('updateProfile', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('skills')
+  getSkills() {
+    return this.client.send('getSkills', {}).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

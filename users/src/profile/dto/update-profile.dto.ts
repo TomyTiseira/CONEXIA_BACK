@@ -135,10 +135,10 @@ export class UpdateProfileDto {
   coverPicture?: string;
 
   @IsArray()
-  @IsString({ each: true, message: 'skills must be an array of strings' })
+  @IsNumber({}, { each: true, message: 'skills must be an array of numbers' })
   @ArrayMaxSize(20, { message: 'skills must have at most 20 items' })
   @IsOptional()
-  skills?: string[];
+  skills?: number[];
 
   @IsString({ message: 'description must be a string' })
   @MaxLength(500, { message: 'description must have at most 500 characters' })

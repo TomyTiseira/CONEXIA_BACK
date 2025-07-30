@@ -98,9 +98,10 @@ export class Certification {
 }
 
 export class CreateProfileDto {
-  @IsNotEmpty({ message: 'token is required' })
-  @IsString({ message: 'token must be a string' })
-  token: string;
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber({}, { message: 'userId must be a number' })
+  @Type(() => Number)
+  userId: number;
 
   @IsString({ message: 'name must be a string' })
   @IsNotEmpty({ message: 'name is required' })
@@ -148,21 +149,11 @@ export class CreateProfileDto {
   @IsOptional()
   coverPicture?: string;
 
-  @IsArray({ message: 'skills must be an array' })
-  @ArrayMaxSize(20, { message: 'skills cannot exceed 20 items' })
-  @IsString({ each: true, message: 'each skill must be a string' })
+  @IsArray()
+  @IsNumber({}, { each: true, message: 'skillIds must be an array of numbers' })
+  @ArrayMaxSize(20, { message: 'skillIds must have at most 20 items' })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value);
-      } catch {
-        return [];
-      }
-    }
-    return value;
-  })
-  skills?: string[];
+  skills?: number[];
 
   @IsString({ message: 'description must be a string' })
   @MaxLength(500, { message: 'description must have at most 500 characters' })

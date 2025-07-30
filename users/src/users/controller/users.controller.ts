@@ -40,7 +40,7 @@ export class UsersController {
       email: result.user.email,
       isValidate: result.user.isValidate,
       message: 'User verified successfully.',
-      token: result.token,
+      data: result.data,
     };
   }
 

@@ -28,12 +28,13 @@ export class ProfileRepository {
         lastName: true,
         profession: true,
         phoneNumber: true,
+        documentTypeId: true,
+        documentNumber: true,
         country: true,
         state: true,
         birthDate: true,
         profilePicture: true,
         coverPicture: true,
-        skills: true,
         description: true,
         experience: true,
         socialLinks: true,
@@ -41,15 +42,21 @@ export class ProfileRepository {
         certifications: true,
       },
       where: { userId, deletedAt: IsNull() },
+      relations: ['profileSkills', 'profileSkills.skill'],
     });
   }
 
   async findById(id: number): Promise<Profile | null> {
-    return this.ormRepository.findOne({ where: { id } });
+    return this.ormRepository.findOne({
+      where: { id },
+      relations: ['profileSkills', 'profileSkills.skill'],
+    });
   }
 
   async findAll(): Promise<Profile[]> {
-    return this.ormRepository.find();
+    return this.ormRepository.find({
+      relations: ['profileSkills', 'profileSkills.skill'],
+    });
   }
 
   async findByDocumentNumber(
@@ -59,6 +66,7 @@ export class ProfileRepository {
     return this.ormRepository.findOne({
       where: { documentTypeId, documentNumber },
       withDeleted: true,
+      relations: ['profileSkills', 'profileSkills.skill'],
     });
   }
 }
