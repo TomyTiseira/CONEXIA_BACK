@@ -45,6 +45,9 @@ export class Profile {
   state: string;
 
   @Column()
+  profession: string;
+
+  @Column()
   userId: number;
 
   @OneToOne(() => User)
@@ -77,6 +80,18 @@ export class Profile {
 
   @Column('simple-json', { nullable: true })
   socialLinks: { platform: string; url: string }[];
+
+  @Column('simple-json', { nullable: true })
+  education: {
+    institution: string;
+    title: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+  }[];
+
+  @Column('simple-json', { nullable: true })
+  certifications: { name: string; url: string }[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

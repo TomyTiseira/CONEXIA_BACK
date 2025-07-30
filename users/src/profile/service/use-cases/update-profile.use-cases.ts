@@ -62,6 +62,18 @@ export class UpdateProfileUseCase {
       }
     }
 
+    // Validar educación con las mismas reglas que experiencia
+    if (dto.education && dto.education.length > 0) {
+      for (let i = 0; i < dto.education.length; i++) {
+        const edu = dto.education[i];
+        if (edu.isCurrent && edu.endDate) {
+          throw new UserBadRequestException(
+            `Education item ${i + 1}: endDate must be empty when isCurrent is true`,
+          );
+        }
+      }
+    }
+
     // Solo actualizar campos permitidos
     const updateData: any = {};
     if (dto.name !== undefined) {
@@ -69,6 +81,9 @@ export class UpdateProfileUseCase {
     }
     if (dto.lastName !== undefined) {
       updateData.lastName = dto.lastName;
+    }
+    if (dto.profession !== undefined) {
+      updateData.profession = dto.profession;
     }
     if (dto.profilePicture !== undefined) {
       updateData.profilePicture = dto.profilePicture;
@@ -81,6 +96,12 @@ export class UpdateProfileUseCase {
     }
     if (dto.experience !== undefined) {
       updateData.experience = dto.experience;
+    }
+    if (dto.education !== undefined) {
+      updateData.education = dto.education;
+    }
+    if (dto.certifications !== undefined) {
+      updateData.certifications = dto.certifications;
     }
     if (dto.country !== undefined) {
       updateData.country = dto.country;

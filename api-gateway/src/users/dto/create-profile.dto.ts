@@ -33,7 +33,13 @@ class ExperienceItem {
     message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
   })
   @IsOptional()
-  endDate: string;
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
+  })
+  endDate?: string;
 
   @IsBoolean({ message: 'isCurrent must be a boolean' })
   @IsNotEmpty({ message: 'isCurrent is required' })
@@ -47,6 +53,48 @@ class SocialLink {
 
   @IsString({ message: 'url must be a string' })
   @IsUrl({}, { message: 'url must be valid (e.g. https://example.com)' })
+  url: string;
+}
+
+class EducationItem {
+  @IsString({ message: 'institution must be a string' })
+  @IsNotEmpty({ message: 'institution is required' })
+  institution: string;
+
+  @IsString({ message: 'title must be a string' })
+  @IsNotEmpty({ message: 'title is required' })
+  title: string;
+
+  @IsDateString(undefined, {
+    message: 'startDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsNotEmpty({ message: 'startDate is required' })
+  startDate: string;
+
+  @IsDateString(undefined, {
+    message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
+  })
+  endDate?: string;
+
+  @IsBoolean({ message: 'isCurrent must be a boolean' })
+  @IsNotEmpty({ message: 'isCurrent is required' })
+  isCurrent: boolean;
+}
+
+class Certification {
+  @IsString({ message: 'name must be a string' })
+  @IsNotEmpty({ message: 'name is required' })
+  name: string;
+
+  @IsString({ message: 'url must be a string' })
+  @IsNotEmpty({ message: 'url is required' })
   url: string;
 }
 
@@ -68,6 +116,10 @@ export class CreateProfileHttpDto {
   @IsNotEmpty({ message: 'documentTypeId is required' })
   @Type(() => Number)
   documentTypeId: number;
+
+  @IsString({ message: 'profession must be a string' })
+  @IsNotEmpty({ message: 'profession is required' })
+  profession: string;
 
   @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
   @IsOptional()
@@ -139,4 +191,39 @@ export class CreateProfileHttpDto {
     return value;
   })
   socialLinks?: SocialLink[];
+
+  @IsArray({ message: 'education must be an array' })
+  @ValidateNested({ each: true, message: 'each education must be an object' })
+  @Type(() => EducationItem)
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
+  education?: EducationItem[];
+
+  @IsArray({ message: 'certifications must be an array' })
+  @ValidateNested({
+    each: true,
+    message: 'each certification must be an object',
+  })
+  @Type(() => Certification)
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
+  certifications?: Certification[];
 }

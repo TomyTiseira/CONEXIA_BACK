@@ -75,6 +75,7 @@ export class VerifyUserUseCase {
         lastName: '',
         documentNumber: '',
         documentTypeId: otherDocumentType.id,
+        profession: '',
         phoneNumber: '',
         country: '',
         state: '',
