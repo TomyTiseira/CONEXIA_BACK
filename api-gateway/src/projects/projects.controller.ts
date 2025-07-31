@@ -38,4 +38,31 @@ export class ProjectsController {
         }),
       );
   }
+
+  @Get('categories')
+  getCategories() {
+    return this.client.send('getCategories', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('V')
+  getCollaborationTypes() {
+    return this.client.send('getCollaborationTypes', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('contract-types')
+  getContractTypes() {
+    return this.client.send('getContractTypes', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }

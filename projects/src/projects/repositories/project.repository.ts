@@ -90,6 +90,24 @@ export class ProjectRepository {
     return this.ormRepository.manager.findOne(ContractType, { where: { id } });
   }
 
+  async findAllCategories(): Promise<Category[]> {
+    return this.ormRepository.manager.find(Category, {
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findAllCollaborationTypes(): Promise<CollaborationType[]> {
+    return this.ormRepository.manager.find(CollaborationType, {
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findAllContractTypes(): Promise<ContractType[]> {
+    return this.ormRepository.manager.find(ContractType, {
+      order: { name: 'ASC' },
+    });
+  }
+
   async createProjectSkills(
     projectId: number,
     skillIds: number[],

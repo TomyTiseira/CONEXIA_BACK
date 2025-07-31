@@ -23,4 +23,19 @@ export class ProjectsController {
       throw error;
     }
   }
+
+  @MessagePattern('getCategories')
+  async getCategories() {
+    return await this.projectsService.getCategories();
+  }
+
+  @MessagePattern('getCollaborationTypes')
+  async getCollaborationTypes() {
+    return await this.projectsService.getCollaborationTypes();
+  }
+
+  @MessagePattern('getContractTypes')
+  async getContractTypes() {
+    return await this.projectsService.getContractTypes();
+  }
 }
