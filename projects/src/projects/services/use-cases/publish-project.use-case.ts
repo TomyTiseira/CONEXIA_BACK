@@ -96,6 +96,7 @@ export class PublishProjectUseCase {
         : undefined,
       location: projectData.location || undefined,
       maxCollaborators: projectData.maxCollaborators || undefined,
+      image: projectData.image || undefined,
       isActive: true,
     };
 
