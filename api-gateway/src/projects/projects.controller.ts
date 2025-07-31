@@ -145,7 +145,7 @@ export class ProjectsController {
     );
   }
 
-  @Get('V')
+  @Get('collaboration-types')
   getCollaborationTypes() {
     return this.client.send('getCollaborationTypes', {}).pipe(
       catchError((error) => {
