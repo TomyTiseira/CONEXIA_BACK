@@ -20,7 +20,6 @@ const contractTypes = [
   { name: 'Remoto', description: 'Contrato remoto' },
   { name: 'Presencial', description: 'Contrato presencial' },
   { name: 'Híbrido', description: 'Contrato híbrido' },
-  { name: 'A Distancia', description: 'Contrato a distancia' },
 ];
 
 async function seedContractTypes() {
