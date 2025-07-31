@@ -1,0 +1,2 @@
+export const NATS_SERVICE = 'NATS_SERVICE';
+export const USERS_SERVICE = 'USERS_SERVICE';
