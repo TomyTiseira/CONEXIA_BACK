@@ -17,14 +17,12 @@ const AppDataSource = new DataSource({
 });
 
 const contractTypes = [
-  { name: 'Por Proyecto', description: 'Pago por proyecto completado' },
-  { name: 'Por Hora', description: 'Pago por hora trabajada' },
-  { name: 'Por Mes', description: 'Pago mensual fijo' },
+  { name: 'Remunerado', description: 'Tipo de contrato remunerado' },
+  { name: 'Voluntario', description: 'Tipo de contrato voluntario' },
   {
-    name: 'Por Resultado',
-    description: 'Pago basado en resultados específicos',
+    name: 'A Definir',
+    description: 'Tipo de contrato a acordar entre las partes',
   },
-  { name: 'Colaboración', description: 'Colaboración sin pago monetario' },
 ];
 
 async function seedContractTypes() {
