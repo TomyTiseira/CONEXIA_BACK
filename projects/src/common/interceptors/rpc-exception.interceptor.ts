@@ -14,12 +14,6 @@ export class RpcExceptionInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((error) => {
-        console.error('=== RPC EXCEPTION INTERCEPTOR ===');
-        console.error('Original error:', error);
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-
         // Si ya es una RpcException, la devolvemos tal como está
         if (error instanceof RpcException) {
           return throwError(() => error);
