@@ -95,4 +95,10 @@ export class UsersController {
       message: 'Role retrieved successfully.',
     };
   }
+
+  @MessagePattern('findUserById')
+  async findUserById(@Payload() data: { id: number }) {
+    const user = await this.usersService.findUserById(data.id);
+    return user;
+  }
 }
