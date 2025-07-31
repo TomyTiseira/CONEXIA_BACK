@@ -69,4 +69,8 @@ export class PublishProjectDto {
   @IsNumber({}, { message: 'maxCollaborators must be a number' })
   @IsPositive({ message: 'maxCollaborators must be a positive number' })
   maxCollaborators?: number;
+
+  @IsString({ message: 'image must be a string' })
+  @IsOptional()
+  image?: string;
 }
