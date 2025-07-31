@@ -21,7 +21,8 @@
     "seed:roles": "ts-node -r tsconfig-paths/register src/scripts/seed-roles.ts",
     "seed:document-types": "ts-node -r tsconfig-paths/register src/scripts/seed-document-types.ts",
     "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts",
-    "migrate:skills": "ts-node -r tsconfig-paths/register src/scripts/migrate-skills.ts"
+    "migrate:skills": "ts-node -r tsconfig-paths/register src/scripts/migrate-skills.ts",
+    "update:professions": "ts-node -r tsconfig-paths/register src/scripts/update-empty-professions.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
