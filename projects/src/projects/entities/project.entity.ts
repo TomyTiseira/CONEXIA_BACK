@@ -66,6 +66,9 @@ export class Project {
   @Column({ nullable: true })
   maxCollaborators: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  image?: string;
+
   @Column({ default: true })
   isActive: boolean;
 
