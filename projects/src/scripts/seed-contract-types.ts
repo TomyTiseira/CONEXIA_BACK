@@ -17,12 +17,10 @@ const AppDataSource = new DataSource({
 });
 
 const contractTypes = [
-  { name: 'Remunerado', description: 'Tipo de contrato remunerado' },
-  { name: 'Voluntario', description: 'Tipo de contrato voluntario' },
-  {
-    name: 'A Definir',
-    description: 'Tipo de contrato a acordar entre las partes',
-  },
+  { name: 'Remoto', description: 'Contrato remoto' },
+  { name: 'Presencial', description: 'Contrato presencial' },
+  { name: 'Híbrido', description: 'Contrato híbrido' },
+  { name: 'A Distancia', description: 'Contrato a distancia' },
 ];
 
 async function seedContractTypes() {

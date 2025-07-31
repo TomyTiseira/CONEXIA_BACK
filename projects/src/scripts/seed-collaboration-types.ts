@@ -17,12 +17,9 @@ const AppDataSource = new DataSource({
 });
 
 const collaborationTypes = [
-  { name: 'Remoto', description: 'Colaboración completamente remota' },
-  { name: 'Presencial', description: 'Colaboración en oficina' },
-  {
-    name: 'Híbrido',
-    description: 'Combinación de trabajo remoto y presencial',
-  },
+  { name: 'Remunerado', description: 'Colaboración remunerada' },
+  { name: 'Voluntario', description: 'Colaboración voluntaria' },
+  { name: 'A Definir', description: 'Colaboración a definir' },
   { name: 'Freelance', description: 'Trabajo independiente por proyecto' },
 ];
 
