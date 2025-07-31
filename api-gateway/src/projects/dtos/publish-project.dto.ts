@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
@@ -32,16 +32,19 @@ export class PublishProjectDto {
 
   @IsNumber({}, { message: 'categoryId must be a number' })
   @IsPositive({ message: 'categoryId must be a positive number' })
+  @Transform(({ value }) => Number(value))
   categoryId: number;
 
   @IsOptional()
   @IsArray({ message: 'skillIds must be an array' })
   @IsNumber({}, { each: true, message: 'each skillId must be a number' })
   @IsPositive({ each: true, message: 'each skillId must be a positive number' })
+  @Transform(({ value }) => value.map((v: string) => Number(v)))
   skills?: number[];
 
   @IsNumber({}, { message: 'collaborationTypeId must be a number' })
   @IsPositive({ message: 'collaborationTypeId must be a positive number' })
+  @Transform(({ value }) => Number(value))
   collaborationTypeId: number;
 
   @IsOptional()
@@ -57,10 +60,12 @@ export class PublishProjectDto {
 
   @IsNumber({}, { message: 'contractTypeId must be a number' })
   @IsPositive({ message: 'contractTypeId must be a positive number' })
+  @Transform(({ value }) => Number(value))
   contractTypeId: number;
 
   @IsOptional()
   @IsNumber({}, { message: 'maxCollaborators must be a number' })
   @IsPositive({ message: 'maxCollaborators must be a positive number' })
+  @Transform(({ value }) => Number(value))
   maxCollaborators?: number;
 }
