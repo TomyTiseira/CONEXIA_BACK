@@ -117,6 +117,14 @@ export class UserRepository {
     return this.ormRepository.manager.findOne(Role, { where: { id } });
   }
 
+  async findUsersByIds(userIds: number[]): Promise<User[]> {
+    return this.ormRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .where('user.id IN (:...userIds)', { userIds })
+      .getMany();
+  }
+
   ping(): string {
     return 'pong';
   }

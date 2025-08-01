@@ -101,4 +101,10 @@ export class UsersController {
     const user = await this.usersService.findUserById(data.id);
     return user;
   }
+
+  @MessagePattern('findUsersByIds')
+  async findUsersByIds(@Payload() data: { ids: number[] }) {
+    const users = await this.usersService.findUsersByIds(data.ids);
+    return users;
+  }
 }
