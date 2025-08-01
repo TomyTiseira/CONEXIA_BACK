@@ -588,4 +588,13 @@ export class UsersController {
       }),
     );
   }
+
+  @Get('localities')
+  getLocalities() {
+    return this.client.send('getLocalities', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }

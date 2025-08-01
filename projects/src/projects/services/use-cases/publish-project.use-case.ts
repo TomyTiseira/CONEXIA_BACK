@@ -5,6 +5,7 @@ import {
   ContractTypeNotFoundException,
   InvalidExecutionPeriodException,
   InvalidSkillsException,
+  LocalityNotFoundException,
   PastStartDateException,
   ProjectNotFoundException,
   UserNotFoundException,
@@ -65,17 +66,25 @@ export class PublishProjectUseCase {
       throw new ContractTypeNotFoundException(projectData.contractTypeId);
     }
 
-    // Validar que la fecha de inicio sea anterior a la fecha de fin (solo si se proporciona)
-    if (projectData.executionPeriod) {
-      if (
-        new Date(projectData.executionPeriod.startDate) >=
-        new Date(projectData.executionPeriod.endDate)
-      ) {
+    // Validar que la localidad existe (si se proporciona)
+    if (projectData.location) {
+      const localityExists =
+        await this.usersClientService.validateLocalityExists(
+          projectData.location,
+        );
+      if (!localityExists) {
+        throw new LocalityNotFoundException(projectData.location);
+      }
+    }
+
+    // Validar que la fecha de inicio sea anterior a la fecha de fin (solo si se proporcionan ambas)
+    if (projectData.startDate && projectData.endDate) {
+      if (new Date(projectData.startDate) >= new Date(projectData.endDate)) {
         throw new InvalidExecutionPeriodException();
       }
 
       // Validar que la fecha de inicio no sea en el pasado
-      if (new Date(projectData.executionPeriod.startDate) < new Date()) {
+      if (new Date(projectData.startDate) < new Date()) {
         throw new PastStartDateException();
       }
     }
@@ -88,13 +97,11 @@ export class PublishProjectUseCase {
       categoryId: projectData.categoryId,
       collaborationTypeId: projectData.collaborationTypeId,
       contractTypeId: projectData.contractTypeId,
-      startDate: projectData.executionPeriod
-        ? new Date(projectData.executionPeriod.startDate)
+      startDate: projectData.startDate
+        ? new Date(projectData.startDate)
         : undefined,
-      endDate: projectData.executionPeriod
-        ? new Date(projectData.executionPeriod.endDate)
-        : undefined,
-      location: projectData.location || undefined,
+      endDate: projectData.endDate ? new Date(projectData.endDate) : undefined,
+      locationId: projectData.location || undefined,
       maxCollaborators: projectData.maxCollaborators || undefined,
       image: projectData.image || undefined,
       isActive: true,

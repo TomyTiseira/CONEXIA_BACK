@@ -102,6 +102,16 @@ export class UsersController {
     return user;
   }
 
+  @MessagePattern('getLocalities')
+  async getLocalities() {
+    return await this.usersService.getLocalities();
+  }
+
+  @MessagePattern('validateLocalityExists')
+  async validateLocalityExists(@Payload() data: { id: number }) {
+    return await this.usersService.validateLocalityExists(data.id);
+  }
+
   @MessagePattern('findUsersByIds')
   async findUsersByIds(@Payload() data: { ids: number[] }) {
     const users = await this.usersService.findUsersByIds(data.ids);

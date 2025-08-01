@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Locality } from '../../shared/entities/locality.entity';
 import { User } from '../../shared/entities/user.entity';
+import { LocalityRepository } from '../../shared/repository/locality.repository';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
@@ -23,6 +25,7 @@ export class UsersService {
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
+    private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
   ) {}
 
@@ -62,6 +65,15 @@ export class UsersService {
 
   async findUserById(userId: number): Promise<User | null> {
     return this.findUserByIdUseCase.execute(userId);
+  }
+
+  async getLocalities(): Promise<Locality[]> {
+    return this.localityRepository.findAll();
+  }
+
+  async validateLocalityExists(localityId: number): Promise<boolean> {
+    const locality = await this.localityRepository.findById(localityId);
+    return locality !== null;
   }
 
   async findUsersByIds(userIds: number[]): Promise<User[]> {
