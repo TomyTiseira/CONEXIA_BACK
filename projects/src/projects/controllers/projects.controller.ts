@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { DeleteProjectDto } from '../dtos/delete-project.dto';
 import { PublishProjectDto } from '../dtos/publish-project.dto';
 import { ProjectsService } from '../services/projects.service';
 
@@ -37,5 +38,20 @@ export class ProjectsController {
   @MessagePattern('getContractTypes')
   async getContractTypes() {
     return await this.projectsService.getContractTypes();
+  }
+
+  @MessagePattern('deleteProject')
+  async deleteProject(@Payload() deleteProjectDto: DeleteProjectDto) {
+    try {
+      const result = await this.projectsService.deleteProject(deleteProjectDto);
+      return {
+        id: result.id,
+        title: result.title,
+        message: 'Project deleted successfully.',
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

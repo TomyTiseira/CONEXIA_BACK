@@ -116,3 +116,21 @@ export class InvalidMaxCollaboratorsException extends RpcException {
     });
   }
 }
+
+export class ProjectAlreadyDeletedException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 409,
+      message: `Project with id ${id} is already deleted`,
+    });
+  }
+}
+
+export class ProjectNotOwnedByUserException extends RpcException {
+  constructor(projectId: number, userId: number) {
+    super({
+      status: 403,
+      message: `Project with id ${projectId} is not owned by user ${userId}`,
+    });
+  }
+}

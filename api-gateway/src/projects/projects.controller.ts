@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
+  Body,
   Controller,
+  Delete,
   Get,
   Inject,
+  Param,
   Post,
   Req,
   UploadedFiles,
@@ -23,6 +25,7 @@ import {
   AuthenticatedUser,
 } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
+import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
@@ -161,5 +164,25 @@ export class ProjectsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Delete(':id')
+  @AuthRoles([ROLES.USER])
+  deleteProject(
+    @Param('id') id: string,
+    @Body() deleteProjectDto: DeleteProjectDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('deleteProject', {
+        projectId: +id,
+        reason: deleteProjectDto.reason,
+        userId: +user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }

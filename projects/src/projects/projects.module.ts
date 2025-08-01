@@ -11,6 +11,7 @@ import { ProjectSkill } from './entities/project-skill.entity';
 import { Project } from './entities/project.entity';
 import { ProjectRepository } from './repositories/project.repository';
 import { ProjectsService } from './services/projects.service';
+import { DeleteProjectUseCase } from './services/use-cases/delete-project.use-case';
 import { PingUseCase } from './services/use-cases/ping.use-case';
 import { PublishProjectUseCase } from './services/use-cases/publish-project.use-case';
 import { UsersClientService } from './services/users-client.service';
@@ -21,6 +22,7 @@ import { UsersClientService } from './services/users-client.service';
     ProjectsService,
     UsersClientService,
     PublishProjectUseCase,
+    DeleteProjectUseCase,
     PingUseCase,
     ProjectRepository,
   ],
