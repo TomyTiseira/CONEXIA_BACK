@@ -41,4 +41,15 @@ export class UsersClientService {
       };
     }
   }
+
+  async validateLocalityExists(localityId: number): Promise<boolean> {
+    try {
+      const locality = await firstValueFrom(
+        this.client.send('validateLocalityExists', { id: localityId }),
+      );
+      return !!locality;
+    } catch {
+      return false;
+    }
+  }
 }

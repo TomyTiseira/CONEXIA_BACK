@@ -53,8 +53,8 @@ export class Project {
   })
   projectSkills: ProjectSkill[];
 
-  @Column({ nullable: true })
-  location: string;
+  @Column({ name: 'location_id', nullable: true })
+  locationId: number;
 
   @Column()
   contractTypeId: number;

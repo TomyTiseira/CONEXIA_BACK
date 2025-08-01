@@ -5,6 +5,7 @@ import {
   ContractTypeNotFoundException,
   InvalidExecutionPeriodException,
   InvalidSkillsException,
+  LocalityNotFoundException,
   PastStartDateException,
   ProjectNotFoundException,
   UserNotFoundException,
@@ -65,6 +66,17 @@ export class PublishProjectUseCase {
       throw new ContractTypeNotFoundException(projectData.contractTypeId);
     }
 
+    // Validar que la localidad existe (si se proporciona)
+    if (projectData.location) {
+      const localityExists =
+        await this.usersClientService.validateLocalityExists(
+          projectData.location,
+        );
+      if (!localityExists) {
+        throw new LocalityNotFoundException(projectData.location);
+      }
+    }
+
     // Validar que la fecha de inicio sea anterior a la fecha de fin (solo si se proporcionan ambas)
     if (projectData.startDate && projectData.endDate) {
       if (new Date(projectData.startDate) >= new Date(projectData.endDate)) {
@@ -89,7 +101,7 @@ export class PublishProjectUseCase {
         ? new Date(projectData.startDate)
         : undefined,
       endDate: projectData.endDate ? new Date(projectData.endDate) : undefined,
-      location: projectData.location || undefined,
+      locationId: projectData.location || undefined,
       maxCollaborators: projectData.maxCollaborators || undefined,
       image: projectData.image || undefined,
       isActive: true,
