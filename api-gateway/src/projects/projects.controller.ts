@@ -4,8 +4,10 @@ import {
   Get,
   Inject,
   Post,
+  Query,
   Req,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -22,7 +24,9 @@ import {
   AuthenticatedRequest,
   AuthenticatedUser,
 } from 'src/common/interfaces/authenticatedRequest.interface';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { NATS_SERVICE } from '../config';
+import { GetProjectsDto } from './dtos/get-projects.dto';
 import { PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
@@ -134,6 +138,22 @@ export class ProjectsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjects(
+    @Query() getProjectsDto: GetProjectsDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getProjects', { getProjectsDto, currentUserId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   @Get('categories')
