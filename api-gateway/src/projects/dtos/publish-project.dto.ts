@@ -44,9 +44,10 @@ export class PublishProjectDto {
   endDate?: string;
 
   @IsOptional()
-  @IsString({ message: 'location must be a string' })
-  @IsNotEmpty({ message: 'location is required' })
-  location?: string;
+  @IsNumber({}, { message: 'location must be a number' })
+  @IsPositive({ message: 'location must be a positive number' })
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  location?: number;
 
   @IsNumber({}, { message: 'contractTypeId must be a number' })
   @IsPositive({ message: 'contractTypeId must be a positive number' })
