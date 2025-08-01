@@ -41,4 +41,16 @@ export class UsersClientService {
       };
     }
   }
+
+  async getUsersByIds(userIds: number[]): Promise<any[]> {
+    try {
+      const users = await firstValueFrom(
+        this.client.send('findUsersByIds', { ids: userIds }),
+      );
+      return users || [];
+    } catch (error) {
+      console.error('Error getting users by IDs:', error);
+      return [];
+    }
+  }
 }

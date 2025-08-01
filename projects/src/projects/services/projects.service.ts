@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { GetProjectsDto } from '../dtos/get-projects.dto';
 import { PublishProjectDto } from '../dtos/publish-project.dto';
 import { ProjectRepository } from '../repositories/project.repository';
+import { GetProjectsUseCase } from './use-cases/get-projects.use-case';
 import { PingUseCase } from './use-cases/ping.use-case';
 import { PublishProjectUseCase } from './use-cases/publish-project.use-case';
 
@@ -8,6 +10,7 @@ import { PublishProjectUseCase } from './use-cases/publish-project.use-case';
 export class ProjectsService {
   constructor(
     private readonly publishProjectUseCase: PublishProjectUseCase,
+    private readonly getProjectsUseCase: GetProjectsUseCase,
     private readonly pingUseCase: PingUseCase,
     private readonly projectRepository: ProjectRepository,
   ) {}
@@ -18,6 +21,10 @@ export class ProjectsService {
 
   async publishProject(projectData: PublishProjectDto) {
     return this.publishProjectUseCase.execute(projectData);
+  }
+
+  async getProjects(getProjectsDto: GetProjectsDto, currentUserId: number) {
+    return this.getProjectsUseCase.execute(getProjectsDto, currentUserId);
   }
 
   async getCategories() {
