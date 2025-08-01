@@ -21,6 +21,7 @@
     "seed:roles": "ts-node -r tsconfig-paths/register src/scripts/seed-roles.ts",
     "seed:document-types": "ts-node -r tsconfig-paths/register src/scripts/seed-document-types.ts",
     "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts",
+    "seed:localities": "ts-node -r tsconfig-paths/register src/scripts/seed-localities.ts",
     "migrate:skills": "ts-node -r tsconfig-paths/register src/scripts/migrate-skills.ts",
     "update:professions": "ts-node -r tsconfig-paths/register src/scripts/update-empty-professions.ts"
   },
