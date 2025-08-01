@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { GetProjectsDto } from '../dtos/get-projects.dto';
 import { PublishProjectDto } from '../dtos/publish-project.dto';
 import { ProjectsService } from '../services/projects.service';
 
@@ -17,6 +18,22 @@ export class ProjectsController {
     try {
       const result =
         await this.projectsService.publishProject(publishProjectDto);
+      return result;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getProjects')
+  async getProjects(
+    @Payload() data: { getProjectsDto: GetProjectsDto; currentUserId: number },
+  ) {
+    try {
+      const result = await this.projectsService.getProjects(
+        data.getProjectsDto,
+        data.currentUserId,
+      );
       return result;
     } catch (error) {
       console.error(error);
