@@ -1,25 +1,13 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsOptional,
   IsPositive,
   IsString,
-  ValidateNested,
 } from 'class-validator';
-
-class ExecutionPeriodDto {
-  @IsDateString({}, { message: 'startDate must be a valid date' })
-  @IsNotEmpty({ message: 'startDate is required' })
-  startDate: Date;
-
-  @IsDateString({}, { message: 'endDate must be a valid date' })
-  @IsNotEmpty({ message: 'endDate is required' })
-  endDate: Date;
-}
 
 export class PublishProjectDto {
   @IsString({ message: 'title must be a string' })
@@ -48,10 +36,12 @@ export class PublishProjectDto {
   collaborationTypeId: number;
 
   @IsOptional()
-  @IsObject({ message: 'executionPeriod must be an object' })
-  @ValidateNested()
-  @Type(() => ExecutionPeriodDto)
-  executionPeriod?: ExecutionPeriodDto;
+  @IsDateString({}, { message: 'startDate must be a valid date' })
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'endDate must be a valid date' })
+  endDate?: string;
 
   @IsOptional()
   @IsString({ message: 'location must be a string' })
