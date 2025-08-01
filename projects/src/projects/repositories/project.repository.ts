@@ -132,6 +132,74 @@ export class ProjectRepository {
     await this.projectSkillRepository.delete({ projectId });
   }
 
+  async findProjectsWithFilters(filters: {
+    search?: string;
+    categoryIds?: number[];
+    skillIds?: number[];
+    collaborationTypeIds?: number[];
+    contractTypeIds?: number[];
+    page: number;
+    limit: number;
+  }): Promise<[Project[], number]> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.isActive = :isActive', { isActive: true });
+
+    // Filtro de búsqueda por título
+    if (filters.search) {
+      queryBuilder.andWhere('project.title ILIKE :search', {
+        search: `%${filters.search}%`,
+      });
+    }
+
+    // Filtro por categorías
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      queryBuilder.andWhere('project.categoryId IN (:...categoryIds)', {
+        categoryIds: filters.categoryIds,
+      });
+    }
+
+    // Filtro por habilidades requeridas
+    if (filters.skillIds && filters.skillIds.length > 0) {
+      queryBuilder.andWhere('projectSkills.skillId IN (:...skillIds)', {
+        skillIds: filters.skillIds,
+      });
+    }
+
+    // Filtro por tipos de colaboración
+    if (
+      filters.collaborationTypeIds &&
+      filters.collaborationTypeIds.length > 0
+    ) {
+      queryBuilder.andWhere(
+        'project.collaborationTypeId IN (:...collaborationTypeIds)',
+        {
+          collaborationTypeIds: filters.collaborationTypeIds,
+        },
+      );
+    }
+
+    // Filtro por tipos de contratación
+    if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
+      queryBuilder.andWhere('project.contractTypeId IN (:...contractTypeIds)', {
+        contractTypeIds: filters.contractTypeIds,
+      });
+    }
+
+    // Aplicar paginación
+    const skip = (filters.page - 1) * filters.limit;
+    queryBuilder
+      .skip(skip)
+      .take(filters.limit)
+      .orderBy('project.createdAt', 'DESC');
+
+    return queryBuilder.getManyAndCount();
+  }
+
   ping(): string {
     return 'pong';
   }
