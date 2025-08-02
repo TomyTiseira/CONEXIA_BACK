@@ -37,14 +37,6 @@ export class GetProjectsByUserUseCase {
       data.currentUserId,
     );
 
-    return {
-      projects: transformedProjects,
-      pagination: {
-        total: projects.length,
-        page: 1,
-        limit: projects.length,
-        totalPages: 1,
-      },
-    };
+    return transformedProjects;
   }
 }
