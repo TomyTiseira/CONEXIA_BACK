@@ -21,8 +21,20 @@ export class ProjectRepository {
     return this.ormRepository.save(entity);
   }
 
-  async findById(id: number): Promise<Project | null> {
-    return this.ormRepository.findOne({ where: { id } });
+  async findById(
+    id: number,
+    includeDeleted: boolean = false,
+  ): Promise<Project | null> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .where('project.id = :id', { id });
+
+    // Incluir registros eliminados si se solicita
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   async findByIdWithRelations(id: number): Promise<Project | null> {
@@ -58,6 +70,26 @@ export class ProjectRepository {
         'projectSkills',
       ],
     });
+  }
+
+  async findByUserId(
+    userId: number,
+    includeDeleted: boolean = false,
+  ): Promise<Project[]> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.userId = :userId', { userId });
+
+    // Incluir registros eliminados si se solicita
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getMany();
   }
 
   async update(id: number, project: Partial<Project>): Promise<Project> {

@@ -1,5 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { GetProjectByIdDto } from '../dtos/get-project-by-id.dto';
+import { GetProjectsByUserDto } from '../dtos/get-projects-by-user.dto';
 import { GetProjectsDto } from '../dtos/get-projects.dto';
 import { PublishProjectDto } from '../dtos/publish-project.dto';
 import { ProjectsService } from '../services/projects.service';
@@ -54,5 +56,15 @@ export class ProjectsController {
   @MessagePattern('getContractTypes')
   async getContractTypes() {
     return await this.projectsService.getContractTypes();
+  }
+
+  @MessagePattern('getProjectById')
+  async getProjectById(@Payload() data: GetProjectByIdDto) {
+    return await this.projectsService.getProjectById(data);
+  }
+
+  @MessagePattern('getProjectsByUser')
+  async getProjectsByUser(@Payload() data: GetProjectsByUserDto) {
+    return await this.projectsService.getProjectsByUser(data);
   }
 }

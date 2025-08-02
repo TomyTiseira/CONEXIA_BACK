@@ -64,4 +64,52 @@ export class UsersClientService {
       return [];
     }
   }
+
+  async getUserById(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserById', { id: userId }),
+      );
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      return null;
+    }
+  }
+
+  async getSkillsByIds(skillIds: number[]): Promise<any[]> {
+    try {
+      const skills = await firstValueFrom(
+        this.client.send('findSkillsByIds', { ids: skillIds }),
+      );
+      return skills || [];
+    } catch (error) {
+      console.error('Error getting skills by IDs:', error);
+      return [];
+    }
+  }
+
+  async getLocalityById(localityId: number): Promise<any> {
+    try {
+      const locality = await firstValueFrom(
+        this.client.send('getLocalityById', { id: localityId }),
+      );
+      return locality;
+    } catch (error) {
+      console.error('Error getting locality by ID:', error);
+      return null;
+    }
+  }
+
+  async getUserWithProfile(userId: number): Promise<any> {
+    try {
+      const result = await firstValueFrom(
+        this.client.send('getUserWithProfile', { userId }),
+      );
+      return result;
+    } catch (error) {
+      console.error('Error getting user with profile:', error);
+      return null;
+    }
+  }
 }
