@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CollaborationType } from '../entities/collaboration-type.entity';
 import { ContractType } from '../entities/contract-type.entity';
@@ -50,7 +50,7 @@ export class ProjectRepository {
 
   async findActive(): Promise<Project[]> {
     return this.ormRepository.find({
-      where: { isActive: true },
+      where: { deletedAt: IsNull() },
       relations: [
         'category',
         'collaborationType',
@@ -147,7 +147,7 @@ export class ProjectRepository {
       .leftJoinAndSelect('project.collaborationType', 'collaborationType')
       .leftJoinAndSelect('project.contractType', 'contractType')
       .leftJoinAndSelect('project.projectSkills', 'projectSkills')
-      .where('project.isActive = :isActive', { isActive: true });
+      .where('project.deletedAt IS NULL');
 
     // Filtro de búsqueda por título
     if (filters.search) {

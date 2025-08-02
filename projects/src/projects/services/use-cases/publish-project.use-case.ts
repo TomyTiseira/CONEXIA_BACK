@@ -104,7 +104,6 @@ export class PublishProjectUseCase {
       locationId: projectData.location || undefined,
       maxCollaborators: projectData.maxCollaborators || undefined,
       image: projectData.image || undefined,
-      isActive: true,
     };
 
     // Crear proyecto
