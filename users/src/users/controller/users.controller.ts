@@ -117,4 +117,16 @@ export class UsersController {
     const users = await this.usersService.findUsersByIds(data.ids);
     return users;
   }
+
+  @MessagePattern('getLocalityById')
+  async getLocalityById(@Payload() data: { id: number }) {
+    const locality = await this.usersService.getLocalityById(data.id);
+    return locality;
+  }
+
+  @MessagePattern('getUserWithProfile')
+  async getUserWithProfile(@Payload() data: { userId: number }) {
+    const result = await this.usersService.getUserWithProfile(data.userId);
+    return result;
+  }
 }

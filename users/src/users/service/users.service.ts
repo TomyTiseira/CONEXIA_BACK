@@ -9,6 +9,7 @@ import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
+import { GetUserWithProfileUseCase } from './use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
 import { UpdateUserUseCase } from './use-cases/update-user.use-cases';
@@ -25,6 +26,7 @@ export class UsersService {
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
+    private readonly getUserWithProfileUseCase: GetUserWithProfileUseCase,
     private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
   ) {}
@@ -78,5 +80,15 @@ export class UsersService {
 
   async findUsersByIds(userIds: number[]): Promise<User[]> {
     return this.findUsersByIdsUseCase.execute(userIds);
+  }
+
+  async getLocalityById(localityId: number): Promise<Locality | null> {
+    return this.localityRepository.findById(localityId);
+  }
+
+  async getUserWithProfile(
+    userId: number,
+  ): Promise<{ user: User; profile: any } | null> {
+    return this.getUserWithProfileUseCase.execute(userId);
   }
 }
