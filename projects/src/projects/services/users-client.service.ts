@@ -1,0 +1,55 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+@Injectable()
+export class UsersClientService {
+  constructor(@Inject('USERS_SERVICE') private readonly client: ClientProxy) {}
+
+  async validateUserExists(userId: number): Promise<boolean> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserById', { id: userId }),
+      );
+      return !!user;
+    } catch (error) {
+      console.error('Error validating user existence:', error);
+      return false;
+    }
+  }
+
+  async validateSkillsExist(
+    skillIds: number[],
+  ): Promise<{ valid: boolean; invalidIds: number[] }> {
+    try {
+      const skills = await firstValueFrom(
+        this.client.send('findSkillsByIds', { ids: skillIds }),
+      );
+
+      const foundSkillIds = skills.map((skill: any) => skill.id);
+      const invalidIds = skillIds.filter((id) => !foundSkillIds.includes(id));
+
+      return {
+        valid: invalidIds.length === 0,
+        invalidIds,
+      };
+    } catch (error) {
+      console.error('Error validating skills existence:', error);
+      return {
+        valid: false,
+        invalidIds: skillIds,
+      };
+    }
+  }
+
+  async validateLocalityExists(localityId: number): Promise<boolean> {
+    try {
+      const locality = await firstValueFrom(
+        this.client.send('validateLocalityExists', { id: localityId }),
+      );
+      return !!locality;
+    } catch {
+      return false;
+    }
+  }
+}

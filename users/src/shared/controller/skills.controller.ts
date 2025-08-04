@@ -1,5 +1,5 @@
 import { Body, Controller, Param } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Skill } from '../entities/skill.entity';
 import { SkillRepository } from '../repository/skill.repository';
 
@@ -47,5 +47,11 @@ export class SkillsController {
   @MessagePattern('deleteSkill')
   async remove(@Param('id') id: string): Promise<void> {
     await this.skillRepo.delete(parseInt(id));
+  }
+
+  @MessagePattern('findSkillsByIds')
+  async findSkillsByIds(@Payload() data: { ids: number[] }): Promise<Skill[]> {
+    const skills = await this.skillRepo.findByIds(data.ids);
+    return skills;
   }
 }

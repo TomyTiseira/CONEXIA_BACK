@@ -12,11 +12,9 @@ sleep 15
 
 # Ejecutar seeds
 echo "Ejecutando seeds..."
-npm run seed:roles
-npm run seed:document-types
-npm run seed:skills
-npm run migrate:skills
-npm run seed:localities
+npm run seed:categories
+npm run seed:collaboration-types
+npm run seed:contract-types
 
 # Esperar a que la aplicación termine
 wait $APP_PID 

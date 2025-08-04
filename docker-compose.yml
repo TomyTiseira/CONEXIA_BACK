@@ -62,3 +62,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  projects:
+    build: ./projects
+    volumes:
+      - ./projects/src:/src/app/src
+    depends_on:
+      projects-db:
+        condition: service_healthy
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DB_HOST=projects-db
+      - DB_PORT=5432
+      - DB_USERNAME=${PROJECTS_DB_USER}
+      - DB_PASSWORD=${PROJECTS_DB_PASSWORD}
+      - DB_DATABASE=${PROJECTS_DB_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+
+  projects-db:
+    build:
+      context: ./projects
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "${PROJECTS_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${PROJECTS_DB_USER}
+      - POSTGRES_PASSWORD=${PROJECTS_DB_PASSWORD}
+      - POSTGRES_DB=${PROJECTS_DB_NAME}
+    volumes:
+      - ./projects/postgres-data:/var/lib/postgresql/data
+      - ./projects/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${PROJECTS_DB_USER} -d ${PROJECTS_DB_NAME}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5

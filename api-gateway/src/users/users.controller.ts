@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -582,6 +583,15 @@ export class UsersController {
   @Get('skills')
   getSkills() {
     return this.client.send('getSkills', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('localities')
+  getLocalities() {
+    return this.client.send('getLocalities', {}).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
