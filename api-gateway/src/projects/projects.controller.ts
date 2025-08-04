@@ -154,43 +154,6 @@ export class ProjectsController {
       );
   }
 
-  @Get(':id')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
-  getProjectById(@Param('id') id: number, @User() user: AuthenticatedUser) {
-    return this.client
-      .send('getProjectById', {
-        id,
-        currentUserId: user.id,
-      })
-      .pipe(
-        catchError((error) => {
-          throw new RpcException(error);
-        }),
-      );
-  }
-
-  @Get('profile/:userId')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
-  getProjectsByUser(
-    @Param('userId') userId: number,
-    @User() user: AuthenticatedUser,
-    @Query('includeDeleted') includeDeleted?: string,
-  ) {
-    const includeDeletedBoolean = includeDeleted === 'true';
-
-    return this.client
-      .send('getProjectsByUser', {
-        userId,
-        currentUserId: user.id,
-        includeDeleted: includeDeletedBoolean,
-      })
-      .pipe(
-        catchError((error) => {
-          throw new RpcException(error);
-        }),
-      );
-  }
-
   @Get('categories')
   getCategories() {
     return this.client.send('getCategories', {}).pipe(
@@ -216,5 +179,42 @@ export class ProjectsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get('profile/:userId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjectsByUser(
+    @Param('userId') userId: number,
+    @User() user: AuthenticatedUser,
+    @Query('includeDeleted') includeDeleted?: string,
+  ) {
+    const includeDeletedBoolean = includeDeleted === 'true';
+
+    return this.client
+      .send('getProjectsByUser', {
+        userId,
+        currentUserId: user.id,
+        includeDeleted: includeDeletedBoolean,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':id')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjectById(@Param('id') id: number, @User() user: AuthenticatedUser) {
+    return this.client
+      .send('getProjectById', {
+        id,
+        currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }
