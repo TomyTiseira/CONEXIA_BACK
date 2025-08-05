@@ -25,6 +25,14 @@ export function transformProjectsWithOwners(
       id: project.id,
       title: project.title,
       image: project.image,
+      category: {
+        id: project.category.id,
+        name: project.category.name,
+      },
+      collaborationType: {
+        id: project.collaborationType.id,
+        name: project.collaborationType.name,
+      },
       contractType: {
         id: project.contractType.id,
         name: project.contractType.name,
