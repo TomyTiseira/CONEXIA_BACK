@@ -116,6 +116,12 @@ export class UpdateProfileDto {
 
   @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return value;
+  })
   phoneNumber?: string;
 
   @IsString({ message: 'country must be a string' })

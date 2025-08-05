@@ -110,7 +110,9 @@ export class UpdateProfileUseCase {
       updateData.state = dto.state;
     }
     if (dto.phoneNumber !== undefined) {
-      updateData.phoneNumber = dto.phoneNumber;
+      // Permitir establecer phoneNumber como null para borrarlo
+      updateData.phoneNumber =
+        dto.phoneNumber === null ? null : dto.phoneNumber;
     }
     if (dto.socialLinks !== undefined) {
       updateData.socialLinks = dto.socialLinks;
