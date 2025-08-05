@@ -75,7 +75,9 @@ export class ProjectRepository {
   async findByUserId(
     userId: number,
     includeDeleted: boolean = false,
-  ): Promise<Project[]> {
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[Project[], number]> {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
@@ -89,7 +91,11 @@ export class ProjectRepository {
       queryBuilder.withDeleted();
     }
 
-    return queryBuilder.getMany();
+    // Aplicar paginación
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(limit).orderBy('project.createdAt', 'DESC');
+
+    return queryBuilder.getManyAndCount();
   }
 
   async update(id: number, project: Partial<Project>): Promise<Project> {

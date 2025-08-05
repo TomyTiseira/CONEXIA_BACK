@@ -187,14 +187,20 @@ export class ProjectsController {
     @Param('userId') userId: number,
     @User() user: AuthenticatedUser,
     @Query('includeDeleted') includeDeleted?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const includeDeletedBoolean = includeDeleted === 'true';
+    const pageNumber = page ? parseInt(page, 10) : undefined;
+    const limitNumber = limit ? parseInt(limit, 10) : undefined;
 
     return this.client
       .send('getProjectsByUser', {
         userId,
         currentUserId: user.id,
         includeDeleted: includeDeletedBoolean,
+        page: pageNumber,
+        limit: limitNumber,
       })
       .pipe(
         catchError((error) => {

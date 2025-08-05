@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { UserNotFoundException } from '../../../common/exceptions/project.exceptions';
+import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
 import { GetProjectsByUserDto } from '../../dtos/get-projects-by-user.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
@@ -22,10 +23,18 @@ export class GetProjectsByUserUseCase {
       throw new UserNotFoundException(data.userId);
     }
 
-    // Obtener proyectos del usuario
-    const projects = await this.projectRepository.findByUserId(
+    // Configurar parámetros de paginación
+    const params = {
+      page: data.page || 1,
+      limit: data.limit || 10,
+    };
+
+    // Obtener proyectos del usuario con paginación
+    const [projects, total] = await this.projectRepository.findByUserId(
       data.userId,
       data.includeDeleted,
+      params.page,
+      params.limit,
     );
 
     const users = [ownerData];
@@ -37,6 +46,12 @@ export class GetProjectsByUserUseCase {
       data.currentUserId,
     );
 
-    return transformedProjects;
+    // Calcular información de paginación usando la función común
+    const pagination = calculatePagination(total, params);
+
+    return {
+      projects: transformedProjects,
+      pagination,
+    };
   }
 }

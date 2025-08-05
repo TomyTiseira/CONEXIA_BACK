@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, Min } from 'class-validator';
 
 export class GetProjectsByUserDto {
   @IsNumber()
@@ -10,4 +10,14 @@ export class GetProjectsByUserDto {
   @IsOptional()
   @IsBoolean()
   includeDeleted?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1, { message: 'page must be greater than 0' })
+  page?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1, { message: 'limit must be greater than 0' })
+  limit?: number;
 }
