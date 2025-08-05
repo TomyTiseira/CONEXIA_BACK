@@ -69,9 +69,6 @@ export class Project {
   @Column({ type: 'varchar', nullable: true })
   image?: string;
 
-  @Column({ default: true })
-  isActive: boolean;
-
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

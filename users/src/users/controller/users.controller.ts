@@ -111,4 +111,22 @@ export class UsersController {
   async validateLocalityExists(@Payload() data: { id: number }) {
     return await this.usersService.validateLocalityExists(data.id);
   }
+
+  @MessagePattern('findUsersByIds')
+  async findUsersByIds(@Payload() data: { ids: number[] }) {
+    const users = await this.usersService.findUsersByIds(data.ids);
+    return users;
+  }
+
+  @MessagePattern('getLocalityById')
+  async getLocalityById(@Payload() data: { id: number }) {
+    const locality = await this.usersService.getLocalityById(data.id);
+    return locality;
+  }
+
+  @MessagePattern('getUserWithProfile')
+  async getUserWithProfile(@Payload() data: { userId: number }) {
+    const result = await this.usersService.getUserWithProfile(data.userId);
+    return result;
+  }
 }

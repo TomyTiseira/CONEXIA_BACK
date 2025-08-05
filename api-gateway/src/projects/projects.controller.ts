@@ -3,7 +3,9 @@ import {
   Controller,
   Get,
   Inject,
+  Param,
   Post,
+  Query,
   Req,
   UploadedFiles,
   UseInterceptors,
@@ -23,6 +25,7 @@ import {
   AuthenticatedUser,
 } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
+import { GetProjectsDto } from './dtos/get-projects.dto';
 import { PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
@@ -136,6 +139,21 @@ export class ProjectsController {
     );
   }
 
+  @Get()
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjects(
+    @Query() getProjectsDto: GetProjectsDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getProjects', { getProjectsDto, currentUserId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Get('categories')
   getCategories() {
     return this.client.send('getCategories', {}).pipe(
@@ -161,5 +179,48 @@ export class ProjectsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get('profile/:userId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjectsByUser(
+    @Param('userId') userId: number,
+    @User() user: AuthenticatedUser,
+    @Query('includeDeleted') includeDeleted?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const includeDeletedBoolean = includeDeleted === 'true';
+    const pageNumber = page ? parseInt(page, 10) : undefined;
+    const limitNumber = limit ? parseInt(limit, 10) : undefined;
+
+    return this.client
+      .send('getProjectsByUser', {
+        userId,
+        currentUserId: user.id,
+        includeDeleted: includeDeletedBoolean,
+        page: pageNumber,
+        limit: limitNumber,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':id')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getProjectById(@Param('id') id: number, @User() user: AuthenticatedUser) {
+    return this.client
+      .send('getProjectById', {
+        id,
+        currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }
