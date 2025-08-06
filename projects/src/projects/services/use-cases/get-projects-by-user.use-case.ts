@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { UserNotFoundException } from '../../../common/exceptions/project.exceptions';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
@@ -15,11 +14,9 @@ export class GetProjectsByUserUseCase {
   ) {}
 
   async execute(data: GetProjectsByUserDto) {
-    // Obtener información del usuario propietario
-    const ownerData = await this.usersClientService.getUserWithProfile(
-      data.userId,
-    );
-    if (!ownerData) {
+    // Obtener información del usuario propietario usando el mismo método que getProjects
+    const users = await this.usersClientService.getUsersByIds([data.userId]);
+    if (!users || users.length === 0) {
       throw new UserNotFoundException(data.userId);
     }
 
@@ -36,8 +33,6 @@ export class GetProjectsByUserUseCase {
       params.page,
       params.limit,
     );
-
-    const users = [ownerData];
 
     // Transformar los proyectos usando la función común (misma que getProjects)
     const transformedProjects = transformProjectsWithOwners(
