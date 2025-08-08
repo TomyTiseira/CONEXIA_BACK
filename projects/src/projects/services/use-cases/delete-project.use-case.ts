@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import {
-    ProjectAlreadyDeletedException,
-    ProjectNotFoundException,
-    ProjectNotOwnedByUserException,
-} from '../../common/exceptions/project.exceptions';
-import { Project } from '../entities/project.entity';
-import { ProjectRepository } from '../repositories/project.repository';
+  ProjectAlreadyDeletedException,
+  ProjectNotFoundException,
+  ProjectNotOwnedByUserException,
+} from '../../../common/exceptions/project.exceptions';
+import { Project } from '../../entities/project.entity';
+import { ProjectRepository } from '../../repositories/project.repository';
 
 @Injectable()
 export class DeleteProjectUseCase {
   constructor(private readonly projectRepository: ProjectRepository) {}
 
-  async execute(projectId: number, reason: string, userId: number): Promise<Project> {
+  async execute(
+    projectId: number,
+    reason: string,
+    userId: number,
+  ): Promise<Project> {
     // Buscar el proyecto por ID
     const project = await this.projectRepository.findById(projectId);
     if (!project) {
