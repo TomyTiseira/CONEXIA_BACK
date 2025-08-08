@@ -23,7 +23,7 @@ export class GetProjectsByUserUseCase {
     // Configurar parámetros de paginación
     const params = {
       page: data.page || 1,
-      limit: data.limit || 10,
+      limit: data.limit || 12,
     };
 
     // Obtener proyectos del usuario con paginación
