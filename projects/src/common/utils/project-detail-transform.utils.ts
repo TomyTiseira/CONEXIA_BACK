@@ -2,7 +2,10 @@ import { Project } from '../../projects/entities/project.entity';
 import { ProjectDetailResponse } from '../../projects/response/project-detail-response';
 
 export interface UserWithProfile {
-  id: number;
+  id?: number;
+  user?: {
+    id: number;
+  };
   profile?: {
     name: string;
     lastName: string;
@@ -22,6 +25,9 @@ export function transformProjectToDetailResponse(
   currentUserId: number,
   location?: string,
 ): ProjectDetailResponse {
+  // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
+  const ownerId = ownerData.user?.id || ownerData.id || project.userId;
+
   return {
     id: project.id,
     title: project.title,
@@ -31,6 +37,7 @@ export function transformProjectToDetailResponse(
     owner: ownerData.profile
       ? ownerData.profile.name + ' ' + ownerData.profile.lastName
       : 'Usuario no encontrado',
+    ownerId,
     ownerImage: ownerData.profile?.profilePicture,
     contractType: [project.contractType.name],
     collaborationType: [project.collaborationType.name],
