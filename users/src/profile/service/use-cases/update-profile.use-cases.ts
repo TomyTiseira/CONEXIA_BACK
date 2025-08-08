@@ -110,7 +110,9 @@ export class UpdateProfileUseCase {
       updateData.state = dto.state;
     }
     if (dto.phoneNumber !== undefined) {
-      updateData.phoneNumber = dto.phoneNumber;
+      // Permitir establecer phoneNumber como null para borrarlo
+      updateData.phoneNumber =
+        dto.phoneNumber === null ? null : dto.phoneNumber;
     }
     if (dto.socialLinks !== undefined) {
       updateData.socialLinks = dto.socialLinks;
@@ -118,12 +120,14 @@ export class UpdateProfileUseCase {
 
     const updated = await this.profileRepo.update(profile.id, updateData);
 
-    // Actualizar habilidades si se proporcionan
-    if (dto.skills && dto.skills.length > 0) {
+    // Actualizar habilidades si se proporcionan (incluso si es un array vacío)
+    if (dto.skills !== undefined) {
       // Primero eliminar las habilidades existentes
       await this.profileSkillRepo.deleteByProfileId(profile.id);
-      // Luego crear las nuevas relaciones
-      await this.profileSkillRepo.createProfileSkills(profile.id, dto.skills);
+      // Luego crear las nuevas relaciones solo si hay habilidades
+      if (dto.skills.length > 0) {
+        await this.profileSkillRepo.createProfileSkills(profile.id, dto.skills);
+      }
     }
 
     return updated;

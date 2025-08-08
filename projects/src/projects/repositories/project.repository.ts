@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CollaborationType } from '../entities/collaboration-type.entity';
 import { ContractType } from '../entities/contract-type.entity';
@@ -21,8 +21,20 @@ export class ProjectRepository {
     return this.ormRepository.save(entity);
   }
 
-  async findById(id: number): Promise<Project | null> {
-    return this.ormRepository.findOne({ where: { id } });
+  async findById(
+    id: number,
+    includeDeleted: boolean = false,
+  ): Promise<Project | null> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .where('project.id = :id', { id });
+
+    // Incluir registros eliminados si se solicita
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   async findByIdWithRelations(id: number): Promise<Project | null> {
@@ -50,7 +62,7 @@ export class ProjectRepository {
 
   async findActive(): Promise<Project[]> {
     return this.ormRepository.find({
-      where: { isActive: true },
+      where: { deletedAt: IsNull() },
       relations: [
         'category',
         'collaborationType',
@@ -58,6 +70,32 @@ export class ProjectRepository {
         'projectSkills',
       ],
     });
+  }
+
+  async findByUserId(
+    userId: number,
+    includeDeleted: boolean = false,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[Project[], number]> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.userId = :userId', { userId });
+
+    // Incluir registros eliminados si se solicita
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    // Aplicar paginación
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(limit).orderBy('project.createdAt', 'DESC');
+
+    return queryBuilder.getManyAndCount();
   }
 
   async update(id: number, project: Partial<Project>): Promise<Project> {
@@ -137,6 +175,74 @@ export class ProjectRepository {
 
   async deleteProjectSkills(projectId: number): Promise<void> {
     await this.projectSkillRepository.delete({ projectId });
+  }
+
+  async findProjectsWithFilters(filters: {
+    search?: string;
+    categoryIds?: number[];
+    skillIds?: number[];
+    collaborationTypeIds?: number[];
+    contractTypeIds?: number[];
+    page: number;
+    limit: number;
+  }): Promise<[Project[], number]> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.deletedAt IS NULL');
+
+    // Filtro de búsqueda por título
+    if (filters.search) {
+      queryBuilder.andWhere('project.title ILIKE :search', {
+        search: `%${filters.search}%`,
+      });
+    }
+
+    // Filtro por categorías
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      queryBuilder.andWhere('project.categoryId IN (:...categoryIds)', {
+        categoryIds: filters.categoryIds,
+      });
+    }
+
+    // Filtro por habilidades requeridas
+    if (filters.skillIds && filters.skillIds.length > 0) {
+      queryBuilder.andWhere('projectSkills.skillId IN (:...skillIds)', {
+        skillIds: filters.skillIds,
+      });
+    }
+
+    // Filtro por tipos de colaboración
+    if (
+      filters.collaborationTypeIds &&
+      filters.collaborationTypeIds.length > 0
+    ) {
+      queryBuilder.andWhere(
+        'project.collaborationTypeId IN (:...collaborationTypeIds)',
+        {
+          collaborationTypeIds: filters.collaborationTypeIds,
+        },
+      );
+    }
+
+    // Filtro por tipos de contratación
+    if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
+      queryBuilder.andWhere('project.contractTypeId IN (:...contractTypeIds)', {
+        contractTypeIds: filters.contractTypeIds,
+      });
+    }
+
+    // Aplicar paginación
+    const skip = (filters.page - 1) * filters.limit;
+    queryBuilder
+      .skip(skip)
+      .take(filters.limit)
+      .orderBy('project.createdAt', 'DESC');
+
+    return queryBuilder.getManyAndCount();
   }
 
   ping(): string {

@@ -117,6 +117,15 @@ export class InvalidMaxCollaboratorsException extends RpcException {
   }
 }
 
+export class LocalityNotFoundException extends RpcException {
+  constructor(id: number) {
+    super({
+      status: 404,
+      message: `Locality with id ${id} not found`,
+    });
+  }
+}
+
 export class ProjectAlreadyDeletedException extends RpcException {
   constructor(id: number) {
     super({

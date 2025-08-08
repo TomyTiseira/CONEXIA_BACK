@@ -1,13 +1,13 @@
 import {
-    Column,
-    CreateDateColumn,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { CollaborationType } from './collaboration-type.entity';
@@ -53,8 +53,8 @@ export class Project {
   })
   projectSkills: ProjectSkill[];
 
-  @Column({ nullable: true })
-  location: string;
+  @Column({ name: 'location_id', nullable: true })
+  locationId: number;
 
   @Column()
   contractTypeId: number;

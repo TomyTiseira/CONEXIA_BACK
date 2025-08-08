@@ -41,4 +41,75 @@ export class UsersClientService {
       };
     }
   }
+
+  async validateLocalityExists(localityId: number): Promise<boolean> {
+    try {
+      const locality = await firstValueFrom(
+        this.client.send('validateLocalityExists', { id: localityId }),
+      );
+      return !!locality;
+    } catch {
+      return false;
+    }
+  }
+
+  async getUsersByIds(userIds: number[]): Promise<any[]> {
+    try {
+      const users = await firstValueFrom(
+        this.client.send('findUsersByIds', { ids: userIds }),
+      );
+      return users || [];
+    } catch (error) {
+      console.error('Error getting users by IDs:', error);
+      return [];
+    }
+  }
+
+  async getUserById(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserById', { id: userId }),
+      );
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      return null;
+    }
+  }
+
+  async getSkillsByIds(skillIds: number[]): Promise<any[]> {
+    try {
+      const skills = await firstValueFrom(
+        this.client.send('findSkillsByIds', { ids: skillIds }),
+      );
+      return skills || [];
+    } catch (error) {
+      console.error('Error getting skills by IDs:', error);
+      return [];
+    }
+  }
+
+  async getLocalityById(localityId: number): Promise<any> {
+    try {
+      const locality = await firstValueFrom(
+        this.client.send('getLocalityById', { id: localityId }),
+      );
+      return locality;
+    } catch (error) {
+      console.error('Error getting locality by ID:', error);
+      return null;
+    }
+  }
+
+  async getUserWithProfile(userId: number): Promise<any> {
+    try {
+      const result = await firstValueFrom(
+        this.client.send('getUserWithProfile', { userId }),
+      );
+      return result;
+    } catch (error) {
+      console.error('Error getting user with profile:', error);
+      return null;
+    }
+  }
 }

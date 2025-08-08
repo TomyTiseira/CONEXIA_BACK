@@ -12,6 +12,9 @@ import { Project } from './entities/project.entity';
 import { ProjectRepository } from './repositories/project.repository';
 import { ProjectsService } from './services/projects.service';
 import { DeleteProjectUseCase } from './services/use-cases/delete-project.use-case';
+import { GetProjectByIdUseCase } from './services/use-cases/get-project-by-id.use-case';
+import { GetProjectsByUserUseCase } from './services/use-cases/get-projects-by-user.use-case';
+import { GetProjectsUseCase } from './services/use-cases/get-projects.use-case';
 import { PingUseCase } from './services/use-cases/ping.use-case';
 import { PublishProjectUseCase } from './services/use-cases/publish-project.use-case';
 import { UsersClientService } from './services/users-client.service';
@@ -22,6 +25,9 @@ import { UsersClientService } from './services/users-client.service';
     ProjectsService,
     UsersClientService,
     PublishProjectUseCase,
+    GetProjectsUseCase,
+    GetProjectByIdUseCase,
+    GetProjectsByUserUseCase,
     DeleteProjectUseCase,
     PingUseCase,
     ProjectRepository,
