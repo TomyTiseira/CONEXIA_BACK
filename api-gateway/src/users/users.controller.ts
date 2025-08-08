@@ -12,7 +12,6 @@ import {
   Req,
   Res,
   UploadedFiles,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -24,7 +23,6 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { jwtConfig } from 'src/config/jwt.config';
@@ -224,7 +222,7 @@ export class UsersController {
   }
 
   @Get('profile/:userId')
-  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
   getProfile(@Param('userId') userId: string, @User() user: AuthenticatedUser) {
     // Enviamos tanto el userId del parámetro como los datos del usuario autenticado
     const payload = {
