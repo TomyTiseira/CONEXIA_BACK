@@ -116,6 +116,7 @@ export class ProjectRepository {
     await this.ormRepository.update(project.id, {
       deletedAt: new Date(),
       deletedReason: reason || 'No reason provided',
+      isActive: false,
     });
   }
 
