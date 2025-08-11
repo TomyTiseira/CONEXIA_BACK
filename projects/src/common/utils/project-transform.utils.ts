@@ -10,16 +10,29 @@ export interface UserWithProfile {
   };
 }
 
+export interface Skill {
+  id: number;
+  name: string;
+}
+
 export function transformProjectsWithOwners(
   projects: Project[],
   users: UserWithProfile[],
   currentUserId: number,
+  skillsMap?: Map<number, string>,
 ): ProjectResponseDto[] {
   const usersMap = new Map(users.map((user) => [user.id, user]));
 
   return projects.map((project) => {
     const user = usersMap.get(project.userId);
     const profile = user?.profile;
+
+    // Obtener las skills del proyecto
+    const projectSkills =
+      project.projectSkills?.map((ps) => ({
+        id: ps.skillId,
+        name: skillsMap?.get(ps.skillId),
+      })) || [];
 
     return {
       id: project.id,
@@ -45,6 +58,7 @@ export function transformProjectsWithOwners(
         image: profile?.profilePicture,
       },
       isOwner: currentUserId === project.userId,
+      skills: projectSkills,
     };
   });
 }
