@@ -112,6 +112,14 @@ export class ProjectRepository {
     await this.ormRepository.softDelete(id);
   }
 
+  async deleteProject(project: Project, reason: string): Promise<void> {
+    await this.ormRepository.update(project.id, {
+      deletedAt: new Date(),
+      deletedReason: reason || 'No reason provided',
+      isActive: false,
+    });
+  }
+
   async findCategoryById(id: number): Promise<Category | null> {
     return this.ormRepository.manager.findOne(Category, { where: { id } });
   }

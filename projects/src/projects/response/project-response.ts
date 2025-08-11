@@ -20,4 +20,8 @@ export class ProjectResponseDto {
     image?: string;
   };
   isOwner: boolean;
+  skills: {
+    id: number;
+    name?: string;
+  }[];
 }

@@ -26,11 +26,33 @@ export class GetProjectsUseCase {
     const userIds = [...new Set(projects.map((project) => project.userId))];
     const users = await this.usersClientService.getUsersByIds(userIds);
 
+    // Obtener todas las skill IDs de todos los proyectos
+    const allSkillIds = [
+      ...new Set(
+        projects.flatMap(
+          (project) => project.projectSkills?.map((ps) => ps.skillId) || [],
+        ),
+      ),
+    ];
+
+    // Obtener información de las skills si hay skill IDs
+    let skillsMap: Map<number, string> = new Map();
+    if (allSkillIds.length > 0) {
+      const skills = await this.usersClientService.getSkillsByIds(allSkillIds);
+      skillsMap = new Map(
+        skills.map((skill: { id: number; name: string }) => [
+          skill.id,
+          skill.name,
+        ]),
+      );
+    }
+
     // Transformar los proyectos usando la función común
     const transformedProjects = transformProjectsWithOwners(
       projects,
       users,
       currentUserId,
+      skillsMap,
     );
 
     // Calcular información de paginación usando la función común

@@ -5,6 +5,7 @@ export interface ProjectDetailResponse {
   image?: string;
   location?: string;
   owner: string;
+  ownerId: number;
   ownerImage?: string;
   contractType: string[];
   collaborationType: string[];
