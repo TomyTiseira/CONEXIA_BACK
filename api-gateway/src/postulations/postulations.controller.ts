@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
+  Body,
   Controller,
   Inject,
   Post,
@@ -22,6 +23,7 @@ import {
   AuthenticatedUser,
 } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
+import { ApprovePostulationDto } from './dto/approve-postulation.dto';
 import { CreatePostulationDto } from './dto/create-postulation.dto';
 
 @Controller('postulations')
@@ -132,5 +134,24 @@ export class PostulationsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Post('approve')
+  approvePostulation(
+    @User() user: AuthenticatedUser,
+    @Body() dto: ApprovePostulationDto,
+  ) {
+    return this.client
+      .send('approvePostulation', {
+        currentUserId: user.id,
+        postulationId: dto.postulationId,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error in approvePostulation:', error);
+          throw new RpcException(error);
+        }),
+      );
   }
 }

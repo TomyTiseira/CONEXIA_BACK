@@ -36,15 +36,16 @@ export class PostulationRepository {
     projectId: number,
     page: number = 1,
     limit: number = 10,
-  ): Promise<[Postulation[], number]> {
+  ): Promise<Postulation[]> {
     const skip = (page - 1) * limit;
-    return await this.postulationRepository.findAndCount({
+    const [postulations] = await this.postulationRepository.findAndCount({
       where: { projectId },
       relations: ['project'],
       skip,
       take: limit,
       order: { createdAt: 'DESC' },
     });
+    return postulations;
   }
 
   async findByUser(
@@ -66,7 +67,7 @@ export class PostulationRepository {
     id: number,
     status: PostulationStatus,
   ): Promise<Postulation | null> {
-    await this.postulationRepository.update(id, { status });
+    await this.postulationRepository.update(id, { statusId: status.id });
     return await this.findById(id);
   }
 

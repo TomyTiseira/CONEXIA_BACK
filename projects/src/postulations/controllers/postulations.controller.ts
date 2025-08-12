@@ -26,4 +26,11 @@ export class PostulationsController {
       throw error;
     }
   }
+
+  @MessagePattern('approvePostulation')
+  async approvePostulation(
+    @Payload() data: { postulationId: number; currentUserId: number },
+  ) {
+    return await this.postulationsService.approvePostulation(data);
+  }
 }
