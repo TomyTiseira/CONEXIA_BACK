@@ -54,7 +54,7 @@ export abstract class EmailService {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${process.env.FRONTEND_URL || 'https://conexia.com'}" 
                style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              🚀 Ver mi proyecto
+              🚀 Ver el proyecto
             </a>
           </div>
           <p style="font-size: 14px; color: #666; text-align: center;">
