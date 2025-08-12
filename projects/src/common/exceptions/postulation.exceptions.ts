@@ -89,3 +89,30 @@ export class ProjectMaxCollaboratorsReachedException extends RpcException {
     });
   }
 }
+
+export class ProjectOwnerCannotApproveException extends RpcException {
+  constructor(projectId: number, userId: number) {
+    super({
+      status: 403,
+      message: `User ${userId} cannot approve postulation for project ${projectId}`,
+    });
+  }
+}
+
+export class PostulationNotPendingException extends RpcException {
+  constructor(postulationId: number) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} is not pending`,
+    });
+  }
+}
+
+export class PostulationStatusNotFoundException extends RpcException {
+  constructor() {
+    super({
+      status: 404,
+      message: 'Postulation status not found',
+    });
+  }
+}
