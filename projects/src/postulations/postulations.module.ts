@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from '../common/common.module';
 import { SharedModule } from '../shared/shared.module';
 import { PostulationsController } from './controllers/postulations.controller';
 import { PostulationStatus } from './entities/postulation-status.entity';
@@ -28,6 +29,7 @@ import { CreatePostulationUseCase } from './services/use-cases/create-postulatio
   imports: [
     TypeOrmModule.forFeature([Postulation, PostulationStatus]),
     SharedModule,
+    CommonModule,
   ],
   exports: [PostulationsService, PostulationRepository],
 })

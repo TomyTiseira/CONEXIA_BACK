@@ -1,13 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { EmailService, UsersClientService } from 'src/common';
 import { ApprovePostulationDto } from 'src/postulations/dtos/approve-postulation.dto';
 import { PostulationOperationsService } from '../postulation-operations.service';
 import { PostulationValidationService } from '../postulation-validation.service';
+
+interface UserProfile {
+  name?: string;
+  lastName?: string;
+}
+
+interface User {
+  email: string;
+}
+
+interface UserWithProfile {
+  user: User;
+  profile?: UserProfile;
+}
 
 @Injectable()
 export class ApprovePostulationUseCase {
   constructor(
     private readonly postulationValidationService: PostulationValidationService,
     private readonly postulationOperationsService: PostulationOperationsService,
+    private readonly usersClientService: UsersClientService,
+    private readonly emailService: EmailService,
   ) {}
 
   async execute(approvePostulationDto: ApprovePostulationDto) {
@@ -45,9 +62,57 @@ export class ApprovePostulationUseCase {
       );
     }
 
-    // Aprobar la postulación
-    return await this.postulationOperationsService.approvePostulation(
-      postulation.id,
+    // Validar que el postulante este activo
+    await this.postulationValidationService.validateUserIsActive(
+      postulation.userId,
     );
+
+    // Aprobar la postulación
+    const approvedPostulation =
+      await this.postulationOperationsService.approvePostulation(
+        postulation.id,
+      );
+
+    // Obtener información del usuario para enviar el email
+    try {
+      const userWithProfile = (await this.usersClientService.getUserWithProfile(
+        postulation.userId,
+      )) as UserWithProfile | null;
+
+      if (
+        userWithProfile &&
+        userWithProfile.user &&
+        userWithProfile.user.email
+      ) {
+        const userName =
+          userWithProfile.profile?.name ||
+          userWithProfile.user.email.split('@')[0];
+
+        // Enviar email de notificación (de forma asíncrona)
+        this.emailService
+          .sendPostulationApprovedEmail(
+            userWithProfile.user.email,
+            userName,
+            project.title,
+          )
+          .catch((error) => {
+            console.error(
+              'Error al enviar email de postulación aprobada:',
+              error,
+            );
+          });
+      } else {
+        console.log(
+          'No se pudo obtener información del usuario para enviar email',
+        );
+      }
+    } catch (error) {
+      console.error(
+        'Error al obtener información del usuario para enviar email:',
+        error,
+      );
+    }
+
+    return approvedPostulation;
   }
 }

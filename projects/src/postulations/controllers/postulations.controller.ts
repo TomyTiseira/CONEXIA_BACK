@@ -15,16 +15,11 @@ export class PostulationsController {
       currentUserId: number;
     },
   ) {
-    try {
-      const result = await this.postulationsService.createPostulation(
-        data.createPostulationDto,
-        data.currentUserId,
-      );
-      return result;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    const result = await this.postulationsService.createPostulation(
+      data.createPostulationDto,
+      data.currentUserId,
+    );
+    return result;
   }
 
   @MessagePattern('approvePostulation')
