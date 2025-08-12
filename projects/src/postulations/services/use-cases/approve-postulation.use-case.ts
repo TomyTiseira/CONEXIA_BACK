@@ -37,11 +37,13 @@ export class ApprovePostulationUseCase {
     // Validar que el proyecto no ha terminado
     this.postulationValidationService.validateProjectNotEnded(project);
 
-    // Validar que el proyecto tiene slots disponibles
-    await this.postulationValidationService.validateProjectHasAvailableSlots(
-      postulation.projectId,
-      project.maxCollaborators,
-    );
+    // Validar que el proyecto tiene slots disponibles (si tiene maxCollaborators > 0)
+    if (project.maxCollaborators && project.maxCollaborators > 0) {
+      await this.postulationValidationService.validateProjectHasAvailableSlots(
+        postulation.projectId,
+        project.maxCollaborators,
+      );
+    }
 
     // Aprobar la postulación
     return await this.postulationOperationsService.approvePostulation(
