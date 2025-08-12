@@ -32,6 +32,11 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  // Servir archivos de CV
+  app.useStaticAssets(join(__dirname, '..', 'uploads', 'cv'), {
+    prefix: '/uploads/cv/',
+  });
+
   app.use(cookieParser());
 
   app.useGlobalPipes(

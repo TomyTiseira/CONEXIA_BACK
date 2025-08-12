@@ -18,6 +18,7 @@ import { DeleteUserUseCase } from './service/use-cases/delate-user.use-cases';
 import { FindUserByIdUseCase } from './service/use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './service/use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './service/use-cases/get-role-by-id.use-cases';
+import { GetRoleByNameUseCase } from './service/use-cases/get-role-by-name.use-cases';
 import { GetUserWithProfileUseCase } from './service/use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
@@ -37,6 +38,7 @@ import { UsersService } from './service/users.service';
     ResendVerificationUseCase,
     DeleteUserUseCase,
     GetRoleByIdUseCase,
+    GetRoleByNameUseCase,
     FindUserByIdUseCase,
     GetUserWithProfileUseCase,
     FindUsersByIdsUseCase,

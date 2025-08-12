@@ -15,6 +15,7 @@ echo "Ejecutando seeds..."
 npm run seed:categories
 npm run seed:collaboration-types
 npm run seed:contract-types
+npm run seed:postulation-statuses
 
 # Esperar a que la aplicación termine
 wait $APP_PID 

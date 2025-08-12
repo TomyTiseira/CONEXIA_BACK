@@ -4,6 +4,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { envs, USERS_SERVICE } from './config';
+import { PostulationStatus } from './postulations/entities/postulation-status.entity';
+import { Postulation } from './postulations/entities/postulation.entity';
 import { Category } from './projects/entities/category.entity';
 import { CollaborationType } from './projects/entities/collaboration-type.entity';
 import { ContractType } from './projects/entities/contract-type.entity';
@@ -26,6 +28,8 @@ import { ProjectsModule } from './projects/projects.module';
         Category,
         CollaborationType,
         ContractType,
+        Postulation,
+        PostulationStatus,
       ],
       synchronize: true,
     }),
