@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from './common/common.module';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { envs, USERS_SERVICE } from './config';
 import { PostulationStatus } from './postulations/entities/postulation-status.entity';
@@ -42,6 +43,7 @@ import { ProjectsModule } from './projects/projects.module';
         },
       },
     ]),
+    CommonModule,
     ProjectsModule,
   ],
   controllers: [],
