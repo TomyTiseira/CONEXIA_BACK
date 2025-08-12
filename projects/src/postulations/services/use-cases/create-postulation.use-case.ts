@@ -5,7 +5,6 @@ import {
   InvalidUserRoleException,
   PostulationCreationFailedException,
   ProjectEndedException,
-  ProjectMaxCollaboratorsReachedException,
   ProjectNotActiveException,
   ProjectOwnerCannotApplyException,
   UserAlreadyAppliedException,
@@ -70,16 +69,6 @@ export class CreatePostulationUseCase {
       throw new UserAlreadyAppliedException(
         createPostulationDto.projectId,
         currentUserId,
-      );
-    }
-
-    // Validar que el proyecto no tenga más postulaciones que el maxCollaborators
-    const postulations = await this.postulationRepository.findByProject(
-      createPostulationDto.projectId,
-    );
-    if (postulations.length >= project.maxCollaborators) {
-      throw new ProjectMaxCollaboratorsReachedException(
-        createPostulationDto.projectId,
       );
     }
 
