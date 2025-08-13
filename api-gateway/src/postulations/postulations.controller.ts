@@ -2,8 +2,11 @@
 import {
   Body,
   Controller,
+  Get,
   Inject,
+  Param,
   Post,
+  Query,
   Req,
   UploadedFiles,
   UseInterceptors,
@@ -25,6 +28,7 @@ import {
 import { NATS_SERVICE } from '../config';
 import { ApprovePostulationDto } from './dto/approve-postulation.dto';
 import { CreatePostulationDto } from './dto/create-postulation.dto';
+import { GetPostulationsDto } from './dto/get-postulations.dto';
 
 @Controller('postulations')
 export class PostulationsController {
@@ -150,6 +154,38 @@ export class PostulationsController {
       .pipe(
         catchError((error) => {
           console.error('Error in approvePostulation:', error);
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('statuses')
+  getPostulationStatuses() {
+    return this.client.send('postulations_get_statuses', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Get('project/:projectId')
+  getPostulations(
+    @Query() query: GetPostulationsDto,
+    @User() user: AuthenticatedUser,
+    @Param('projectId') projectId: string,
+  ) {
+    return this.client
+      .send('getPostulationsForProject', {
+        getPostulationsDto: {
+          ...query,
+          projectId: Number(projectId),
+        },
+        currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error in getPostulations:', error);
           throw new RpcException(error);
         }),
       );

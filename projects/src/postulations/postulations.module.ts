@@ -1,5 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from '../common/common.module';
+import { ProjectsModule } from '../projects/projects.module';
 import { SharedModule } from '../shared/shared.module';
 import { PostulationsController } from './controllers/postulations.controller';
 import { PostulationStatus } from './entities/postulation-status.entity';
@@ -8,26 +10,32 @@ import { PostulationStatusRepository } from './repositories/postulation-status.r
 import { PostulationRepository } from './repositories/postulation.repository';
 import { PostulationOperationsService } from './services/postulation-operations.service';
 import { PostulationStatusService } from './services/postulation-status.service';
+import { PostulationTransformService } from './services/postulation-transform.service';
 import { PostulationValidationService } from './services/postulation-validation.service';
 import { PostulationsService } from './services/postulations.service';
 import { ApprovePostulationUseCase } from './services/use-cases/approve-postulation.use-case';
 import { CreatePostulationUseCase } from './services/use-cases/create-postulation.use-case';
+import { GetPostulationsUseCase } from './services/use-cases/get-postulations.use-case';
 
 @Module({
   controllers: [PostulationsController],
   providers: [
     PostulationsService,
     CreatePostulationUseCase,
+    GetPostulationsUseCase,
     PostulationRepository,
     PostulationStatusRepository,
     ApprovePostulationUseCase,
     PostulationStatusService,
     PostulationValidationService,
     PostulationOperationsService,
+    PostulationTransformService,
   ],
   imports: [
     TypeOrmModule.forFeature([Postulation, PostulationStatus]),
     SharedModule,
+    CommonModule,
+    forwardRef(() => ProjectsModule),
   ],
   exports: [PostulationsService, PostulationRepository],
 })

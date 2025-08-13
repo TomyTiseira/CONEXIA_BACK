@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { UsersClientService } from 'src/common';
+import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 import {
   PostulationNotFoundException,
   PostulationNotPendingException,
@@ -8,6 +10,7 @@ import {
   ProjectOwnerCannotApplyException,
   ProjectOwnerCannotApproveException,
   UserAlreadyAppliedException,
+  UserNotActiveException,
 } from '../../common/exceptions/postulation.exceptions';
 import { Project } from '../../projects/entities/project.entity';
 import { ProjectRepository } from '../../projects/repositories/project.repository';
@@ -21,6 +24,7 @@ export class PostulationValidationService {
     private readonly postulationRepository: PostulationRepository,
     private readonly projectRepository: ProjectRepository,
     private readonly postulationStatusService: PostulationStatusService,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   /**
@@ -43,9 +47,9 @@ export class PostulationValidationService {
    * @returns El proyecto si existe y está activo
    */
   async validateProjectExistsAndActive(projectId: number): Promise<Project> {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.findById(projectId, true);
     if (!project) {
-      throw new PostulationNotFoundException(projectId);
+      throw new ProjectNotFoundException(projectId);
     }
 
     if (!project.isActive || project.deletedAt) {
@@ -159,6 +163,19 @@ export class PostulationValidationService {
   validateProjectIsActive(project: Project): void {
     if (!project.isActive || project.deletedAt) {
       throw new ProjectNotActiveException(project.id);
+    }
+  }
+
+  /**
+   * Valida que un usuario esté activo
+   * @param userId - ID del usuario
+   */
+  async validateUserIsActive(userId: number): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const user = await this.usersClientService.getUserById(userId);
+    // Verifica que el usuario exista y que NO esté eliminado
+    if (!user || user.deletedAt) {
+      throw new UserNotActiveException(userId);
     }
   }
 }

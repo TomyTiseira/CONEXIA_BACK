@@ -48,6 +48,41 @@ export class PostulationRepository {
     return postulations;
   }
 
+  async findAndCountWithFilters(
+    whereClause: { projectId: number; statusId?: number },
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[Postulation[], number]> {
+    const skip = (page - 1) * limit;
+
+    // Construir el where clause dinámicamente
+    const where: { projectId: number; statusId?: number } = {
+      projectId: whereClause.projectId,
+    };
+
+    if (whereClause.statusId) {
+      where.statusId = whereClause.statusId;
+    }
+
+    // Obtener postulaciones con ordenamiento especial: estado activo primero, luego por fecha
+    const [postulations, total] = await this.postulationRepository.findAndCount(
+      {
+        where,
+        relations: ['project', 'status'],
+        skip,
+        take: limit,
+        order: {
+          status: {
+            code: 'ASC', // El estado activo tiene código 'activo' que viene primero alfabéticamente
+          },
+          createdAt: 'ASC', // Luego por fecha de creación (más viejo primero)
+        },
+      },
+    );
+
+    return [postulations, total];
+  }
+
   async findByUser(
     userId: number,
     page: number = 1,
