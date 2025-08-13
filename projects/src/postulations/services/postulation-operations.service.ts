@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { CreatePostulationDto } from '../dtos/create-postulation.dto';
 import { Postulation } from '../entities/postulation.entity';
+import { PostulationStatusCode } from '../enums/postulation-status.enum';
 import { PostulationRepository } from '../repositories/postulation.repository';
+import { PostulationContext } from '../states/postulation-context';
 import { PostulationStatusService } from './postulation-status.service';
 
 @Injectable()
@@ -90,6 +92,43 @@ export class PostulationOperationsService {
    * @returns La postulación actualizada
    */
   async cancelPostulation(postulationId: number): Promise<Postulation> {
+    // Obtener la postulación con su estado actual
+    const postulation =
+      await this.postulationRepository.findByIdWithState(postulationId);
+    if (!postulation) {
+      throw new RpcException({
+        status: 404,
+        message: `Postulation with id ${postulationId} not found`,
+      });
+    }
+
+    // Validar que la postulación tiene un estado válido
+    if (!postulation.status) {
+      throw new RpcException({
+        status: 500,
+        message: `Postulation with id ${postulationId} has no valid status. StatusId: ${postulation.statusId}`,
+      });
+    }
+
+    // Crear el contexto de estado para validar la transición
+    const postulationContext = new PostulationContext(postulation);
+
+    // Validar que la postulación puede ser cancelada según su estado actual
+    if (!postulationContext.canBeCancelled()) {
+      throw new RpcException({
+        status: 400,
+        message: `Postulation with id ${postulationId} cannot be cancelled in its current state: ${postulationContext.getDisplayName()}`,
+      });
+    }
+
+    // Validar que puede transicionar al estado cancelado
+    if (!postulationContext.canTransitionTo(PostulationStatusCode.CANCELLED)) {
+      throw new RpcException({
+        status: 400,
+        message: `Postulation with id ${postulationId} cannot transition to cancelled state from current state: ${postulationContext.getDisplayName()}`,
+      });
+    }
+
     const cancelledStatus =
       await this.postulationStatusService.getCancelledStatus();
 

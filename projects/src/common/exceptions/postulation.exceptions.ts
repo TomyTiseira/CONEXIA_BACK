@@ -134,3 +134,21 @@ export class ProjectAccessForbiddenException extends RpcException {
     });
   }
 }
+
+export class PostulationNotActiveException extends RpcException {
+  constructor(postulationId: number) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} is not active and cannot be cancelled`,
+    });
+  }
+}
+
+export class UserNotPostulationOwnerException extends RpcException {
+  constructor(postulationId: number, userId: number) {
+    super({
+      status: 403,
+      message: `User ${userId} is not authorized to cancel postulation ${postulationId}. Only the postulation owner can cancel it.`,
+    });
+  }
+}

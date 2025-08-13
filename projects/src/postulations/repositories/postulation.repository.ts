@@ -23,6 +23,13 @@ export class PostulationRepository {
     });
   }
 
+  async findByIdWithState(id: number): Promise<Postulation | null> {
+    return await this.postulationRepository.findOne({
+      where: { id },
+      relations: ['project', 'status'],
+    });
+  }
+
   async findByProjectAndUser(
     projectId: number,
     userId: number,

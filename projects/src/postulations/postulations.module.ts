@@ -14,6 +14,7 @@ import { PostulationTransformService } from './services/postulation-transform.se
 import { PostulationValidationService } from './services/postulation-validation.service';
 import { PostulationsService } from './services/postulations.service';
 import { ApprovePostulationUseCase } from './services/use-cases/approve-postulation.use-case';
+import { CancelPostulationUseCase } from './services/use-cases/cancel-postulation.use-case';
 import { CreatePostulationUseCase } from './services/use-cases/create-postulation.use-case';
 import { GetPostulationsUseCase } from './services/use-cases/get-postulations.use-case';
 
@@ -26,6 +27,7 @@ import { GetPostulationsUseCase } from './services/use-cases/get-postulations.us
     PostulationRepository,
     PostulationStatusRepository,
     ApprovePostulationUseCase,
+    CancelPostulationUseCase,
     PostulationStatusService,
     PostulationValidationService,
     PostulationOperationsService,

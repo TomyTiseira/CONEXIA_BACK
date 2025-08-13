@@ -27,6 +27,7 @@ import {
 } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { ApprovePostulationDto } from './dto/approve-postulation.dto';
+import { CancelPostulationDto } from './dto/cancel-postulation.dto';
 import { CreatePostulationDto } from './dto/create-postulation.dto';
 import { GetPostulationsDto } from './dto/get-postulations.dto';
 
@@ -186,6 +187,25 @@ export class PostulationsController {
       .pipe(
         catchError((error) => {
           console.error('Error in getPostulations:', error);
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Post('cancel')
+  cancelPostulation(
+    @User() user: AuthenticatedUser,
+    @Body() dto: CancelPostulationDto,
+  ) {
+    return this.client
+      .send('cancelPostulation', {
+        currentUserId: user.id,
+        postulationId: dto.postulationId,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error in cancelPostulation:', error);
           throw new RpcException(error);
         }),
       );
