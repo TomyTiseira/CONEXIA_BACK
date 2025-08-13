@@ -16,4 +16,5 @@ export interface ProjectDetailResponse {
   startDate?: Date;
   endDate?: Date;
   isOwner: boolean;
+  isApplied: boolean; // Indica si el usuario actual está postulado al proyecto
 }
