@@ -15,6 +15,7 @@ export class PostulationTransformService {
         code: postulation.status.code,
       },
       cvUrl: postulation.cvUrl,
+      createdAt: postulation.createdAt,
     };
   }
 

@@ -10,4 +10,5 @@ export class PostulationResponseDto {
   projectId: number;
   status: PostulationStatusResponseDto;
   cvUrl: string;
+  createdAt: Date;
 }
