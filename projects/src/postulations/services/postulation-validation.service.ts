@@ -9,10 +9,10 @@ import {
   ProjectMaxCollaboratorsReachedException,
   ProjectNotActiveException,
   ProjectOwnerCannotApplyException,
-  ProjectOwnerCannotApproveException,
   UserAlreadyAppliedException,
   UserNotActiveException,
   UserNotPostulationOwnerException,
+  UserNotProjectOwnerException,
 } from '../../common/exceptions/postulation.exceptions';
 import { Project } from '../../projects/entities/project.entity';
 import { ProjectRepository } from '../../projects/repositories/project.repository';
@@ -90,7 +90,7 @@ export class PostulationValidationService {
    */
   validateUserIsProjectOwner(project: Project, userId: number): void {
     if (project.userId !== userId) {
-      throw new ProjectOwnerCannotApproveException(project.id, userId);
+      throw new UserNotProjectOwnerException(project.id, userId);
     }
   }
 

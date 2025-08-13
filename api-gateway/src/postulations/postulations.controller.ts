@@ -29,7 +29,9 @@ import { NATS_SERVICE } from '../config';
 import { ApprovePostulationDto } from './dto/approve-postulation.dto';
 import { CancelPostulationDto } from './dto/cancel-postulation.dto';
 import { CreatePostulationDto } from './dto/create-postulation.dto';
+import { GetPostulationsByUserDto } from './dto/get-postulations-by-user.dto';
 import { GetPostulationsDto } from './dto/get-postulations.dto';
+import { RejectPostulationDto } from './dto/reject-postulation.dto';
 
 @Controller('postulations')
 export class PostulationsController {
@@ -206,6 +208,45 @@ export class PostulationsController {
       .pipe(
         catchError((error) => {
           console.error('Error in cancelPostulation:', error);
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Post('reject')
+  rejectPostulation(
+    @User() user: AuthenticatedUser,
+    @Body() dto: RejectPostulationDto,
+  ) {
+    return this.client
+      .send('rejectPostulation', {
+        currentUserId: user.id,
+        postulationId: dto.postulationId,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error in rejectPostulation:', error);
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Get('me')
+  getPostulationsByUser(
+    @Query() query: GetPostulationsByUserDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getPostulationsByUser', {
+        userId: user.id,
+        page: query.page,
+        limit: query.limit,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error in getPostulationsByUser:', error);
           throw new RpcException(error);
         }),
       );

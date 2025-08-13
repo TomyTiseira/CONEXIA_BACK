@@ -152,3 +152,66 @@ export class UserNotPostulationOwnerException extends RpcException {
     });
   }
 }
+
+export class PostulationCannotBeRejectedException extends RpcException {
+  constructor(postulationId: number, currentState: string) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} cannot be rejected in its current state: ${currentState}`,
+    });
+  }
+}
+
+export class PostulationCannotTransitionToRejectedException extends RpcException {
+  constructor(postulationId: number, currentState: string) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} cannot transition to rejected state from current state: ${currentState}`,
+    });
+  }
+}
+
+export class PostulationCannotBeCancelledException extends RpcException {
+  constructor(postulationId: number, currentState: string) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} cannot be cancelled in its current state: ${currentState}`,
+    });
+  }
+}
+
+export class PostulationCannotTransitionToCancelledException extends RpcException {
+  constructor(postulationId: number, currentState: string) {
+    super({
+      status: 400,
+      message: `Postulation with id ${postulationId} cannot transition to cancelled state from current state: ${currentState}`,
+    });
+  }
+}
+
+export class PostulationStatusUpdateFailedException extends RpcException {
+  constructor(postulationId: number) {
+    super({
+      status: 500,
+      message: `Failed to update postulation ${postulationId} status`,
+    });
+  }
+}
+
+export class PostulationHasNoValidStatusException extends RpcException {
+  constructor(postulationId: number, statusId: number) {
+    super({
+      status: 500,
+      message: `Postulation with id ${postulationId} has no valid status. StatusId: ${statusId}`,
+    });
+  }
+}
+
+export class UserNotProjectOwnerException extends RpcException {
+  constructor(projectId: number, userId: number) {
+    super({
+      status: 403,
+      message: `User ${userId} is not the owner of project ${projectId}`,
+    });
+  }
+}

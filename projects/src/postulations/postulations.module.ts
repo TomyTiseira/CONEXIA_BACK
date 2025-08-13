@@ -16,18 +16,22 @@ import { PostulationsService } from './services/postulations.service';
 import { ApprovePostulationUseCase } from './services/use-cases/approve-postulation.use-case';
 import { CancelPostulationUseCase } from './services/use-cases/cancel-postulation.use-case';
 import { CreatePostulationUseCase } from './services/use-cases/create-postulation.use-case';
+import { GetPostulationsByUserUseCase } from './services/use-cases/get-postulations-by-user.use-case';
 import { GetPostulationsUseCase } from './services/use-cases/get-postulations.use-case';
+import { RejectPostulationUseCase } from './services/use-cases/reject-postulation.use-case';
 
 @Module({
   controllers: [PostulationsController],
   providers: [
     PostulationsService,
     CreatePostulationUseCase,
+    GetPostulationsByUserUseCase,
     GetPostulationsUseCase,
     PostulationRepository,
     PostulationStatusRepository,
     ApprovePostulationUseCase,
     CancelPostulationUseCase,
+    RejectPostulationUseCase,
     PostulationStatusService,
     PostulationValidationService,
     PostulationOperationsService,
