@@ -9,6 +9,7 @@ import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
+import { GetRoleByNameUseCase } from './use-cases/get-role-by-name.use-cases';
 import { GetUserWithProfileUseCase } from './use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
@@ -29,6 +30,7 @@ export class UsersService {
     private readonly getUserWithProfileUseCase: GetUserWithProfileUseCase,
     private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
+    private readonly getRoleByNameUseCase: GetRoleByNameUseCase,
   ) {}
 
   ping() {
@@ -63,6 +65,10 @@ export class UsersService {
 
   async getRoleById(roleId: string) {
     return this.getRoleByIdUseCase.execute(roleId);
+  }
+
+  async getRoleByName(roleName: string) {
+    return this.getRoleByNameUseCase.execute(roleName);
   }
 
   async findUserById(userId: number): Promise<User | null> {

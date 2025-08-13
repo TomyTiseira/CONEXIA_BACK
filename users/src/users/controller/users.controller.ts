@@ -96,6 +96,16 @@ export class UsersController {
     };
   }
 
+  @MessagePattern('getRoleByName')
+  async getRoleByName(@Payload() name: string) {
+    const role = await this.usersService.getRoleByName(name);
+    return {
+      id: role.id,
+      name: role.name,
+      message: 'Role retrieved successfully.',
+    };
+  }
+
   @MessagePattern('findUserById')
   async findUserById(@Payload() data: { id: number }) {
     const user = await this.usersService.findUserById(data.id);

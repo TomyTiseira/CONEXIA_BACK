@@ -112,4 +112,25 @@ export class UsersClientService {
       return null;
     }
   }
+
+  async getUserRole(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserById', { id: userId }),
+      );
+
+      if (!user || !user.roleId) {
+        return null;
+      }
+
+      const role = await firstValueFrom(
+        this.client.send('getRoleById', user.roleId.toString()),
+      );
+
+      return role;
+    } catch (error) {
+      console.error('Error getting user role:', error);
+      return null;
+    }
+  }
 }

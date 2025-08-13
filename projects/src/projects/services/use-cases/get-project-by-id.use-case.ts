@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   ProjectNotFoundException,
   UserNotFoundException,
@@ -9,6 +9,7 @@ import {
   getProjectSkillNames,
   transformProjectToDetailResponse,
 } from '../../../common/utils/project-detail-transform.utils';
+import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { GetProjectByIdDto } from '../../dtos/get-project-by-id.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
 import { ProjectDetailResponse } from '../../response/project-detail-response';
@@ -19,6 +20,8 @@ export class GetProjectByIdUseCase {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly usersClientService: UsersClientService,
+    @Inject(forwardRef(() => PostulationRepository))
+    private readonly postulationRepository: PostulationRepository,
   ) {}
 
   async execute(data: GetProjectByIdDto): Promise<ProjectDetailResponse> {
@@ -56,6 +59,15 @@ export class GetProjectByIdUseCase {
     const skillsMap = createSkillsMap(skills);
     const skillNames = getProjectSkillNames(project, skillsMap);
 
+    // Verificar si el usuario actual está postulado al proyecto
+    let isApplied = false;
+    if (data.currentUserId && project.userId !== data.currentUserId) {
+      isApplied = await this.postulationRepository.existsByProjectAndUser(
+        project.id,
+        data.currentUserId,
+      );
+    }
+
     // Construir la respuesta usando la función utilitaria
     const response = transformProjectToDetailResponse(
       project,
@@ -63,6 +75,7 @@ export class GetProjectByIdUseCase {
       skillNames,
       data.currentUserId,
       locationName,
+      isApplied,
     );
 
     return response;
