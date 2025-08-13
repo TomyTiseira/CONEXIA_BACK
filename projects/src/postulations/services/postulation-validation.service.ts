@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersClientService } from 'src/common';
+import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 import {
   PostulationNotFoundException,
   PostulationNotPendingException,
@@ -46,9 +47,9 @@ export class PostulationValidationService {
    * @returns El proyecto si existe y está activo
    */
   async validateProjectExistsAndActive(projectId: number): Promise<Project> {
-    const project = await this.projectRepository.findById(projectId);
+    const project = await this.projectRepository.findById(projectId, true);
     if (!project) {
-      throw new PostulationNotFoundException(projectId);
+      throw new ProjectNotFoundException(projectId);
     }
 
     if (!project.isActive || project.deletedAt) {
