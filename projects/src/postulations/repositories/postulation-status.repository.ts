@@ -11,6 +11,12 @@ export class PostulationStatusRepository {
     private readonly postulationStatusRepository: Repository<PostulationStatus>,
   ) {}
 
+  async findAll(): Promise<PostulationStatus[]> {
+    return await this.postulationStatusRepository.find({
+      order: { displayOrder: 'ASC' },
+    });
+  }
+
   async findByCode(
     code: PostulationStatusCode,
   ): Promise<PostulationStatus | null> {

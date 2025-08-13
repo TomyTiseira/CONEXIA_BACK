@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostulationsModule } from '../postulations/postulations.module';
 import { SharedModule } from '../shared/shared.module';
@@ -27,9 +27,9 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
   ],
   imports: [
     TypeOrmModule.forFeature([Category, CollaborationType, ContractType]),
-    PostulationsModule,
+    forwardRef(() => PostulationsModule),
     SharedModule,
   ],
-  exports: [],
+  exports: [ProjectsService],
 })
 export class ProjectsModule {}

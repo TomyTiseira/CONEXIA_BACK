@@ -26,16 +26,17 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
-
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // Servir archivos estáticos ANTES del prefijo global
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // Servir archivos de CV
-  app.useStaticAssets(join(__dirname, '..', 'uploads', 'cv'), {
+  // Servir archivos de CV específicamente
+  app.useStaticAssets(join(process.cwd(), 'uploads', 'cv'), {
     prefix: '/uploads/cv/',
   });
+
+  app.setGlobalPrefix('api');
 
   app.use(cookieParser());
 

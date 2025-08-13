@@ -125,3 +125,12 @@ export class UserNotActiveException extends RpcException {
     });
   }
 }
+
+export class ProjectAccessForbiddenException extends RpcException {
+  constructor(projectId: number, userId: number) {
+    super({
+      status: 403,
+      message: `User ${userId} is not authorized to view postulations for project ${projectId}. Only the project owner can access this resource.`,
+    });
+  }
+}

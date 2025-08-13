@@ -3,6 +3,7 @@ import { PostulationStatusNotFoundException } from '../../common/exceptions/post
 import { PostulationStatus } from '../entities/postulation-status.entity';
 import { PostulationStatusCode } from '../enums/postulation-status.enum';
 import { PostulationStatusRepository } from '../repositories/postulation-status.repository';
+import { PostulationStatusResponseDto } from '../response/postulation-status-response.dto';
 
 @Injectable()
 export class PostulationStatusService {
@@ -75,5 +76,40 @@ export class PostulationStatusService {
    */
   async getAllActiveStatuses(): Promise<PostulationStatus[]> {
     return this.postulationStatusRepository.findAllActive();
+  }
+
+  /**
+   * Obtiene todos los estados de postulación
+   * @returns Lista de estados de postulación
+   */
+  async getAllStatuses(): Promise<PostulationStatusResponseDto[]> {
+    const statuses: PostulationStatus[] =
+      await this.postulationStatusRepository.findAll();
+
+    return statuses.map((status) => ({
+      id: status.id,
+      name: status.name,
+      code: status.code,
+    }));
+  }
+
+  /**
+   * Obtiene un estado de postulación por su ID
+   * @param id - ID del estado
+   * @returns Estado de postulación o null si no existe
+   */
+  async findById(id: number): Promise<PostulationStatus | null> {
+    return await this.postulationStatusRepository.findById(id);
+  }
+
+  /**
+   * Obtiene un estado de postulación por su código
+   * @param code - Código del estado
+   * @returns Estado de postulación o null si no existe
+   */
+  async findByCode(
+    code: PostulationStatusCode,
+  ): Promise<PostulationStatus | null> {
+    return await this.postulationStatusRepository.findByCode(code);
   }
 }
