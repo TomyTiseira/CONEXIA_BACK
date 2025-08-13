@@ -46,11 +46,6 @@ export class RejectPostulationUseCase {
       rejectPostulationDto.currentUserId,
     );
 
-    // Validar que la postulación está en estado activo (pendiente)
-    await this.postulationValidationService.validatePostulationIsPending(
-      postulation,
-    );
-
     // Validar que el postulante esté activo
     await this.postulationValidationService.validateUserIsActive(
       postulation.userId,
