@@ -18,6 +18,19 @@ export class MockEmailService extends EmailService {
     });
   }
 
+  async sendPostulationRejectedEmail(
+    email: string,
+    userName: string,
+    projectTitle: string,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: '📝 Tu postulación fue revisada - Conexia',
+      html: this.generatePostulationRejectedEmailHTML(userName, projectTitle),
+      text: this.generatePostulationRejectedEmailText(userName, projectTitle),
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     this.logger.log(`[MOCK EMAIL] Email would be sent to ${options.to}`);
     this.logger.log(`[MOCK EMAIL] Subject: ${options.subject}`);

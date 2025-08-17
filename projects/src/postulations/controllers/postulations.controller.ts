@@ -1,7 +1,10 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { CancelPostulationDto } from '../dtos/cancel-postulation.dto';
 import { CreatePostulationDto } from '../dtos/create-postulation.dto';
+import { GetPostulationsByUserDto } from '../dtos/get-postulations-by-user.dto';
 import { GetPostulationsDto } from '../dtos/get-postulations.dto';
+import { RejectPostulationDto } from '../dtos/reject-postulation.dto';
 import { PostulationStatusService } from '../services/postulation-status.service';
 import { PostulationsService } from '../services/postulations.service';
 
@@ -37,6 +40,46 @@ export class PostulationsController {
     @Payload() data: { postulationId: number; currentUserId: number },
   ) {
     return await this.postulationsService.approvePostulation(data);
+  }
+
+  @MessagePattern('cancelPostulation')
+  async cancelPostulation(
+    @Payload() data: { postulationId: number; currentUserId: number },
+  ) {
+    const cancelPostulationDto: CancelPostulationDto = {
+      postulationId: data.postulationId,
+      currentUserId: data.currentUserId,
+    };
+    return await this.postulationsService.cancelPostulation(
+      cancelPostulationDto,
+    );
+  }
+
+  @MessagePattern('rejectPostulation')
+  async rejectPostulation(
+    @Payload() data: { postulationId: number; currentUserId: number },
+  ) {
+    const rejectPostulationDto: RejectPostulationDto = {
+      postulationId: data.postulationId,
+      currentUserId: data.currentUserId,
+    };
+    return await this.postulationsService.rejectPostulation(
+      rejectPostulationDto,
+    );
+  }
+
+  @MessagePattern('getPostulationsByUser')
+  async getPostulationsByUser(
+    @Payload() data: { userId: number; page?: number; limit?: number },
+  ) {
+    const getPostulationsByUserDto: GetPostulationsByUserDto = {
+      userId: data.userId,
+      page: data.page || 1,
+      limit: data.limit || 10,
+    };
+    return await this.postulationsService.getPostulationsByUser(
+      getPostulationsByUserDto,
+    );
   }
 
   @MessagePattern('getPostulationsForProject')

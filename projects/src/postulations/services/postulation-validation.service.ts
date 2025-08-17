@@ -2,20 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { UsersClientService } from 'src/common';
 import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 import {
+  PostulationNotActiveException,
   PostulationNotFoundException,
   PostulationNotPendingException,
   ProjectEndedException,
   ProjectMaxCollaboratorsReachedException,
   ProjectNotActiveException,
   ProjectOwnerCannotApplyException,
-  ProjectOwnerCannotApproveException,
   UserAlreadyAppliedException,
   UserNotActiveException,
+  UserNotPostulationOwnerException,
+  UserNotProjectOwnerException,
 } from '../../common/exceptions/postulation.exceptions';
 import { Project } from '../../projects/entities/project.entity';
 import { ProjectRepository } from '../../projects/repositories/project.repository';
 import { Postulation } from '../entities/postulation.entity';
 import { PostulationRepository } from '../repositories/postulation.repository';
+import { PostulationContext } from '../states/postulation-context';
 import { PostulationStatusService } from './postulation-status.service';
 
 @Injectable()
@@ -87,7 +90,7 @@ export class PostulationValidationService {
    */
   validateUserIsProjectOwner(project: Project, userId: number): void {
     if (project.userId !== userId) {
-      throw new ProjectOwnerCannotApproveException(project.id, userId);
+      throw new UserNotProjectOwnerException(project.id, userId);
     }
   }
 
@@ -176,6 +179,36 @@ export class PostulationValidationService {
     // Verifica que el usuario exista y que NO esté eliminado
     if (!user || user.deletedAt) {
       throw new UserNotActiveException(userId);
+    }
+  }
+
+  /**
+   * Valida que una postulación esté en estado activo
+   * @param postulación a validar
+   */
+  validatePostulationIsActive(postulation: Postulation): void {
+    if (!postulation.status) {
+      throw new PostulationNotActiveException(postulation.id);
+    }
+
+    const postulationContext = new PostulationContext(postulation);
+
+    if (!postulationContext.canBeCancelled()) {
+      throw new PostulationNotActiveException(postulation.id);
+    }
+  }
+
+  /**
+   * Valida que un usuario sea el dueño de la postulación
+   * @param postulation - Postulación a validar
+   * @param userId - ID del usuario
+   */
+  validateUserIsPostulationOwner(
+    postulation: Postulation,
+    userId: number,
+  ): void {
+    if (postulation.userId !== userId) {
+      throw new UserNotPostulationOwnerException(postulation.id, userId);
     }
   }
 }
