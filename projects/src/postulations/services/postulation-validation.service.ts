@@ -96,6 +96,7 @@ export class PostulationValidationService {
 
   /**
    * Valida que un usuario no esté ya postulado a un proyecto
+   * Solo considera postulaciones activas, permitiendo re-postularse si la anterior fue cancelada
    * @param projectId - ID del proyecto
    * @param userId - ID del usuario
    */
@@ -107,7 +108,14 @@ export class PostulationValidationService {
       await this.postulationRepository.findByProjectAndUser(projectId, userId);
 
     if (existingPostulation) {
-      throw new UserAlreadyAppliedException(projectId, userId);
+      // Solo bloquear si la postulación está en estado activo, aceptada o rechazada
+      // Permitir nueva postulación si la anterior fue cancelada
+      const cancelledStatus =
+        await this.postulationStatusService.getCancelledStatus();
+
+      if (existingPostulation.statusId !== cancelledStatus.id) {
+        throw new UserAlreadyAppliedException(projectId, userId);
+      }
     }
   }
 

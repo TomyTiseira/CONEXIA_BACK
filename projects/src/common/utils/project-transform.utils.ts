@@ -59,6 +59,7 @@ export function transformProjectsWithOwners(
       },
       isOwner: currentUserId === project.userId,
       skills: projectSkills,
+      endDate: project.endDate ? project.endDate.toISOString() : undefined,
     };
   });
 }
