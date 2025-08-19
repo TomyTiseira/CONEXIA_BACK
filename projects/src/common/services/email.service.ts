@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { envs } from 'src/config';
 
 export interface EmailOptions {
   to: string;
@@ -15,6 +16,7 @@ export abstract class EmailService {
   abstract sendPostulationApprovedEmail(
     email: string,
     userName: string,
+    projectId: number,
     projectTitle: string,
   ): Promise<void>;
 
@@ -38,7 +40,9 @@ export abstract class EmailService {
   protected generatePostulationApprovedEmailHTML(
     userName: string,
     projectTitle: string,
+    projectId: number,
   ): string {
+    const url = `${envs.frontendUrl}/project/${projectId}`;
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -61,7 +65,7 @@ export abstract class EmailService {
             ¡Felicidades por esta nueva oportunidad! Estamos seguros de que será una experiencia muy enriquecedora.
           </p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'https://conexia.com'}" 
+            <a href="${url}" 
                style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
               🚀 Ver el proyecto
             </a>
@@ -113,6 +117,8 @@ export abstract class EmailService {
     userName: string,
     projectTitle: string,
   ): string {
+    // Para el email de rechazo, redirigimos a la búsqueda de proyectos
+    const url = `${envs.frontendUrl}/project/search`;
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -135,7 +141,7 @@ export abstract class EmailService {
             Te animamos a seguir explorando otras oportunidades en nuestra plataforma. ¡Hay muchos proyectos interesantes esperando por colaboradores como tú!
           </p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'https://conexia.com'}" 
+            <a href="${url}" 
                style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
               🔍 Explorar más proyectos
             </a>

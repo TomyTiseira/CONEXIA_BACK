@@ -8,12 +8,17 @@ export class MockEmailService extends EmailService {
   async sendPostulationApprovedEmail(
     email: string,
     userName: string,
+    projectId: number,
     projectTitle: string,
   ): Promise<void> {
     await this.sendEmail({
       to: email,
       subject: '🎉 ¡Tu postulación fue aprobada! - Conexia',
-      html: this.generatePostulationApprovedEmailHTML(userName, projectTitle),
+      html: this.generatePostulationApprovedEmailHTML(
+        userName,
+        projectTitle,
+        projectId,
+      ),
       text: this.generatePostulationApprovedEmailText(userName, projectTitle),
     });
   }
