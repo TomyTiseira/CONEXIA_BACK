@@ -25,4 +25,6 @@ export class ProjectResponseDto {
     name?: string;
   }[];
   endDate?: string;
+  deletedAt?: string;
+  isActive: boolean;
 }

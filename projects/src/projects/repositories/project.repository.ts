@@ -37,16 +37,23 @@ export class ProjectRepository {
     return queryBuilder.getOne();
   }
 
-  async findByIdWithRelations(id: number): Promise<Project | null> {
-    return this.ormRepository.findOne({
-      where: { id },
-      relations: [
-        'category',
-        'collaborationType',
-        'contractType',
-        'projectSkills',
-      ],
-    });
+  async findByIdWithRelations(
+    id: number,
+    includeDeleted: boolean = false,
+  ): Promise<Project | null> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.id = :id', { id });
+
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
+    return queryBuilder.getOne();
   }
 
   async findAll(): Promise<Project[]> {
