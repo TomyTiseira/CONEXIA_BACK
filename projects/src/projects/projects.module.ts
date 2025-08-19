@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostulationsModule } from '../postulations/postulations.module';
+import { ReportsModule } from '../reports/reports.module';
 import { SharedModule } from '../shared/shared.module';
 import { ProjectsController } from './controllers/projects.controller';
 import { Category } from './entities/category.entity';
@@ -28,6 +29,7 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
   imports: [
     TypeOrmModule.forFeature([Category, CollaborationType, ContractType]),
     forwardRef(() => PostulationsModule),
+    ReportsModule,
     SharedModule,
   ],
   exports: [ProjectsService],

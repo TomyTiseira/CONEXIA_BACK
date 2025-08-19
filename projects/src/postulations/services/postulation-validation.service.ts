@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UsersClientService } from 'src/common';
-import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 import {
   PostulationNotFoundException,
   PostulationNotPendingException,
@@ -12,6 +10,8 @@ import {
   UserAlreadyAppliedException,
   UserNotActiveException,
 } from '../../common/exceptions/postulation.exceptions';
+import { ProjectNotFoundException } from '../../common/exceptions/project.exceptions';
+import { UsersClientService } from '../../common/services/users-client.service';
 import { Project } from '../../projects/entities/project.entity';
 import { ProjectRepository } from '../../projects/repositories/project.repository';
 import { Postulation } from '../entities/postulation.entity';

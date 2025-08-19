@@ -13,6 +13,8 @@ import { ContractType } from './projects/entities/contract-type.entity';
 import { ProjectSkill } from './projects/entities/project-skill.entity';
 import { Project } from './projects/entities/project.entity';
 import { ProjectsModule } from './projects/projects.module';
+import { ReportsModule } from './reports';
+import { Report } from './reports/entities/report.entity';
 
 @Module({
   imports: [
@@ -31,11 +33,13 @@ import { ProjectsModule } from './projects/projects.module';
         ContractType,
         Postulation,
         PostulationStatus,
+        Report,
       ],
       synchronize: true,
     }),
     CommonModule,
     PostulationsModule,
+    ReportsModule,
     ProjectsModule,
   ],
   controllers: [],
