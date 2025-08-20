@@ -6,10 +6,14 @@ import { GetProjectsByUserDto } from '../dtos/get-projects-by-user.dto';
 import { GetProjectsDto } from '../dtos/get-projects.dto';
 import { PublishProjectDto } from '../dtos/publish-project.dto';
 import { ProjectsService } from '../services/projects.service';
+import { SkillsService } from '../services/skills.service';
 
 @Controller()
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly skillsService: SkillsService,
+  ) {}
 
   @MessagePattern('ping')
   ping() {
@@ -82,5 +86,15 @@ export class ProjectsController {
       console.error(error);
       throw error;
     }
+  }
+
+  @MessagePattern('getSkillsByRubro')
+  async getSkillsByRubro(@Payload() data: { rubroId: number }) {
+    return await this.skillsService.getSkillsByRubro(data.rubroId);
+  }
+
+  @MessagePattern('getRubros')
+  async getRubros() {
+    return await this.skillsService.getRubros();
   }
 }

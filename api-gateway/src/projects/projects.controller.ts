@@ -183,6 +183,26 @@ export class ProjectsController {
     );
   }
 
+  @Get('skills/:rubroId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getSkillsByRubro(@Param('rubroId') rubroId: number) {
+    return this.client.send('getSkillsByRubro', { rubroId }).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('rubros')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getRubros() {
+    return this.client.send('getRubros', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
   @Get('profile/:userId')
   @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
   getProjectsByUser(
