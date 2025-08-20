@@ -9,7 +9,6 @@ import { DocumentType } from './shared/entities/document-type.entity';
 import { Locality } from './shared/entities/locality.entity';
 import { ProfileSkill } from './shared/entities/profile-skill.entity';
 import { Role } from './shared/entities/role.entity';
-import { Skill } from './shared/entities/skill.entity';
 import { User } from './shared/entities/user.entity';
 import { NatsModule } from './transports/nats.module';
 import { UsersModule } from './users/users.module';
@@ -23,15 +22,7 @@ import { UsersModule } from './users/users.module';
       username: envs.dbUsername,
       password: envs.dbPassword,
       database: envs.dbDatabase,
-      entities: [
-        User,
-        Role,
-        DocumentType,
-        Profile,
-        Skill,
-        ProfileSkill,
-        Locality,
-      ],
+      entities: [User, Role, DocumentType, Profile, ProfileSkill, Locality],
       synchronize: true,
     }),
     UsersModule,

@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Profile } from '../../profile/entities/profile.entity';
-import { Skill } from './skill.entity';
 
 @Entity('profile_skills')
 export class ProfileSkill {
@@ -23,10 +22,6 @@ export class ProfileSkill {
   @ManyToOne(() => Profile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
-
-  @ManyToOne(() => Skill, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'skillId' })
-  skill: Skill;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

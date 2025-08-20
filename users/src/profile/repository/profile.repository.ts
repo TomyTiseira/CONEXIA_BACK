@@ -42,20 +42,20 @@ export class ProfileRepository {
         certifications: true,
       },
       where: { userId, deletedAt: IsNull() },
-      relations: ['profileSkills', 'profileSkills.skill'],
+      relations: ['profileSkills'],
     });
   }
 
   async findById(id: number): Promise<Profile | null> {
     return this.ormRepository.findOne({
       where: { id },
-      relations: ['profileSkills', 'profileSkills.skill'],
+      relations: ['profileSkills'],
     });
   }
 
   async findAll(): Promise<Profile[]> {
     return this.ormRepository.find({
-      relations: ['profileSkills', 'profileSkills.skill'],
+      relations: ['profileSkills'],
     });
   }
 
@@ -66,7 +66,7 @@ export class ProfileRepository {
     return this.ormRepository.findOne({
       where: { documentTypeId, documentNumber },
       withDeleted: true,
-      relations: ['profileSkills', 'profileSkills.skill'],
+      relations: ['profileSkills'],
     });
   }
 }

@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../app.module';
-import { SkillRepository } from '../shared/repository/skill.repository';
+import { AppModule } from '../src/app.module';
+import { SkillService } from '../src/shared/services/skill.service';
 
 async function seedSkills() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  const skillRepo = app.get(SkillRepository);
+  const skillService = app.get(SkillService);
 
   const skills = [
     { name: 'JavaScript', description: 'Lenguaje de programación web' },
@@ -61,18 +61,27 @@ async function seedSkills() {
     { name: 'Ruby on Rails', description: 'Framework web de Ruby' },
   ];
 
-  console.log('🌱 Iniciando seed de habilidades...');
+  console.log(
+    '🌱 Iniciando seed de habilidades en el microservicio de proyectos...',
+  );
+
+  let createdCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
 
   for (const skillData of skills) {
     try {
-      const existingSkill = await skillRepo.findByName(skillData.name);
+      const existingSkill = await skillService.findByName(skillData.name);
       if (!existingSkill) {
-        await skillRepo.createSkill(skillData.name, skillData.description);
+        await skillService.create(skillData.name, skillData.description);
+        createdCount++;
         console.log(`✅ Habilidad creada: ${skillData.name}`);
       } else {
+        skippedCount++;
         console.log(`⏭️  Habilidad ya existe: ${skillData.name}`);
       }
     } catch (error) {
+      errorCount++;
       console.error(
         `❌ Error al crear habilidad ${skillData.name}:`,
         error.message,
@@ -80,7 +89,13 @@ async function seedSkills() {
     }
   }
 
+  console.log('\n📋 Resumen del seed:');
+  console.log(`✅ Habilidades creadas: ${createdCount}`);
+  console.log(`⏭️  Habilidades saltadas: ${skippedCount}`);
+  console.log(`❌ Errores: ${errorCount}`);
+  console.log(`📊 Total procesadas: ${skills.length}`);
   console.log('🎉 Seed de habilidades completado!');
+
   await app.close();
 }
 

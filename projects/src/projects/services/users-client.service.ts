@@ -2,9 +2,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { USERS_SERVICE } from 'src/config';
+import { SkillService } from '../../shared/services/skill.service';
+
 @Injectable()
 export class UsersClientService {
-  constructor(@Inject('USERS_SERVICE') private readonly client: ClientProxy) {}
+  constructor(
+    @Inject(USERS_SERVICE) private readonly client: ClientProxy,
+    private readonly skillService: SkillService,
+  ) {}
 
   async validateUserExists(userId: number): Promise<boolean> {
     try {
@@ -21,25 +27,8 @@ export class UsersClientService {
   async validateSkillsExist(
     skillIds: number[],
   ): Promise<{ valid: boolean; invalidIds: number[] }> {
-    try {
-      const skills = await firstValueFrom(
-        this.client.send('findSkillsByIds', { ids: skillIds }),
-      );
-
-      const foundSkillIds = skills.map((skill: any) => skill.id);
-      const invalidIds = skillIds.filter((id) => !foundSkillIds.includes(id));
-
-      return {
-        valid: invalidIds.length === 0,
-        invalidIds,
-      };
-    } catch (error) {
-      console.error('Error validating skills existence:', error);
-      return {
-        valid: false,
-        invalidIds: skillIds,
-      };
-    }
+    // Ahora usamos el servicio local de habilidades
+    return this.skillService.validateSkillsExist(skillIds);
   }
 
   async validateLocalityExists(localityId: number): Promise<boolean> {
@@ -78,15 +67,8 @@ export class UsersClientService {
   }
 
   async getSkillsByIds(skillIds: number[]): Promise<any[]> {
-    try {
-      const skills = await firstValueFrom(
-        this.client.send('findSkillsByIds', { ids: skillIds }),
-      );
-      return skills || [];
-    } catch (error) {
-      console.error('Error getting skills by IDs:', error);
-      return [];
-    }
+    // Ahora usamos el servicio local de habilidades
+    return this.skillService.findByIds(skillIds);
   }
 
   async getLocalityById(localityId: number): Promise<any> {
