@@ -13,6 +13,8 @@ import { ContractType } from './projects/entities/contract-type.entity';
 import { ProjectSkill } from './projects/entities/project-skill.entity';
 import { Project } from './projects/entities/project.entity';
 import { ProjectsModule } from './projects/projects.module';
+import { Rubro } from './shared/entities/rubro.entity';
+import { Skill } from './shared/entities/skill.entity';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { ProjectsModule } from './projects/projects.module';
         ContractType,
         Postulation,
         PostulationStatus,
+        Rubro,
+        Skill,
       ],
       synchronize: true,
     }),
