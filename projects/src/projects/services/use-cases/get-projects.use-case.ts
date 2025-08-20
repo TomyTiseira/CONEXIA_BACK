@@ -19,7 +19,7 @@ export class GetProjectsUseCase {
       limit: getProjectsDto.limit || 10,
     };
 
-    const [projects, total] =
+    const [projects] =
       await this.projectRepository.findProjectsWithFilters(params);
 
     // Obtener información de los dueños de los proyectos
@@ -55,8 +55,12 @@ export class GetProjectsUseCase {
       skillsMap,
     );
 
-    // Calcular información de paginación usando la función común
-    const pagination = calculatePagination(total, params);
+    // Filtrar proyectos donde el usuario NO es dueño
+    const notOwnerProjects = transformedProjects.filter((p) => !p.isOwner);
+    const totalNotOwner = notOwnerProjects.length;
+
+    // Calcular información de paginación usando solo los proyectos donde no es dueño
+    const pagination = calculatePagination(totalNotOwner, params);
 
     return {
       projects: transformedProjects,
