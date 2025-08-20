@@ -183,7 +183,7 @@ export class ProjectsController {
     );
   }
 
-  @Get('skills/:rubroId')
+  @Get('skills/rubro/:rubroId')
   @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
   getSkillsByRubro(@Param('rubroId') rubroId: number) {
     return this.client.send('getSkillsByRubro', { rubroId }).pipe(
