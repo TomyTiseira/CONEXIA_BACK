@@ -22,9 +22,8 @@
     "seed:collaboration-types": "ts-node -r tsconfig-paths/register src/scripts/seed-collaboration-types.ts",
     "seed:contract-types": "ts-node -r tsconfig-paths/register src/scripts/seed-contract-types.ts",
     "seed:postulation-statuses": "ts-node -r tsconfig-paths/register src/scripts/seed-postulation-statuses.ts",
-    "seed:rubros": "ts-node scripts/seed-rubros.ts",
-    "seed:skills": "ts-node scripts/seed-skills.ts",
-    "seed:all": "npm run seed:rubros && npm run seed:skills"
+    "seed:rubros": "ts-node -r tsconfig-paths/register src/scripts/seed-rubros.ts",
+    "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

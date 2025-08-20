@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
-import { Rubro } from '../src/shared/entities/rubro.entity';
-import { Skill } from '../src/shared/entities/skill.entity';
+import { Rubro } from '../shared/entities/rubro.entity';
+import { Skill } from '../shared/entities/skill.entity';
 
 dotenv.config();
 

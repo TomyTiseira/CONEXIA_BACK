@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
+import { Rubro } from 'src/shared/entities/rubro.entity';
 import { DataSource } from 'typeorm';
-import { Rubro } from '../src/shared/entities/rubro.entity';
 
 dotenv.config();
 
