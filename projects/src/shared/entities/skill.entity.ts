@@ -3,9 +3,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Rubro } from './rubro.entity';
 
 @Entity('skills')
 export class Skill {
@@ -17,6 +20,16 @@ export class Skill {
 
   @Column({ nullable: true })
   description: string;
+
+  @Column()
+  rubroId: number;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @ManyToOne(() => Rubro, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'rubroId' })
+  rubro: Rubro;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

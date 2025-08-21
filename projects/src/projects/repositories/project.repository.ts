@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Rubro } from 'src/shared/entities/rubro.entity';
+import { Skill } from 'src/shared/entities/skill.entity';
 import { IsNull, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CollaborationType } from '../entities/collaboration-type.entity';
@@ -251,6 +253,19 @@ export class ProjectRepository {
       .orderBy('project.createdAt', 'DESC');
 
     return queryBuilder.getManyAndCount();
+  }
+
+  // get skills by rubro
+  async getSkillsByRubro(rubroId: number): Promise<Skill[]> {
+    return this.ormRepository.manager.find(Skill, { where: { rubroId } });
+  }
+
+  async findRubroById(id: number): Promise<Rubro | null> {
+    return this.ormRepository.manager.findOne(Rubro, { where: { id } });
+  }
+
+  async getRubros(): Promise<Rubro[]> {
+    return this.ormRepository.manager.find(Rubro);
   }
 
   ping(): string {

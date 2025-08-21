@@ -20,10 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:roles": "ts-node -r tsconfig-paths/register src/scripts/seed-roles.ts",
     "seed:document-types": "ts-node -r tsconfig-paths/register src/scripts/seed-document-types.ts",
-    "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts",
     "seed:localities": "ts-node -r tsconfig-paths/register src/scripts/seed-localities.ts",
-    "migrate:skills": "ts-node -r tsconfig-paths/register src/scripts/migrate-skills.ts",
-    "update:professions": "ts-node -r tsconfig-paths/register src/scripts/update-empty-professions.ts"
+    "cleanup:skills": "ts-node -r tsconfig-paths/register src/scripts/cleanup-skills.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
