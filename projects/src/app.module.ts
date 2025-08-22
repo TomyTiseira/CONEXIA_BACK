@@ -15,6 +15,9 @@ import { Project } from './projects/entities/project.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
+import { Rubro } from './shared/entities/rubro.entity';
+import { Skill } from './shared/entities/skill.entity';
+
 
 @Module({
   imports: [
@@ -34,6 +37,8 @@ import { Report } from './reports/entities/report.entity';
         Postulation,
         PostulationStatus,
         Report,
+        Rubro,
+        Skill,
       ],
       synchronize: true,
     }),

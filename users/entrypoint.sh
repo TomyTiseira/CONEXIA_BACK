@@ -14,8 +14,6 @@ sleep 15
 echo "Ejecutando seeds..."
 npm run seed:roles
 npm run seed:document-types
-npm run seed:skills
-npm run migrate:skills
 npm run seed:localities
 
 # Esperar a que la aplicación termine

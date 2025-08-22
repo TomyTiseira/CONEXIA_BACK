@@ -93,6 +93,7 @@ export class ApprovePostulationUseCase {
           .sendPostulationApprovedEmail(
             userWithProfile.user.email,
             userName,
+            project.id,
             project.title,
           )
           .catch((error) => {

@@ -23,6 +23,13 @@ export class PostulationRepository {
     });
   }
 
+  async findByIdWithState(id: number): Promise<Postulation | null> {
+    return await this.postulationRepository.findOne({
+      where: { id },
+      relations: ['project', 'status'],
+    });
+  }
+
   async findByProjectAndUser(
     projectId: number,
     userId: number,
@@ -83,7 +90,7 @@ export class PostulationRepository {
     return [postulations, total];
   }
 
-  async findByUser(
+  async findByUserWithState(
     userId: number,
     page: number = 1,
     limit: number = 10,
@@ -91,7 +98,7 @@ export class PostulationRepository {
     const skip = (page - 1) * limit;
     return await this.postulationRepository.findAndCount({
       where: { userId },
-      relations: ['project'],
+      relations: ['project', 'status'],
       skip,
       take: limit,
       order: { createdAt: 'DESC' },

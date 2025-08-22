@@ -59,6 +59,11 @@ export function transformProjectsWithOwners(
       },
       isOwner: currentUserId === project.userId,
       skills: projectSkills,
+      endDate: project.endDate ? project.endDate.toISOString() : undefined,
+      deletedAt: project.deletedAt
+        ? project.deletedAt.toISOString()
+        : undefined,
+      isActive: project.isActive,
     };
   });
 }

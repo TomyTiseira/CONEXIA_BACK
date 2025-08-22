@@ -17,17 +17,119 @@ const AppDataSource = new DataSource({
 });
 
 const categories = [
-  { name: 'Desarrollo Web', description: 'Proyectos de desarrollo web' },
-  { name: 'Desarrollo Móvil', description: 'Proyectos de desarrollo móvil' },
-  { name: 'Inteligencia Artificial', description: 'Proyectos de IA y ML' },
-  { name: 'DevOps', description: 'Proyectos de DevOps e infraestructura' },
+  // Categorías de Desarrollo (agrupando skills relacionadas)
   {
-    name: 'Diseño UX/UI',
-    description: 'Proyectos de diseño de experiencia de usuario',
+    name: 'Desarrollo Frontend',
+    description:
+      'Proyectos de desarrollo frontend, interfaces de usuario y aplicaciones web',
   },
   {
-    name: 'Análisis de Datos',
-    description: 'Proyectos de análisis y visualización de datos',
+    name: 'Desarrollo Backend',
+    description: 'Proyectos de desarrollo backend, APIs y servicios web',
+  },
+  {
+    name: 'Desarrollo Mobile',
+    description: 'Proyectos de desarrollo móvil nativo y multiplataforma',
+  },
+  {
+    name: 'Desarrollo de Videojuegos',
+    description:
+      'Proyectos de desarrollo de videojuegos y aplicaciones interactivas',
+  },
+  {
+    name: 'Desarrollo Blockchain',
+    description: 'Proyectos de blockchain, contratos inteligentes y Web3',
+  },
+  {
+    name: 'Desarrollo IoT y Embedded',
+    description: 'Proyectos de Internet de las Cosas y sistemas embebidos',
+  },
+
+  // Categorías de Tecnologías Específicas
+  {
+    name: 'Inteligencia Artificial',
+    description: 'Proyectos de IA, machine learning y procesamiento de datos',
+  },
+  {
+    name: 'Ciencia de Datos',
+    description:
+      'Proyectos de análisis de datos, visualización y business intelligence',
+  },
+  {
+    name: 'DevOps',
+    description:
+      'Proyectos de DevOps, cloud computing y gestión de infraestructura',
+  },
+  {
+    name: 'Bases de Datos',
+    description:
+      'Proyectos de bases de datos, almacenamiento y procesamiento de datos',
+  },
+  {
+    name: 'Seguridad Informática',
+    description:
+      'Proyectos de ciberseguridad, auditorías y protección de sistemas',
+  },
+  {
+    name: 'Testing y QA',
+    description:
+      'Proyectos de testing automatizado, QA y aseguramiento de calidad',
+  },
+
+  // Categorías de Diseño (agrupando skills relacionadas)
+  {
+    name: 'Diseño UX/UI',
+    description: 'Proyectos de diseño de experiencia de usuario e interfaces',
+  },
+  {
+    name: 'Diseño Gráfico y Branding',
+    description:
+      'Proyectos de diseño gráfico, identidad de marca y comunicación visual',
+  },
+  {
+    name: 'Diseño 3D y Motion',
+    description: 'Proyectos de modelado 3D, animación y gráficos en movimiento',
+  },
+  {
+    name: 'Diseño Industrial y Producto',
+    description:
+      'Proyectos de diseño industrial, arquitectónico y de productos',
+  },
+
+  // Categorías de Marketing (agrupando skills relacionadas)
+  {
+    name: 'Marketing Digital',
+    description: 'Proyectos de marketing digital, SEO, SEM y publicidad online',
+  },
+  {
+    name: 'Gestión de Redes Sociales',
+    description:
+      'Proyectos de gestión de redes sociales, community management y social media',
+  },
+
+  // Categorías de Medios y Comunicación
+  {
+    name: 'Fotografía y Edición',
+    description:
+      'Proyectos fotográficos, edición de imágenes y producción visual',
+  },
+  {
+    name: 'Video y Animación',
+    description: 'Proyectos de video, animación y producción multimedia',
+  },
+  {
+    name: 'Audio y Podcasts',
+    description: 'Proyectos de audio, podcasts y producción sonora',
+  },
+
+  // Categorías de Gestión y Metodologías
+  {
+    name: 'Gestión de Proyectos',
+    description: 'Proyectos de gestión, metodologías ágiles y consultoría',
+  },
+  {
+    name: 'Consultoría Tecnológica',
+    description: 'Proyectos de consultoría, auditorías y asesoramiento técnico',
   },
 ];
 

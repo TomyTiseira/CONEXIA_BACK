@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { TokenService } from '../../../auth/service/token.service';
+import { UserBaseService } from 'src/common/services/user-base.service';
 import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
 import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
-import { SkillRepository } from '../../../shared/repository/skill.repository';
+import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { UpdateProfileDto } from '../../dto/update-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
@@ -15,8 +15,8 @@ export class UpdateProfileUseCase {
   constructor(
     private readonly profileRepo: ProfileRepository,
     private readonly userRepo: UserRepository,
-    private readonly tokenService: TokenService,
-    private readonly skillRepo: SkillRepository,
+    private readonly userBaseService: UserBaseService,
+    private readonly skillsValidationService: SkillsValidationService,
     private readonly profileSkillRepo: ProfileSkillRepository,
   ) {}
 
@@ -52,12 +52,11 @@ export class UpdateProfileUseCase {
 
     // Validar que las habilidades existan si se proporcionan
     if (dto.skills && dto.skills.length > 0) {
-      const skills = await this.skillRepo.findByIds(dto.skills);
-      if (skills.length !== dto.skills.length) {
-        const foundIds = skills.map((skill) => skill.id);
-        const missingIds = dto.skills.filter((id) => !foundIds.includes(id));
+      const validationResult =
+        await this.skillsValidationService.validateSkillsExist(dto.skills);
+      if (!validationResult.valid) {
         throw new UserBadRequestException(
-          `Skills with IDs [${missingIds.join(', ')}] do not exist`,
+          `Skills with IDs [${validationResult.invalidIds.join(', ')}] do not exist`,
         );
       }
     }
@@ -76,74 +75,46 @@ export class UpdateProfileUseCase {
 
     // Solo actualizar campos permitidos
     const updateData: any = {};
-    if (dto.name !== undefined) {
-      updateData.name = dto.name;
-    }
-    if (dto.lastName !== undefined) {
-      updateData.lastName = dto.lastName;
-    }
-    if (dto.profession !== undefined) {
-      updateData.profession = dto.profession;
-    }
-    if (dto.profilePicture !== undefined) {
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
+    if (dto.profession !== undefined) updateData.profession = dto.profession;
+    if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
+    if (dto.country !== undefined) updateData.country = dto.country;
+    if (dto.state !== undefined) updateData.state = dto.state;
+    if (dto.profilePicture !== undefined)
       updateData.profilePicture = dto.profilePicture;
-    }
-    if (dto.coverPicture !== undefined) {
+    if (dto.coverPicture !== undefined)
       updateData.coverPicture = dto.coverPicture;
-    }
-    if (dto.description !== undefined) {
-      updateData.description = dto.description;
-    }
-    if (dto.experience !== undefined) {
-      updateData.experience = dto.experience;
-    }
-    if (dto.education !== undefined) {
-      updateData.education = dto.education;
-    }
-    if (dto.certifications !== undefined) {
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.experience !== undefined) updateData.experience = dto.experience;
+    if (dto.socialLinks !== undefined) updateData.socialLinks = dto.socialLinks;
+    if (dto.education !== undefined) updateData.education = dto.education;
+    if (dto.certifications !== undefined)
       updateData.certifications = dto.certifications;
-    }
-    if (dto.country !== undefined) {
-      updateData.country = dto.country;
-    }
-    if (dto.state !== undefined) {
-      updateData.state = dto.state;
-    }
-    if (dto.phoneNumber !== undefined) {
-      // Permitir establecer phoneNumber como null para borrarlo
-      updateData.phoneNumber =
-        dto.phoneNumber === null ? null : dto.phoneNumber;
-    }
-    if (dto.socialLinks !== undefined) {
-      updateData.socialLinks = dto.socialLinks;
-    }
 
-    const updated = await this.profileRepo.update(profile.id, updateData);
+    // Actualizar el perfil
+    const updatedProfile = await this.profileRepo.update(
+      profile.id,
+      updateData,
+    );
 
-    // Actualizar habilidades si se proporcionan (incluso si es un array vacío)
+    // Actualizar habilidades si se proporcionan
     if (dto.skills !== undefined) {
-      // Primero eliminar las habilidades existentes
+      // Eliminar habilidades existentes
       await this.profileSkillRepo.deleteByProfileId(profile.id);
-      // Luego crear las nuevas relaciones solo si hay habilidades
+
+      // Crear nuevas habilidades si se proporcionan
       if (dto.skills.length > 0) {
         await this.profileSkillRepo.createProfileSkills(profile.id, dto.skills);
       }
     }
 
-    return updated;
+    return updatedProfile;
   }
 
-  private isValidImage(image: string): boolean {
-    // Validar extensión y tamaño (base64 string o filename)
-    // Aquí solo ejemplo simple, deberías adaptar según cómo almacenas imágenes
-    const allowed = ['.jpg', '.jpeg', '.png'];
-    // const maxSize = 5 * 1024 * 1024; // 5MB
-    const ext = image.split('.').pop()?.toLowerCase();
-    if (!ext || !allowed.includes('.' + ext)) {
-      return false;
-    }
-    // Si es base64, podrías validar el tamaño decodificando
-    // Aquí solo ejemplo para filename
+  private isValidImage(imageUrl: string): boolean {
+    console.log('imageUrl', imageUrl);
+    // Implementar validación de imagen si es necesario
     return true;
   }
 }

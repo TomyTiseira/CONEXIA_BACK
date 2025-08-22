@@ -1,8 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import {
+  PostulationCannotBeCancelledException,
+  PostulationCannotBeRejectedException,
+  PostulationCannotTransitionToCancelledException,
+  PostulationCannotTransitionToRejectedException,
+  PostulationHasNoValidStatusException,
+  PostulationNotFoundException,
+  PostulationStatusUpdateFailedException,
+} from 'src/common/exceptions/postulation.exceptions';
 import { CreatePostulationDto } from '../dtos/create-postulation.dto';
 import { Postulation } from '../entities/postulation.entity';
+import { PostulationStatusCode } from '../enums/postulation-status.enum';
 import { PostulationRepository } from '../repositories/postulation.repository';
+import { PostulationContext } from '../states/postulation-context';
 import { PostulationStatusService } from './postulation-status.service';
 
 @Injectable()
@@ -51,10 +61,7 @@ export class PostulationOperationsService {
     );
 
     if (!updatedPostulation) {
-      throw new RpcException({
-        status: 500,
-        message: `Failed to update postulation ${postulationId} status`,
-      });
+      throw new PostulationStatusUpdateFailedException(postulationId);
     }
 
     return updatedPostulation;
@@ -66,6 +73,40 @@ export class PostulationOperationsService {
    * @returns La postulación actualizada
    */
   async rejectPostulation(postulationId: number): Promise<Postulation> {
+    // Obtener la postulación con su estado actual
+    const postulation =
+      await this.postulationRepository.findByIdWithState(postulationId);
+    if (!postulation) {
+      throw new PostulationNotFoundException(postulationId);
+    }
+
+    // Validar que la postulación tiene un estado válido
+    if (!postulation.status) {
+      throw new PostulationHasNoValidStatusException(
+        postulationId,
+        postulation.statusId,
+      );
+    }
+
+    // Crear el contexto de estado para validar la transición
+    const postulationContext = new PostulationContext(postulation);
+
+    // Validar que la postulación puede ser rechazada según su estado actual
+    if (!postulationContext.canBeRejected()) {
+      throw new PostulationCannotBeRejectedException(
+        postulationId,
+        postulationContext.getDisplayName(),
+      );
+    }
+
+    // Validar que puede transicionar al estado rechazado
+    if (!postulationContext.canTransitionTo(PostulationStatusCode.REJECTED)) {
+      throw new PostulationCannotTransitionToRejectedException(
+        postulationId,
+        postulationContext.getDisplayName(),
+      );
+    }
+
     const rejectedStatus =
       await this.postulationStatusService.getRejectedStatus();
 
@@ -75,10 +116,7 @@ export class PostulationOperationsService {
     );
 
     if (!updatedPostulation) {
-      throw new RpcException({
-        status: 500,
-        message: `Failed to update postulation ${postulationId} status`,
-      });
+      throw new PostulationStatusUpdateFailedException(postulationId);
     }
 
     return updatedPostulation;
@@ -90,6 +128,40 @@ export class PostulationOperationsService {
    * @returns La postulación actualizada
    */
   async cancelPostulation(postulationId: number): Promise<Postulation> {
+    // Obtener la postulación con su estado actual
+    const postulation =
+      await this.postulationRepository.findByIdWithState(postulationId);
+    if (!postulation) {
+      throw new PostulationNotFoundException(postulationId);
+    }
+
+    // Validar que la postulación tiene un estado válido
+    if (!postulation.status) {
+      throw new PostulationHasNoValidStatusException(
+        postulationId,
+        postulation.statusId,
+      );
+    }
+
+    // Crear el contexto de estado para validar la transición
+    const postulationContext = new PostulationContext(postulation);
+
+    // Validar que la postulación puede ser cancelada según su estado actual
+    if (!postulationContext.canBeCancelled()) {
+      throw new PostulationCannotBeCancelledException(
+        postulationId,
+        postulationContext.getDisplayName(),
+      );
+    }
+
+    // Validar que puede transicionar al estado cancelado
+    if (!postulationContext.canTransitionTo(PostulationStatusCode.CANCELLED)) {
+      throw new PostulationCannotTransitionToCancelledException(
+        postulationId,
+        postulationContext.getDisplayName(),
+      );
+    }
+
     const cancelledStatus =
       await this.postulationStatusService.getCancelledStatus();
 
@@ -99,10 +171,7 @@ export class PostulationOperationsService {
     );
 
     if (!updatedPostulation) {
-      throw new RpcException({
-        status: 500,
-        message: `Failed to update postulation ${postulationId} status`,
-      });
+      throw new PostulationStatusUpdateFailedException(postulationId);
     }
 
     return updatedPostulation;
@@ -128,10 +197,7 @@ export class PostulationOperationsService {
     );
 
     if (!updatedPostulation) {
-      throw new RpcException({
-        status: 500,
-        message: `Failed to update postulation ${postulationId} status`,
-      });
+      throw new PostulationStatusUpdateFailedException(postulationId);
     }
 
     return updatedPostulation;

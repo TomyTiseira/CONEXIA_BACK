@@ -16,8 +16,11 @@ export class SkillRepository extends Repository<Skill> {
     return this.findOne({ where: { name } });
   }
 
-  async createSkill(name: string, description?: string): Promise<Skill> {
-    const skill = this.create({ name, description });
-    return this.save(skill);
+  async findAll(): Promise<Skill[]> {
+    return this.find();
+  }
+
+  async findById(id: number): Promise<Skill | null> {
+    return this.findOne({ where: { id } });
   }
 }

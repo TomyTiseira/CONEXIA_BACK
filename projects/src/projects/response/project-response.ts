@@ -24,4 +24,7 @@ export class ProjectResponseDto {
     id: number;
     name?: string;
   }[];
+  endDate?: string;
+  deletedAt?: string;
+  isActive: boolean;
 }

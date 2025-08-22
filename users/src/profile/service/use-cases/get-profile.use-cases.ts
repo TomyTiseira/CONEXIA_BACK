@@ -1,11 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
+import { Skill } from '../../../shared/interfaces/skill.interface';
+import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
+import {
+  ProfileSkillResponse,
+  ProfileWithSkills,
+} from '../../../shared/types/skill.types';
 import { GetProfileDto } from '../../dto/get-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
 
 @Injectable()
 export class GetProfileUseCase {
-  constructor(private readonly profileRepository: ProfileRepository) {}
+  constructor(
+    private readonly profileRepository: ProfileRepository,
+    private readonly skillsValidationService: SkillsValidationService,
+  ) {}
 
   async execute(getProfileDto: GetProfileDto) {
     // Buscar el perfil del usuario objetivo
@@ -17,14 +26,22 @@ export class GetProfileUseCase {
       throw new ProfileNotFoundException();
     }
 
+    // Obtener información de skills desde el microservicio de proyectos
+    let skills: Skill[] = [];
+    if (profile.profileSkills && profile.profileSkills.length > 0) {
+      const skillIds = profile.profileSkills.map((ps) => ps.skillId);
+      skills = await this.skillsValidationService.getSkillsByIds(skillIds);
+    }
+
     // Transformar profileSkills en skills
-    const transformedProfile = {
+    const transformedProfile: ProfileWithSkills = {
       ...profile,
-      skills:
-        profile.profileSkills?.map((ps) => ({
-          id: ps.skill.id,
-          name: ps.skill.name,
-        })) || [],
+      skills: skills.map(
+        (skill: Skill): ProfileSkillResponse => ({
+          id: skill.id,
+          name: skill.name,
+        }),
+      ),
     };
 
     // Eliminar profileSkills de la respuesta de forma segura

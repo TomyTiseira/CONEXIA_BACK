@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import {
+  PostulationNotActiveException,
   PostulationNotFoundException,
   PostulationNotPendingException,
   ProjectEndedException,
   ProjectMaxCollaboratorsReachedException,
   ProjectNotActiveException,
   ProjectOwnerCannotApplyException,
-  ProjectOwnerCannotApproveException,
   UserAlreadyAppliedException,
   UserNotActiveException,
+  UserNotPostulationOwnerException,
+  UserNotProjectOwnerException,
 } from '../../common/exceptions/postulation.exceptions';
 import { ProjectNotFoundException } from '../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../common/services/users-client.service';
@@ -16,6 +18,7 @@ import { Project } from '../../projects/entities/project.entity';
 import { ProjectRepository } from '../../projects/repositories/project.repository';
 import { Postulation } from '../entities/postulation.entity';
 import { PostulationRepository } from '../repositories/postulation.repository';
+import { PostulationContext } from '../states/postulation-context';
 import { PostulationStatusService } from './postulation-status.service';
 
 @Injectable()
@@ -87,12 +90,13 @@ export class PostulationValidationService {
    */
   validateUserIsProjectOwner(project: Project, userId: number): void {
     if (project.userId !== userId) {
-      throw new ProjectOwnerCannotApproveException(project.id, userId);
+      throw new UserNotProjectOwnerException(project.id, userId);
     }
   }
 
   /**
    * Valida que un usuario no esté ya postulado a un proyecto
+   * Solo considera postulaciones activas, permitiendo re-postularse si la anterior fue cancelada
    * @param projectId - ID del proyecto
    * @param userId - ID del usuario
    */
@@ -104,7 +108,14 @@ export class PostulationValidationService {
       await this.postulationRepository.findByProjectAndUser(projectId, userId);
 
     if (existingPostulation) {
-      throw new UserAlreadyAppliedException(projectId, userId);
+      // Solo bloquear si la postulación está en estado activo, aceptada o rechazada
+      // Permitir nueva postulación si la anterior fue cancelada
+      const cancelledStatus =
+        await this.postulationStatusService.getCancelledStatus();
+
+      if (existingPostulation.statusId !== cancelledStatus.id) {
+        throw new UserAlreadyAppliedException(projectId, userId);
+      }
     }
   }
 
@@ -176,6 +187,36 @@ export class PostulationValidationService {
     // Verifica que el usuario exista y que NO esté eliminado
     if (!user || user.deletedAt) {
       throw new UserNotActiveException(userId);
+    }
+  }
+
+  /**
+   * Valida que una postulación esté en estado activo
+   * @param postulación a validar
+   */
+  validatePostulationIsActive(postulation: Postulation): void {
+    if (!postulation.status) {
+      throw new PostulationNotActiveException(postulation.id);
+    }
+
+    const postulationContext = new PostulationContext(postulation);
+
+    if (!postulationContext.canBeCancelled()) {
+      throw new PostulationNotActiveException(postulation.id);
+    }
+  }
+
+  /**
+   * Valida que un usuario sea el dueño de la postulación
+   * @param postulation - Postulación a validar
+   * @param userId - ID del usuario
+   */
+  validateUserIsPostulationOwner(
+    postulation: Postulation,
+    userId: number,
+  ): void {
+    if (postulation.userId !== userId) {
+      throw new UserNotPostulationOwnerException(postulation.id, userId);
     }
   }
 }

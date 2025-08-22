@@ -13,6 +13,7 @@ export interface ProjectDetailResponse {
   category: string[];
   maxCollaborators?: number;
   isActive: boolean;
+  deletedAt?: string;
   startDate?: Date;
   endDate?: Date;
   isOwner: boolean;

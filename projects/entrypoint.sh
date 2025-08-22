@@ -16,6 +16,8 @@ npm run seed:categories
 npm run seed:collaboration-types
 npm run seed:contract-types
 npm run seed:postulation-statuses
+npm run seed:rubros
+npm run seed:skills
 
 # Esperar a que la aplicación termine
 wait $APP_PID 

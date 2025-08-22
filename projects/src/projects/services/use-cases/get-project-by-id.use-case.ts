@@ -25,8 +25,11 @@ export class GetProjectByIdUseCase {
   ) {}
 
   async execute(data: GetProjectByIdDto): Promise<ProjectDetailResponse> {
-    // Obtener el proyecto con todas las relaciones
-    const project = await this.projectRepository.findByIdWithRelations(data.id);
+    // Obtener el proyecto con todas las relaciones, incluyendo eliminados
+    const project = await this.projectRepository.findByIdWithRelations(
+      data.id,
+      true,
+    );
 
     if (!project) {
       throw new ProjectNotFoundException(data.id);
