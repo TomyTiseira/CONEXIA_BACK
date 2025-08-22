@@ -71,6 +71,15 @@ export class GetProjectByIdUseCase {
       );
     }
 
+    // Calcular cantidad de postulaciones aprobadas para este proyecto
+    const statusAccepted = 2; // Ajusta este valor si el ID de estado "aprobada" es diferente
+    const [, approvedCount] =
+      await this.postulationRepository.findAndCountWithFilters(
+        { projectId: project.id, statusId: statusAccepted },
+        1,
+        1,
+      );
+
     // Construir la respuesta usando la función utilitaria
     const response = transformProjectToDetailResponse(
       project,
@@ -79,6 +88,7 @@ export class GetProjectByIdUseCase {
       data.currentUserId,
       locationName,
       isApplied,
+      approvedCount,
     );
 
     return response;

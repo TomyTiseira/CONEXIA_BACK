@@ -27,4 +27,7 @@ export class ProjectResponseDto {
   endDate?: string;
   deletedAt?: string;
   isActive: boolean;
+  isApplied: boolean;
+  approvedApplications: number;
+  maxCollaborators: number;
 }

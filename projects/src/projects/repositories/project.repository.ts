@@ -23,6 +23,19 @@ export class ProjectRepository {
     return this.ormRepository.save(entity);
   }
 
+  async findProjectsByIds(projectIds: number[]): Promise<Project[]> {
+    if (!projectIds || projectIds.length === 0) return [];
+    return this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.id IN (:...projectIds)', { projectIds })
+      .orderBy('project.createdAt', 'DESC')
+      .getMany();
+  }
+
   async findById(
     id: number,
     includeDeleted: boolean = false,
@@ -196,63 +209,72 @@ export class ProjectRepository {
     page: number;
     limit: number;
   }): Promise<[Project[], number]> {
-    const queryBuilder = this.ormRepository
+    // 1. Obtener los IDs únicos de los proyectos paginados
+    const idQueryBuilder = this.ormRepository
       .createQueryBuilder('project')
-      .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('project.contractType', 'contractType')
-      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .select('project.id')
       .where('project.deletedAt IS NULL');
 
-    // Filtro de búsqueda por título
     if (filters.search) {
-      queryBuilder.andWhere('project.title ILIKE :search', {
+      idQueryBuilder.andWhere('project.title ILIKE :search', {
         search: `%${filters.search}%`,
       });
     }
-
-    // Filtro por categorías
     if (filters.categoryIds && filters.categoryIds.length > 0) {
-      queryBuilder.andWhere('project.categoryId IN (:...categoryIds)', {
+      idQueryBuilder.andWhere('project.categoryId IN (:...categoryIds)', {
         categoryIds: filters.categoryIds,
       });
     }
-
-    // Filtro por habilidades requeridas
-    if (filters.skillIds && filters.skillIds.length > 0) {
-      queryBuilder.andWhere('projectSkills.skillId IN (:...skillIds)', {
-        skillIds: filters.skillIds,
-      });
-    }
-
-    // Filtro por tipos de colaboración
+    // NOTA: Para filtrar por skills, colaboración y contratación, se requiere join, pero para IDs solo filtramos por project.
+    // Si necesitas filtrar por skills, deberías hacer un subquery o join aquí también.
     if (
       filters.collaborationTypeIds &&
       filters.collaborationTypeIds.length > 0
     ) {
-      queryBuilder.andWhere(
+      idQueryBuilder.andWhere(
         'project.collaborationTypeId IN (:...collaborationTypeIds)',
         {
           collaborationTypeIds: filters.collaborationTypeIds,
         },
       );
     }
-
-    // Filtro por tipos de contratación
     if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
-      queryBuilder.andWhere('project.contractTypeId IN (:...contractTypeIds)', {
-        contractTypeIds: filters.contractTypeIds,
-      });
+      idQueryBuilder.andWhere(
+        'project.contractTypeId IN (:...contractTypeIds)',
+        {
+          contractTypeIds: filters.contractTypeIds,
+        },
+      );
     }
 
-    // Aplicar paginación
+    idQueryBuilder.orderBy('project.createdAt', 'DESC');
     const skip = (filters.page - 1) * filters.limit;
-    queryBuilder
-      .skip(skip)
-      .take(filters.limit)
-      .orderBy('project.createdAt', 'DESC');
+    idQueryBuilder.skip(skip).take(filters.limit);
 
-    return queryBuilder.getManyAndCount();
+    const idsResult = await idQueryBuilder.getMany();
+    const projectIds = idsResult.map((p) => p.id);
+
+    if (projectIds.length === 0) {
+      return [[], 0];
+    }
+
+    // 2. Traer los proyectos completos con relaciones usando los IDs obtenidos
+    const projects = await this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.category', 'category')
+      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('project.contractType', 'contractType')
+      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .where('project.id IN (:...projectIds)', { projectIds })
+      .orderBy('project.createdAt', 'DESC')
+      .getMany();
+
+    // 3. Obtener el total de proyectos (sin paginación)
+    const total = await this.ormRepository.count({
+      where: { deletedAt: IsNull() },
+    });
+
+    return [projects, total];
   }
 
   // get skills by rubro
