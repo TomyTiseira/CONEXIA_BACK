@@ -20,6 +20,8 @@ export function transformProjectsWithOwners(
   users: UserWithProfile[],
   currentUserId: number,
   skillsMap?: Map<number, string>,
+  appliedProjectIds: Set<number> = new Set(),
+  approvedApplicationsMap: Map<number, number> = new Map(),
 ): ProjectResponseDto[] {
   const usersMap = new Map(users.map((user) => [user.id, user]));
 
@@ -64,6 +66,9 @@ export function transformProjectsWithOwners(
         ? project.deletedAt.toISOString()
         : undefined,
       isActive: project.isActive,
+      isApplied: appliedProjectIds.has(project.id),
+      approvedApplications: approvedApplicationsMap.get(project.id) || 0,
+      maxCollaborators: project.maxCollaborators ?? 1,
     };
   });
 }

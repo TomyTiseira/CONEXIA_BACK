@@ -25,6 +25,7 @@ export function transformProjectToDetailResponse(
   currentUserId: number,
   location?: string,
   isApplied: boolean = false,
+  approvedApplications: number = 0,
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
@@ -51,6 +52,7 @@ export function transformProjectToDetailResponse(
     endDate: project.endDate,
     isOwner: project.userId === currentUserId,
     isApplied,
+    approvedApplications,
   };
 }
 

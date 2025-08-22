@@ -39,6 +39,14 @@ export class CreatePostulationUseCase {
       currentUserId,
     );
 
+    // Validar que no se haya alcanzado el máximo de colaboradores aprobados
+    if (project.maxCollaborators && project.maxCollaborators > 0) {
+      await this.postulationValidationService.validateProjectHasAvailableSlots(
+        createPostulationDto.projectId,
+        project.maxCollaborators,
+      );
+    }
+
     // Validar tamaño del CV
     this.postulationValidationService.validateCvFileSize(
       createPostulationDto.cvSize,
