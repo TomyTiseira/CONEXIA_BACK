@@ -33,10 +33,6 @@ export class ReportsController {
   async getProjectReports(
     @Payload() getProjectReportsDto: GetProjectReportsDto,
   ) {
-    console.log(
-      '🎯 Controlador getProjectReports - DTO recibido:',
-      getProjectReportsDto,
-    );
     return await this.getProjectReportsUseCase.execute(getProjectReportsDto);
   }
 
