@@ -120,7 +120,7 @@ export class NodemailerService extends EmailService {
             ¡Tu viaje con Conexia acaba de comenzar!
           </p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'https://conexia.com'}" 
+            <a href="${process.env.FRONTEND_URL || 'https://conexia-front.vercel.app'}" 
                style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
               🚀 Comenzar mi experiencia
             </a>
