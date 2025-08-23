@@ -87,13 +87,17 @@ export class ReportRepository {
     // Incluir reportes de proyectos eliminados
     const queryBuilder = this.repository
       .createQueryBuilder('report')
-      .addSelect([
+      .leftJoinAndSelect('report.project', 'project')
+      .select([
         'report.id',
         'report.projectId',
         'report.reason',
         'report.description',
         'report.createdAt',
         'report.reporterId',
+        'project.title',
+        'project.isActive',
+        'project.deletedAt',
       ])
       .orderBy(
         'report.createdAt',
@@ -120,11 +124,9 @@ export class ReportRepository {
 
     reports.forEach((report) => {
       const projectId = report.projectId;
-
-      // Por ahora, usamos un título genérico ya que no tenemos la relación cargada
-      const projectTitle = `Proyecto ${projectId}`;
-      const isActive = true; // Por defecto asumimos que está activo
-      const deletedAt = null; // Por defecto asumimos que no está eliminado
+      const projectTitle = report.project.title;
+      const isActive = report.project.isActive;
+      const deletedAt = report.project.deletedAt;
 
       if (!projectMap.has(projectId)) {
         projectMap.set(projectId, {
