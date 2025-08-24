@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InvalidUserRoleException } from '../../../common/exceptions/postulation.exceptions';
-import { UsersClientService } from '../../../projects/services/users-client.service';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { CreatePostulationDto } from '../../dtos/create-postulation.dto';
 import { PostulationOperationsService } from '../postulation-operations.service';
 import { PostulationValidationService } from '../postulation-validation.service';

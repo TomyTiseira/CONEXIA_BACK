@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { PostulationsModule } from './postulations/postulations.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ReportsModule } from './reports/reports.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -12,6 +13,7 @@ import { UsersModule } from './users/users.module';
     InternalUsersModule,
     ProjectsModule,
     PostulationsModule,
+    ReportsModule,
   ],
   controllers: [],
   providers: [],

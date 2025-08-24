@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { GetProjectsDto } from '../../dtos/get-projects.dto';
 import { Project } from '../../entities/project.entity';
 import { ProjectRepository } from '../../repositories/project.repository';
-import { UsersClientService } from '../users-client.service';
 
 @Injectable()
 export class GetProjectsUseCase {

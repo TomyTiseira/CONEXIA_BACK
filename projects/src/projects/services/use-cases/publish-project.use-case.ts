@@ -10,9 +10,9 @@ import {
   ProjectNotFoundException,
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { PublishProjectDto } from '../../dtos/publish-project.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
-import { UsersClientService } from '../users-client.service';
 
 @Injectable()
 export class PublishProjectUseCase {

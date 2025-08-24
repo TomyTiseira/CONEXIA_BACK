@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UserNotFoundException } from '../../../common/exceptions/project.exceptions';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
 import { GetProjectsByUserDto } from '../../dtos/get-projects-by-user.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
-import { UsersClientService } from '../users-client.service';
 
 @Injectable()
 export class GetProjectsByUserUseCase {
