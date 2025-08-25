@@ -30,4 +30,5 @@ export class ProjectResponseDto {
   isApplied: boolean;
   approvedApplications: number;
   maxCollaborators: number;
+  postulationStatus?: { code: string } | null;
 }

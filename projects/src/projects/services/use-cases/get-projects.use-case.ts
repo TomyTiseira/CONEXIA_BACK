@@ -70,16 +70,39 @@ export class GetProjectsUseCase {
       );
     }
 
-    // Obtener los IDs de proyectos a los que el usuario ya se postuló
-    const userPostulations =
-      await this.postulationRepository.findByUserWithState(
-        currentUserId,
-        1,
-        10000,
-      );
+    // Obtener las postulaciones del usuario autenticado a los proyectos listados
+    const userPostulationsArr =
+      (
+        await this.postulationRepository.findByUserWithState(
+          currentUserId,
+          1,
+          10000,
+        )
+      )[0] || [];
     const appliedProjectIds = new Set(
-      (userPostulations[0] || []).map((p: any) => p.projectId),
+      userPostulationsArr.map((p: any) => p.projectId),
     );
+
+    // Mapear la última postulación por proyecto (por fecha de creación)
+    // Usar objeto auxiliar interno para comparar createdAt
+    const postulationStatusAux: Map<
+      number,
+      { code: string; createdAt: string }
+    > = new Map();
+    userPostulationsArr.forEach((p: any) => {
+      const prev = postulationStatusAux.get(p.projectId);
+      if (!prev || new Date(p.createdAt as string) > new Date(prev.createdAt)) {
+        postulationStatusAux.set(p.projectId, {
+          code: String(p.status?.code || ''),
+          createdAt: String(p.createdAt),
+        });
+      }
+    });
+    // Limpiar el objeto para solo dejar el code
+    const postulationStatusMap: Map<number, { code: string }> = new Map();
+    for (const [k, v] of postulationStatusAux.entries()) {
+      postulationStatusMap.set(k, { code: v.code });
+    }
 
     // Obtener la cantidad de postulaciones aprobadas para cada proyecto
     const approvedApplicationsMap = new Map<number, number>();
@@ -104,6 +127,7 @@ export class GetProjectsUseCase {
       skillsMap,
       appliedProjectIds,
       approvedApplicationsMap,
+      postulationStatusMap,
     );
 
     // Calcular información de paginación usando solo los proyectos donde no es dueño

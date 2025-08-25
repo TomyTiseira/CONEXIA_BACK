@@ -22,6 +22,7 @@ export function transformProjectsWithOwners(
   skillsMap?: Map<number, string>,
   appliedProjectIds: Set<number> = new Set(),
   approvedApplicationsMap: Map<number, number> = new Map(),
+  postulationStatusMap: Map<number, { code: string }> = new Map(),
 ): ProjectResponseDto[] {
   const usersMap = new Map(users.map((user) => [user.id, user]));
 
@@ -69,6 +70,7 @@ export function transformProjectsWithOwners(
       isApplied: appliedProjectIds.has(project.id),
       approvedApplications: approvedApplicationsMap.get(project.id) || 0,
       maxCollaborators: project.maxCollaborators ?? 1,
+      postulationStatus: postulationStatusMap.get(project.id) ?? null,
     };
   });
 }
