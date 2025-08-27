@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PublicationsController } from './controllers/publications.controller';
 import { Publication } from './entities/publication.entity';
-import { PublicationsController } from './publications.controller';
-import { PublicationsService } from './publications.service';
 import { PublicationRepository } from './repositories/publication.repository';
+import { PublicationsService } from './services/publications.service';
 import {
   CreatePublicationUseCase,
   GetPublicationByIdUseCase,
   GetPublicationsUseCase,
-} from './use-cases';
+} from './services/use-cases';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Publication])],

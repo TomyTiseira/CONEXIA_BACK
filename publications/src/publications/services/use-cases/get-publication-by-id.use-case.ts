@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Publication } from '../entities/publication.entity';
-import { PublicationRepository } from '../repositories/publication.repository';
+import { Publication } from '../../entities/publication.entity';
+import { PublicationRepository } from '../../repositories/publication.repository';
 
 @Injectable()
 export class GetPublicationByIdUseCase {

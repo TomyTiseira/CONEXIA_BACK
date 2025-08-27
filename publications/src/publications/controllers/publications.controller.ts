@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { PublicationsService } from './publications.service';
+import { PublicationsService } from '../services/publications.service';
 
 @Controller()
 export class PublicationsController {
