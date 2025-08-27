@@ -112,3 +112,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  publications:
+    build: ./publications
+    volumes:
+      - ./publications/src:/src/app/src
+    depends_on:
+      publications-db:
+        condition: service_healthy
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DB_HOST=publications-db
+      - DB_PORT=5432
+      - DB_USERNAME=${PUBLICATIONS_DB_USER}
+      - DB_PASSWORD=${PUBLICATIONS_DB_PASSWORD}
+      - DB_DATABASE=${PUBLICATIONS_DB_NAME}
+
+  publications-db:
+    build:
+      context: ./publications
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "${PUBLICATIONS_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${PUBLICATIONS_DB_USER}
+      - POSTGRES_PASSWORD=${PUBLICATIONS_DB_PASSWORD}
+      - POSTGRES_DB=${PUBLICATIONS_DB_NAME}
+    volumes:
+      - ./publications/postgres-data:/var/lib/postgresql/data
+      - ./publications/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${PUBLICATIONS_DB_USER} -d ${PUBLICATIONS_DB_NAME}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
