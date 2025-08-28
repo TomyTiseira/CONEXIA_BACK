@@ -1,16 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  CreatePublicationUseCase,
-  GetPublicationByIdUseCase,
-  GetPublicationsUseCase,
-} from './use-cases';
+import { CreatePublicationDto } from '../dto/create-publication.dto';
+import { CreatePublicationUseCase } from './use-cases';
 
 @Injectable()
 export class PublicationsService {
   constructor(
     private readonly createPublicationUseCase: CreatePublicationUseCase,
-    private readonly getPublicationsUseCase: GetPublicationsUseCase,
-    private readonly getPublicationByIdUseCase: GetPublicationByIdUseCase,
   ) {}
 
   ping() {
@@ -20,22 +15,7 @@ export class PublicationsService {
     };
   }
 
-  async createPublication(
-    description: string,
-    imageData?: { filename: string; size: number },
-  ) {
-    return await this.createPublicationUseCase.execute({
-      description,
-      imageFilename: imageData?.filename,
-      imageSize: imageData?.size,
-    });
-  }
-
-  async getPublications() {
-    return await this.getPublicationsUseCase.execute();
-  }
-
-  async getPublicationById(id: number) {
-    return await this.getPublicationByIdUseCase.execute(id);
+  async createPublication(data: CreatePublicationDto, userId: number) {
+    return await this.createPublicationUseCase.execute(data, userId);
   }
 }

@@ -15,14 +15,20 @@ export class Publication {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ name: 'image_url', nullable: true })
-  imageUrl: string;
+  @Column({ name: 'media_url', nullable: true })
+  mediaUrl: string;
 
-  @Column({ name: 'image_filename', nullable: true })
-  imageFilename: string;
+  @Column({ name: 'media_filename', nullable: true })
+  mediaFilename: string;
 
-  @Column({ name: 'image_size', nullable: true })
-  imageSize: number;
+  @Column({ name: 'media_size', nullable: true })
+  mediaSize: number;
+
+  @Column({ name: 'media_type', nullable: true })
+  mediaType: string; // 'image' | 'video' | 'gif'
+
+  @Column({ name: 'user_id' })
+  userId: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

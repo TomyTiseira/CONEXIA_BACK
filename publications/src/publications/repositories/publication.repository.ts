@@ -22,6 +22,14 @@ export class PublicationRepository extends Repository<Publication> {
       .getOne();
   }
 
+  async findPublicationsByUser(userId: number): Promise<Publication[]> {
+    return this.createQueryBuilder('publication')
+      .where('publication.userId = :userId', { userId })
+      .andWhere('publication.deletedAt IS NULL')
+      .orderBy('publication.createdAt', 'DESC')
+      .getMany();
+  }
+
   async softDeletePublication(id: number): Promise<void> {
     await this.update(id, { deletedAt: new Date() });
   }

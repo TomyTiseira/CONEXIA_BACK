@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { CreatePublicationDto } from '../dto/create-publication.dto';
 import { PublicationsService } from '../services/publications.service';
 
 @Controller()
@@ -9,5 +10,19 @@ export class PublicationsController {
   @MessagePattern('ping')
   ping() {
     return this.publicationsService.ping();
+  }
+
+  @MessagePattern('createPublication')
+  createPublication(
+    @Payload()
+    data: {
+      createPublicationDto: CreatePublicationDto;
+      userId: number;
+    },
+  ) {
+    return this.publicationsService.createPublication(
+      data.createPublicationDto,
+      data.userId,
+    );
   }
 }
