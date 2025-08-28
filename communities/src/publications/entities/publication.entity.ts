@@ -30,6 +30,9 @@ export class Publication {
   @Column({ name: 'user_id' })
   userId: number;
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
