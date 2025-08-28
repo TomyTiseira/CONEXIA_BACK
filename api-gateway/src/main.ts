@@ -36,6 +36,11 @@ async function bootstrap() {
     prefix: '/uploads/cv/',
   });
 
+  // Servir archivos de publicaciones específicamente
+  app.useStaticAssets(join(process.cwd(), 'uploads', 'publications'), {
+    prefix: '/uploads/publications/',
+  });
+
   app.setGlobalPrefix('api');
 
   app.use(cookieParser());

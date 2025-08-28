@@ -112,3 +112,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  communities:
+    build: ./communities
+    volumes:
+      - ./communities/src:/src/app/src
+    depends_on:
+      communities-db:
+        condition: service_healthy
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DB_HOST=communities-db
+      - DB_PORT=5432
+      - DB_USERNAME=${COMMUNITIES_DB_USER}
+      - DB_PASSWORD=${COMMUNITIES_DB_PASSWORD}
+      - DB_DATABASE=${COMMUNITIES_DB_NAME}
+
+  communities-db:
+    build:
+      context: ./communities
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "${COMMUNITIES_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${COMMUNITIES_DB_USER}
+      - POSTGRES_PASSWORD=${COMMUNITIES_DB_PASSWORD}
+      - POSTGRES_DB=${COMMUNITIES_DB_NAME}
+    volumes:
+      - ./communities/postgres-data:/var/lib/postgresql/data
+      - ./communities/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${COMMUNITIES_DB_USER} -d ${COMMUNITIES_DB_NAME}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
