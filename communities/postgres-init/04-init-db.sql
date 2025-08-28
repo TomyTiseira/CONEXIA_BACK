@@ -1,5 +1,5 @@
--- Conectar a la base de datos publications_db
-\c publications_db;
+-- Conectar a la base de datos communities_db
+\c communities_db;
 
 -- Crear extensiones necesarias si no existen
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

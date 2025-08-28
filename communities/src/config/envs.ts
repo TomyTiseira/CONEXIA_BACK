@@ -17,7 +17,7 @@ const envSchema = joi
     DB_PORT: joi.string().default('5432'),
     DB_USERNAME: joi.string().default('postgres'),
     DB_PASSWORD: joi.string().default('postgres'),
-    DB_DATABASE: joi.string().default('publications_db'),
+    DB_DATABASE: joi.string().default('communities_db'),
   })
   .unknown(true);
 

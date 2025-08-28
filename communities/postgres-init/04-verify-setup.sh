@@ -9,9 +9,9 @@ until pg_isready -U postgres; do
   sleep 2
 done
 
-echo "Verificando que la base de datos publications_db existe..."
-psql -U postgres -d publications_db -c "SELECT 1;" > /dev/null 2>&1 || {
-  echo "ERROR: La base de datos publications_db no existe"
+echo "Verificando que la base de datos communities_db existe..."
+psql -U postgres -d communities_db -c "SELECT 1;" > /dev/null 2>&1 || {
+  echo "ERROR: La base de datos communities_db no existe"
   exit 1
 }
 

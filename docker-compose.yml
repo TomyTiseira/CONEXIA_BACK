@@ -113,34 +113,34 @@ services:
       timeout: 5s
       retries: 5
 
-  publications:
-    build: ./publications
+  communities:
+    build: ./communities
     volumes:
-      - ./publications/src:/src/app/src
+      - ./communities/src:/src/app/src
     depends_on:
-      publications-db:
+      communities-db:
         condition: service_healthy
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - DB_HOST=publications-db
+      - DB_HOST=communities-db
       - DB_PORT=5432
-      - DB_USERNAME=${PUBLICATIONS_DB_USER}
-      - DB_PASSWORD=${PUBLICATIONS_DB_PASSWORD}
-      - DB_DATABASE=${PUBLICATIONS_DB_NAME}
+      - DB_USERNAME=${COMMUNITIES_DB_USER}
+      - DB_PASSWORD=${COMMUNITIES_DB_PASSWORD}
+      - DB_DATABASE=${COMMUNITIES_DB_NAME}
 
-  publications-db:
+  communities-db:
     build:
-      context: ./publications
+      context: ./communities
       dockerfile: Dockerfile.postgres
     ports:
-      - "${PUBLICATIONS_DB_PORT}:5432"
+      - "${COMMUNITIES_DB_PORT}:5432"
     environment:
-      - POSTGRES_USER=${PUBLICATIONS_DB_USER}
-      - POSTGRES_PASSWORD=${PUBLICATIONS_DB_PASSWORD}
-      - POSTGRES_DB=${PUBLICATIONS_DB_NAME}
+      - POSTGRES_USER=${COMMUNITIES_DB_USER}
+      - POSTGRES_PASSWORD=${COMMUNITIES_DB_PASSWORD}
+      - POSTGRES_DB=${COMMUNITIES_DB_NAME}
     volumes:
-      - ./publications/postgres-data:/var/lib/postgresql/data
-      - ./publications/postgres-init:/docker-entrypoint-initdb.d
+      - ./communities/postgres-data:/var/lib/postgresql/data
+      - ./communities/postgres-init:/docker-entrypoint-initdb.d
     command: >
       postgres
       -c listen_addresses='*'
@@ -149,7 +149,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${PUBLICATIONS_DB_USER} -d ${PUBLICATIONS_DB_NAME}",
+          "pg_isready -U ${COMMUNITIES_DB_USER} -d ${COMMUNITIES_DB_NAME}",
         ]
       interval: 5s
       timeout: 5s

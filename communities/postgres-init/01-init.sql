@@ -1,6 +1,6 @@
 -- Crear la base de datos si no existe
-SELECT 'CREATE DATABASE publications_db'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'publications_db')\gexec
+SELECT 'CREATE DATABASE communities_db'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'communities_db')\gexec
 
 -- Configurar autenticación para permitir conexiones desde otros contenedores
 ALTER SYSTEM SET listen_addresses = '*';
