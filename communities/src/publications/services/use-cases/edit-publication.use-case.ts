@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  PublicationNotFoundException,
+  PublicationNotOwnerException,
+} from 'src/common/exceptions/publications.exceptions';
 import { UpdatePublicationDto } from '../../dto/update-publication.dto';
 import { Publication } from '../../entities/publication.entity';
 import { PublicationRepository } from '../../repositories/publication.repository';
@@ -18,18 +18,23 @@ export class EditPublicationUseCase {
   ): Promise<Publication> {
     const publication =
       await this.publicationRepository.findActivePublicationById(id);
+
     if (!publication) {
-      throw new NotFoundException('Publication not found');
+      throw new PublicationNotFoundException(id);
     }
+
     if (publication.userId !== userId) {
-      throw new ForbiddenException('You are not the owner of this publication');
+      throw new PublicationNotOwnerException();
     }
+
     await this.publicationRepository.updatePublication(id, updateDto);
     const updated =
       await this.publicationRepository.findActivePublicationById(id);
+
     if (!updated) {
-      throw new NotFoundException('Publication not found after update');
+      throw new PublicationNotFoundException(id);
     }
+
     return updated;
   }
 }

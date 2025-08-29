@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  PublicationNotFoundException,
+  PublicationNotOwnerException,
+} from 'src/common/exceptions/publications.exceptions';
 import { PublicationRepository } from '../../repositories/publication.repository';
 
 @Injectable()
@@ -13,10 +13,10 @@ export class DeletePublicationUseCase {
     const publication =
       await this.publicationRepository.findActivePublicationById(id);
     if (!publication) {
-      throw new NotFoundException('Publication not found');
+      throw new PublicationNotFoundException(id);
     }
     if (publication.userId !== userId) {
-      throw new ForbiddenException('You are not the owner of this publication');
+      throw new PublicationNotOwnerException();
     }
     await this.publicationRepository.softDeletePublication(id);
   }

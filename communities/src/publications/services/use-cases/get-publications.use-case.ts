@@ -6,9 +6,12 @@ import { PublicationRepository } from '../../repositories/publication.repository
 export class GetPublicationsUseCase {
   constructor(private readonly publicationRepository: PublicationRepository) {}
 
-  async execute(currentUserId: number): Promise<(Publication & { isOwner: boolean })[]> {
-    const publications = await this.publicationRepository.findActivePublications();
-    return publications.map(pub => ({
+  async execute(
+    currentUserId: number,
+  ): Promise<(Publication & { isOwner: boolean })[]> {
+    const publications =
+      await this.publicationRepository.findActivePublications();
+    return publications.map((pub) => ({
       ...pub,
       isOwner: pub.userId === currentUserId,
     }));

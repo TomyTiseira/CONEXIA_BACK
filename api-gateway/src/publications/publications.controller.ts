@@ -116,6 +116,7 @@ export class PublicationsController {
   }
 
   @Get()
+  @AuthRoles([ROLES.USER])
   getPublications(@User() user: AuthenticatedUser) {
     return this.client.send('getPublications', { currentUserId: user.id }).pipe(
       catchError((error) => {
@@ -125,6 +126,7 @@ export class PublicationsController {
   }
 
   @Get(':id')
+  @AuthRoles([ROLES.USER])
   getPublicationById(@Body() data: { id: number }) {
     return this.client.send('getPublicationById', data).pipe(
       catchError((error) => {
@@ -134,7 +136,6 @@ export class PublicationsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileInterceptor('media', {
@@ -211,7 +212,6 @@ export class PublicationsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
   deletePublication(@Param('id') id: string, @User() user: AuthenticatedUser) {
     const payload = {
