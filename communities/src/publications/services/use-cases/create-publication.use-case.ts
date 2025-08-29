@@ -18,6 +18,7 @@ export class CreatePublicationUseCase {
       mediaType: data.mediaType,
       mediaUrl: data.mediaUrl,
       userId,
+      privacy: data.privacy,
     });
 
     return await this.publicationRepository.save(publication);

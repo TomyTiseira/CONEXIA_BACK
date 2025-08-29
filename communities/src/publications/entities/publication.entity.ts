@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { PublicationPrivacy } from '../enums/privacy.enum';
 
 @Entity('publications')
 export class Publication {
@@ -26,6 +27,14 @@ export class Publication {
 
   @Column({ name: 'media_type', nullable: true })
   mediaType: string; // 'image' | 'video' | 'gif'
+
+  @Column({
+    name: 'privacy',
+    type: 'enum',
+    enum: PublicationPrivacy,
+    default: PublicationPrivacy.PUBLIC,
+  })
+  privacy: PublicationPrivacy;
 
   @Column({ name: 'user_id' })
   userId: number;

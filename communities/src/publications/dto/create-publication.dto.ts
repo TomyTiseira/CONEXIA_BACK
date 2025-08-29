@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { PublicationPrivacy } from '../enums/privacy.enum';
 
 export class CreatePublicationDto {
   @IsNotEmpty({ message: 'description is required' })
@@ -32,4 +33,10 @@ export class CreatePublicationDto {
   @IsOptional()
   @IsString({ message: 'mediaUrl must be a string' })
   mediaUrl?: string;
+
+  @IsOptional()
+  @IsIn(Object.values(PublicationPrivacy), {
+    message: 'privacy must be either public or onlyFriends',
+  })
+  privacy?: PublicationPrivacy;
 }
