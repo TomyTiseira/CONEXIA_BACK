@@ -8,6 +8,7 @@ import {
   CreatePublicationUseCase,
   DeletePublicationUseCase,
   EditPublicationUseCase,
+  GetPublicationByIdUseCase,
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
 } from './services/use-cases';
@@ -22,6 +23,7 @@ import {
     EditPublicationUseCase,
     DeletePublicationUseCase,
     GetPublicationsUseCase,
+    GetPublicationByIdUseCase,
     GetUserPublicationsUseCase,
   ],
 })

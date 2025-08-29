@@ -1,7 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreatePublicationDto } from '../dto/create-publication.dto';
-import { UpdatePublicationDto } from '../dto/update-publication.dto';
+import {
+  CreatePublicationDto,
+  DeletePublicationDto,
+  EditPublicationSimpleDto,
+  GetPublicationByIdDto,
+  GetPublicationsDto,
+  GetUserPublicationsDto,
+} from '../dto';
 import { PublicationsService } from '../services/publications.service';
 
 @Controller()
@@ -14,28 +20,12 @@ export class PublicationsController {
   }
 
   @MessagePattern('createPublication')
-  createPublication(
-    @Payload()
-    data: {
-      createPublicationDto: CreatePublicationDto;
-      userId: number;
-    },
-  ) {
-    return this.publicationsService.createPublication(
-      data.createPublicationDto,
-      data.userId,
-    );
+  createPublication(@Payload() data: CreatePublicationDto) {
+    return this.publicationsService.createPublication(data, data.userId);
   }
 
   @MessagePattern('editPublication')
-  editPublication(
-    @Payload()
-    data: {
-      id: number;
-      userId: number;
-      updatePublicationDto: UpdatePublicationDto;
-    },
-  ) {
+  editPublication(@Payload() data: EditPublicationSimpleDto) {
     return this.publicationsService.editPublication(
       data.id,
       data.userId,
@@ -44,23 +34,25 @@ export class PublicationsController {
   }
 
   @MessagePattern('getUserPublications')
-  getUserPublications(@Payload() data: { userId: number }) {
+  getUserPublications(@Payload() data: GetUserPublicationsDto) {
     return this.publicationsService.getUserPublications(data.userId);
   }
 
   @MessagePattern('getPublications')
-  getPublications(@Payload() data: { currentUserId: number }) {
+  getPublications(@Payload() data: GetPublicationsDto) {
     return this.publicationsService.getPublications(data.currentUserId);
   }
 
+  @MessagePattern('getPublicationById')
+  getPublicationById(@Payload() data: GetPublicationByIdDto) {
+    return this.publicationsService.getPublicationById(
+      data.id,
+      data.currentUserId,
+    );
+  }
+
   @MessagePattern('deletePublication')
-  async deletePublication(
-    @Payload()
-    data: {
-      id: number;
-      userId: number;
-    },
-  ) {
+  async deletePublication(@Payload() data: DeletePublicationDto) {
     try {
       await this.publicationsService.deletePublication(data.id, data.userId);
       return {

@@ -25,6 +25,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { CreatePublicationDto } from './dto/create-publication.dto';
+import { PublicationIdDto } from './dto/publication-id.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 
 @Controller('publications')
@@ -102,10 +103,8 @@ export class PublicationsController {
         }
       : undefined;
     const payload = {
-      createPublicationDto: {
-        ...dto,
-        ...(mediaData ?? {}),
-      },
+      ...dto,
+      ...(mediaData ?? {}),
       userId: user.id,
     };
     return this.client.send('createPublication', payload).pipe(
@@ -127,12 +126,20 @@ export class PublicationsController {
 
   @Get(':id')
   @AuthRoles([ROLES.USER])
-  getPublicationById(@Body() data: { id: number }) {
-    return this.client.send('getPublicationById', data).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
+  getPublicationById(
+    @Param() params: PublicationIdDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getPublicationById', {
+        id: params.id,
+        currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   @Patch(':id')
@@ -170,7 +177,7 @@ export class PublicationsController {
     }),
   )
   async editPublication(
-    @Param('id') id: string,
+    @Param() params: PublicationIdDto,
     @Body() updatePublicationDto: UpdatePublicationDto,
     @UploadedFile() media: Express.Multer.File,
     @User() user: AuthenticatedUser,
@@ -197,7 +204,7 @@ export class PublicationsController {
         }
       : undefined;
     const payload = {
-      id: Number(id),
+      id: params.id,
       userId: user.id,
       updatePublicationDto: {
         ...dto,
@@ -213,9 +220,12 @@ export class PublicationsController {
 
   @Delete(':id')
   @AuthRoles([ROLES.USER])
-  deletePublication(@Param('id') id: string, @User() user: AuthenticatedUser) {
+  deletePublication(
+    @Param() params: PublicationIdDto,
+    @User() user: AuthenticatedUser,
+  ) {
     const payload = {
-      id: Number(id),
+      id: params.id,
       userId: user.id,
     };
     return this.client.send('deletePublication', payload).pipe(

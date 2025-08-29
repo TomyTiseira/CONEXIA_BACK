@@ -14,7 +14,7 @@ export class EditPublicationUseCase {
   async execute(
     id: number,
     userId: number,
-    updateDto: UpdatePublicationDto,
+    updateDto: Partial<UpdatePublicationDto>,
   ): Promise<Publication> {
     const publication =
       await this.publicationRepository.findActivePublicationById(id);

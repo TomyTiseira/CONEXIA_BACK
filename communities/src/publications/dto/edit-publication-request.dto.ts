@@ -1,7 +1,31 @@
-import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { PublicationPrivacy } from '../enums/privacy.enum';
 
-export class UpdatePublicationDto {
+export class EditPublicationRequestDto {
+  @Type(() => Number)
+  @IsNumber({}, { message: 'id must be a number' })
+  @IsPositive({ message: 'id must be a positive number' })
+  id: number;
+
+  @Type(() => Number)
+  @IsNumber({}, { message: 'userId must be a number' })
+  @IsPositive({ message: 'userId must be a positive number' })
+  userId: number;
+
+  @ValidateNested()
+  @Type(() => UpdatePublicationDataDto)
+  updateData: UpdatePublicationDataDto;
+}
+
+export class UpdatePublicationDataDto {
   @IsOptional()
   @IsString({ message: 'description must be a string' })
   description?: string;

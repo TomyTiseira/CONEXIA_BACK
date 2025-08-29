@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePublicationDto } from '../dto/create-publication.dto';
+import { UpdatePublicationDto } from '../dto/update-publication.dto';
 import {
   CreatePublicationUseCase,
   DeletePublicationUseCase,
   EditPublicationUseCase,
+  GetPublicationByIdUseCase,
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
 } from './use-cases';
@@ -15,6 +17,7 @@ export class PublicationsService {
     private readonly editPublicationUseCase: EditPublicationUseCase,
     private readonly deletePublicationUseCase: DeletePublicationUseCase,
     private readonly getPublicationsUseCase: GetPublicationsUseCase,
+    private readonly getPublicationByIdUseCase: GetPublicationByIdUseCase,
     private readonly getUserPublicationsUseCase: GetUserPublicationsUseCase,
   ) {}
 
@@ -29,7 +32,11 @@ export class PublicationsService {
     return await this.createPublicationUseCase.execute(data, userId);
   }
 
-  async editPublication(id: number, userId: number, updateDto: any) {
+  async editPublication(
+    id: number,
+    userId: number,
+    updateDto: Partial<UpdatePublicationDto>,
+  ) {
     return await this.editPublicationUseCase.execute(id, userId, updateDto);
   }
 
@@ -43,5 +50,9 @@ export class PublicationsService {
 
   async getUserPublications(userId: number) {
     return await this.getUserPublicationsUseCase.execute(userId);
+  }
+
+  async getPublicationById(id: number, currentUserId?: number) {
+    return await this.getPublicationByIdUseCase.execute(id, currentUserId);
   }
 }
