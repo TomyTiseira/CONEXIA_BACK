@@ -142,6 +142,24 @@ export class PublicationsController {
       );
   }
 
+  @Get('profile/:userId')
+  @AuthRoles([ROLES.USER])
+  getUserPublications(
+    @Param('userId') userId: number,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getUserPublications', {
+        userId: Number(userId),
+        currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Patch(':id')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
@@ -195,14 +213,34 @@ export class PublicationsController {
         })),
       });
     }
-    const mediaData = media
-      ? {
-          mediaFilename: media.filename,
-          mediaSize: media.size,
-          mediaType: this.getMediaType(media.mimetype),
-          mediaUrl: `/uploads/publications/${media.filename}`,
+
+    // Si no se envía media (ni archivo ni propiedad), eliminar la imagen
+    let mediaData:
+      | {
+          mediaFilename: string | null;
+          mediaSize: number | null;
+          mediaType: string | null;
+          mediaUrl: string | null;
         }
-      : undefined;
+      | undefined = undefined;
+
+    if (media) {
+      mediaData = {
+        mediaFilename: media.filename,
+        mediaSize: media.size,
+        mediaType: this.getMediaType(media.mimetype),
+        mediaUrl: `/uploads/publications/${media.filename}`,
+      };
+    } else if (!('media' in updatePublicationDto)) {
+      // No se envió media: eliminar imagen
+      mediaData = {
+        mediaFilename: null,
+        mediaSize: null,
+        mediaType: null,
+        mediaUrl: null,
+      };
+    }
+
     const payload = {
       id: params.id,
       userId: user.id,
