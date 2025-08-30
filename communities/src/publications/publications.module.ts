@@ -4,7 +4,14 @@ import { PublicationsController } from './controllers/publications.controller';
 import { Publication } from './entities/publication.entity';
 import { PublicationRepository } from './repositories/publication.repository';
 import { PublicationsService } from './services/publications.service';
-import { CreatePublicationUseCase } from './services/use-cases';
+import {
+  CreatePublicationUseCase,
+  DeletePublicationUseCase,
+  EditPublicationUseCase,
+  GetPublicationByIdUseCase,
+  GetPublicationsUseCase,
+  GetUserPublicationsUseCase,
+} from './services/use-cases';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Publication])],
@@ -13,6 +20,11 @@ import { CreatePublicationUseCase } from './services/use-cases';
     PublicationsService,
     PublicationRepository,
     CreatePublicationUseCase,
+    EditPublicationUseCase,
+    DeletePublicationUseCase,
+    GetPublicationsUseCase,
+    GetPublicationByIdUseCase,
+    GetUserPublicationsUseCase,
   ],
 })
 export class PublicationsModule {}

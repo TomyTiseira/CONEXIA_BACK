@@ -1,16 +1,14 @@
-import {
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 import { PublicationPrivacy } from '../enums/privacy.enum';
 
-export class CreatePublicationDto {
-  @IsNotEmpty({ message: 'description is required' })
+export class UpdatePublicationDto {
+  @IsOptional()
   @IsString({ message: 'description must be a string' })
-  description: string;
+  description?: string;
+
+  @IsOptional()
+  @IsString({ message: 'mediaUrl must be a string' })
+  mediaUrl?: string;
 
   @IsOptional()
   @IsString({ message: 'mediaFilename must be a string' })
@@ -21,18 +19,12 @@ export class CreatePublicationDto {
   mediaSize?: number;
 
   @IsOptional()
-  @IsIn(['image', 'video', 'gif'], {
-    message: 'mediaType must be image, video or gif',
-  })
+  @IsString({ message: 'mediaType must be a string' })
   mediaType?: string;
 
   @IsOptional()
-  @IsString({ message: 'mediaUrl must be a string' })
-  mediaUrl?: string;
-
-  @IsOptional()
   @IsIn(Object.values(PublicationPrivacy), {
-    message: 'privacy must be either public or onlyFriends',
+    message: 'privacy must be public or onlyFriends',
   })
   privacy?: PublicationPrivacy;
 }

@@ -31,6 +31,17 @@ export class PublicationRepository extends Repository<Publication> {
   }
 
   async softDeletePublication(id: number): Promise<void> {
-    await this.update(id, { deletedAt: new Date() });
+    await this.update(id, { deletedAt: new Date(), isActive: false });
+  }
+
+  async updatePublication(
+    id: number,
+    updateDto: Partial<Publication>,
+  ): Promise<void> {
+    await this.createQueryBuilder()
+      .update(Publication)
+      .set(updateDto)
+      .where('id = :id', { id })
+      .execute();
   }
 }
