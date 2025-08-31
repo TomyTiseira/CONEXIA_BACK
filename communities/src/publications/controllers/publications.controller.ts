@@ -35,12 +35,12 @@ export class PublicationsController {
 
   @MessagePattern('getUserPublications')
   getUserPublications(@Payload() data: GetUserPublicationsDto) {
-    return this.publicationsService.getUserPublications(data.userId);
+    return this.publicationsService.getUserPublications(data);
   }
 
   @MessagePattern('getPublications')
   getPublications(@Payload() data: GetPublicationsDto) {
-    return this.publicationsService.getPublications(data.currentUserId);
+    return this.publicationsService.getPublications(data);
   }
 
   @MessagePattern('getPublicationById')

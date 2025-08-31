@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { CreatePublicationDto } from './dto/create-publication.dto';
+import { PaginationDto } from './dto/pagination.dto';
 import { PublicationIdDto } from './dto/publication-id.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 
@@ -116,12 +118,20 @@ export class PublicationsController {
 
   @Get()
   @AuthRoles([ROLES.USER])
-  getPublications(@User() user: AuthenticatedUser) {
-    return this.client.send('getPublications', { currentUserId: user.id }).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
+  getPublications(
+    @User() user: AuthenticatedUser,
+    @Query() query: PaginationDto,
+  ) {
+    return this.client
+      .send('getPublications', {
+        currentUserId: user.id,
+        ...query,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   @Get(':id')
@@ -147,11 +157,13 @@ export class PublicationsController {
   getUserPublications(
     @Param('userId') userId: number,
     @User() user: AuthenticatedUser,
+    @Query() query: PaginationDto,
   ) {
     return this.client
       .send('getUserPublications', {
         userId: Number(userId),
         currentUserId: user.id,
+        ...query,
       })
       .pipe(
         catchError((error) => {

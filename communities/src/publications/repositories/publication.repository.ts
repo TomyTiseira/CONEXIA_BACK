@@ -15,6 +15,20 @@ export class PublicationRepository extends Repository<Publication> {
       .getMany();
   }
 
+  async findActivePublicationsPaginated(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[Publication[], number]> {
+    const skip = (page - 1) * limit;
+
+    return this.createQueryBuilder('publication')
+      .where('publication.deletedAt IS NULL')
+      .orderBy('publication.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+  }
+
   async findActivePublicationById(id: number): Promise<Publication | null> {
     return this.createQueryBuilder('publication')
       .where('publication.id = :id', { id })
@@ -28,6 +42,22 @@ export class PublicationRepository extends Repository<Publication> {
       .andWhere('publication.deletedAt IS NULL')
       .orderBy('publication.createdAt', 'DESC')
       .getMany();
+  }
+
+  async findPublicationsByUserPaginated(
+    userId: number,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<[Publication[], number]> {
+    const skip = (page - 1) * limit;
+
+    return this.createQueryBuilder('publication')
+      .where('publication.userId = :userId', { userId })
+      .andWhere('publication.deletedAt IS NULL')
+      .orderBy('publication.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
   }
 
   async softDeletePublication(id: number): Promise<void> {

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from './common/common.module';
 import { envs } from './config';
 import { Publication } from './publications/entities/publication.entity';
 import { PublicationsModule } from './publications/publications.module';
@@ -16,6 +17,7 @@ import { PublicationsModule } from './publications/publications.module';
       entities: [Publication],
       synchronize: true,
     }),
+    CommonModule,
     PublicationsModule,
   ],
   controllers: [],
