@@ -226,13 +226,13 @@ export class PublicationsController {
       });
     }
 
-    // Si no se envía media (ni archivo ni propiedad), eliminar la imagen
+    // Solo incluir mediaData si se envía un nuevo archivo
     let mediaData:
       | {
-          mediaFilename: string | null;
-          mediaSize: number | null;
-          mediaType: string | null;
-          mediaUrl: string | null;
+          mediaFilename: string;
+          mediaSize: number;
+          mediaType: string;
+          mediaUrl: string;
         }
       | undefined = undefined;
 
@@ -243,22 +243,21 @@ export class PublicationsController {
         mediaType: this.getMediaType(media.mimetype),
         mediaUrl: `/uploads/publications/${media.filename}`,
       };
-    } else if (!('media' in updatePublicationDto)) {
-      // No se envió media: eliminar imagen
-      mediaData = {
-        mediaFilename: null,
-        mediaSize: null,
-        mediaType: null,
-        mediaUrl: null,
-      };
     }
+    // Si no se envía media, no se incluye mediaData en el payload
+    // Esto mantendrá los valores existentes en la base de datos
 
     const payload = {
       id: params.id,
       userId: user.id,
       updatePublicationDto: {
         ...dto,
-        ...(mediaData ?? {}),
+        ...(mediaData && {
+          mediaFilename: mediaData.mediaFilename,
+          mediaSize: mediaData.mediaSize,
+          mediaType: mediaData.mediaType,
+          mediaUrl: mediaData.mediaUrl,
+        }),
       },
     };
     return this.client.send('editPublication', payload).pipe(
