@@ -117,7 +117,7 @@ export class PublicationsController {
   }
 
   @Get()
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getPublications(
     @User() user: AuthenticatedUser,
     @Query() query: PaginationDto,
@@ -135,7 +135,7 @@ export class PublicationsController {
   }
 
   @Get(':id')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getPublicationById(
     @Param() params: PublicationIdDto,
     @User() user: AuthenticatedUser,
@@ -153,7 +153,7 @@ export class PublicationsController {
   }
 
   @Get('profile/:userId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getUserPublications(
     @Param('userId') userId: number,
     @User() user: AuthenticatedUser,
