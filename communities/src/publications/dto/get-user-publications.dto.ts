@@ -1,9 +1,16 @@
-import { Type } from 'class-transformer';
-import { IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, Min } from 'class-validator';
 
 export class GetUserPublicationsDto {
-  @Type(() => Number)
-  @IsNumber({}, { message: 'userId debe ser un número válido' })
-  @IsPositive({ message: 'userId debe ser un número positivo' })
+  @IsNumber()
   userId: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1, { message: 'page must be greater than 0' })
+  page?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1, { message: 'limit must be greater than 0' })
+  limit?: number;
 }

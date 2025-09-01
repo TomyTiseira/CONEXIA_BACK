@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePublicationDto } from '../dto/create-publication.dto';
+import { GetPublicationsDto } from '../dto/get-publications.dto';
+import { GetUserPublicationsDto } from '../dto/get-user-publications.dto';
 import { UpdatePublicationDto } from '../dto/update-publication.dto';
 import {
   CreatePublicationUseCase,
@@ -44,12 +46,12 @@ export class PublicationsService {
     return await this.deletePublicationUseCase.execute(id, userId);
   }
 
-  async getPublications(currentUserId: number) {
-    return await this.getPublicationsUseCase.execute(currentUserId);
+  async getPublications(data: GetPublicationsDto) {
+    return await this.getPublicationsUseCase.execute(data);
   }
 
-  async getUserPublications(userId: number) {
-    return await this.getUserPublicationsUseCase.execute(userId);
+  async getUserPublications(data: GetUserPublicationsDto) {
+    return await this.getUserPublicationsUseCase.execute(data);
   }
 
   async getPublicationById(id: number, currentUserId?: number) {
