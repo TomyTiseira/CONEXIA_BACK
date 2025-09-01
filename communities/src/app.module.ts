@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommonModule } from './common/common.module';
 import { envs } from './config';
 import { ContactsModule } from './contacts/contacts.module';
 import { Connection } from './contacts/entities/connection.entity';
@@ -18,6 +19,7 @@ import { PublicationsModule } from './publications/publications.module';
       entities: [Publication, Connection],
       synchronize: true,
     }),
+    CommonModule,
     PublicationsModule,
     ContactsModule,
   ],

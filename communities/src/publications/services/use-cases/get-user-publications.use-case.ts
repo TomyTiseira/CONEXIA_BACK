@@ -1,12 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { Publication } from '../../entities/publication.entity';
+import { calculatePagination } from '../../../common/utils/pagination.utils';
+import { GetUserPublicationsDto } from '../../dto/get-user-publications.dto';
 import { PublicationRepository } from '../../repositories/publication.repository';
+import { PublicationWithOwnerDto } from '../../response/publication-with-owner.dto';
+import { PublicationsPaginatedDto } from '../../response/publications-paginated.dto';
+import { OwnerHelperService } from '../helpers/owner-helper.service';
 
 @Injectable()
 export class GetUserPublicationsUseCase {
-  constructor(private readonly publicationRepository: PublicationRepository) {}
+  constructor(
+    private readonly publicationRepository: PublicationRepository,
+    private readonly ownerHelperService: OwnerHelperService,
+  ) {}
 
-  async execute(userId: number): Promise<Publication[]> {
-    return await this.publicationRepository.findPublicationsByUser(userId);
+  async execute(
+    data: GetUserPublicationsDto,
+  ): Promise<PublicationsPaginatedDto> {
+    // Configurar parámetros de paginación
+    const params = {
+      page: data.page || 1,
+      limit: data.limit || 10,
+    };
+
+    // Obtener publicaciones del usuario con paginación
+    const [publications, total] =
+      await this.publicationRepository.findPublicationsByUserPaginated(
+        data.userId,
+        params.page,
+        params.limit,
+      );
+
+    // Enriquecer publicaciones con información del owner
+    const enrichedPublications =
+      (await this.ownerHelperService.enrichPublicationsWithOwners(
+        publications,
+        data.userId,
+      )) as PublicationWithOwnerDto[];
+
+    // Calcular información de paginación
+    const pagination = calculatePagination(total, params);
+
+    return {
+      publications: enrichedPublications,
+      pagination,
+    };
   }
 }

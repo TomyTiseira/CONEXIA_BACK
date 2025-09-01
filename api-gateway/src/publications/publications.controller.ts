@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { CreatePublicationDto } from './dto/create-publication.dto';
+import { PaginationDto } from './dto/pagination.dto';
 import { PublicationIdDto } from './dto/publication-id.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 
@@ -115,17 +117,25 @@ export class PublicationsController {
   }
 
   @Get()
-  @AuthRoles([ROLES.USER])
-  getPublications(@User() user: AuthenticatedUser) {
-    return this.client.send('getPublications', { currentUserId: user.id }).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
-    );
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
+  getPublications(
+    @User() user: AuthenticatedUser,
+    @Query() query: PaginationDto,
+  ) {
+    return this.client
+      .send('getPublications', {
+        currentUserId: user.id,
+        ...query,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   @Get(':id')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getPublicationById(
     @Param() params: PublicationIdDto,
     @User() user: AuthenticatedUser,
@@ -143,15 +153,17 @@ export class PublicationsController {
   }
 
   @Get('profile/:userId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getUserPublications(
     @Param('userId') userId: number,
     @User() user: AuthenticatedUser,
+    @Query() query: PaginationDto,
   ) {
     return this.client
       .send('getUserPublications', {
         userId: Number(userId),
         currentUserId: user.id,
+        ...query,
       })
       .pipe(
         catchError((error) => {
@@ -214,13 +226,13 @@ export class PublicationsController {
       });
     }
 
-    // Si no se envía media (ni archivo ni propiedad), eliminar la imagen
+    // Solo incluir mediaData si se envía un nuevo archivo
     let mediaData:
       | {
-          mediaFilename: string | null;
-          mediaSize: number | null;
-          mediaType: string | null;
-          mediaUrl: string | null;
+          mediaFilename: string;
+          mediaSize: number;
+          mediaType: string;
+          mediaUrl: string;
         }
       | undefined = undefined;
 
@@ -231,22 +243,21 @@ export class PublicationsController {
         mediaType: this.getMediaType(media.mimetype),
         mediaUrl: `/uploads/publications/${media.filename}`,
       };
-    } else if (!('media' in updatePublicationDto)) {
-      // No se envió media: eliminar imagen
-      mediaData = {
-        mediaFilename: null,
-        mediaSize: null,
-        mediaType: null,
-        mediaUrl: null,
-      };
     }
+    // Si no se envía media, no se incluye mediaData en el payload
+    // Esto mantendrá los valores existentes en la base de datos
 
     const payload = {
       id: params.id,
       userId: user.id,
       updatePublicationDto: {
         ...dto,
-        ...(mediaData ?? {}),
+        ...(mediaData && {
+          mediaFilename: mediaData.mediaFilename,
+          mediaSize: mediaData.mediaSize,
+          mediaType: mediaData.mediaType,
+          mediaUrl: mediaData.mediaUrl,
+        }),
       },
     };
     return this.client.send('editPublication', payload).pipe(
