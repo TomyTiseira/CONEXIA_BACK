@@ -127,6 +127,13 @@ services:
       - DB_USERNAME=${COMMUNITIES_DB_USER}
       - DB_PASSWORD=${COMMUNITIES_DB_PASSWORD}
       - DB_DATABASE=${COMMUNITIES_DB_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
 
   communities-db:
     build:
