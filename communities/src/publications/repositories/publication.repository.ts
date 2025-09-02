@@ -18,22 +18,89 @@ export class PublicationRepository extends Repository<Publication> {
   async findActivePublicationsPaginated(
     page: number = 1,
     limit: number = 10,
+    currentUserId?: number,
   ): Promise<[Publication[], number]> {
     const skip = (page - 1) * limit;
 
-    return this.createQueryBuilder('publication')
+    const queryBuilder = this.createQueryBuilder('publication')
       .where('publication.deletedAt IS NULL')
-      .orderBy('publication.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+      .orderBy('publication.createdAt', 'DESC');
+
+    // Si se proporciona currentUserId, filtrar publicaciones privadas
+    if (currentUserId) {
+      queryBuilder.andWhere(
+        '(publication.privacy = :publicPrivacy OR (publication.privacy = :onlyFriendsPrivacy AND publication.userId = :currentUserId))',
+        {
+          publicPrivacy: 'public',
+          onlyFriendsPrivacy: 'onlyFriends',
+          currentUserId,
+        },
+      );
+    } else {
+      // Si no hay usuario actual, solo mostrar publicaciones públicas
+      queryBuilder.andWhere('publication.privacy = :publicPrivacy', {
+        publicPrivacy: 'public',
+      });
+    }
+
+    return queryBuilder.skip(skip).take(limit).getManyAndCount();
   }
 
-  async findActivePublicationById(id: number): Promise<Publication | null> {
-    return this.createQueryBuilder('publication')
+  async findActivePublicationsPaginatedWithFriendsFilter(
+    page: number = 1,
+    limit: number = 10,
+    currentUserId?: number,
+  ): Promise<[Publication[], number]> {
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.createQueryBuilder('publication')
+      .leftJoin(
+        'connections',
+        'connection',
+        '((connection.sender_id = :currentUserId AND connection.receiver_id = publication.userId) OR (connection.receiver_id = :currentUserId AND connection.sender_id = publication.userId)) AND connection.status = :acceptedStatus',
+        { currentUserId, acceptedStatus: 'accepted' },
+      )
+      .where('publication.deletedAt IS NULL')
+      .andWhere(
+        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL))',
+        {
+          publicPrivacy: 'public',
+          onlyFriendsPrivacy: 'onlyFriends',
+          currentUserId,
+        },
+      )
+      .orderBy('publication.createdAt', 'DESC');
+
+    return queryBuilder.skip(skip).take(limit).getManyAndCount();
+  }
+
+  async findActivePublicationById(
+    id: number,
+    currentUserId?: number,
+  ): Promise<Publication | null> {
+    const queryBuilder = this.createQueryBuilder('publication')
       .where('publication.id = :id', { id })
-      .andWhere('publication.deletedAt IS NULL')
-      .getOne();
+      .andWhere('publication.deletedAt IS NULL');
+
+    // Si se proporciona currentUserId, filtrar publicaciones privadas
+    if (currentUserId) {
+      queryBuilder.andWhere(
+        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND :currentUserId IN (SELECT CASE WHEN c.sender_id = :currentUserId THEN c.receiver_id ELSE c.sender_id END FROM connections c WHERE ((c.sender_id = :currentUserId AND c.receiver_id = publication.userId) OR (c.receiver_id = :currentUserId AND c.sender_id = publication.userId)) AND c.status = :acceptedStatus)))',
+        {
+          publicPrivacy: 'public',
+          onlyFriendsPrivacy: 'onlyFriends',
+          currentUserId,
+          acceptedStatus: 'accepted',
+        },
+      );
+    } else {
+      // Si no hay usuario actual, solo mostrar publicaciones públicas
+      queryBuilder.andWhere('publication.privacy = :publicPrivacy', {
+        publicPrivacy: 'public',
+      });
+    }
+
+    return queryBuilder.getOne();
   }
 
   async findPublicationsByUser(userId: number): Promise<Publication[]> {
@@ -48,16 +115,35 @@ export class PublicationRepository extends Repository<Publication> {
     userId: number,
     page: number = 1,
     limit: number = 10,
+    currentUserId?: number,
   ): Promise<[Publication[], number]> {
     const skip = (page - 1) * limit;
 
-    return this.createQueryBuilder('publication')
+    const queryBuilder = this.createQueryBuilder('publication')
       .where('publication.userId = :userId', { userId })
       .andWhere('publication.deletedAt IS NULL')
-      .orderBy('publication.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+      .orderBy('publication.createdAt', 'DESC');
+
+    // Si se proporciona currentUserId, filtrar publicaciones privadas
+    if (currentUserId) {
+      queryBuilder.andWhere(
+        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND :currentUserId IN (SELECT CASE WHEN c.sender_id = :currentUserId THEN c.receiver_id ELSE c.sender_id END FROM connections c WHERE ((c.sender_id = :currentUserId AND c.receiver_id = :userId) OR (c.receiver_id = :currentUserId AND c.sender_id = :userId)) AND c.status = :acceptedStatus)))',
+        {
+          publicPrivacy: 'public',
+          onlyFriendsPrivacy: 'onlyFriends',
+          currentUserId,
+          userId,
+          acceptedStatus: 'accepted',
+        },
+      );
+    } else {
+      // Si no hay usuario actual, solo mostrar publicaciones públicas
+      queryBuilder.andWhere('publication.privacy = :publicPrivacy', {
+        publicPrivacy: 'public',
+      });
+    }
+
+    return queryBuilder.skip(skip).take(limit).getManyAndCount();
   }
 
   async softDeletePublication(id: number): Promise<void> {
