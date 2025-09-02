@@ -13,6 +13,7 @@ import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
   GetConnectionRequestsUseCase,
+  GetFriendsUseCase,
   SendConnectionRequestUseCase,
 } from './services/use-cases';
 
@@ -36,6 +37,7 @@ import {
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
     AcceptConnectionUseCase,
+    GetFriendsUseCase,
     UsersService,
     {
       provide: MockEmailService,

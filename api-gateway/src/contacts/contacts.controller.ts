@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
@@ -7,6 +15,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { AcceptConnectionDto, SendConnectionRequestDto } from './dto';
+import { GetFriendsDto } from './dto/get-friends.dto';
 
 @Controller('contacts')
 export class ContactsController {
@@ -61,5 +70,23 @@ export class ContactsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get('friends/:userId')
+  @AuthRoles([ROLES.USER])
+  getFriends(
+    @Param('userId') userId: string,
+    @Query() getFriendsDto: GetFriendsDto,
+  ) {
+    return this.client
+      .send('getFriends', {
+        userId: parseInt(userId),
+        ...getFriendsDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }

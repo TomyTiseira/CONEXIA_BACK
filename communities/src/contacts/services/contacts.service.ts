@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
+import { GetFriendsDto } from '../dto/get-friends.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import {
   AcceptConnectionUseCase,
   GetConnectionRequestsUseCase,
+  GetFriendsUseCase,
   SendConnectionRequestUseCase,
 } from './use-cases';
 
@@ -14,6 +16,7 @@ export class ContactsService {
     private readonly sendConnectionRequestUseCase: SendConnectionRequestUseCase,
     private readonly getConnectionRequestsUseCase: GetConnectionRequestsUseCase,
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
+    private readonly getFriendsUseCase: GetFriendsUseCase,
   ) {}
 
   async sendConnectionRequest(currentUserId: number, data: SendConnectionDto) {
@@ -26,5 +29,9 @@ export class ContactsService {
 
   acceptConnection(currentUserId: number, data: AcceptConnectionDto) {
     return this.acceptConnectionUseCase.execute(currentUserId, data);
+  }
+
+  async getFriends(data: GetFriendsDto) {
+    return await this.getFriendsUseCase.execute(data);
   }
 }

@@ -76,4 +76,21 @@ export class ConnectionRepository {
     });
     return count > 0;
   }
+
+  async findAcceptedConnectionsByUserId(
+    userId: number,
+    limit: number = 10,
+    page: number = 1,
+  ): Promise<Connection[]> {
+    const offset = (page - 1) * limit;
+    return this.connectionRepository.find({
+      where: [
+        { senderId: userId, status: ConnectionStatus.ACCEPTED },
+        { receiverId: userId, status: ConnectionStatus.ACCEPTED },
+      ],
+      order: { updatedAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
 }

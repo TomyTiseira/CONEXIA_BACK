@@ -1,0 +1,80 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { UsersService } from '../../../common/services/users.service';
+import { GetFriendsDto } from '../../dto/get-friends.dto';
+import { ConnectionRepository } from '../../repositories/connection.repository';
+import { FriendResponse } from '../../response/friend.response';
+
+@Injectable()
+export class GetFriendsUseCase {
+  constructor(
+    private readonly connectionRepository: ConnectionRepository,
+    private readonly usersService: UsersService,
+  ) {}
+
+  async execute(getFriendsDto: GetFriendsDto): Promise<FriendResponse[]> {
+    const { userId, limit = 10, page = 1 } = getFriendsDto;
+
+    try {
+      const connections =
+        await this.connectionRepository.findAcceptedConnectionsByUserId(
+          userId,
+          limit,
+          page,
+        );
+
+      if (connections.length === 0) {
+        return [];
+      }
+
+      // Obtener IDs de los amigos (tanto sender como receiver, excluyendo el usuario actual)
+      const friendIds = connections.map((connection) =>
+        connection.senderId === userId
+          ? connection.receiverId
+          : connection.senderId,
+      );
+
+      // Obtener información de los amigos con perfiles
+      const userPromises = friendIds.map((id) =>
+        this.usersService.getUserWithProfile(id),
+      );
+      const userResults = await Promise.allSettled(userPromises);
+
+      const usersMap = new Map();
+      userResults.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          const friendId = friendIds[index];
+          const userData = result.value;
+          const userName = userData.profile
+            ? `${userData.profile.name} ${userData.profile.lastName}`.trim()
+            : 'Usuario';
+          usersMap.set(friendId, {
+            name: userName,
+            email: userData.user?.email,
+          });
+        }
+      });
+
+      return connections.map((connection) => {
+        const friendId =
+          connection.senderId === userId
+            ? connection.receiverId
+            : connection.senderId;
+        const friendInfo = usersMap.get(friendId);
+
+        return {
+          id: friendId,
+          userId: friendId,
+          userName: friendInfo?.name || 'Usuario',
+          userEmail: friendInfo?.email || '',
+          connectionId: connection.id,
+          status: connection.status,
+          createdAt: connection.createdAt,
+          updatedAt: connection.updatedAt,
+        };
+      });
+    } catch {
+      throw new InternalServerErrorException();
+    }
+  }
+}
