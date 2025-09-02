@@ -52,7 +52,10 @@ export class PublicationRepository extends Repository<Publication> {
     currentUserId?: number,
   ): Promise<[Publication[], number]> {
     const skip = (page - 1) * limit;
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
 
+    // Usar una subconsulta para crear un campo de prioridad y ordenar correctamente
     const queryBuilder = this.createQueryBuilder('publication')
       .leftJoin(
         'connections',
@@ -60,16 +63,34 @@ export class PublicationRepository extends Repository<Publication> {
         '((connection.sender_id = :currentUserId AND connection.receiver_id = publication.userId) OR (connection.receiver_id = :currentUserId AND connection.sender_id = publication.userId)) AND connection.status = :acceptedStatus',
         { currentUserId, acceptedStatus: 'accepted' },
       )
+      .addSelect(
+        `CASE 
+          WHEN connection.id IS NOT NULL AND publication.createdAt > :oneDayAgo THEN 1
+          ELSE 2
+        END`,
+        'priority',
+      )
       .where('publication.deletedAt IS NULL')
+      .andWhere('publication.createdAt > :fiveDaysAgo', { fiveDaysAgo })
+      .andWhere('publication.userId != :currentUserId') // Excluir publicaciones propias
       .andWhere(
-        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL))',
+        `(
+          -- Publicaciones de contactos de 1 día (prioridad alta)
+          (connection.id IS NOT NULL AND publication.createdAt > :oneDayAgo) OR
+          -- Publicaciones públicas de otros usuarios
+          (publication.privacy = :publicPrivacy) OR
+          -- Publicaciones privadas de contactos (más de 1 día de antigüedad)
+          (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL AND publication.createdAt <= :oneDayAgo)
+        )`,
         {
           publicPrivacy: 'public',
           onlyFriendsPrivacy: 'onlyFriends',
           currentUserId,
+          oneDayAgo,
         },
       )
-      .orderBy('publication.createdAt', 'DESC');
+      .orderBy('priority', 'ASC')
+      .addOrderBy('publication.createdAt', 'DESC');
 
     return queryBuilder.skip(skip).take(limit).getManyAndCount();
   }
