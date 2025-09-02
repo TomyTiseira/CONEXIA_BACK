@@ -48,6 +48,6 @@ import {
       useClass: NodemailerService,
     },
   ],
-  exports: [ContactsService],
+  exports: [ContactsService, ConnectionRepository],
 })
 export class ContactsModule {}

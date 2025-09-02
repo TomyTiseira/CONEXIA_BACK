@@ -13,4 +13,5 @@ export class PublicationResponseDto {
   createdAt: Date;
   updatedAt: Date;
   isOwner?: boolean; // Solo para endpoints que requieren currentUserId
+  isContact?: boolean; // Indica si el usuario actual es contacto del autor
 }
