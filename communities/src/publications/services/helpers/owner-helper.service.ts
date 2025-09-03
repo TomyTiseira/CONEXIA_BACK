@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
+import { ContactHelperService } from './contact-helper.service';
 
 export interface OwnerInfo {
   id: number;
@@ -10,7 +11,10 @@ export interface OwnerInfo {
 
 @Injectable()
 export class OwnerHelperService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly contactHelperService: ContactHelperService,
+  ) {}
 
   /**
    * Obtiene la información de los owners para una lista de publicaciones
@@ -41,13 +45,15 @@ export class OwnerHelperService {
    * @param publication Publicación a enriquecer
    * @param ownersMap Mapa de owners
    * @param currentUserId ID del usuario actual
-   * @returns Publicación enriquecida con owner e isOwner
+   * @param contactsMap Mapa de contactos (opcional)
+   * @returns Publicación enriquecida con owner, isOwner e isContact
    */
   enrichPublicationWithOwner<T extends { userId: number }>(
     publication: T,
     ownersMap: Map<number, OwnerInfo>,
     currentUserId: number,
-  ): T & { isOwner: boolean; owner: OwnerInfo } {
+    contactsMap?: Map<number, boolean>,
+  ): T & { isOwner: boolean; isContact?: boolean; owner: OwnerInfo } {
     const owner = ownersMap.get(publication.userId) || {
       id: publication.userId,
       name: undefined as unknown as string,
@@ -55,9 +61,12 @@ export class OwnerHelperService {
       profession: 'Sin profesión',
     };
 
+    const isContact = contactsMap?.get(publication.userId) || false;
+
     return {
       ...publication,
       isOwner: publication.userId === currentUserId,
+      isContact,
       owner,
     };
   }
@@ -71,11 +80,25 @@ export class OwnerHelperService {
   async enrichPublicationsWithOwners<T extends { userId: number }>(
     publications: T[],
     currentUserId: number,
-  ): Promise<(T & { isOwner: boolean; owner: OwnerInfo })[]> {
+  ): Promise<
+    (T & { isOwner: boolean; isContact?: boolean; owner: OwnerInfo })[]
+  > {
     const ownersMap = await this.getOwnersInfo(publications);
 
+    // Obtener información de contactos si se proporciona currentUserId
+    const userIds = [...new Set(publications.map((pub) => pub.userId))];
+    const contactsMap = await this.contactHelperService.getContactsMap(
+      currentUserId,
+      userIds,
+    );
+
     return publications.map((pub) =>
-      this.enrichPublicationWithOwner(pub, ownersMap, currentUserId),
+      this.enrichPublicationWithOwner(
+        pub,
+        ownersMap,
+        currentUserId,
+        contactsMap,
+      ),
     );
   }
 }

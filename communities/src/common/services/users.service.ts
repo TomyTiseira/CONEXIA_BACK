@@ -2,24 +2,23 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { USERS_SERVICE } from 'src/config';
+import { OwnerInfo } from 'src/publications/services/helpers/owner-helper.service';
 
-export interface OwnerInfo {
+export interface UserInfo {
   id: number;
   name: string;
-  profilePicture?: string;
-  profession: string;
+  email: string;
 }
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @Inject('USERS_SERVICE') private readonly usersClient: ClientProxy,
-  ) {}
+  constructor(@Inject(USERS_SERVICE) private readonly client: ClientProxy) {}
 
   async getUsersByIds(userIds: number[]): Promise<OwnerInfo[]> {
     try {
       const users = await firstValueFrom(
-        this.usersClient.send('findUsersByIds', { ids: userIds }),
+        this.client.send('findUsersByIds', { ids: userIds }),
       );
 
       return users.map((user: any) => ({
@@ -38,6 +37,18 @@ export class UsersService {
         profilePicture: undefined,
         profession: 'Sin profesión',
       }));
+    }
+  }
+
+  async getUserWithProfile(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('getUserWithProfile', { id: userId }),
+      );
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      return null;
     }
   }
 }

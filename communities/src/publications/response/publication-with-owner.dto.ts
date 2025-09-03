@@ -21,5 +21,6 @@ export class PublicationWithOwnerDto {
   updatedAt: Date;
   deletedAt?: Date;
   isOwner: boolean;
+  isContact?: boolean; // Indica si el usuario actual es contacto del autor
   owner: OwnerDto;
 }

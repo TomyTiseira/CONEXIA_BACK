@@ -20,11 +20,12 @@ export class GetPublicationsUseCase {
       limit: data.limit || 10,
     };
 
-    // Obtener publicaciones con paginación
+    // Obtener publicaciones con paginación y filtrado por privacidad
     const [publications, total] =
-      await this.publicationRepository.findActivePublicationsPaginated(
+      await this.publicationRepository.findActivePublicationsPaginatedWithFriendsFilter(
         params.page,
         params.limit,
+        data.currentUserId,
       );
 
     // Enriquecer publicaciones con información del owner
