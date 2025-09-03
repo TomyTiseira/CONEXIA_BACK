@@ -6,6 +6,10 @@ export class GetUserPublicationsDto {
 
   @IsNumber()
   @IsOptional()
+  currentUserId?: number;
+
+  @IsNumber()
+  @IsOptional()
   @Min(1, { message: 'page must be greater than 0' })
   page?: number;
 

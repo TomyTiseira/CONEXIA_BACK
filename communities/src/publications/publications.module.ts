@@ -3,38 +3,69 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ContactsModule } from '../contacts/contacts.module';
 import { PublicationsController } from './controllers/publications.controller';
+import { PublicationComment } from './entities/publication-comment.entity';
+import { PublicationReaction } from './entities/publication-reaction.entity';
 import { Publication } from './entities/publication.entity';
+import { CommentRepository } from './repositories/comment.repository';
 import { PublicationRepository } from './repositories/publication.repository';
+import { ReactionRepository } from './repositories/reaction.repository';
 import { ContactHelperService } from './services/helpers/contact-helper.service';
 import { OwnerHelperService } from './services/helpers/owner-helper.service';
 import { PublicationsService } from './services/publications.service';
 import {
+  CreateCommentUseCase,
   CreatePublicationUseCase,
+  CreateReactionUseCase,
+  DeleteCommentUseCase,
   DeletePublicationUseCase,
+  DeleteReactionUseCase,
+  EditCommentUseCase,
   EditPublicationUseCase,
+  EditReactionUseCase,
   GetPublicationByIdUseCase,
+  GetPublicationCommentsUseCase,
+  GetPublicationReactionsUseCase,
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
 } from './services/use-cases';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Publication]),
+    TypeOrmModule.forFeature([
+      Publication,
+      PublicationComment,
+      PublicationReaction,
+    ]),
     CommonModule,
     ContactsModule,
   ],
   controllers: [PublicationsController],
   providers: [
     PublicationsService,
+    // Repositorios
     PublicationRepository,
+    CommentRepository,
+    ReactionRepository,
+    // Helpers
     OwnerHelperService,
     ContactHelperService,
+    // Casos de uso de publicaciones
     CreatePublicationUseCase,
     EditPublicationUseCase,
     DeletePublicationUseCase,
     GetPublicationsUseCase,
     GetPublicationByIdUseCase,
     GetUserPublicationsUseCase,
+    // Casos de uso de comentarios
+    CreateCommentUseCase,
+    EditCommentUseCase,
+    DeleteCommentUseCase,
+    GetPublicationCommentsUseCase,
+    // Casos de uso de reacciones
+    CreateReactionUseCase,
+    EditReactionUseCase,
+    DeleteReactionUseCase,
+    GetPublicationReactionsUseCase,
   ],
 })
 export class PublicationsModule {}
