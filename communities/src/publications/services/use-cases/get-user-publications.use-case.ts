@@ -26,12 +26,13 @@ export class GetUserPublicationsUseCase {
       limit: data.limit || 10,
     };
 
-    // Obtener publicaciones del usuario con paginación
+    // Obtener publicaciones del usuario con paginación y filtrado por privacidad
     const [publications, total] =
       await this.publicationRepository.findPublicationsByUserPaginated(
         data.userId,
         params.page,
         params.limit,
+        data.currentUserId,
       );
 
     // Obtener información de comentarios y reacciones para cada publicación

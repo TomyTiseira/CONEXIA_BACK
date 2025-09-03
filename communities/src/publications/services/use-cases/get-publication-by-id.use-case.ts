@@ -16,7 +16,10 @@ export class GetPublicationByIdUseCase {
     currentUserId?: number,
   ): Promise<Publication & { isOwner?: boolean; isContact?: boolean }> {
     const publication =
-      await this.publicationRepository.findActivePublicationById(id);
+      await this.publicationRepository.findActivePublicationById(
+        id,
+        currentUserId,
+      );
 
     if (!publication) {
       throw new PublicationNotFoundException(id);
