@@ -1,8 +1,19 @@
-import { IsNumber, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
+
+export enum CommentSortType {
+  RECENT = 'recent',
+  RELEVANCE = 'relevance',
+}
 
 export class GetPublicationCommentsDto {
   @IsNumber({}, { message: 'publicationId must be a number' })
   publicationId: number;
+
+  @IsOptional()
+  @IsEnum(CommentSortType, {
+    message: 'sort must be either recent or relevance',
+  })
+  sort?: CommentSortType = CommentSortType.RECENT;
 
   @IsOptional()
   @IsNumber({}, { message: 'page must be a number' })

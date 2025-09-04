@@ -1,33 +1,57 @@
 import { Injectable } from '@nestjs/common';
+import { EnhancedCommentsPaginatedDto } from 'src/publications/response/enhanced-comments-paginated.dto';
+import { CommentSortType } from '../../../dto/comment-sort-type.enum';
 import { GetPublicationCommentsDto } from '../../../dto/get-publication-comments.dto';
 import { CommentRepository } from '../../../repositories/comment.repository';
 import { PublicationRepository } from '../../../repositories/publication.repository';
-import { CommentsPaginatedDto } from 'src/publications/response/comments-paginated.dto';
+import { UserInfoService } from '../../user-info.service';
 
 @Injectable()
 export class GetPublicationCommentsUseCase {
   constructor(
     private readonly commentRepository: CommentRepository,
     private readonly publicationRepository: PublicationRepository,
+    private readonly userInfoService: UserInfoService,
   ) {}
 
   async execute(
     data: GetPublicationCommentsDto,
-  ): Promise<CommentsPaginatedDto> {
+  ): Promise<EnhancedCommentsPaginatedDto> {
     const page = data.page || 1;
     const limit = data.limit || 10;
+    const sortBy =
+      (data as any).sort === CommentSortType.RELEVANCE
+        ? CommentSortType.RELEVANCE
+        : CommentSortType.RECENT;
 
+    // Obtener los comentarios con el ordenamiento adecuado
     const [comments, total] =
       await this.commentRepository.findActiveCommentsByPublicationId(
         data.publicationId,
         page,
         limit,
+        sortBy,
       );
+
+    // Obtener información de usuarios para los comentarios
+    const userIds = comments.map((comment) => comment.userId);
+    const userInfoMap = await this.userInfoService.getUserInfoByIds(userIds);
+
+    // Enriquecer los comentarios con información de usuario
+    const enhancedComments = comments.map((comment) => ({
+      id: comment.id,
+      content: comment.content,
+      userId: comment.userId,
+      user: userInfoMap[comment.userId],
+      publicationId: comment.publicationId,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+    }));
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      comments,
+      comments: enhancedComments,
       pagination: {
         currentPage: page,
         itemsPerPage: limit,

@@ -7,7 +7,6 @@ import {
   DeleteCommentDto,
   DeletePublicationDto,
   DeleteReactionDto,
-  EditCommentDto,
   EditPublicationSimpleDto,
   EditReactionDto,
   GetPublicationByIdDto,
@@ -15,6 +14,7 @@ import {
   GetPublicationReactionsDto,
   GetPublicationsDto,
   GetUserPublicationsDto,
+  UpdateCommentDto,
 } from '../dto';
 import { PublicationsService } from '../services/publications.service';
 
@@ -80,11 +80,29 @@ export class PublicationsController {
   }
 
   @MessagePattern('editComment')
-  editComment(@Payload() data: EditCommentDto) {
+  editComment(
+    @Payload()
+    data: {
+      id: number;
+      userId: number;
+      content?: string;
+      updateCommentDto?: { content: string };
+    },
+  ) {
+    // Convertimos los datos recibidos a un formato consistente
+    const updateDto: UpdateCommentDto = {
+      content: data.content || data.updateCommentDto?.content || '',
+    };
+
+    // Validamos que tengamos el contenido
+    if (!updateDto.content) {
+      throw new Error('Content no encontrado en los datos');
+    }
+
     return this.publicationsService.editComment(
       data.id,
       data.userId,
-      data.updateCommentDto,
+      updateDto,
     );
   }
 

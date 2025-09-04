@@ -29,7 +29,10 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { CreateReactionDto } from './dto/create-reaction.dto';
 import { GetPublicationCommentsDto } from './dto/get-publication-comments.dto';
-import { GetPublicationReactionsDto } from './dto/get-publication-reactions.dto';
+import {
+  GetPublicationReactionsDto,
+  ReactionType,
+} from './dto/get-publication-reactions.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { PublicationIdDto } from './dto/publication-id.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -304,7 +307,7 @@ export class PublicationsController {
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
-  async createComment(
+  createComment(
     @Param('id') publicationId: string,
     @Body() createCommentDto: CreateCommentDto,
     @User() user: AuthenticatedUser,
@@ -330,11 +333,13 @@ export class PublicationsController {
   async getPublicationComments(
     @Param('id') publicationId: string,
     @Query() query: PaginationDto,
+    @Query('sort') sort?: string,
   ) {
     const dto = plainToInstance(GetPublicationCommentsDto, {
       publicationId: parseInt(publicationId, 10),
       page: query.page,
       limit: query.limit,
+      sort,
     });
 
     const errors = await validate(dto);
@@ -364,10 +369,11 @@ export class PublicationsController {
     @Body() updateCommentDto: UpdateCommentDto,
     @User() user: AuthenticatedUser,
   ) {
+    // Creamos un payload simple para el servicio de communities
     const payload = {
       id: parseInt(id, 10),
       userId: user.id,
-      updateCommentDto,
+      content: updateCommentDto.content,
     };
 
     return this.client.send('editComment', payload).pipe(
@@ -397,7 +403,7 @@ export class PublicationsController {
   @Post(':id/reactions')
   @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
-  async createReaction(
+  createReaction(
     @Param('id') publicationId: string,
     @Body() createReactionDto: CreateReactionDto,
     @User() user: AuthenticatedUser,
@@ -420,12 +426,15 @@ export class PublicationsController {
   @UseGuards(JwtAuthGuard)
   async getPublicationReactions(
     @Param('id') publicationId: string,
-    @Query() query: PaginationDto,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: ReactionType,
   ) {
     const dto = plainToInstance(GetPublicationReactionsDto, {
       publicationId: parseInt(publicationId, 10),
-      page: query.page,
-      limit: query.limit,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      type,
     });
 
     const errors = await validate(dto);

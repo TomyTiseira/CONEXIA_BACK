@@ -4,18 +4,22 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UpdateCommentDto } from '../../../dto/update-comment.dto';
-import { PublicationComment } from '../../../entities/publication-comment.entity';
 import { CommentRepository } from '../../../repositories/comment.repository';
+import { CommentWithUserDto } from '../../../response/enhanced-comments-paginated.dto';
+import { UserInfoService } from '../../user-info.service';
 
 @Injectable()
 export class EditCommentUseCase {
-  constructor(private readonly commentRepository: CommentRepository) {}
+  constructor(
+    private readonly commentRepository: CommentRepository,
+    private readonly userInfoService: UserInfoService,
+  ) {}
 
   async execute(
     id: number,
     userId: number,
     updateDto: UpdateCommentDto,
-  ): Promise<PublicationComment> {
+  ): Promise<CommentWithUserDto> {
     const comment = await this.commentRepository.findActiveCommentById(id);
 
     if (!comment) {
@@ -41,6 +45,18 @@ export class EditCommentUseCase {
       );
     }
 
-    return updatedComment;
+    // Obtener la información del usuario
+    const userInfoMap = await this.userInfoService.getUserInfoByIds([userId]);
+
+    // Devolver el comentario enriquecido con datos de usuario
+    return {
+      id: updatedComment.id,
+      content: updatedComment.content,
+      userId: updatedComment.userId,
+      user: userInfoMap[updatedComment.userId],
+      publicationId: updatedComment.publicationId,
+      createdAt: updatedComment.createdAt,
+      updatedAt: updatedComment.updatedAt,
+    };
   }
 }

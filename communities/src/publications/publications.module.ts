@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
+import { NatsModule } from '../common/nats/nats.module';
 import { ContactsModule } from '../contacts/contacts.module';
 import { PublicationsController } from './controllers/publications.controller';
 import { PublicationComment } from './entities/publication-comment.entity';
@@ -28,6 +29,7 @@ import {
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
 } from './services/use-cases';
+import { UserInfoService } from './services/user-info.service';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import {
     ]),
     CommonModule,
     ContactsModule,
+    // Importar el módulo NatsModule para usar USERS_SERVICE
+    NatsModule,
   ],
   controllers: [PublicationsController],
   providers: [
@@ -49,6 +53,8 @@ import {
     // Helpers
     OwnerHelperService,
     ContactHelperService,
+    // Servicios de información
+    UserInfoService,
     // Casos de uso de publicaciones
     CreatePublicationUseCase,
     EditPublicationUseCase,

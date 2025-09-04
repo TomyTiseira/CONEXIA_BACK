@@ -1,8 +1,20 @@
-import { IsNumber, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
+
+export enum ReactionType {
+  LIKE = 'like',
+  LOVE = 'love',
+  SUPPORT = 'support',
+  CELEBRATE = 'celebrate',
+  INSIGHTFUL = 'insightful',
+}
 
 export class GetPublicationReactionsDto {
   @IsNumber({}, { message: 'publicationId must be a number' })
   publicationId: number;
+
+  @IsOptional()
+  @IsEnum(ReactionType, { message: 'type must be a valid reaction type' })
+  type?: ReactionType;
 
   @IsOptional()
   @IsNumber({}, { message: 'page must be a number' })

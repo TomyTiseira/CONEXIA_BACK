@@ -9,7 +9,10 @@ import { CommentRepository } from '../../../repositories/comment.repository';
 export class DeleteCommentUseCase {
   constructor(private readonly commentRepository: CommentRepository) {}
 
-  async execute(id: number, userId: number): Promise<void> {
+  async execute(
+    id: number,
+    userId: number,
+  ): Promise<{ success: boolean; message: string }> {
     const comment = await this.commentRepository.findActiveCommentById(id);
 
     if (!comment) {
@@ -25,5 +28,11 @@ export class DeleteCommentUseCase {
 
     // Eliminar lógicamente el comentario
     await this.commentRepository.softDelete(id);
+
+    // Devolver respuesta de éxito
+    return {
+      success: true,
+      message: 'Comentario eliminado correctamente',
+    };
   }
 }

@@ -12,16 +12,22 @@ export class ReactionRepository extends Repository<PublicationReaction> {
     publicationId: number,
     page: number = 1,
     limit: number = 10,
+    type?: string,
   ): Promise<[PublicationReaction[], number]> {
     const skip = (page - 1) * limit;
 
-    return this.createQueryBuilder('reaction')
+    const query = this.createQueryBuilder('reaction')
       .where('reaction.publicationId = :publicationId', { publicationId })
       .andWhere('reaction.deletedAt IS NULL')
       .orderBy('reaction.createdAt', 'DESC')
       .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+      .take(limit);
+
+    if (type) {
+      query.andWhere('reaction.type = :type', { type });
+    }
+
+    return query.getManyAndCount();
   }
 
   async findActiveReactionById(
