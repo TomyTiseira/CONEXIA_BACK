@@ -9,6 +9,7 @@ import { PublicationReaction } from './entities/publication-reaction.entity';
 import { Publication } from './entities/publication.entity';
 import { CommentRepository } from './repositories/comment.repository';
 import { PublicationRepository } from './repositories/publication.repository';
+import { ConnectionStatusService } from './services/helpers/connection-status.service';
 import { ReactionRepository } from './repositories/reaction.repository';
 import { ContactHelperService } from './services/helpers/contact-helper.service';
 import { OwnerHelperService } from './services/helpers/owner-helper.service';
@@ -56,6 +57,7 @@ import { UserInfoService } from './services/user-info.service';
     // Servicios de información
     UserInfoService,
     // Casos de uso de publicaciones
+    ConnectionStatusService,
     CreatePublicationUseCase,
     EditPublicationUseCase,
     DeletePublicationUseCase,

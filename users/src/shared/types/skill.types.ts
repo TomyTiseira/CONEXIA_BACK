@@ -26,6 +26,7 @@ export type ProfileWithSkills = {
   education?: any[];
   certifications?: any[];
   skills: ProfileSkillResponse[];
+  connectionStatus?: string | null;
 };
 
 /**

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
+import { ConnectionStatusService } from './connection-status.service';
 import { ContactHelperService } from './contact-helper.service';
 
 export interface OwnerInfo {
@@ -14,6 +15,7 @@ export class OwnerHelperService {
   constructor(
     private readonly usersService: UsersService,
     private readonly contactHelperService: ContactHelperService,
+    private readonly connectionStatusService: ConnectionStatusService,
   ) {}
 
   /**
@@ -46,14 +48,21 @@ export class OwnerHelperService {
    * @param ownersMap Mapa de owners
    * @param currentUserId ID del usuario actual
    * @param contactsMap Mapa de contactos (opcional)
-   * @returns Publicación enriquecida con owner, isOwner e isContact
+   * @param connectionStatusMap Mapa de estados de conexión (opcional)
+   * @returns Publicación enriquecida con owner, isOwner, isContact y connectionStatus
    */
   enrichPublicationWithOwner<T extends { userId: number }>(
     publication: T,
     ownersMap: Map<number, OwnerInfo>,
     currentUserId?: number,
     contactsMap?: Map<number, boolean>,
-  ): T & { isOwner: boolean; isContact?: boolean; owner: OwnerInfo } {
+    connectionStatusMap?: Map<number, string | null>,
+  ): T & {
+    isOwner: boolean;
+    isContact?: boolean;
+    connectionStatus?: string | null;
+    owner: OwnerInfo;
+  } {
     const owner = ownersMap.get(publication.userId) || {
       id: publication.userId,
       name: undefined as unknown as string,
@@ -62,12 +71,15 @@ export class OwnerHelperService {
     };
 
     const isContact = contactsMap?.get(publication.userId) || false;
+    const connectionStatus =
+      connectionStatusMap?.get(publication.userId) || null;
 
     return {
       ...publication,
       isOwner:
         currentUserId !== undefined && publication.userId === currentUserId,
       isContact,
+      connectionStatus,
       owner,
     };
   }
@@ -82,7 +94,12 @@ export class OwnerHelperService {
     publications: T[],
     currentUserId?: number,
   ): Promise<
-    (T & { isOwner: boolean; isContact?: boolean; owner: OwnerInfo })[]
+    (T & {
+      isOwner: boolean;
+      isContact?: boolean;
+      connectionStatus?: string | null;
+      owner: OwnerInfo;
+    })[]
   > {
     const ownersMap = await this.getOwnersInfo(publications);
 
@@ -102,12 +119,20 @@ export class OwnerHelperService {
       contactsMap = new Map(userIds.map((id) => [id, false]));
     }
 
+    // Obtener estados de conexión
+    const connectionStatusMap =
+      await this.connectionStatusService.getConnectionStatusMap(
+        currentUserId,
+        userIds,
+      );
+
     return publications.map((pub) =>
       this.enrichPublicationWithOwner(
         pub,
         ownersMap,
         currentUserId,
         contactsMap,
+        connectionStatusMap,
       ),
     );
   }

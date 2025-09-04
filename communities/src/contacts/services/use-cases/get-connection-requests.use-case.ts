@@ -46,7 +46,12 @@ export class GetConnectionRequestsUseCase {
           const userName = userData.profile
             ? `${userData.profile.name} ${userData.profile.lastName}`.trim()
             : 'Usuario';
-          usersMap.set(userId, { name: userName, email: userData.user?.email });
+          usersMap.set(userId, {
+            name: userName,
+            email: userData.user?.email,
+            image: userData.profile?.profilePicture,
+            profession: userData.profile?.profession || 'Sin profesión',
+          });
         }
       });
 
@@ -61,7 +66,12 @@ export class GetConnectionRequestsUseCase {
           message: connection.message,
           createdAt: connection.createdAt,
           updatedAt: connection.updatedAt,
-          senderName: senderInfo?.name || 'Usuario',
+          sender: {
+            name: senderInfo?.name || 'Usuario',
+            email: senderInfo?.email || '',
+            image: senderInfo?.image || '',
+            profession: senderInfo?.profession || 'Sin profesión',
+          },
         };
       });
     } catch {

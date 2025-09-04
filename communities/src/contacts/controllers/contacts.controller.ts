@@ -33,4 +33,9 @@ export class ContactsController {
   async getFriends(@Payload() data: GetFriendsDto) {
     return this.contactsService.getFriends(data);
   }
+
+  @MessagePattern('getConnectionStatus')
+  getConnectionStatus(@Payload() data: { userId1: number; userId2: number }) {
+    return this.contactsService.getConnectionStatus(data.userId1, data.userId2);
+  }
 }
