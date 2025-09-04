@@ -25,10 +25,19 @@ import { User } from '../auth/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
+import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreatePublicationDto } from './dto/create-publication.dto';
+import { CreateReactionDto } from './dto/create-reaction.dto';
+import { GetPublicationCommentsDto } from './dto/get-publication-comments.dto';
+import {
+  GetPublicationReactionsDto,
+  ReactionType,
+} from './dto/get-publication-reactions.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { PublicationIdDto } from './dto/publication-id.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
+import { UpdateReactionDto } from './dto/update-reaction.dto';
 
 @Controller('publications')
 export class PublicationsController {
@@ -162,7 +171,7 @@ export class PublicationsController {
     return this.client
       .send('getUserPublications', {
         userId: Number(userId),
-        currentUserId: user.id,
+        currentUserId: user.id, // Pasamos el ID del usuario actual
         ...query,
       })
       .pipe(
@@ -292,5 +301,195 @@ export class PublicationsController {
       return 'video';
     }
     return 'image';
+  }
+
+  // Endpoints para comentarios
+  @Post(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  createComment(
+    @Param('id') publicationId: string,
+    @Body() createCommentDto: CreateCommentDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    // Creamos un nuevo objeto para enviar al microservicio
+    const payload = {
+      content: createCommentDto.content,
+      publicationId: parseInt(publicationId, 10),
+      userId: user.id,
+    };
+
+    // Ya no necesitamos validar con el DTO porque pasamos los campos directamente
+
+    return this.client.send('createComment', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get(':id/comments')
+  @UseGuards(JwtAuthGuard)
+  async getPublicationComments(
+    @Param('id') publicationId: string,
+    @Query() query: PaginationDto,
+    @Query('sort') sort?: string,
+  ) {
+    const dto = plainToInstance(GetPublicationCommentsDto, {
+      publicationId: parseInt(publicationId, 10),
+      page: query.page,
+      limit: query.limit,
+      sort,
+    });
+
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new RpcException({
+        status: 400,
+        message: 'Validation failed',
+        errors: errors.map((e) => ({
+          property: e.property,
+          constraints: e.constraints,
+        })),
+      });
+    }
+
+    return this.client.send('getPublicationComments', dto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Patch('comments/:id')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  updateComment(
+    @Param('id') id: string,
+    @Body() updateCommentDto: UpdateCommentDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    // Creamos un payload simple para el servicio de communities
+    const payload = {
+      id: parseInt(id, 10),
+      userId: user.id,
+      content: updateCommentDto.content,
+    };
+
+    return this.client.send('editComment', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Delete('comments/:id')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  deleteComment(@Param('id') id: string, @User() user: AuthenticatedUser) {
+    const payload = {
+      id: parseInt(id, 10),
+      userId: user.id,
+    };
+
+    return this.client.send('deleteComment', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  // Endpoints para reacciones
+  @Post(':id/reactions')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  createReaction(
+    @Param('id') publicationId: string,
+    @Body() createReactionDto: CreateReactionDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    // Creamos un nuevo objeto para enviar al microservicio
+    const payload = {
+      type: createReactionDto.type,
+      publicationId: parseInt(publicationId, 10),
+      userId: user.id,
+    };
+
+    return this.client.send('createReaction', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get(':id/reactions')
+  @UseGuards(JwtAuthGuard)
+  async getPublicationReactions(
+    @Param('id') publicationId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: ReactionType,
+  ) {
+    const dto = plainToInstance(GetPublicationReactionsDto, {
+      publicationId: parseInt(publicationId, 10),
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      type,
+    });
+
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new RpcException({
+        status: 400,
+        message: 'Validation failed',
+        errors: errors.map((e) => ({
+          property: e.property,
+          constraints: e.constraints,
+        })),
+      });
+    }
+
+    return this.client.send('getPublicationReactions', dto).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Patch('reactions/:id')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  updateReaction(
+    @Param('id') id: string,
+    @Body() updateReactionDto: UpdateReactionDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      id: parseInt(id, 10),
+      userId: user.id,
+      updateReactionDto,
+    };
+
+    return this.client.send('editReaction', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Delete('reactions/:id')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  deleteReaction(@Param('id') id: string, @User() user: AuthenticatedUser) {
+    const payload = {
+      id: parseInt(id, 10),
+      userId: user.id,
+    };
+
+    return this.client.send('deleteReaction', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

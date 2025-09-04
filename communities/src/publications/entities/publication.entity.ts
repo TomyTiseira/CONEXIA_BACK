@@ -3,10 +3,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { PublicationPrivacy } from '../enums/privacy.enum';
+import { PublicationComment } from './publication-comment.entity';
+import { PublicationReaction } from './publication-reaction.entity';
 
 @Entity('publications')
 export class Publication {
@@ -41,6 +44,18 @@ export class Publication {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
+
+  @OneToMany(() => PublicationComment, (comment) => comment.publication, {
+    cascade: true,
+    eager: false,
+  })
+  comments: PublicationComment[];
+
+  @OneToMany(() => PublicationReaction, (reaction) => reaction.publication, {
+    cascade: true,
+    eager: false,
+  })
+  reactions: PublicationReaction[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

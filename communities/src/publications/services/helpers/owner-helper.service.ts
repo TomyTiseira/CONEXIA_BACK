@@ -54,7 +54,7 @@ export class OwnerHelperService {
   enrichPublicationWithOwner<T extends { userId: number }>(
     publication: T,
     ownersMap: Map<number, OwnerInfo>,
-    currentUserId: number,
+    currentUserId?: number,
     contactsMap?: Map<number, boolean>,
     connectionStatusMap?: Map<number, string | null>,
   ): T & {
@@ -76,7 +76,8 @@ export class OwnerHelperService {
 
     return {
       ...publication,
-      isOwner: publication.userId === currentUserId,
+      isOwner:
+        currentUserId !== undefined && publication.userId === currentUserId,
       isContact,
       connectionStatus,
       owner,
@@ -91,7 +92,7 @@ export class OwnerHelperService {
    */
   async enrichPublicationsWithOwners<T extends { userId: number }>(
     publications: T[],
-    currentUserId: number,
+    currentUserId?: number,
   ): Promise<
     (T & {
       isOwner: boolean;
@@ -104,10 +105,19 @@ export class OwnerHelperService {
 
     // Obtener información de contactos si se proporciona currentUserId
     const userIds = [...new Set(publications.map((pub) => pub.userId))];
-    const contactsMap = await this.contactHelperService.getContactsMap(
-      currentUserId,
-      userIds,
-    );
+
+    // Si no hay currentUserId, no podemos determinar contactos
+    let contactsMap: Map<number, boolean> | undefined;
+
+    if (currentUserId !== undefined) {
+      contactsMap = await this.contactHelperService.getContactsMap(
+        currentUserId,
+        userIds,
+      );
+    } else {
+      // Si no hay currentUserId, crear un mapa vacío donde todos son false
+      contactsMap = new Map(userIds.map((id) => [id, false]));
+    }
 
     // Obtener estados de conexión
     const connectionStatusMap =

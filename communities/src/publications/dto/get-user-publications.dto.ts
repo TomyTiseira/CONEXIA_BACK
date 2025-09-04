@@ -5,7 +5,8 @@ export class GetUserPublicationsDto {
   userId: number;
 
   @IsNumber()
-  currentUserId: number;
+  @IsOptional()
+  currentUserId?: number;
 
   @IsNumber()
   @IsOptional()
