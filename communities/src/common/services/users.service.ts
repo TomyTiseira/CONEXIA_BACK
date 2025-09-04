@@ -43,7 +43,7 @@ export class UsersService {
   async getUserWithProfile(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(
-        this.client.send('getUserWithProfile', { id: userId }),
+        this.client.send('getUserWithProfile', { userId: userId }),
       );
       return user;
     } catch (error) {

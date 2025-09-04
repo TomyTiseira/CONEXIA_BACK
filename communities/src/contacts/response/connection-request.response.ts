@@ -6,6 +6,11 @@ export class ConnectionRequestResponse {
   message?: string;
   createdAt: Date;
   updatedAt: Date;
-  senderName?: string;
+  sender: {
+    name: string;
+    email: string;
+    image: string;
+    profession: string;
+  };
   receiverName?: string;
 }
