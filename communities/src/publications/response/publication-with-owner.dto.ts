@@ -22,5 +22,6 @@ export class PublicationWithOwnerDto {
   deletedAt?: Date;
   isOwner: boolean;
   isContact?: boolean; // Indica si el usuario actual es contacto del autor
+  connectionStatus?: string | null; // Estado de conexión entre usuarios
   owner: OwnerDto;
 }

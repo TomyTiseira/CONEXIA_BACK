@@ -5,6 +5,7 @@ import { ContactsModule } from '../contacts/contacts.module';
 import { PublicationsController } from './controllers/publications.controller';
 import { Publication } from './entities/publication.entity';
 import { PublicationRepository } from './repositories/publication.repository';
+import { ConnectionStatusService } from './services/helpers/connection-status.service';
 import { ContactHelperService } from './services/helpers/contact-helper.service';
 import { OwnerHelperService } from './services/helpers/owner-helper.service';
 import { PublicationsService } from './services/publications.service';
@@ -29,6 +30,7 @@ import {
     PublicationRepository,
     OwnerHelperService,
     ContactHelperService,
+    ConnectionStatusService,
     CreatePublicationUseCase,
     EditPublicationUseCase,
     DeletePublicationUseCase,
