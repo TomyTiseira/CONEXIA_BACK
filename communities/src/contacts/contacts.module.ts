@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { envs } from 'src/config';
+import { envs, USERS_SERVICE } from 'src/config';
 import { EmailService } from '../common/services/email.service';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
@@ -13,6 +13,7 @@ import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
   GetConnectionRequestsUseCase,
+  GetConnectionStatusUseCase,
   GetFriendsUseCase,
   SendConnectionRequestUseCase,
 } from './services/use-cases';
@@ -22,7 +23,7 @@ import {
     TypeOrmModule.forFeature([Connection]),
     ClientsModule.register([
       {
-        name: 'USERS_SERVICE',
+        name: USERS_SERVICE,
         transport: Transport.NATS,
         options: {
           servers: envs.natsServers,
@@ -36,6 +37,7 @@ import {
     ConnectionRepository,
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
+    GetConnectionStatusUseCase,
     AcceptConnectionUseCase,
     GetFriendsUseCase,
     UsersService,

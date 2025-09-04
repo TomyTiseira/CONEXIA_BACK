@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
 import { Skill } from '../../../shared/interfaces/skill.interface';
+import { ConnectionStatusService } from '../../../shared/services/connection-status.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
   ProfileSkillResponse,
@@ -14,6 +15,7 @@ export class GetProfileUseCase {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly skillsValidationService: SkillsValidationService,
+    private readonly connectionStatusService: ConnectionStatusService,
   ) {}
 
   async execute(getProfileDto: GetProfileDto) {
@@ -52,6 +54,16 @@ export class GetProfileUseCase {
     // Determinar si el usuario autenticado es el propietario del perfil
     const isOwner =
       getProfileDto.authenticatedUser.id === getProfileDto.targetUserId;
+
+    // Obtener el estado de conexión entre los usuarios
+    const connectionStatus =
+      await this.connectionStatusService.getConnectionStatus(
+        getProfileDto.authenticatedUser.id,
+        getProfileDto.targetUserId,
+      );
+
+    // Agregar el estado de conexión al perfil
+    transformedProfile.connectionStatus = connectionStatus;
 
     return {
       profile: transformedProfile,
