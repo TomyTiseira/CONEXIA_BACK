@@ -120,11 +120,18 @@ export class OwnerHelperService {
     }
 
     // Obtener estados de conexión
-    const connectionStatusMap =
-      await this.connectionStatusService.getConnectionStatusMap(
-        currentUserId,
-        userIds,
-      );
+    let connectionStatusMap: Map<number, string | null> | undefined;
+
+    if (currentUserId !== undefined) {
+      connectionStatusMap =
+        await this.connectionStatusService.getConnectionStatusMap(
+          currentUserId,
+          userIds,
+        );
+    } else {
+      // Si no hay currentUserId, crear un mapa vacío donde todos son null
+      connectionStatusMap = new Map(userIds.map((id) => [id, null]));
+    }
 
     return publications.map((pub) =>
       this.enrichPublicationWithOwner(
