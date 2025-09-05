@@ -1,5 +1,5 @@
 -- Crear tipo de enumeración para reacciones
-CREATE TYPE reaction_type AS ENUM ('like', 'love', 'support', 'celebrate', 'insightful');
+CREATE TYPE reaction_type AS ENUM ('like', 'love', 'support', 'celebrate', 'insightful', 'fun');
 
 -- Crear tabla para reacciones
 CREATE TABLE IF NOT EXISTS publication_reactions (

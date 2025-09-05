@@ -6,6 +6,7 @@ enum ReactionType {
   SUPPORT = 'support',
   CELEBRATE = 'celebrate',
   INSIGHTFUL = 'insightful',
+  FUN = 'fun',
 }
 
 export class UpdateReactionDto {

@@ -333,6 +333,7 @@ export class PublicationsController {
   async getPublicationComments(
     @Param('id') publicationId: string,
     @Query() query: PaginationDto,
+    @User() user: AuthenticatedUser,
     @Query('sort') sort?: string,
   ) {
     const dto = plainToInstance(GetPublicationCommentsDto, {
@@ -340,6 +341,7 @@ export class PublicationsController {
       page: query.page,
       limit: query.limit,
       sort,
+      currentUserId: user?.id,
     });
 
     const errors = await validate(dto);
@@ -426,6 +428,7 @@ export class PublicationsController {
   @UseGuards(JwtAuthGuard)
   async getPublicationReactions(
     @Param('id') publicationId: string,
+    @User() user: AuthenticatedUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('type') type?: ReactionType,
@@ -435,6 +438,7 @@ export class PublicationsController {
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
       type,
+      currentUserId: user?.id,
     });
 
     const errors = await validate(dto);

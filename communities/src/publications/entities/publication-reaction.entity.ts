@@ -19,6 +19,7 @@ export enum ReactionType {
   SUPPORT = 'support',
   CELEBRATE = 'celebrate',
   INSIGHTFUL = 'insightful',
+  FUN = 'fun',
 }
 
 @Entity('publication_reactions')
