@@ -17,7 +17,7 @@ export class EditPublicationUseCase {
     updateDto: Partial<UpdatePublicationDto>,
   ): Promise<Publication> {
     const publication =
-      await this.publicationRepository.findActivePublicationById(id);
+      await this.publicationRepository.findActivePublicationById(id, userId);
 
     if (!publication) {
       throw new PublicationNotFoundException(id);
@@ -28,8 +28,10 @@ export class EditPublicationUseCase {
     }
 
     await this.publicationRepository.updatePublication(id, updateDto);
-    const updated =
-      await this.publicationRepository.findActivePublicationById(id);
+    const updated = await this.publicationRepository.findActivePublicationById(
+      id,
+      userId,
+    );
 
     if (!updated) {
       throw new PublicationNotFoundException(id);

@@ -19,15 +19,16 @@ export class CreateCommentUseCase {
     data: CreateCommentDto,
     userId: number,
   ): Promise<PublicationComment> {
-    // Verificar que la publicación existe
+    // Verificar que la publicación existe y el usuario tiene acceso a ella
     const publication =
       await this.publicationRepository.findActivePublicationById(
         data.publicationId,
+        userId,
       );
 
     if (!publication) {
       throw new NotFoundException(
-        `Publication with ID ${data.publicationId} not found`,
+        `Publication with ID ${data.publicationId} not found or access denied`,
       );
     }
 

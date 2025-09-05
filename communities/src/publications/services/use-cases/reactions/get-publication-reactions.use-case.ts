@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EnhancedReactionsPaginatedDto } from 'src/publications/response/enhanced-reactions-paginated.dto';
 import { GetPublicationReactionsDto } from '../../../dto/get-publication-reactions.dto';
+import { PublicationRepository } from '../../../repositories/publication.repository';
 import { ReactionRepository } from '../../../repositories/reaction.repository';
 import { UserInfoService } from '../../user-info.service';
 
@@ -8,6 +9,7 @@ import { UserInfoService } from '../../user-info.service';
 export class GetPublicationReactionsUseCase {
   constructor(
     private readonly reactionRepository: ReactionRepository,
+    private readonly publicationRepository: PublicationRepository,
     private readonly userInfoService: UserInfoService,
   ) {}
 
@@ -16,6 +18,17 @@ export class GetPublicationReactionsUseCase {
   ): Promise<EnhancedReactionsPaginatedDto> {
     const page = data.page || 1;
     const limit = data.limit || 10;
+
+    // Primero verificar si el usuario tiene acceso a la publicación
+    const publication =
+      await this.publicationRepository.findActivePublicationById(
+        data.publicationId,
+        data.currentUserId,
+      );
+
+    if (!publication) {
+      throw new Error('Publication not found or access denied');
+    }
 
     // Obtener reacciones paginadas, posiblemente filtrando por tipo
     const [reactions, total] =
@@ -85,6 +98,7 @@ export class GetPublicationReactionsUseCase {
       support: '🤝',
       celebrate: '🎉',
       insightful: '💡',
+      fun: '😂',
     };
     return emojiMap[type] || '👍';
   }
