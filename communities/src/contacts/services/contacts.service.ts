@@ -6,11 +6,13 @@ import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
 import {
   AcceptConnectionUseCase,
+  GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
   SendConnectionRequestUseCase,
 } from './use-cases';
+import { ConnectionInfo } from './use-cases/get-connection-info.use-case';
 
 @Injectable()
 export class ContactsService {
@@ -20,6 +22,7 @@ export class ContactsService {
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
     private readonly getFriendsUseCase: GetFriendsUseCase,
     private readonly getConnectionStatusUseCase: GetConnectionStatusUseCase,
+    private readonly getConnectionInfoUseCase: GetConnectionInfoUseCase,
   ) {}
 
   async sendConnectionRequest(currentUserId: number, data: SendConnectionDto) {
@@ -43,5 +46,12 @@ export class ContactsService {
     userId2: number,
   ): Promise<ConnectionStatus | null> {
     return await this.getConnectionStatusUseCase.execute(userId1, userId2);
+  }
+
+  async getConnectionInfo(
+    userId1: number,
+    userId2: number,
+  ): Promise<ConnectionInfo | null> {
+    return await this.getConnectionInfoUseCase.execute(userId1, userId2);
   }
 }

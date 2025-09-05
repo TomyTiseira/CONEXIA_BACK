@@ -12,6 +12,7 @@ import { ConnectionRepository } from './repositories/connection.repository';
 import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
+  GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
@@ -38,6 +39,7 @@ import {
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
     GetConnectionStatusUseCase,
+    GetConnectionInfoUseCase,
     AcceptConnectionUseCase,
     GetFriendsUseCase,
     UsersService,

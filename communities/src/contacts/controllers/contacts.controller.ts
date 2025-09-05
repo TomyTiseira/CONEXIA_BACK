@@ -38,4 +38,9 @@ export class ContactsController {
   getConnectionStatus(@Payload() data: { userId1: number; userId2: number }) {
     return this.contactsService.getConnectionStatus(data.userId1, data.userId2);
   }
+
+  @MessagePattern('getConnectionInfo')
+  getConnectionInfo(@Payload() data: { userId1: number; userId2: number }) {
+    return this.contactsService.getConnectionInfo(data.userId1, data.userId2);
+  }
 }

@@ -68,7 +68,8 @@ export class ConnectionStatusService {
     const results = await Promise.all(promises);
 
     results.forEach(({ userId, status }) => {
-      statusMap.set(userId, status);
+      // Simplemente asignar el status, que puede ser ConnectionStatus o null
+      statusMap.set(userId, status ?? null);
     });
 
     return statusMap;
