@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
 import { Skill } from '../../../shared/interfaces/skill.interface';
-import { ConnectionStatusService } from '../../../shared/services/connection-status.service';
+import { ConnectionInfoService } from '../../../shared/services/connection-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
   ProfileSkillResponse,
@@ -15,7 +15,7 @@ export class GetProfileUseCase {
   constructor(
     private readonly profileRepository: ProfileRepository,
     private readonly skillsValidationService: SkillsValidationService,
-    private readonly connectionStatusService: ConnectionStatusService,
+    private readonly connectionInfoService: ConnectionInfoService,
   ) {}
 
   async execute(getProfileDto: GetProfileDto) {
@@ -55,15 +55,22 @@ export class GetProfileUseCase {
     const isOwner =
       getProfileDto.authenticatedUser.id === getProfileDto.targetUserId;
 
-    // Obtener el estado de conexión entre los usuarios
-    const connectionStatus =
-      await this.connectionStatusService.getConnectionStatus(
-        getProfileDto.authenticatedUser.id,
-        getProfileDto.targetUserId,
-      );
+    // Obtener los datos de conexión entre los usuarios
+    const connectionInfo = await this.connectionInfoService.getConnectionInfo(
+      getProfileDto.authenticatedUser.id,
+      getProfileDto.targetUserId,
+    );
 
-    // Agregar el estado de conexión al perfil
-    transformedProfile.connectionStatus = connectionStatus;
+    // Agregar los datos de conexión al perfil
+    if (connectionInfo) {
+      transformedProfile.connectionData = {
+        id: connectionInfo.id,
+        state: connectionInfo.state,
+        senderId: connectionInfo.senderId,
+      };
+    } else {
+      transformedProfile.connectionData = null;
+    }
 
     return {
       profile: transformedProfile,
