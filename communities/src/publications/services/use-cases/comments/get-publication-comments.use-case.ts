@@ -24,6 +24,17 @@ export class GetPublicationCommentsUseCase {
         ? CommentSortType.RELEVANCE
         : CommentSortType.RECENT;
 
+    // Primero, verificar que la publicación existe y el usuario tiene acceso a ella
+    const publication =
+      await this.publicationRepository.findActivePublicationById(
+        data.publicationId,
+        data.currentUserId,
+      );
+
+    if (!publication) {
+      throw new Error('Publication not found or access denied');
+    }
+
     // Obtener los comentarios con el ordenamiento adecuado
     const [comments, total] =
       await this.commentRepository.findActiveCommentsByPublicationId(

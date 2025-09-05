@@ -10,6 +10,10 @@ export class GetPublicationCommentsDto {
   publicationId: number;
 
   @IsOptional()
+  @IsNumber({}, { message: 'currentUserId must be a number' })
+  currentUserId?: number;
+
+  @IsOptional()
   @IsEnum(CommentSortType, {
     message: 'sort must be either recent or relevance',
   })
