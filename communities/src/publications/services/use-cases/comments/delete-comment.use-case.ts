@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  CommentNotFoundException,
+  CommentNotOwnerException,
+} from 'src/common/exceptions/comments.exceptions';
 import { CommentRepository } from '../../../repositories/comment.repository';
 
 @Injectable()
@@ -16,14 +16,12 @@ export class DeleteCommentUseCase {
     const comment = await this.commentRepository.findActiveCommentById(id);
 
     if (!comment) {
-      throw new NotFoundException(`Comment with ID ${id} not found`);
+      throw new CommentNotFoundException(id);
     }
 
     // Verificar que el usuario es el dueño del comentario
     if (comment.userId !== userId) {
-      throw new UnauthorizedException(
-        'You are not authorized to delete this comment',
-      );
+      throw new CommentNotOwnerException();
     }
 
     // Eliminar lógicamente el comentario
@@ -32,7 +30,7 @@ export class DeleteCommentUseCase {
     // Devolver respuesta de éxito
     return {
       success: true,
-      message: 'Comentario eliminado correctamente',
+      message: 'comment deleted successfully',
     };
   }
 }

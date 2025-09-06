@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PublicationNotFoundException } from 'src/common/exceptions/publications.exceptions';
 import { EnhancedCommentsPaginatedDto } from 'src/publications/response/enhanced-comments-paginated.dto';
 import { CommentSortType } from '../../../dto/comment-sort-type.enum';
 import { GetPublicationCommentsDto } from '../../../dto/get-publication-comments.dto';
@@ -32,7 +33,7 @@ export class GetPublicationCommentsUseCase {
       );
 
     if (!publication) {
-      throw new Error('Publication not found or access denied');
+      throw new PublicationNotFoundException(data.publicationId);
     }
 
     // Obtener los comentarios con el ordenamiento adecuado

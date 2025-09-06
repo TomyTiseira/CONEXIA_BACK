@@ -1,8 +1,6 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { PublicationNotFoundException } from 'src/common/exceptions/publications.exceptions';
+import { ReactionUserIdMismatchException } from 'src/common/exceptions/reactions.exceptions';
 import { CreateReactionDto } from '../../../dto/create-reaction.dto';
 import { PublicationReaction } from '../../../entities/publication-reaction.entity';
 import { PublicationRepository } from '../../../repositories/publication.repository';
@@ -27,14 +25,12 @@ export class CreateReactionUseCase {
       );
 
     if (!publication) {
-      throw new NotFoundException(
-        `Publication with ID ${data.publicationId} not found or access denied`,
-      );
+      throw new PublicationNotFoundException(data.publicationId);
     }
 
     // Verificar que el usuario es el mismo que el que viene en el DTO
     if (userId !== data.userId) {
-      throw new BadRequestException('User ID mismatch');
+      throw new ReactionUserIdMismatchException();
     }
 
     // Verificar si ya existe una reacción del usuario en esta publicación

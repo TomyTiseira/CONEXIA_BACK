@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  ReactionNotFoundException,
+  ReactionNotOwnerException,
+} from 'src/common/exceptions/reactions.exceptions';
 import { ReactionRepository } from '../../../repositories/reaction.repository';
 
 @Injectable()
@@ -13,14 +13,12 @@ export class DeleteReactionUseCase {
     const reaction = await this.reactionRepository.findActiveReactionById(id);
 
     if (!reaction) {
-      throw new NotFoundException(`Reaction with ID ${id} not found`);
+      throw new ReactionNotFoundException(id);
     }
 
     // Verificar que el usuario es el dueño de la reacción
     if (reaction.userId !== userId) {
-      throw new UnauthorizedException(
-        'You are not authorized to delete this reaction',
-      );
+      throw new ReactionNotOwnerException();
     }
 
     // Eliminar lógicamente la reacción
