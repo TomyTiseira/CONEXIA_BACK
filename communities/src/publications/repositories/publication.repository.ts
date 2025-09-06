@@ -105,15 +105,22 @@ export class PublicationRepository extends Repository<Publication> {
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
     if (currentUserId) {
-      queryBuilder.andWhere(
-        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND :currentUserId IN (SELECT CASE WHEN c.sender_id = :currentUserId THEN c.receiver_id ELSE c.sender_id END FROM connections c WHERE ((c.sender_id = :currentUserId AND c.receiver_id = publication.userId) OR (c.receiver_id = :currentUserId AND c.sender_id = publication.userId)) AND c.status = :acceptedStatus)))',
-        {
-          publicPrivacy: 'public',
-          onlyFriendsPrivacy: 'onlyFriends',
-          currentUserId,
-          acceptedStatus: 'accepted',
-        },
-      );
+      // Usar LEFT JOIN para verificar la conexión de amistad
+      queryBuilder
+        .leftJoin(
+          'connections',
+          'connection',
+          '((connection.sender_id = :currentUserId AND connection.receiver_id = publication.userId) OR (connection.receiver_id = :currentUserId AND connection.sender_id = publication.userId)) AND connection.status = :acceptedStatus',
+          { currentUserId, acceptedStatus: 'accepted' },
+        )
+        .andWhere(
+          '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL))',
+          {
+            publicPrivacy: 'public',
+            onlyFriendsPrivacy: 'onlyFriends',
+            currentUserId,
+          },
+        );
     } else {
       // Si no hay usuario actual, solo mostrar publicaciones públicas
       queryBuilder.andWhere('publication.privacy = :publicPrivacy', {
@@ -147,16 +154,22 @@ export class PublicationRepository extends Repository<Publication> {
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
     if (currentUserId) {
-      queryBuilder.andWhere(
-        '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND :currentUserId IN (SELECT CASE WHEN c.sender_id = :currentUserId THEN c.receiver_id ELSE c.sender_id END FROM connections c WHERE ((c.sender_id = :currentUserId AND c.receiver_id = :userId) OR (c.receiver_id = :currentUserId AND c.sender_id = :userId)) AND c.status = :acceptedStatus)))',
-        {
-          publicPrivacy: 'public',
-          onlyFriendsPrivacy: 'onlyFriends',
-          currentUserId,
-          userId,
-          acceptedStatus: 'accepted',
-        },
-      );
+      // Usar LEFT JOIN para verificar la conexión de amistad
+      queryBuilder
+        .leftJoin(
+          'connections',
+          'connection',
+          '((connection.sender_id = :currentUserId AND connection.receiver_id = :userId) OR (connection.receiver_id = :currentUserId AND connection.sender_id = :userId)) AND connection.status = :acceptedStatus',
+          { currentUserId, userId, acceptedStatus: 'accepted' },
+        )
+        .andWhere(
+          '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL))',
+          {
+            publicPrivacy: 'public',
+            onlyFriendsPrivacy: 'onlyFriends',
+            currentUserId,
+          },
+        );
     } else {
       // Si no hay usuario actual, solo mostrar publicaciones públicas
       queryBuilder.andWhere('publication.privacy = :publicPrivacy', {
