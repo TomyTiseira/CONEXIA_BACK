@@ -16,6 +16,7 @@ import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.int
 import { NATS_SERVICE } from '../config';
 import { AcceptConnectionDto, SendConnectionRequestDto } from './dto';
 import { GetFriendsDto } from './dto/get-friends.dto';
+import { GetRecommendationsDto } from './dto/get-recommendations.dto';
 
 @Controller('contacts')
 export class ContactsController {
@@ -88,5 +89,23 @@ export class ContactsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Get('recommendations')
+  @AuthRoles([ROLES.USER])
+  getRecommendations(
+    @Query() getRecommendationsDto: GetRecommendationsDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      userId: user.id,
+      ...getRecommendationsDto,
+    };
+
+    return this.client.send('getRecommendations', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

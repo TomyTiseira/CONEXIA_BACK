@@ -97,7 +97,7 @@ export class UserRepository {
   async findProfileByUserId(userId: number): Promise<Profile | null> {
     const user = await this.ormRepository.findOne({
       where: { id: userId },
-      relations: ['profile'],
+      relations: ['profile', 'profile.profileSkills'],
     });
     return user?.profile || null;
   }
@@ -121,8 +121,29 @@ export class UserRepository {
     return this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('profile.profileSkills', 'profileSkills')
       .where('user.id IN (:...userIds)', { userIds })
       .getMany();
+  }
+
+  async getAllUsersExcept(
+    currentUserId: number,
+    excludedIds: number[],
+    limit: number,
+  ): Promise<number[]> {
+    const excludedIdsList = excludedIds.length > 0 ? excludedIds : [0];
+
+    const query = this.ormRepository
+      .createQueryBuilder('user')
+      .select('user.id as user_id')
+      .where('user.id != :currentUserId', { currentUserId })
+      .andWhere('user.id NOT IN (:...excludedIds)', {
+        excludedIds: excludedIdsList,
+      })
+      .limit(limit);
+
+    const results = await query.getRawMany();
+    return results.map((result) => result.user_id);
   }
 
   ping(): string {

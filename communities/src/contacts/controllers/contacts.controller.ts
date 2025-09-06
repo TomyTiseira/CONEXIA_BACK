@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
+import { GetRecommendationsDto } from '../dto/get-recommendations.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ContactsService } from '../services/contacts.service';
 
@@ -42,5 +43,10 @@ export class ContactsController {
   @MessagePattern('getConnectionInfo')
   getConnectionInfo(@Payload() data: { userId1: number; userId2: number }) {
     return this.contactsService.getConnectionInfo(data.userId1, data.userId2);
+  }
+
+  @MessagePattern('getRecommendations')
+  getRecommendations(@Payload() data: GetRecommendationsDto) {
+    return this.contactsService.getRecommendations(data);
   }
 }

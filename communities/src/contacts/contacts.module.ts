@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { envs, USERS_SERVICE } from 'src/config';
+import { CacheService } from '../common/services/cache.service';
 import { EmailService } from '../common/services/email.service';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
@@ -16,6 +17,7 @@ import {
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
+  GetRecommendationsUseCase,
   SendConnectionRequestUseCase,
 } from './services/use-cases';
 
@@ -42,7 +44,9 @@ import {
     GetConnectionInfoUseCase,
     AcceptConnectionUseCase,
     GetFriendsUseCase,
+    GetRecommendationsUseCase,
     UsersService,
+    CacheService,
     {
       provide: MockEmailService,
       useClass: NodemailerService,

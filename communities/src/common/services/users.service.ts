@@ -51,4 +51,34 @@ export class UsersService {
       return null;
     }
   }
+
+  async getSkillsByIds(skillIds: number[]): Promise<any[]> {
+    try {
+      const skills = await firstValueFrom(
+        this.client.send('findSkillsByIds', { ids: skillIds }),
+      );
+      return skills;
+    } catch {
+      return [];
+    }
+  }
+
+  async getAllUsersExcept(
+    currentUserId: number,
+    excludedIds: number[],
+    limit: number,
+  ): Promise<number[]> {
+    try {
+      const users = await firstValueFrom(
+        this.client.send('getAllUsersExcept', {
+          currentUserId,
+          excludedIds,
+          limit,
+        }),
+      );
+      return users;
+    } catch {
+      return [];
+    }
+  }
 }

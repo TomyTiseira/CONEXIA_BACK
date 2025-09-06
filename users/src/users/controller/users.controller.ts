@@ -139,4 +139,27 @@ export class UsersController {
     const result = await this.usersService.getUserWithProfile(data.userId);
     return result;
   }
+
+  @MessagePattern('findSkillsByIds')
+  async findSkillsByIds(@Payload() data: { ids: number[] }) {
+    const skills = await this.usersService.findSkillsByIds(data.ids);
+    return skills;
+  }
+
+  @MessagePattern('getAllUsersExcept')
+  async getAllUsersExcept(
+    @Payload()
+    data: {
+      currentUserId: number;
+      excludedIds: number[];
+      limit: number;
+    },
+  ) {
+    const users = await this.usersService.getAllUsersExcept(
+      data.currentUserId,
+      data.excludedIds,
+      data.limit,
+    );
+    return users;
+  }
 }

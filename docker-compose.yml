@@ -40,6 +40,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - JWT_SECRET=${JWT_SECRET}
+      - NODE_OPTIONS=--max-old-space-size=4096
+    command: npm run start:dev
 
   users-db:
     build:
@@ -85,6 +87,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
+      - NODE_OPTIONS=--max-old-space-size=4096
+    command: npm run start:dev
 
   projects-db:
     build:
@@ -134,6 +138,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
+      - NODE_OPTIONS=--max-old-space-size=4096
+    command: npm run start:dev
 
   communities-db:
     build:

@@ -3,4 +3,5 @@ export * from './get-connection-info.use-case';
 export * from './get-connection-requests.use-case';
 export * from './get-connection-status.use-case';
 export * from './get-friends.use-case';
+export * from './get-recommendations.use-case';
 export * from './send-connection-request.use-case';

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
+import { GetRecommendationsDto } from '../dto/get-recommendations.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
 import {
@@ -10,6 +11,7 @@ import {
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
+  GetRecommendationsUseCase,
   SendConnectionRequestUseCase,
 } from './use-cases';
 import { ConnectionInfo } from './use-cases/get-connection-info.use-case';
@@ -23,6 +25,7 @@ export class ContactsService {
     private readonly getFriendsUseCase: GetFriendsUseCase,
     private readonly getConnectionStatusUseCase: GetConnectionStatusUseCase,
     private readonly getConnectionInfoUseCase: GetConnectionInfoUseCase,
+    private readonly getRecommendationsUseCase: GetRecommendationsUseCase,
   ) {}
 
   async sendConnectionRequest(currentUserId: number, data: SendConnectionDto) {
@@ -53,5 +56,9 @@ export class ContactsService {
     userId2: number,
   ): Promise<ConnectionInfo | null> {
     return await this.getConnectionInfoUseCase.execute(userId1, userId2);
+  }
+
+  async getRecommendations(data: GetRecommendationsDto) {
+    return await this.getRecommendationsUseCase.execute(data);
   }
 }
