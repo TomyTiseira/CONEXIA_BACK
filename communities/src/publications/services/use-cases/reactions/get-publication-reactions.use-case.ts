@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PublicationNotFoundException } from 'src/common/exceptions/publications.exceptions';
 import { EnhancedReactionsPaginatedDto } from 'src/publications/response/enhanced-reactions-paginated.dto';
 import { GetPublicationReactionsDto } from '../../../dto/get-publication-reactions.dto';
 import { PublicationRepository } from '../../../repositories/publication.repository';
@@ -27,7 +28,7 @@ export class GetPublicationReactionsUseCase {
       );
 
     if (!publication) {
-      throw new Error('Publication not found or access denied');
+      throw new PublicationNotFoundException(data.publicationId);
     }
 
     // Obtener reacciones paginadas, posiblemente filtrando por tipo

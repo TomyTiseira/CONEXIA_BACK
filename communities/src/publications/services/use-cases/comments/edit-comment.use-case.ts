@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  CommentNotFoundException,
+  CommentNotOwnerException,
+  CommentUpdateFailedException,
+} from 'src/common/exceptions/comments.exceptions';
 import { UpdateCommentDto } from '../../../dto/update-comment.dto';
 import { CommentRepository } from '../../../repositories/comment.repository';
 import { CommentWithUserDto } from '../../../response/enhanced-comments-paginated.dto';
@@ -23,14 +24,12 @@ export class EditCommentUseCase {
     const comment = await this.commentRepository.findActiveCommentById(id);
 
     if (!comment) {
-      throw new NotFoundException(`Comment with ID ${id} not found`);
+      throw new CommentNotFoundException(id);
     }
 
     // Verificar que el usuario es el dueño del comentario
     if (comment.userId !== userId) {
-      throw new UnauthorizedException(
-        'You are not authorized to edit this comment',
-      );
+      throw new CommentNotOwnerException();
     }
 
     // Actualizar el comentario
@@ -40,9 +39,7 @@ export class EditCommentUseCase {
       await this.commentRepository.findActiveCommentById(id);
 
     if (!updatedComment) {
-      throw new NotFoundException(
-        `Comment with ID ${id} not found after update`,
-      );
+      throw new CommentUpdateFailedException(id);
     }
 
     // Obtener la información del usuario

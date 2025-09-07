@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+  ReactionNotFoundException,
+  ReactionNotOwnerException,
+  ReactionUpdateFailedException,
+} from 'src/common/exceptions/reactions.exceptions';
 import { UpdateReactionDto } from '../../../dto/update-reaction.dto';
 import { PublicationReaction } from '../../../entities/publication-reaction.entity';
 import { ReactionRepository } from '../../../repositories/reaction.repository';
@@ -19,14 +20,12 @@ export class EditReactionUseCase {
     const reaction = await this.reactionRepository.findActiveReactionById(id);
 
     if (!reaction) {
-      throw new NotFoundException(`Reaction with ID ${id} not found`);
+      throw new ReactionNotFoundException(id);
     }
 
     // Verificar que el usuario es el dueño de la reacción
     if (reaction.userId !== userId) {
-      throw new UnauthorizedException(
-        'You are not authorized to edit this reaction',
-      );
+      throw new ReactionNotOwnerException();
     }
 
     // Actualizar la reacción
@@ -36,9 +35,7 @@ export class EditReactionUseCase {
       await this.reactionRepository.findActiveReactionById(id);
 
     if (!updatedReaction) {
-      throw new NotFoundException(
-        `Reaction with ID ${id} not found after update`,
-      );
+      throw new ReactionUpdateFailedException(id);
     }
 
     return updatedReaction;

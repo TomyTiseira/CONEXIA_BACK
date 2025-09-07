@@ -14,6 +14,7 @@ import { Role } from './entities/role.entity';
 import { User } from './entities/user.entity';
 import { LocalityRepository } from './repository/locality.repository';
 import { ProfileSkillRepository } from './repository/profile-skill.repository';
+import { ConnectionInfoService } from './services/connection-info.service';
 import { ConnectionStatusService } from './services/connection-status.service';
 import { SkillsValidationService } from './services/skills-validation.service';
 
@@ -50,6 +51,7 @@ import { SkillsValidationService } from './services/skills-validation.service';
     LocalityRepository,
     SkillsValidationService,
     ConnectionStatusService,
+    ConnectionInfoService,
     UserRepository,
     UserBaseService,
     ProfileRepository,
@@ -59,6 +61,7 @@ import { SkillsValidationService } from './services/skills-validation.service';
     LocalityRepository,
     SkillsValidationService,
     ConnectionStatusService,
+    ConnectionInfoService,
     UserRepository,
     UserBaseService,
     ProfileRepository,

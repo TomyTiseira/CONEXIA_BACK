@@ -1,8 +1,6 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { CommentUserIdMismatchException } from 'src/common/exceptions/comments.exceptions';
+import { PublicationNotFoundException } from 'src/common/exceptions/publications.exceptions';
 import { CreateCommentDto } from '../../../dto/create-comment.dto';
 import { PublicationComment } from '../../../entities/publication-comment.entity';
 import { CommentRepository } from '../../../repositories/comment.repository';
@@ -27,14 +25,12 @@ export class CreateCommentUseCase {
       );
 
     if (!publication) {
-      throw new NotFoundException(
-        `Publication with ID ${data.publicationId} not found or access denied`,
-      );
+      throw new PublicationNotFoundException(data.publicationId);
     }
 
     // Verificar que el usuario es el mismo que el que viene en el DTO
     if (userId !== data.userId) {
-      throw new BadRequestException('User ID mismatch');
+      throw new CommentUserIdMismatchException();
     }
 
     // Crear el comentario

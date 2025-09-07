@@ -7,6 +7,15 @@ export type ProfileSkillResponse = {
 };
 
 /**
+ * Tipo para los datos de conexión
+ */
+export type ConnectionData = {
+  id: number;
+  state: string;
+  senderId: number;
+};
+
+/**
  * Tipo para la respuesta completa de un perfil con skills
  */
 export type ProfileWithSkills = {
@@ -26,7 +35,7 @@ export type ProfileWithSkills = {
   education?: any[];
   certifications?: any[];
   skills: ProfileSkillResponse[];
-  connectionStatus?: string | null;
+  connectionData?: ConnectionData | null;
 };
 
 /**
