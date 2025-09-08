@@ -81,9 +81,9 @@ export class ConnectionRepository {
     userId: number,
     limit: number = 10,
     page: number = 1,
-  ): Promise<Connection[]> {
+  ): Promise<[Connection[], number]> {
     const offset = (page - 1) * limit;
-    return this.connectionRepository.find({
+    return this.connectionRepository.findAndCount({
       where: [
         { senderId: userId, status: ConnectionStatus.ACCEPTED },
         { receiverId: userId, status: ConnectionStatus.ACCEPTED },

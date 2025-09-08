@@ -73,7 +73,7 @@ export class ContactsController {
   }
 
   @Get('friends/:userId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getFriends(
     @Param('userId') userId: string,
     @Query() getFriendsDto: GetFriendsDto,
