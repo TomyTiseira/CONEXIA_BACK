@@ -64,6 +64,8 @@ export class GetFriendsUseCase {
           usersMap.set(friendId, {
             name: userName,
             email: userData.user?.email,
+            profession: userData.profile?.profession || '',
+            profilePicture: userData.profile?.profilePicture,
           });
         }
       });
@@ -80,6 +82,8 @@ export class GetFriendsUseCase {
           userId: friendId,
           userName: friendInfo?.name || 'Usuario',
           userEmail: friendInfo?.email || '',
+          profession: friendInfo?.profession || 'Sin profesión',
+          profilePicture: friendInfo?.profilePicture,
           connectionId: connection.id,
           status: connection.status,
           createdAt: connection.createdAt,
