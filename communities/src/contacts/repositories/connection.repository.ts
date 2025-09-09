@@ -93,4 +93,24 @@ export class ConnectionRepository {
       skip: offset,
     });
   }
+
+  async findAcceptedConnection(
+    userId1: number,
+    userId2: number,
+  ): Promise<Connection | null> {
+    return this.connectionRepository.findOne({
+      where: [
+        {
+          senderId: userId1,
+          receiverId: userId2,
+          status: ConnectionStatus.ACCEPTED,
+        },
+        {
+          senderId: userId2,
+          receiverId: userId1,
+          status: ConnectionStatus.ACCEPTED,
+        },
+      ],
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { MessagingModule } from './contacts/messaging.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { PostulationsModule } from './postulations/postulations.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -18,6 +19,7 @@ import { UsersModule } from './users/users.module';
     ReportsModule,
     PublicationsModule,
     ContactsModule,
+    MessagingModule,
   ],
   controllers: [],
   providers: [],

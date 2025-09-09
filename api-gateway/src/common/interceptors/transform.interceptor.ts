@@ -5,8 +5,8 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ResponseFormat } from '../interfaces/response.interface';
 
 @Injectable()
@@ -22,6 +22,10 @@ export class ResponseFormatInterceptor implements NestInterceptor {
         timestamp: new Date().toISOString(),
         path: context.switchToHttp().getRequest().url as string,
       })),
+      catchError((error) => {
+        // No transformar errores, dejarlos pasar para que los maneje el filtro
+        return throwError(() => error);
+      }),
     );
   }
 }
