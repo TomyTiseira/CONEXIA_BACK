@@ -11,7 +11,7 @@ export class DeletePublicationUseCase {
 
   async execute(id: number, userId: number): Promise<void> {
     const publication =
-      await this.publicationRepository.findActivePublicationById(id);
+      await this.publicationRepository.findActivePublicationById(id, userId);
     if (!publication) {
       throw new PublicationNotFoundException(id);
     }
