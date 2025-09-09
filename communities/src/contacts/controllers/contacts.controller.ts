@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
+import { DeleteConnectionRequestDto } from '../dto/delete-connection-request.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
@@ -42,5 +43,15 @@ export class ContactsController {
   @MessagePattern('getConnectionInfo')
   getConnectionInfo(@Payload() data: { userId1: number; userId2: number }) {
     return this.contactsService.getConnectionInfo(data.userId1, data.userId2);
+  }
+
+  @MessagePattern('deleteConnectionRequest')
+  deleteConnectionRequest(
+    @Payload() data: DeleteConnectionRequestDto & { currentUserId: number },
+  ) {
+    return this.contactsService.deleteConnectionRequest(
+      data.currentUserId,
+      data,
+    );
   }
 }

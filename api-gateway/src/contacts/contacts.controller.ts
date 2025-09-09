@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -88,5 +89,23 @@ export class ContactsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Delete('connection-request/:requestId')
+  @AuthRoles([ROLES.USER])
+  deleteConnectionRequest(
+    @Param('requestId') requestId: string,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      currentUserId: user.id,
+      requestId: parseInt(requestId),
+    };
+
+    return this.client.send('deleteConnectionRequest', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

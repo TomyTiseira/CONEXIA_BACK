@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
+import { DeleteConnectionRequestDto } from '../dto/delete-connection-request.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
 import {
   AcceptConnectionUseCase,
+  DeleteConnectionRequestUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
@@ -20,6 +22,7 @@ export class ContactsService {
     private readonly sendConnectionRequestUseCase: SendConnectionRequestUseCase,
     private readonly getConnectionRequestsUseCase: GetConnectionRequestsUseCase,
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
+    private readonly deleteConnectionRequestUseCase: DeleteConnectionRequestUseCase,
     private readonly getFriendsUseCase: GetFriendsUseCase,
     private readonly getConnectionStatusUseCase: GetConnectionStatusUseCase,
     private readonly getConnectionInfoUseCase: GetConnectionInfoUseCase,
@@ -53,5 +56,12 @@ export class ContactsService {
     userId2: number,
   ): Promise<ConnectionInfo | null> {
     return await this.getConnectionInfoUseCase.execute(userId1, userId2);
+  }
+
+  deleteConnectionRequest(
+    currentUserId: number,
+    data: DeleteConnectionRequestDto,
+  ) {
+    return this.deleteConnectionRequestUseCase.execute(currentUserId, data);
   }
 }
