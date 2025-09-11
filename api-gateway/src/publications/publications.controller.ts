@@ -150,7 +150,7 @@ export class PublicationsController {
     @User() user: AuthenticatedUser,
   ) {
     return this.client
-      .send('getPublicationById', {
+      .send('getPublicationDetail', {
         id: params.id,
         currentUserId: user.id,
       })
