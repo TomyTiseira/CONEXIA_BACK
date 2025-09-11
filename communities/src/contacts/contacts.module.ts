@@ -17,6 +17,7 @@ import {
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
+  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
 } from './services/use-cases';
 
@@ -39,6 +40,7 @@ import {
     ConnectionRepository,
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
+    GetSentConnectionRequestsUseCase,
     GetConnectionStatusUseCase,
     GetConnectionInfoUseCase,
     AcceptConnectionUseCase,

@@ -15,7 +15,11 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
-import { AcceptConnectionDto, SendConnectionRequestDto } from './dto';
+import {
+  AcceptConnectionDto,
+  GetSentConnectionRequestsDto,
+  SendConnectionRequestDto,
+} from './dto';
 import { GetFriendsDto } from './dto/get-friends.dto';
 
 @Controller('contacts')
@@ -48,6 +52,24 @@ export class ContactsController {
     };
 
     return this.client.send('getConnectionRequests', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('sent-requests')
+  @AuthRoles([ROLES.USER])
+  getSentConnectionRequests(
+    @Query() getSentConnectionRequestsDto: GetSentConnectionRequestsDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      userId: user.id,
+      ...getSentConnectionRequestsDto,
+    };
+
+    return this.client.send('getSentConnectionRequests', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
