@@ -4,6 +4,7 @@ import { AcceptConnectionDto } from '../dto/accept-connection.dto';
 import { DeleteConnectionRequestDto } from '../dto/delete-connection-request.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
+import { GetSentConnectionRequestsDto } from '../dto/get-sent-connection-requests.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ContactsService } from '../services/contacts.service';
 
@@ -21,6 +22,13 @@ export class ContactsController {
   @MessagePattern('getConnectionRequests')
   async getConnectionRequests(@Payload() data: GetConnectionRequestsDto) {
     return this.contactsService.getConnectionRequests(data);
+  }
+
+  @MessagePattern('getSentConnectionRequests')
+  async getSentConnectionRequests(
+    @Payload() data: GetSentConnectionRequestsDto,
+  ) {
+    return this.contactsService.getSentConnectionRequests(data);
   }
 
   @MessagePattern('acceptConnection')

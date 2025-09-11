@@ -3,6 +3,7 @@ import { AcceptConnectionDto } from '../dto/accept-connection.dto';
 import { DeleteConnectionRequestDto } from '../dto/delete-connection-request.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
+import { GetSentConnectionRequestsDto } from '../dto/get-sent-connection-requests.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
 import {
@@ -12,6 +13,7 @@ import {
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
+  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
 } from './use-cases';
 import { ConnectionInfo } from './use-cases/get-connection-info.use-case';
@@ -21,6 +23,7 @@ export class ContactsService {
   constructor(
     private readonly sendConnectionRequestUseCase: SendConnectionRequestUseCase,
     private readonly getConnectionRequestsUseCase: GetConnectionRequestsUseCase,
+    private readonly getSentConnectionRequestsUseCase: GetSentConnectionRequestsUseCase,
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
     private readonly deleteConnectionRequestUseCase: DeleteConnectionRequestUseCase,
     private readonly getFriendsUseCase: GetFriendsUseCase,
@@ -34,6 +37,10 @@ export class ContactsService {
 
   async getConnectionRequests(data: GetConnectionRequestsDto) {
     return this.getConnectionRequestsUseCase.execute(data);
+  }
+
+  async getSentConnectionRequests(data: GetSentConnectionRequestsDto) {
+    return this.getSentConnectionRequestsUseCase.execute(data);
   }
 
   acceptConnection(currentUserId: number, data: AcceptConnectionDto) {
