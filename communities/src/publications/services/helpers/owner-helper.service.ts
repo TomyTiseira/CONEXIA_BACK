@@ -6,7 +6,9 @@ import { ContactHelperService } from './contact-helper.service';
 export interface OwnerInfo {
   id: number;
   name: string;
-  profilePicture?: string;
+  lastName?: string;
+  email?: string;
+  profilePicture?: string | null;
   profession: string;
 }
 
@@ -65,7 +67,8 @@ export class OwnerHelperService {
   } {
     const owner = ownersMap.get(publication.userId) || {
       id: publication.userId,
-      name: undefined as unknown as string,
+      name: `Usuario ${publication.userId}`,
+      lastName: '',
       profilePicture: undefined,
       profession: 'Sin profesión',
     };

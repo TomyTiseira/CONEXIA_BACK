@@ -194,4 +194,112 @@ export class PublicationRepository extends Repository<Publication> {
       .where('id = :id', { id })
       .execute();
   }
+
+  async findActivePublicationByIdWithDetails(
+    id: number,
+    currentUserId?: number,
+  ): Promise<any> {
+    const baseQuery = this.createQueryBuilder('publication')
+      .select('publication.id', 'publication_id')
+      .addSelect('publication.description', 'publication_description')
+      .addSelect('publication.mediaUrl', 'publication_mediaUrl')
+      .addSelect('publication.mediaType', 'publication_mediaType')
+      .addSelect('publication.privacy', 'publication_privacy')
+      .addSelect('publication.userId', 'publication_userId')
+      .addSelect('publication.isActive', 'publication_isActive')
+      .addSelect('publication.createdAt', 'publication_createdAt')
+      .addSelect('publication.updatedAt', 'publication_updatedAt')
+      .addSelect('publication.deletedAt', 'publication_deletedAt')
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'like' AND r.deleted_at IS NULL)`,
+        'like_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'love' AND r.deleted_at IS NULL)`,
+        'love_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'support' AND r.deleted_at IS NULL)`,
+        'support_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'celebrate' AND r.deleted_at IS NULL)`,
+        'celebrate_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'insightful' AND r.deleted_at IS NULL)`,
+        'insightful_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_reactions r WHERE r.publication_id = publication.id AND r.type = 'fun' AND r.deleted_at IS NULL)`,
+        'fun_count',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM publication_comments c WHERE c.publication_id = publication.id AND c.deleted_at IS NULL)`,
+        'comments_count',
+      )
+      .where('publication.id = :id', { id })
+      .andWhere('publication.deletedAt IS NULL');
+
+    // Si hay usuario actual, obtener su reacción
+    if (currentUserId) {
+      baseQuery.addSelect(
+        `(SELECT r.type FROM publication_reactions r WHERE r.publication_id = publication.id AND r.user_id = :currentUserId AND r.deleted_at IS NULL LIMIT 1)`,
+        'user_reaction_type',
+      );
+      baseQuery.setParameter('currentUserId', currentUserId);
+
+      // Filtrar publicaciones privadas
+      baseQuery
+        .leftJoin(
+          'connections',
+          'connection',
+          '((connection.sender_id = :currentUserId AND connection.receiver_id = publication.userId) OR (connection.receiver_id = :currentUserId AND connection.sender_id = publication.userId)) AND connection.status = :acceptedStatus',
+          { currentUserId, acceptedStatus: 'accepted' },
+        )
+        .andWhere(
+          '(publication.privacy = :publicPrivacy OR publication.userId = :currentUserId OR (publication.privacy = :onlyFriendsPrivacy AND connection.id IS NOT NULL))',
+          {
+            publicPrivacy: 'public',
+            onlyFriendsPrivacy: 'onlyFriends',
+            currentUserId,
+          },
+        );
+    } else {
+      // Si no hay usuario actual, solo mostrar publicaciones públicas
+      baseQuery.andWhere('publication.privacy = :publicPrivacy', {
+        publicPrivacy: 'public',
+      });
+    }
+
+    const result = await baseQuery.getRawOne();
+
+    if (!result) {
+      return null;
+    }
+
+    // Transformar el resultado
+    return {
+      id: result.publication_id,
+      description: result.publication_description,
+      mediaUrl: result.publication_mediaUrl,
+      mediaType: result.publication_mediaType,
+      privacy: result.publication_privacy,
+      userId: result.publication_userId,
+      createdAt: result.publication_createdAt,
+      updatedAt: result.publication_updatedAt,
+      isActive: result.publication_isActive,
+      deletedAt: result.publication_deletedAt,
+      reactionsCount: {
+        like: parseInt(result.like_count) || 0,
+        love: parseInt(result.love_count) || 0,
+        support: parseInt(result.support_count) || 0,
+        celebrate: parseInt(result.celebrate_count) || 0,
+        insightful: parseInt(result.insightful_count) || 0,
+        fun: parseInt(result.fun_count) || 0,
+      },
+      commentsCount: parseInt(result.comments_count) || 0,
+      userReaction: result.user_reaction_type || null,
+    };
+  }
 }
