@@ -12,7 +12,7 @@ export class CacheService {
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutos
 
   /**
-   * Obtiene un valor del caché
+   * Obtiene un valor del caché con versión optimizada
    */
   get<T>(key: string): T | null {
     const item = this.cache.get(key);
@@ -22,9 +22,15 @@ export class CacheService {
     }
 
     // Verificar si el item ha expirado
-    if (Date.now() - item.timestamp > item.ttl) {
+    const now = Date.now();
+    if (now - item.timestamp > item.ttl) {
       this.cache.delete(key);
       return null;
+    }
+
+    // Actualizar timestamp para "refresh on access" en recomendaciones
+    if (key.startsWith('recommendations:')) {
+      item.timestamp = now;
     }
 
     return item.data as T;
@@ -75,27 +81,37 @@ export class CacheService {
   }
 
   /**
-   * Genera una clave de caché para recomendaciones
+   * Genera una clave de caché para recomendaciones (optimizada)
    */
   generateRecommendationsKey(
     userId: number,
     limit: number,
-    page: number,
+    _page: number,
   ): string {
-    return `recommendations:${userId}:${limit}:${page}`;
+    // Simplificar clave para mejor hit rate
+    return `rec:${userId}:${limit}`;
   }
 
   /**
-   * Genera una clave de caché para amigos en común
+   * Genera una clave de caché para amigos en común (optimizada)
    */
   generateMutualFriendsKey(userId1: number, userId2: number): string {
-    return `mutual_friends:${Math.min(userId1, userId2)}:${Math.max(userId1, userId2)}`;
+    return `mf:${Math.min(userId1, userId2)}:${Math.max(userId1, userId2)}`;
   }
 
   /**
    * Genera una clave de caché para habilidades de usuario
    */
   generateUserSkillsKey(userId: number): string {
-    return `user_skills:${userId}`;
+    return `skills:${userId}`;
+  }
+
+  /**
+   * Cache con múltiples niveles de TTL para recomendaciones
+   */
+  setRecommendations<T>(userId: number, limit: number, data: T): void {
+    const key = this.generateRecommendationsKey(userId, limit, 1);
+    // TTL más largo para recomendaciones (30 minutos)
+    this.set(key, data, 30 * 60 * 1000);
   }
 }

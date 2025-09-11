@@ -138,7 +138,14 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
-      - NODE_OPTIONS=--max-old-space-size=4096
+      # Configuraciones optimizadas para recomendaciones
+      - RECOMMENDATIONS_CACHE_TTL=${RECOMMENDATIONS_CACHE_TTL:-86400000}
+      - RECOMMENDATIONS_MAX_CACHE_SIZE=${RECOMMENDATIONS_MAX_CACHE_SIZE:-10000}
+      - MAX_PARALLEL_PROCESSING=${MAX_PARALLEL_PROCESSING:-8}
+      - MUTUAL_FRIENDS_THRESHOLD=${MUTUAL_FRIENDS_THRESHOLD:-1}
+      - SKILLS_MATCH_THRESHOLD=${SKILLS_MATCH_THRESHOLD:-2}
+      - MAX_FRIENDS_FOR_CALCULATION=${MAX_FRIENDS_FOR_CALCULATION:-50}
+      - NODE_OPTIONS=${COMMUNITIES_NODE_OPTIONS:-"--max-old-space-size=2048"}
     command: npm run start:dev
 
   communities-db:
@@ -151,6 +158,11 @@ services:
       - POSTGRES_USER=${COMMUNITIES_DB_USER}
       - POSTGRES_PASSWORD=${COMMUNITIES_DB_PASSWORD}
       - POSTGRES_DB=${COMMUNITIES_DB_NAME}
+      # Configuraciones optimizadas para recomendaciones
+      - POSTGRES_WORK_MEM=${POSTGRES_WORK_MEM:-128MB}
+      - POSTGRES_SHARED_BUFFERS=${POSTGRES_SHARED_BUFFERS:-256MB}
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      - POSTGRES_RANDOM_PAGE_COST=${POSTGRES_RANDOM_PAGE_COST:-1.1}
     volumes:
       - ./communities/postgres-data:/var/lib/postgresql/data
       - ./communities/postgres-init:/docker-entrypoint-initdb.d
@@ -158,6 +170,12 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c work_mem=${POSTGRES_WORK_MEM:-128MB}
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
+      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      -c random_page_cost=${POSTGRES_RANDOM_PAGE_COST:-1.1}
+      -c seq_page_cost=1.0
+      -c cpu_tuple_cost=0.01
     healthcheck:
       test:
         [

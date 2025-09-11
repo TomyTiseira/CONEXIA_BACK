@@ -251,4 +251,79 @@ export class ConnectionRepository {
     const results = await this.connectionRepository.query(query, params);
     return results.map((result) => result.user_id);
   }
+
+  /**
+   * Versión optimizada que retorna usuarios con su conteo de amigos mutuos
+   */
+  async getUsersWithMutualFriendsOptimized(
+    currentUserId: number,
+    friendIds: number[],
+    limit: number,
+  ): Promise<{ userId: number; mutualCount: number }[]> {
+    if (friendIds.length === 0) {
+      return [];
+    }
+
+    // Consulta SQL altamente optimizada usando CTEs y índices
+    const query = `
+      WITH current_user_friends AS (
+        SELECT UNNEST($2::int[]) as friend_id
+      ),
+      potential_users AS (
+        SELECT DISTINCT 
+          CASE 
+            WHEN c.sender_id = ANY($2::int[]) THEN c.receiver_id
+            WHEN c.receiver_id = ANY($2::int[]) THEN c.sender_id
+          END as user_id
+        FROM connections c
+        WHERE c.status = 'accepted'
+        AND (c.sender_id = ANY($2::int[]) OR c.receiver_id = ANY($2::int[]))
+        AND CASE 
+          WHEN c.sender_id = ANY($2::int[]) THEN c.receiver_id
+          WHEN c.receiver_id = ANY($2::int[]) THEN c.sender_id
+        END != $1
+        AND CASE 
+          WHEN c.sender_id = ANY($2::int[]) THEN c.receiver_id
+          WHEN c.receiver_id = ANY($2::int[]) THEN c.sender_id
+        END NOT IN (
+          SELECT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END
+          FROM connections 
+          WHERE (sender_id = $1 OR receiver_id = $1) AND status = 'accepted'
+        )
+      ),
+      mutual_counts AS (
+        SELECT 
+          pu.user_id,
+          COUNT(*) as mutual_count
+        FROM potential_users pu
+        INNER JOIN connections c1 ON (
+          (c1.sender_id = pu.user_id AND c1.receiver_id = ANY($2::int[])) OR
+          (c1.receiver_id = pu.user_id AND c1.sender_id = ANY($2::int[]))
+        )
+        WHERE c1.status = 'accepted'
+        GROUP BY pu.user_id
+        HAVING COUNT(*) >= 1
+      )
+      SELECT user_id, mutual_count
+      FROM mutual_counts
+      ORDER BY mutual_count DESC, user_id ASC
+      LIMIT $3
+    `;
+
+    try {
+      const results = await this.connectionRepository.query(query, [
+        currentUserId,
+        friendIds,
+        limit,
+      ]);
+
+      return results.map((result) => ({
+        userId: parseInt(result.user_id),
+        mutualCount: parseInt(result.mutual_count),
+      }));
+    } catch (error) {
+      console.error('Error in getUsersWithMutualFriendsOptimized:', error);
+      return [];
+    }
+  }
 }

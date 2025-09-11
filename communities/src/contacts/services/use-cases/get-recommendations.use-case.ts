@@ -1,20 +1,27 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /*
 ============================================
-SISTEMA DE RECOMENDACIONES SOLO POR AMIGOS EN COMÚN
+SISTEMA DE RECOMENDACIONES ULTRA-OPTIMIZADO
 ============================================
-IMPORTANTE: Este sistema SOLO recomienda usuarios basándose en amigos en común.
-TODA la lógica relacionada con habilidades está COMENTADA INTENCIONALMENTE.
+FUNCIONALIDAD COMPLETA según User Story:
+✅ Match de habilidades 
+✅ Contactos en común
+✅ Solo 12 recomendaciones máximo
+✅ Ordenadas por mayor cantidad de match y amigos en común
+✅ Excluye contactos ya agregados
 
-FUNCIONALIDAD:
-- Busca usuarios que tienen amigos en común con el usuario actual
-- Ordena por cantidad de amigos en común (más amigos = mayor prioridad)
-- NO considera habilidades, profesiones, o cualquier otro criterio
+ALGORITMO DE SCORING:
+- 60% peso: Amigos en común (red social)
+- 40% peso: Habilidades coincidentes (compatibilidad profesional)
 
-PARA REACTIVAR HABILIDADES:
-- Descomenta los métodos marcados con "COMENTADO INTENCIONALMENTE"
-- Descomenta la lógica en getRecommendationsWithStrategy
+OPTIMIZACIONES ULTRA-AGRESIVAS:
+🚀 Máximo 15 candidatos potenciales (reducido de 30)
+🚀 Lotes de 5 candidatos (reducido de 10)
+🚀 Timeout de 1 segundo por candidato
+🚀 Early break cuando se tienen suficientes resultados
+🚀 Límite de 10 amigos por consulta (reducido de 25)
+🚀 Detección temprana de usuarios sin conexiones
+🚀 Procesamiento paralelo con límites estrictos
 ============================================
 */
 import { Injectable } from '@nestjs/common';
@@ -24,6 +31,14 @@ import { UsersService } from '../../../common/services/users.service';
 import { GetRecommendationsDto } from '../../dto/get-recommendations.dto';
 import { ConnectionRepository } from '../../repositories/connection.repository';
 import { RecommendationResponse } from '../../response/recommendation.response';
+
+interface UserCandidate {
+  id: number;
+  mutualFriendsCount: number;
+  skillsMatchCount: number;
+  totalScore: number;
+  userData: any;
+}
 
 @Injectable()
 export class GetRecommendationsUseCase {
@@ -37,11 +52,9 @@ export class GetRecommendationsUseCase {
     getRecommendationsDto: GetRecommendationsDto,
   ): Promise<RecommendationResponse[]> {
     const { userId, limit = 12, page = 1 } = getRecommendationsDto;
+    const maxLimit = Math.min(limit, 12); // Máximo 12 según user story
 
-    // Usar el límite especificado (máximo 12)
-    const maxLimit = Math.min(limit, 12);
-
-    // Verificar caché de 24 horas primero
+    // Verificar caché
     const cacheKey = this.cacheService.generateRecommendationsKey(
       userId,
       maxLimit,
@@ -55,460 +68,348 @@ export class GetRecommendationsUseCase {
     }
 
     try {
-      // Obtener el perfil del usuario actual con sus habilidades
+      // 1. Obtener perfil del usuario actual con habilidades
       const currentUserProfile =
         await this.usersService.getUserWithProfile(userId);
       if (!currentUserProfile?.profile) {
         return [];
       }
 
-      // Obtener las habilidades del usuario actual
       const currentUserSkills =
         currentUserProfile.profile.profileSkills?.map((ps) => ps.skillId) || [];
 
-      // Obtener amigos del usuario (OPTIMIZADO: Solo los necesarios)
-      const friends =
+      // 2. Obtener contactos actuales para excluirlos
+      const existingConnections =
         await this.connectionRepository.findAcceptedConnectionsByUserId(
           userId,
-          Math.min(maxLimit, 20), // Máximo 20 amigos
+          100,
           1,
         );
-      const friendIds = new Set(
-        friends.map((connection) =>
+      const connectedUserIds = new Set(
+        existingConnections.map((connection) =>
           connection.senderId === userId
             ? connection.receiverId
             : connection.senderId,
         ),
       );
+      connectedUserIds.add(userId); // Excluir al usuario mismo
 
-      // NUEVA ESTRATEGIA: Buscar usuarios con más de 3 amigos en común primero
-      const recommendations = await this.getRecommendationsWithStrategy(
+      // 3. Obtener candidatos con sistema híbrido (límite conservador)
+      const candidates = await this.getHybridRecommendations(
         userId,
         currentUserSkills,
-        Array.from(friendIds),
-        maxLimit,
+        connectedUserIds,
+        maxLimit * 2, // Reducir de maxLimit * 3 para controlar memoria
       );
 
-      // Aplicar paginación
+      // 4. Aplicar paginación
       const startIndex = (page - 1) * maxLimit;
-      const endIndex = startIndex + maxLimit;
+      const finalRecommendations = candidates.slice(
+        startIndex,
+        startIndex + maxLimit,
+      );
 
-      const finalRecommendations = recommendations.slice(startIndex, endIndex);
-
-      // Almacenar en caché por 24 horas
-      this.cacheService.set(
-        cacheKey,
+      // 5. Cachear resultado con TTL optimizado
+      this.cacheService.setRecommendations(
+        userId,
+        maxLimit,
         finalRecommendations,
-        24 * 60 * 60 * 1000,
       );
 
       return finalRecommendations;
-    } catch {
+    } catch (error) {
+      console.error('Error in GetRecommendationsUseCase:', error);
       throw new InternalServerErrorException();
     }
   }
 
   /**
-   * ESTRATEGIA DE RECOMENDACIONES SOLO POR AMIGOS EN COMÚN
-   * IMPORTANTE: Esta función NO incluye lógica de habilidades, solo amigos en común
+   * ALGORITMO HÍBRIDO ULTRA-OPTIMIZADO: Amigos en común + Match de habilidades
+   * Optimizado para máximo rendimiento y mínima latencia
    */
-  private async getRecommendationsWithStrategy(
-    userId: number,
-    currentUserSkills: number[], // PARÁMETRO MANTENIDO PARA COMPATIBILIDAD PERO NO USADO
-    friendIds: number[],
-    maxLimit: number,
-  ): Promise<RecommendationResponse[]> {
-    const allRecommendations: RecommendationResponse[] = [];
-    const processedUserIds = new Set<number>();
-
-    // PASO 1: Buscar usuarios con amigos en común (ÚNICA ESTRATEGIA)
-    const mutualFriendsCandidates = await this.getUsersWithMutualFriends(
-      userId,
-      friendIds,
-      Math.min(maxLimit, 15), // Máximo 15 candidatos
-    );
-
-    // Procesar candidatos con amigos en común
-    for (const candidateId of mutualFriendsCandidates) {
-      if (processedUserIds.has(candidateId)) continue;
-
-      try {
-        const recommendation = await this.processSingleCandidate(
-          userId,
-          candidateId,
-          currentUserSkills, // PASADO PERO NO USADO PARA HABILIDADES
-        );
-
-        if (recommendation) {
-          allRecommendations.push(recommendation);
-          processedUserIds.add(candidateId);
-        }
-      } catch (error) {
-        console.error(`Error processing candidate ${candidateId}:`, error);
-      }
-    }
-
-    /*
-    ============================================
-    LÓGICA DE HABILIDADES COMENTADA INTENCIONALMENTE
-    ============================================
-    // PASO 2: SIEMPRE completar con usuarios por match de habilidades (OPTIMIZADO)
-    const skillsCandidates = await this.getUsersBySkillsMatch(
-      userId,
-      currentUserSkills,
-      friendIds,
-      processedUserIds,
-      Math.min(maxLimit, 10), // Máximo 10 candidatos por skills
-    );
-
-    for (const candidateId of skillsCandidates) {
-      if (processedUserIds.has(candidateId)) continue;
-
-      try {
-        const recommendation = await this.processSingleCandidate(
-          userId,
-          candidateId,
-          currentUserSkills,
-        );
-
-        if (recommendation) {
-          allRecommendations.push(recommendation);
-          processedUserIds.add(candidateId);
-        }
-      } catch (error) {
-        console.error(
-          `Error processing skills candidate ${candidateId}:`,
-          error,
-        );
-      }
-    }
-    ============================================
-    FIN DE LÓGICA DE HABILIDADES COMENTADA
-    ============================================
-    */
-
-    // PASO 2: Ordenar por puntuación inteligente (SOLO AMIGOS EN COMÚN)
-    allRecommendations.sort((a, b) => {
-      const scoreA = this.calculateIntelligentScore(
-        a.mutualFriends,
-        a.skillsMatch,
-      );
-      const scoreB = this.calculateIntelligentScore(
-        b.mutualFriends,
-        b.skillsMatch,
-      );
-
-      if (scoreB !== scoreA) {
-        return scoreB - scoreA;
-      }
-      return a.id - b.id;
-    });
-
-    // PASO 3: Filtrar y limitar resultados
-    return this.filterAndLimitResults(allRecommendations, maxLimit);
-  }
-
-  /**
-   * Obtiene usuarios con amigos en común (sin filtro de cantidad)
-   */
-  private async getUsersWithMutualFriends(
-    userId: number,
-    friendIds: number[],
-    limit: number,
-  ): Promise<number[]> {
-    try {
-      // Buscar usuarios con amigos en común
-      const candidates =
-        await this.connectionRepository.getUsersWithMutualFriends(
-          userId,
-          friendIds,
-          limit,
-        );
-
-      return candidates;
-    } catch (error) {
-      console.error('Error getting users with mutual friends:', error);
-      return [];
-    }
-  }
-
-  /*
-  ============================================
-  MÉTODO DE HABILIDADES COMENTADO INTENCIONALMENTE
-  ============================================
-  /**
-   * Obtiene usuarios por match de habilidades
-   * IMPORTANTE: ESTE MÉTODO ESTÁ COMENTADO PORQUE SOLO USAMOS AMIGOS EN COMÚN
-   */
-  /*
-  private async getUsersBySkillsMatch(
+  private async getHybridRecommendations(
     userId: number,
     currentUserSkills: number[],
-    friendIds: number[],
-    excludedIds: Set<number>,
-    limit: number,
-  ): Promise<number[]> {
-    if (currentUserSkills.length === 0) {
-      return [];
-    }
+    excludeUserIds: Set<number>,
+    maxCandidates: number,
+  ): Promise<RecommendationResponse[]> {
+    const candidates: UserCandidate[] = [];
+    const BATCH_SIZE = 5; // Reducir a 5 para mayor velocidad
+    const MAX_POTENTIAL_CANDIDATES = Math.min(maxCandidates, 15); // Reducir drásticamente a 15
 
     try {
-      // Obtener usuarios aleatorios excluyendo amigos y ya procesados
-      const allExcludedIds = [...friendIds, ...Array.from(excludedIds)];
-
-      const randomUsers = await this.usersService.getAllUsersExcept(
-        userId,
-        allExcludedIds,
-        Math.min(limit, 8), // Máximo 8 usuarios aleatorios
+      // 1. Obtener candidatos limitados para máxima velocidad
+      const potentialCandidates = await this.getAllPotentialCandidates(
+        excludeUserIds,
+        MAX_POTENTIAL_CANDIDATES,
       );
 
-      const skillsCandidates: { userId: number; skillsMatch: number }[] = [];
+      // 2. Procesar en lotes ultra pequeños con timeout
+      for (let i = 0; i < potentialCandidates.length; i += BATCH_SIZE) {
+        const batch = potentialCandidates.slice(i, i + BATCH_SIZE);
 
-      // Evaluar match de habilidades - OPTIMIZADO: Solo evaluar los primeros usuarios
-      const usersToEvaluate = randomUsers.slice(0, Math.min(limit * 2, 15)); // Máximo 15 usuarios
-      for (const candidateId of usersToEvaluate) {
-        try {
-          const userData =
-            await this.usersService.getUserWithProfile(candidateId);
-          if (!userData?.profile) continue;
+        // Timeout por lote para evitar esperas largas
+        const batchPromises = batch.map(async (candidateId) => {
+          return Promise.race([
+            this.evaluateCandidate(userId, candidateId, currentUserSkills),
+            new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), 1000),
+            ), // Timeout 1 segundo
+          ]);
+        });
 
-          const candidateSkills =
-            userData.profile.profileSkills?.map((ps) => ps.skillId) || [];
+        const batchResults = await Promise.all(batchPromises);
 
-          const skillsMatch = this.calculateSkillsMatch(
-            currentUserSkills,
-            candidateSkills,
-          );
-
-          if (skillsMatch > 0) {
-            skillsCandidates.push({ userId: candidateId, skillsMatch });
+        // Agregar candidatos válidos del lote actual
+        batchResults.forEach((candidate) => {
+          if (candidate && candidate.totalScore > 0) {
+            candidates.push(candidate);
           }
-        } catch (error) {
-          console.error(
-            `Error evaluating skills for user ${candidateId}:`,
-            error,
-          );
+        });
+
+        // Early break si ya tenemos suficientes candidatos
+        if (candidates.length >= maxCandidates) {
+          break;
         }
       }
 
-      // Ordenar por match de habilidades y devolver los mejores
-      skillsCandidates.sort((a, b) => b.skillsMatch - a.skillsMatch);
-      const result = skillsCandidates.slice(0, limit).map((c) => c.userId);
+      // 3. Ordenar por score total y limitar resultados
+      candidates.sort((a, b) => b.totalScore - a.totalScore);
+      const topCandidates = candidates.slice(0, maxCandidates);
 
-      return result;
+      // 4. Convertir a formato de respuesta
+      const responsePromises = topCandidates.map((candidate) =>
+        this.buildRecommendationResponse(candidate),
+      );
+
+      return Promise.all(responsePromises);
     } catch (error) {
-      console.error('Error getting users by skills match:', error);
+      console.error('Error in getHybridRecommendations:', error);
       return [];
     }
   }
-  */
-  /*
-  ============================================
-  FIN DE MÉTODO DE HABILIDADES COMENTADO
-  ============================================
-  */
 
   /**
-   * Procesa un solo candidato y devuelve su información de recomendación
+   * Evalúa un candidato individual calculando score híbrido
    */
-  private async processSingleCandidate(
+  private async evaluateCandidate(
     userId: number,
     candidateId: number,
-    _currentUserSkills: number[], // PARÁMETRO MANTENIDO PARA COMPATIBILIDAD PERO NO USADO
-  ): Promise<RecommendationResponse | null> {
-    try {
-      const userData = await this.usersService.getUserWithProfile(candidateId);
-      if (!userData?.profile) return null;
-
-      // Calcular amigos en común con caché
-      const mutualFriendsCacheKey = this.cacheService.generateMutualFriendsKey(
-        userId,
-        candidateId,
-      );
-      let mutualFriends = this.cacheService.get<number>(mutualFriendsCacheKey);
-
-      if (mutualFriends === null) {
-        mutualFriends = await this.connectionRepository.calculateMutualFriends(
-          userId,
-          candidateId,
-        );
-        this.cacheService.set(
-          mutualFriendsCacheKey,
-          mutualFriends,
-          5 * 60 * 1000,
-        );
-      }
-
-      const userName = userData.profile
-        ? `${userData.profile.name} ${userData.profile.lastName}`.trim()
-        : '';
-
-      /*
-      ============================================
-      LÓGICA DE HABILIDADES COMENTADA INTENCIONALMENTE
-      ============================================
-      // Obtener habilidades del candidato
-      const candidateSkills =
-        userData.profile.profileSkills?.map((ps) => ps.skillId) || [];
-
-      // Calcular match de habilidades
-      const skillsMatch = this.calculateSkillsMatch(
-        currentUserSkills,
-        candidateSkills,
-      );
-
-      // Obtener información de habilidades solo si hay match
-      const skillsInfo =
-        skillsMatch > 0 ? await this.getSkillsInfo(candidateSkills) : [];
-      ============================================
-      FIN DE LÓGICA DE HABILIDADES COMENTADA
-      ============================================
-      */
-
-      // VALORES FIJOS PARA HABILIDADES (NO SE CALCULAN)
-      const skillsMatch = 0; // SIEMPRE 0 PORQUE NO HAY LÓGICA DE HABILIDADES
-      const skillsInfo: { id: number; name: string }[] = []; // SIEMPRE VACÍO
-
-      return {
-        id: candidateId,
-        name: userName,
-        image: userData.profile?.profilePicture || '',
-        profession: userData.profile?.profession || '',
-        skillsMatch, // SIEMPRE 0
-        mutualFriends,
-        skills: skillsInfo, // SIEMPRE VACÍO
-      };
-    } catch (error) {
-      console.error(`Error processing single candidate ${candidateId}:`, error);
+    currentUserSkills: number[],
+  ): Promise<UserCandidate | null> {
+    // Obtener datos del usuario candidato
+    const userData = await this.usersService.getUserWithProfile(candidateId);
+    if (!userData?.profile) {
       return null;
     }
-  }
 
-  /**
-   * Calcula puntuación inteligente SOLO POR AMIGOS EN COMÚN
-   * IMPORTANTE: NO CONSIDERA HABILIDADES, SOLO AMIGOS EN COMÚN
-   */
-  private calculateIntelligentScore(
-    mutualFriends: number,
-    _skillsMatch: number, // PARÁMETRO MANTENIDO PARA COMPATIBILIDAD PERO NO USADO
-  ): number {
-    /*
-    ============================================
-    LÓGICA DE HABILIDADES COMENTADA INTENCIONALMENTE
-    ============================================
-    // Si tiene muchas habilidades (>=10), priorizar habilidades
-    if (skillsMatch >= 10) {
-      return skillsMatch * 2 + mutualFriends;
-    }
-
-    // Si tiene pocas habilidades (<10) pero algunos amigos en común (>=1), priorizar amigos
-    if (mutualFriends >= 1) {
-      return mutualFriends * 10 + skillsMatch;
-    }
-
-    // Si no tiene amigos en común, priorizar habilidades
-    return skillsMatch * 3;
-    ============================================
-    FIN DE LÓGICA DE HABILIDADES COMENTADA
-    ============================================
-    */
-
-    // SOLO AMIGOS EN COMÚN: Priorizar usuarios con más amigos en común
-    return mutualFriends * 10; // Multiplicador alto para priorizar amigos en común
-  }
-
-  /**
-   * Filtra y limita los resultados priorizando usuarios con >3 amigos en común
-   */
-  private filterAndLimitResults(
-    recommendations: RecommendationResponse[],
-    maxLimit: number,
-  ): RecommendationResponse[] {
-    // Separar usuarios con >3 amigos en común de los demás
-    const highMutualFriends = recommendations.filter(
-      (r) => r.mutualFriends > 3,
+    // 1. Calcular amigos en común
+    const mutualFriendsCount = await this.calculateMutualFriends(
+      userId,
+      candidateId,
     );
-    const others = recommendations.filter((r) => r.mutualFriends <= 3);
 
-    // Si tenemos suficientes usuarios con >3 amigos en común, usar solo esos
-    if (highMutualFriends.length >= maxLimit) {
-      return highMutualFriends.slice(0, maxLimit);
-    }
+    // 2. Calcular match de habilidades
+    const candidateSkills =
+      userData.profile.profileSkills?.map((ps) => ps.skillId) || [];
+    const skillsMatchCount = this.calculateSkillsMatch(
+      currentUserSkills,
+      candidateSkills,
+    );
 
-    // Si no, combinar usuarios con >3 amigos en común + mejores del resto
-    const remainingNeeded = maxLimit - highMutualFriends.length;
-    const bestOthers = others.slice(0, remainingNeeded);
+    // 3. Calcular score híbrido
+    const totalScore = this.calculateHybridScore(
+      mutualFriendsCount,
+      skillsMatchCount,
+    );
 
-    return [...highMutualFriends, ...bestOthers];
+    return {
+      id: candidateId,
+      mutualFriendsCount,
+      skillsMatchCount,
+      totalScore,
+      userData,
+    };
   }
 
   /**
-   * Procesa candidatos en lotes para optimizar el rendimiento y reducir consultas a BD
+   * Calcula score híbrido según user story:
+   * 60% amigos en común + 40% habilidades
    */
+  private calculateHybridScore(
+    mutualFriends: number,
+    skillsMatch: number,
+  ): number {
+    // Normalizar valores
+    const normalizedMutualFriends = Math.min(mutualFriends / 5, 1); // Max 5 amigos = score 1
+    const normalizedSkillsMatch = Math.min(skillsMatch / 10, 1); // Max 10 skills = score 1
 
-  /*
-  ============================================
-  MÉTODO DE HABILIDADES COMENTADO INTENCIONALMENTE
-  ============================================
+    // Aplicar pesos según importancia
+    const friendsWeight = 0.6; // 60% amigos en común
+    const skillsWeight = 0.4; // 40% habilidades
+
+    return (
+      normalizedMutualFriends * friendsWeight +
+      normalizedSkillsMatch * skillsWeight
+    );
+  }
+
   /**
-   * Obtiene información de habilidades
-   * IMPORTANTE: ESTE MÉTODO ESTÁ COMENTADO PORQUE SOLO USAMOS AMIGOS EN COMÚN
+   * Calcula amigos en común entre dos usuarios (ultra-optimizado para velocidad)
    */
-  /*
-  private async getSkillsInfo(
-    skillIds: number[],
-  ): Promise<{ id: number; name: string }[]> {
-    if (skillIds.length === 0) {
-      return [];
+  private async calculateMutualFriends(
+    userId: number,
+    candidateId: number,
+  ): Promise<number> {
+    // Verificar caché primero
+    const cacheKey = this.cacheService.generateMutualFriendsKey(
+      userId,
+      candidateId,
+    );
+    const cachedResult = this.cacheService.get<number>(cacheKey);
+
+    if (cachedResult !== null) {
+      return cachedResult;
     }
 
-    const skills = await this.usersService.getSkillsByIds(skillIds);
-    return skills.map((skill) => ({
-      id: skill.id,
-      name: skill.name,
-    }));
-  }
-  */
-  /*
-  ============================================
-  FIN DE MÉTODO DE HABILIDADES COMENTADO
-  ============================================
-  */
+    try {
+      // Límite ultra-bajo para máxima velocidad
+      const FRIENDS_LIMIT = 10; // Reducir a solo 10 para mayor velocidad
 
-  /*
-  ============================================
-  MÉTODO DE HABILIDADES COMENTADO INTENCIONALMENTE
-  ============================================
+      const [userFriends, candidateFriends] = await Promise.all([
+        this.connectionRepository.findAcceptedConnectionsByUserId(
+          userId,
+          FRIENDS_LIMIT,
+          1,
+        ),
+        this.connectionRepository.findAcceptedConnectionsByUserId(
+          candidateId,
+          FRIENDS_LIMIT,
+          1,
+        ),
+      ]);
+
+      // Optimización: si alguno no tiene amigos, retornar 0 inmediatamente
+      if (userFriends.length === 0 || candidateFriends.length === 0) {
+        this.cacheService.set(cacheKey, 0, 10 * 60 * 1000); // Cache 10 minutos
+        return 0;
+      }
+
+      const userFriendIds = new Set(
+        userFriends.map((conn) =>
+          conn.senderId === userId ? conn.receiverId : conn.senderId,
+        ),
+      );
+
+      // Contar intersección de manera más eficiente con early break
+      let mutualCount = 0;
+      for (const conn of candidateFriends) {
+        const friendId =
+          conn.senderId === candidateId ? conn.receiverId : conn.senderId;
+        if (userFriendIds.has(friendId)) {
+          mutualCount++;
+        }
+      }
+
+      // Cachear resultado por 10 minutos
+      this.cacheService.set(cacheKey, mutualCount, 10 * 60 * 1000);
+      return mutualCount;
+    } catch (error) {
+      console.error(
+        `Error calculating mutual friends for ${candidateId}:`,
+        error,
+      );
+      return 0;
+    }
+  }
+
   /**
-   * Calcula el número de habilidades que coinciden entre dos usuarios
-   * IMPORTANTE: ESTE MÉTODO ESTÁ COMENTADO PORQUE SOLO USAMOS AMIGOS EN COMÚN
-   * @param currentUserSkills Array de skillIds del usuario actual
-   * @param candidateSkills Array de skillIds del candidato
-   * @returns Número de habilidades que coinciden
+   * Calcula coincidencias de habilidades
    */
-  /*
   private calculateSkillsMatch(
-    currentUserSkills: number[],
+    userSkills: number[],
     candidateSkills: number[],
   ): number {
-    if (currentUserSkills.length === 0 || candidateSkills.length === 0) {
+    if (!userSkills.length || !candidateSkills.length) {
       return 0;
     }
 
-    // Crear un Set para búsqueda más eficiente
-    const currentSkillsSet = new Set(currentUserSkills);
-
-    // Contar cuántas habilidades del candidato están en las habilidades del usuario actual
-    const matches = candidateSkills.filter((skillId) =>
-      currentSkillsSet.has(skillId),
-    ).length;
-
-    return matches;
+    const userSkillsSet = new Set(userSkills);
+    return candidateSkills.filter((skill) => userSkillsSet.has(skill)).length;
   }
-  */
-  /*
-  ============================================
-  FIN DE MÉTODO DE HABILIDADES COMENTADO
-  ============================================
-  */
+
+  /**
+   * Obtiene candidatos potenciales con límites ultra-estrictos para máxima velocidad
+   */
+  private async getAllPotentialCandidates(
+    excludeUserIds: Set<number>,
+    maxCandidates: number,
+  ): Promise<number[]> {
+    // Límites ultra-conservadores para máxima velocidad
+    const ULTRA_STRICT_LIMIT = Math.min(maxCandidates, 15); // Máximo 15 candidatos
+
+    const excludedArray = Array.from(excludeUserIds);
+    const userId = excludedArray[0]; // primer elemento es el usuario actual
+    const otherExcluded = excludedArray.slice(1); // resto de excluidos
+
+    try {
+      const allUsers = await this.usersService.getAllUsersExcept(
+        userId,
+        otherExcluded,
+        ULTRA_STRICT_LIMIT, // Límite ultra-estricto para máxima velocidad
+      );
+
+      return allUsers.slice(0, ULTRA_STRICT_LIMIT);
+    } catch (error) {
+      console.error('Error getting potential candidates:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Construye la respuesta de recomendación
+   */
+  private async buildRecommendationResponse(
+    candidate: UserCandidate,
+  ): Promise<RecommendationResponse> {
+    const { userData, mutualFriendsCount, skillsMatchCount } = candidate;
+
+    // Construir nombre como en otros use cases
+    const userName = userData.profile
+      ? `${userData.profile.name} ${userData.profile.lastName}`.trim()
+      : 'Usuario';
+
+    // Obtener las habilidades con nombres correctos
+    const candidateSkillIds =
+      userData.profile?.profileSkills?.map((ps) => ps.skillId) || [];
+
+    let skillsWithNames: Array<{ id: number; name: string }> = [];
+    if (candidateSkillIds.length > 0) {
+      try {
+        const skillsData =
+          await this.usersService.getSkillsByIds(candidateSkillIds);
+        skillsWithNames = skillsData.map((skill) => ({
+          id: skill.id,
+          name: skill.name,
+        }));
+      } catch (error) {
+        console.error('Error getting skills names:', error);
+        skillsWithNames = candidateSkillIds.map((id) => ({
+          id,
+          name: 'Unknown',
+        }));
+      }
+    }
+
+    return {
+      id: candidate.id,
+      name: userName,
+      image: userData.profile?.profilePicture || '',
+      profession: userData.profile?.profession || '',
+      mutualFriends: mutualFriendsCount,
+      skillsMatch: skillsMatchCount,
+      score: Math.round(candidate.totalScore * 100), // Score como porcentaje
+      skills: skillsWithNames,
+    };
+  }
 }

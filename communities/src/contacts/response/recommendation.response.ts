@@ -5,6 +5,7 @@ export class RecommendationResponse {
   profession: string;
   skillsMatch: number;
   mutualFriends: number;
+  score?: number; // Campo opcional para puntuación
   skills: {
     id: number;
     name: string;
