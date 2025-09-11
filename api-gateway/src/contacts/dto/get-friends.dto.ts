@@ -6,7 +6,7 @@ export class GetFriendsDto {
   @IsNumber()
   @Min(1)
   @Transform(({ value }) => Number(value))
-  limit?: number = 10;
+  limit?: number = 12;
 
   @IsOptional()
   @IsNumber()

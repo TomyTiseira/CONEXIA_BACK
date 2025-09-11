@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -14,7 +16,11 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
-import { AcceptConnectionDto, SendConnectionRequestDto } from './dto';
+import {
+  AcceptConnectionDto,
+  GetSentConnectionRequestsDto,
+  SendConnectionRequestDto,
+} from './dto';
 import { GetFriendsDto } from './dto/get-friends.dto';
 import { GetRecommendationsDto } from './dto/get-recommendations.dto';
 
@@ -54,6 +60,24 @@ export class ContactsController {
     );
   }
 
+  @Get('sent-requests')
+  @AuthRoles([ROLES.USER])
+  getSentConnectionRequests(
+    @Query() getSentConnectionRequestsDto: GetSentConnectionRequestsDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      userId: user.id,
+      ...getSentConnectionRequestsDto,
+    };
+
+    return this.client.send('getSentConnectionRequests', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
   @Post('accept-request')
   @AuthRoles([ROLES.USER])
   acceptConnection(
@@ -74,7 +98,7 @@ export class ContactsController {
   }
 
   @Get('friends/:userId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getFriends(
     @Param('userId') userId: string,
     @Query() getFriendsDto: GetFriendsDto,
@@ -103,6 +127,24 @@ export class ContactsController {
     };
 
     return this.client.send('getRecommendations', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Delete('connection-request/:requestId')
+  @AuthRoles([ROLES.USER])
+  deleteConnectionRequest(
+    @Param('requestId') requestId: string,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      currentUserId: user.id,
+      requestId: parseInt(requestId),
+    };
+
+    return this.client.send('deleteConnectionRequest', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

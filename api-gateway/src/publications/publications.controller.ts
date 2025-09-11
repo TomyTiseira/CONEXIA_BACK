@@ -245,6 +245,7 @@ export class PublicationsController {
         }
       | undefined = undefined;
 
+    // Si hay un nuevo archivo, procesarlo
     if (media) {
       mediaData = {
         mediaFilename: media.filename,
@@ -252,9 +253,12 @@ export class PublicationsController {
         mediaType: this.getMediaType(media.mimetype),
         mediaUrl: `/uploads/publications/${media.filename}`,
       };
+      // Si se recibe un nuevo archivo, no se puede eliminar al mismo tiempo
+      dto.removeMedia = false;
     }
-    // Si no se envía media, no se incluye mediaData en el payload
-    // Esto mantendrá los valores existentes en la base de datos
+
+    // Si se indica explícitamente eliminar el medio, asegurarse de que se incluya en el payload
+    // aunque no se envíe un nuevo archivo
 
     const payload = {
       id: params.id,
@@ -269,6 +273,10 @@ export class PublicationsController {
         }),
       },
     };
+    // Si se solicita eliminar el archivo y la publicación ya existe
+    // Esto se manejará en el microservicio, no necesitamos hacer nada especial aquí
+    // excepto enviar el flag removeMedia
+
     return this.client.send('editPublication', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);

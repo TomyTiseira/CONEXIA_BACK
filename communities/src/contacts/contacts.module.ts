@@ -13,11 +13,13 @@ import { ConnectionRepository } from './repositories/connection.repository';
 import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
+  DeleteConnectionRequestUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
   GetFriendsUseCase,
   GetRecommendationsUseCase,
+  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
 } from './services/use-cases';
 
@@ -40,9 +42,11 @@ import {
     ConnectionRepository,
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
+    GetSentConnectionRequestsUseCase,
     GetConnectionStatusUseCase,
     GetConnectionInfoUseCase,
     AcceptConnectionUseCase,
+    DeleteConnectionRequestUseCase,
     GetFriendsUseCase,
     GetRecommendationsUseCase,
     UsersService,

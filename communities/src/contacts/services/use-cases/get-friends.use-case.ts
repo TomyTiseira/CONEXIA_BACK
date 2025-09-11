@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
+import {
+  calculatePagination,
+  PaginationInfo,
+} from '../../../common/utils/pagination.utils';
 import { GetFriendsDto } from '../../dto/get-friends.dto';
 import { ConnectionRepository } from '../../repositories/connection.repository';
 import { FriendResponse } from '../../response/friend.response';
@@ -12,11 +16,14 @@ export class GetFriendsUseCase {
     private readonly usersService: UsersService,
   ) {}
 
-  async execute(getFriendsDto: GetFriendsDto): Promise<FriendResponse[]> {
-    const { userId, limit = 10, page = 1 } = getFriendsDto;
+  async execute(getFriendsDto: GetFriendsDto): Promise<{
+    friends: FriendResponse[];
+    pagination: PaginationInfo;
+  }> {
+    const { userId, limit = 12, page = 1 } = getFriendsDto;
 
     try {
-      const connections =
+      const [connections, total] =
         await this.connectionRepository.findAcceptedConnectionsByUserId(
           userId,
           limit,
@@ -24,7 +31,13 @@ export class GetFriendsUseCase {
         );
 
       if (connections.length === 0) {
-        return [];
+        // Calcular información de paginación
+        const pagination = calculatePagination(total, { page, limit });
+
+        return {
+          friends: [],
+          pagination,
+        };
       }
 
       // Obtener IDs de los amigos (tanto sender como receiver, excluyendo el usuario actual)
@@ -51,11 +64,13 @@ export class GetFriendsUseCase {
           usersMap.set(friendId, {
             name: userName,
             email: userData.user?.email,
+            profession: userData.profile?.profession || '',
+            profilePicture: userData.profile?.profilePicture,
           });
         }
       });
 
-      return connections.map((connection) => {
+      const friends = connections.map((connection) => {
         const friendId =
           connection.senderId === userId
             ? connection.receiverId
@@ -67,12 +82,22 @@ export class GetFriendsUseCase {
           userId: friendId,
           userName: friendInfo?.name || 'Usuario',
           userEmail: friendInfo?.email || '',
+          profession: friendInfo?.profession || 'Sin profesión',
+          profilePicture: friendInfo?.profilePicture,
           connectionId: connection.id,
           status: connection.status,
           createdAt: connection.createdAt,
           updatedAt: connection.updatedAt,
         };
       });
+
+      // Calcular información de paginación
+      const pagination = calculatePagination(total, { page, limit });
+
+      return {
+        friends,
+        pagination,
+      };
     } catch {
       throw new InternalServerErrorException();
     }
