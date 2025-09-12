@@ -10,6 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { ROLES } from '../../auth/constants/role-ids';
@@ -33,6 +34,12 @@ export class MessagingController {
           const uploadPath = file.mimetype.startsWith('image/')
             ? join(process.cwd(), 'uploads', 'messages', 'images')
             : join(process.cwd(), 'uploads', 'messages', 'pdfs');
+
+          // Crear el directorio si no existe
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+          }
+
           cb(null, uploadPath);
         },
         filename: (req, file, cb) => {
