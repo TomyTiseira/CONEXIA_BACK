@@ -48,7 +48,7 @@ export class SendMessageUseCase {
       senderId: currentUserId,
       receiverId,
       type,
-      content: type === MessageType.TEXT ? content : undefined,
+      content: content, // Siempre guardar el content (URL del archivo para imágenes/PDFs)
       fileUrl: type !== MessageType.TEXT ? content : undefined,
       fileName: type !== MessageType.TEXT ? fileName : undefined,
       fileSize: type !== MessageType.TEXT ? fileSize : undefined,
