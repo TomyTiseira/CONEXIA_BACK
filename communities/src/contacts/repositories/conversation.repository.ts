@@ -43,6 +43,7 @@ export class ConversationRepository {
         { userId },
       )
       .orderBy('conversation.updatedAt', 'DESC')
+      .addOrderBy('messages.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -77,6 +78,7 @@ export class ConversationRepository {
         { userId },
       )
       .orderBy('conversation.updatedAt', 'DESC')
+      .addOrderBy('messages.createdAt', 'DESC')
       .take(page * limit)
       .getMany();
 

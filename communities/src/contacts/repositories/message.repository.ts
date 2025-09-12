@@ -24,7 +24,7 @@ export class MessageRepository {
     const [messages, total] = await this.repository
       .createQueryBuilder('message')
       .where('message.conversationId = :conversationId', { conversationId })
-      .orderBy('message.createdAt', 'ASC')
+      .orderBy('message.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -45,7 +45,7 @@ export class MessageRepository {
     const messages = await this.repository
       .createQueryBuilder('message')
       .where('message.conversationId = :conversationId', { conversationId })
-      .orderBy('message.createdAt', 'ASC')
+      .orderBy('message.createdAt', 'DESC')
       .take(page * limit) // Tomamos todos los mensajes hasta la página actual
       .getMany();
 

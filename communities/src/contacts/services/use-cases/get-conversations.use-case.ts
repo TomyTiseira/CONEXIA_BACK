@@ -46,8 +46,7 @@ export class GetConversationsUseCase {
 
     // Formatear conversaciones con información adicional
     const formattedConversations = conversations.map((conversation) => {
-      const lastMessage =
-        conversation.messages?.[conversation.messages.length - 1];
+      const lastMessage = conversation.messages?.[0];
       const otherUserId =
         conversation.user1Id === currentUserId
           ? conversation.user2Id
