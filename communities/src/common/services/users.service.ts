@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -23,18 +22,21 @@ export class UsersService {
 
       return users.map((user: any) => ({
         id: user.id,
-        name: user.profile
-          ? `${user.profile.name} ${user.profile.lastName}`
-          : 'Usuario',
-        profilePicture: user.profile?.profilePicture,
+        name: user.profile?.name || `Usuario ${user.id}`,
+        lastName: user.profile?.lastName || '',
+        email: user.email || '',
+        profilePicture: user.profile?.profilePicture || null,
         profession: user.profile?.profession || 'Sin profesión',
       }));
     } catch (error) {
       console.error('Error getting users by IDs:', error);
+      // Devolver información básica si falla
       return userIds.map((id) => ({
         id,
-        name: 'Usuario',
-        profilePicture: undefined,
+        name: `Usuario ${id}`,
+        lastName: '',
+        email: '',
+        profilePicture: null,
         profession: 'Sin profesión',
       }));
     }

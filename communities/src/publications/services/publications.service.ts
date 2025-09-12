@@ -21,6 +21,7 @@ import {
   EditReactionUseCase,
   GetPublicationByIdUseCase,
   GetPublicationCommentsUseCase,
+  GetPublicationDetailUseCase,
   GetPublicationReactionsUseCase,
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
@@ -35,6 +36,7 @@ export class PublicationsService {
     private readonly deletePublicationUseCase: DeletePublicationUseCase,
     private readonly getPublicationsUseCase: GetPublicationsUseCase,
     private readonly getPublicationByIdUseCase: GetPublicationByIdUseCase,
+    private readonly getPublicationDetailUseCase: GetPublicationDetailUseCase,
     private readonly getUserPublicationsUseCase: GetUserPublicationsUseCase,
 
     // Comentarios
@@ -83,6 +85,10 @@ export class PublicationsService {
 
   async getPublicationById(id: number, currentUserId?: number) {
     return await this.getPublicationByIdUseCase.execute(id, currentUserId);
+  }
+
+  async getPublicationDetail(id: number, currentUserId?: number) {
+    return await this.getPublicationDetailUseCase.execute(id, currentUserId);
   }
 
   // Métodos para comentarios
