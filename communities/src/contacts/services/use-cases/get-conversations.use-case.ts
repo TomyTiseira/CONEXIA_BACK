@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
+import { UsersService } from '../../../common/services/users.service';
 import {
   calculatePagination,
   PaginationInfo,
@@ -11,6 +12,7 @@ import { ConversationRepository } from '../../repositories/conversation.reposito
 export class GetConversationsUseCase {
   constructor(
     private readonly conversationRepository: ConversationRepository,
+    private readonly usersService: UsersService,
   ) {}
 
   async execute(
@@ -32,6 +34,16 @@ export class GetConversationsUseCase {
     // Calcular información de paginación
     const pagination = calculatePagination(total, { page, limit });
 
+    // Obtener IDs de todos los usuarios con los que se tiene conversación
+    const otherUserIds = conversations.map((conversation) => {
+      return conversation.user1Id === currentUserId
+        ? conversation.user2Id
+        : conversation.user1Id;
+    });
+
+    // Obtener información de los usuarios
+    const usersInfo = await this.usersService.getUsersByIds(otherUserIds);
+
     // Formatear conversaciones con información adicional
     const formattedConversations = conversations.map((conversation) => {
       const lastMessage =
@@ -41,9 +53,16 @@ export class GetConversationsUseCase {
           ? conversation.user2Id
           : conversation.user1Id;
 
+      // Buscar información del otro usuario
+      const otherUserInfo = usersInfo.find((user) => user.id === otherUserId);
+
       return {
         id: conversation.id,
-        otherUserId,
+        otherUser: {
+          id: otherUserId,
+          userName: otherUserInfo?.name || '',
+          userProfilePicture: otherUserInfo?.profilePicture || null,
+        },
         lastMessage: lastMessage
           ? {
               id: lastMessage.id,
