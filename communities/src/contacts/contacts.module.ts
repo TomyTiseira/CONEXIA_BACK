@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { envs, USERS_SERVICE } from 'src/config';
 import { CacheService } from '../common/services/cache.service';
 import { EmailService } from '../common/services/email.service';
+import { MemoryMonitorService } from '../common/services/memory-monitor.service';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
 import { UsersService } from '../common/services/users.service';
@@ -51,6 +52,7 @@ import {
     GetRecommendationsUseCase,
     UsersService,
     CacheService,
+    MemoryMonitorService,
     {
       provide: MockEmailService,
       useClass: NodemailerService,

@@ -12,7 +12,9 @@ import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
 import { GetRoleByNameUseCase } from './use-cases/get-role-by-name.use-cases';
+import { GetUserWithProfileAndSkillsUseCase } from './use-cases/get-user-with-profile-and-skills.use-cases';
 import { GetUserWithProfileUseCase } from './use-cases/get-user-with-profile.use-cases';
+import { GetUsersSkillsOnlyUseCase } from './use-cases/get-users-skills-only.use-case';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
 import { UpdateUserUseCase } from './use-cases/update-user.use-cases';
@@ -30,6 +32,8 @@ export class UsersService {
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly getUserWithProfileUseCase: GetUserWithProfileUseCase,
+    private readonly getUserWithProfileAndSkillsUseCase: GetUserWithProfileAndSkillsUseCase,
+    private readonly getUsersSkillsOnlyUseCase: GetUsersSkillsOnlyUseCase,
     private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
     private readonly getRoleByNameUseCase: GetRoleByNameUseCase,
@@ -102,6 +106,12 @@ export class UsersService {
     return this.getUserWithProfileUseCase.execute(userId);
   }
 
+  async getUserWithProfileAndSkills(
+    userId: number,
+  ): Promise<{ user: User; profile: any } | null> {
+    return await this.getUserWithProfileAndSkillsUseCase.execute(userId);
+  }
+
   findSkillsByIds(skillIds: number[]): Promise<any[]> {
     return this.skillsValidationService.getSkillsByIds(skillIds);
   }
@@ -116,5 +126,12 @@ export class UsersService {
       excludedIds,
       limit,
     );
+  }
+
+  // Método optimizado para obtener solo skills sin cargar perfiles completos
+  async getUsersSkillsOnly(
+    userIds: number[],
+  ): Promise<Array<{ userId: number; skillIds: number[] }>> {
+    return await this.getUsersSkillsOnlyUseCase.execute(userIds);
   }
 }

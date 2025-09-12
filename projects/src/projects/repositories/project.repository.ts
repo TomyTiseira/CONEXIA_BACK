@@ -208,12 +208,29 @@ export class ProjectRepository {
     contractTypeIds?: number[];
     page: number;
     limit: number;
+    excludeUserId?: number;
+    onlyActive?: boolean;
   }): Promise<[Project[], number]> {
     // 1. Obtener los IDs únicos de los proyectos paginados
     const idQueryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .select('project.id')
       .where('project.deletedAt IS NULL');
+
+    // Excluir proyectos del usuario actual
+    if (filters.excludeUserId) {
+      idQueryBuilder.andWhere('project.userId != :excludeUserId', {
+        excludeUserId: filters.excludeUserId,
+      });
+    }
+
+    // Solo proyectos activos (no vencidos)
+    if (filters.onlyActive) {
+      idQueryBuilder.andWhere(
+        '(project.endDate IS NULL OR project.endDate >= :now)',
+        { now: new Date() },
+      );
+    }
 
     if (filters.search) {
       idQueryBuilder.andWhere('project.title ILIKE :search', {
@@ -269,10 +286,59 @@ export class ProjectRepository {
       .orderBy('project.createdAt', 'DESC')
       .getMany();
 
-    // 3. Obtener el total de proyectos (sin paginación)
-    const total = await this.ormRepository.count({
-      where: { deletedAt: IsNull() },
-    });
+    // 3. Obtener el total de proyectos (usando los mismos filtros)
+    const totalQueryBuilder = this.ormRepository
+      .createQueryBuilder('project')
+      .where('project.deletedAt IS NULL');
+
+    // Aplicar los mismos filtros para el conteo
+    if (filters.excludeUserId) {
+      totalQueryBuilder.andWhere('project.userId != :excludeUserId', {
+        excludeUserId: filters.excludeUserId,
+      });
+    }
+
+    if (filters.onlyActive) {
+      totalQueryBuilder.andWhere(
+        '(project.endDate IS NULL OR project.endDate >= :now)',
+        { now: new Date() },
+      );
+    }
+
+    if (filters.search) {
+      totalQueryBuilder.andWhere('project.title ILIKE :search', {
+        search: `%${filters.search}%`,
+      });
+    }
+
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      totalQueryBuilder.andWhere('project.categoryId IN (:...categoryIds)', {
+        categoryIds: filters.categoryIds,
+      });
+    }
+
+    if (
+      filters.collaborationTypeIds &&
+      filters.collaborationTypeIds.length > 0
+    ) {
+      totalQueryBuilder.andWhere(
+        'project.collaborationTypeId IN (:...collaborationTypeIds)',
+        {
+          collaborationTypeIds: filters.collaborationTypeIds,
+        },
+      );
+    }
+
+    if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
+      totalQueryBuilder.andWhere(
+        'project.contractTypeId IN (:...contractTypeIds)',
+        {
+          contractTypeIds: filters.contractTypeIds,
+        },
+      );
+    }
+
+    const total = await totalQueryBuilder.getCount();
 
     return [projects, total];
   }

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { MemoryMonitorService } from './common/services/memory-monitor.service';
 import { envs } from './config';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { Profile } from './profile/entities/profile.entity';
@@ -32,6 +33,6 @@ import { UsersModule } from './users/users.module';
     InternalUsersModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [MemoryMonitorService],
 })
 export class AppModule {}

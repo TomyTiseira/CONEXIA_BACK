@@ -105,6 +105,59 @@ export class PostulationRepository {
     });
   }
 
+  /**
+   * Obtiene postulaciones de un usuario para proyectos específicos
+   * Evita cargar todas las postulaciones del usuario
+   */
+  async findByUserForProjects(
+    userId: number,
+    projectIds: number[],
+  ): Promise<Postulation[]> {
+    if (!projectIds || projectIds.length === 0) return [];
+
+    return await this.postulationRepository
+      .createQueryBuilder('postulation')
+      .leftJoinAndSelect('postulation.status', 'status')
+      .where('postulation.userId = :userId', { userId })
+      .andWhere('postulation.projectId IN (:...projectIds)', { projectIds })
+      .orderBy('postulation.createdAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Obtiene el conteo de postulaciones aprobadas para múltiples proyectos
+   * Evita hacer consultas individuales por proyecto
+   */
+  async getApprovedCountsByProjects(
+    projectIds: number[],
+    statusAccepted: number = 2,
+  ): Promise<Map<number, number>> {
+    if (!projectIds || projectIds.length === 0) return new Map();
+
+    const results = await this.postulationRepository
+      .createQueryBuilder('postulation')
+      .select('postulation.projectId', 'projectId')
+      .addSelect('COUNT(*)', 'count')
+      .where('postulation.projectId IN (:...projectIds)', { projectIds })
+      .andWhere('postulation.statusId = :statusAccepted', { statusAccepted })
+      .groupBy('postulation.projectId')
+      .getRawMany();
+
+    const countMap = new Map<number, number>();
+    for (const result of results) {
+      countMap.set(parseInt(result.projectId), parseInt(result.count));
+    }
+
+    // Agregar proyectos sin postulaciones aprobadas con conteo 0
+    for (const projectId of projectIds) {
+      if (!countMap.has(projectId)) {
+        countMap.set(projectId, 0);
+      }
+    }
+
+    return countMap;
+  }
+
   async updateStatus(
     id: number,
     status: PostulationStatus,

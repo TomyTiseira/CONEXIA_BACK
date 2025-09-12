@@ -140,6 +140,14 @@ export class UsersController {
     return result;
   }
 
+  @MessagePattern('getUserWithProfileAndSkills')
+  async getUserWithProfileAndSkills(@Payload() data: { userId: number }) {
+    const result = await this.usersService.getUserWithProfileAndSkills(
+      data.userId,
+    );
+    return result;
+  }
+
   @MessagePattern('findSkillsByIds')
   async findSkillsByIds(@Payload() data: { ids: number[] }) {
     const skills = await this.usersService.findSkillsByIds(data.ids);
@@ -161,5 +169,10 @@ export class UsersController {
       data.limit,
     );
     return users;
+  }
+
+  @MessagePattern('getUsersSkillsOnly')
+  async getUsersSkillsOnly(@Payload() data: { userIds: number[] }) {
+    return await this.usersService.getUsersSkillsOnly(data.userIds);
   }
 }

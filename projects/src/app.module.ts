@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
+import { MemoryMonitorService } from './common/services/memory-monitor.service';
 import { envs } from './config';
 import { PostulationStatus } from './postulations/entities/postulation-status.entity';
 import { Postulation } from './postulations/entities/postulation.entity';
@@ -17,7 +18,6 @@ import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
 import { Rubro } from './shared/entities/rubro.entity';
 import { Skill } from './shared/entities/skill.entity';
-
 
 @Module({
   imports: [
@@ -53,6 +53,7 @@ import { Skill } from './shared/entities/skill.entity';
       provide: APP_INTERCEPTOR,
       useClass: RpcExceptionInterceptor,
     },
+    MemoryMonitorService,
   ],
 })
 export class AppModule {}

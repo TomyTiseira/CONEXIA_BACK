@@ -9,12 +9,18 @@ interface CacheItem<T> {
 @Injectable()
 export class CacheService {
   private cache = new Map<string, CacheItem<any>>();
-  private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutos
+  private readonly DEFAULT_TTL = 3 * 60 * 1000; // Reducir a 3 minutos para liberar memoria más rápido
+  private readonly MAX_CACHE_SIZE = 3000; // Límite de cache para controlar memoria
 
   /**
    * Obtiene un valor del caché con versión optimizada
    */
   get<T>(key: string): T | null {
+    // Verificar tamaño del cache y limpiar si es necesario
+    if (this.cache.size > this.MAX_CACHE_SIZE) {
+      this.evictOldEntries();
+    }
+
     const item = this.cache.get(key);
 
     if (!item) {
@@ -29,7 +35,7 @@ export class CacheService {
     }
 
     // Actualizar timestamp para "refresh on access" en recomendaciones
-    if (key.startsWith('recommendations:')) {
+    if (key.startsWith('recommendations:') || key.startsWith('rec:')) {
       item.timestamp = now;
     }
 
@@ -37,14 +43,34 @@ export class CacheService {
   }
 
   /**
-   * Almacena un valor en el caché
+   * Almacena un valor en el caché con control de memoria
    */
   set<T>(key: string, data: T, ttl: number = this.DEFAULT_TTL): void {
+    // Limpiar cache si está lleno
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      this.evictOldEntries();
+    }
+
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
       ttl,
     });
+  }
+
+  /**
+   * Elimina entradas más antiguas para liberar memoria
+   */
+  private evictOldEntries(): void {
+    const now = Date.now();
+    const entries = Array.from(this.cache.entries());
+
+    // Ordenar por timestamp (más antiguo primero)
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+
+    // Eliminar la mitad más antigua
+    const toDelete = entries.slice(0, Math.floor(entries.length / 2));
+    toDelete.forEach(([key]) => this.cache.delete(key));
   }
 
   /**

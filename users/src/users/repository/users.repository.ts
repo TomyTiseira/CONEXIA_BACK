@@ -97,6 +97,15 @@ export class UserRepository {
   async findProfileByUserId(userId: number): Promise<Profile | null> {
     const user = await this.ormRepository.findOne({
       where: { id: userId },
+      relations: ['profile'],
+    });
+    return user?.profile || null;
+  }
+
+  // Método específico para cuando SÍ necesitas las skills (usado en get-profile endpoints)
+  async findProfileByUserIdWithSkills(userId: number): Promise<Profile | null> {
+    const user = await this.ormRepository.findOne({
+      where: { id: userId },
       relations: ['profile', 'profile.profileSkills'],
     });
     return user?.profile || null;
@@ -121,9 +130,79 @@ export class UserRepository {
     return this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
+      .where('user.id IN (:...userIds)', { userIds })
+      .getMany();
+  }
+
+  // Método específico para cuando SÍ necesitas las skills de múltiples usuarios
+  async findUsersByIdsWithSkills(userIds: number[]): Promise<User[]> {
+    return this.ormRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
       .leftJoinAndSelect('profile.profileSkills', 'profileSkills')
       .where('user.id IN (:...userIds)', { userIds })
       .getMany();
+  }
+
+  // Método ultra-optimizado para recomendaciones: solo skills sin cargar perfiles completos
+  async getUsersSkillsOnly(
+    userIds: number[],
+  ): Promise<Array<{ userId: number; skillIds: number[] }>> {
+    if (userIds.length === 0) return [];
+
+    console.log(
+      `[getUsersSkillsOnly] Obteniendo skills para usuarios: [${userIds.join(', ')}]`,
+    );
+
+    const query = this.ormRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.profile', 'profile')
+      .leftJoin('profile.profileSkills', 'profileSkills')
+      .select(['user.id as userId', 'profileSkills.skillId as skillId'])
+      .where('user.id IN (:...userIds)', { userIds })
+      .andWhere('profile.deletedAt IS NULL')
+      .getRawMany();
+
+    const results = await query;
+    console.log(
+      `[getUsersSkillsOnly] Query ejecutado, ${results.length} filas obtenidas`,
+    );
+    console.log(
+      `[getUsersSkillsOnly] Primeras 3 filas:`,
+      JSON.stringify(results.slice(0, 3)),
+    );
+
+    // Agrupar skills por usuario
+    const usersSkills = new Map<number, number[]>();
+
+    results.forEach((row) => {
+      const userId = row.userid as number; // PostgreSQL devuelve en minúsculas
+      const skillId = row.skillid as number; // PostgreSQL devuelve en minúsculas
+
+      console.log(
+        `[getUsersSkillsOnly] Procesando fila: userId=${userId}, skillId=${skillId}`,
+      );
+
+      if (!usersSkills.has(userId)) {
+        usersSkills.set(userId, []);
+      }
+
+      if (skillId) {
+        usersSkills.get(userId)!.push(skillId);
+      }
+    });
+
+    const finalResult = Array.from(usersSkills.entries()).map(
+      ([userId, skillIds]) => ({
+        userId,
+        skillIds: [...new Set(skillIds)], // Remover duplicados
+      }),
+    );
+
+    console.log(
+      `[getUsersSkillsOnly] Resultado final: ${JSON.stringify(finalResult)}`,
+    );
+    return finalResult;
   }
 
   async getAllUsersExcept(

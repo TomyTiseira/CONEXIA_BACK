@@ -12,9 +12,9 @@ export class RecommendationsCacheService {
   private readonly cache = new Map<string, { data: any; expiry: number }>();
   private readonly metrics: CacheMetrics = { hits: 0, misses: 0, sets: 0 };
 
-  private readonly DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 horas
+  private readonly DEFAULT_TTL = 20 * 60 * 1000; // Reducir a 20 minutos para liberar memoria más rápido
   private readonly CACHE_PREFIX = 'recommendations';
-  private readonly MAX_CACHE_SIZE = 10000; // Máximo 10k entradas
+  private readonly MAX_CACHE_SIZE = 5000; // Reducir a 5k entradas para menos memoria
 
   /**
    * Genera clave de caché optimizada y específica

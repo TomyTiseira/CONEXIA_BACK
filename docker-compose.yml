@@ -3,6 +3,12 @@ services:
     image: nats:2.10.25-alpine3.21
     ports:
       - "8222:8222"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
 
   api-gateway:
     build: ./api-gateway
@@ -18,6 +24,15 @@ services:
       - PORT=${API_GATEWAY_PORT}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
+      - NODE_OPTIONS=--max-old-space-size=1024
+      - NATS_TIMEOUT=30000
+      - NATS_MAX_RECONNECT_ATTEMPTS=10
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
 
   users:
     build: ./users
@@ -40,8 +55,16 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - JWT_SECRET=${JWT_SECRET}
-      - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max-old-space-size=2048 --expose-gc --max-semi-space-size=128
+      - NATS_TIMEOUT=30000
+      - NATS_MAX_RECONNECT_ATTEMPTS=10
     command: npm run start:dev
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
 
   users-db:
     build:
@@ -60,11 +83,19 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${USERS_DB_USER} -d ${USERS_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
 
   projects:
     build: ./projects
@@ -87,8 +118,16 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
-      - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max-old-space-size=1024 --expose-gc --max-semi-space-size=64
+      - NATS_TIMEOUT=30000
+      - NATS_MAX_RECONNECT_ATTEMPTS=10
     command: npm run start:dev
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
 
   projects-db:
     build:
@@ -107,6 +146,8 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
     healthcheck:
       test:
         [
@@ -116,6 +157,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
 
   communities:
     build: ./communities
@@ -138,15 +185,23 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
-      # Configuraciones optimizadas para recomendaciones
-      - RECOMMENDATIONS_CACHE_TTL=${RECOMMENDATIONS_CACHE_TTL:-86400000}
-      - RECOMMENDATIONS_MAX_CACHE_SIZE=${RECOMMENDATIONS_MAX_CACHE_SIZE:-10000}
-      - MAX_PARALLEL_PROCESSING=${MAX_PARALLEL_PROCESSING:-8}
+      # Configuraciones optimizadas para recomendaciones (MEMORY OPTIMIZED)
+      - RECOMMENDATIONS_CACHE_TTL=${RECOMMENDATIONS_CACHE_TTL:-1200000}
+      - RECOMMENDATIONS_MAX_CACHE_SIZE=${RECOMMENDATIONS_MAX_CACHE_SIZE:-3000}
+      - MAX_PARALLEL_PROCESSING=${MAX_PARALLEL_PROCESSING:-2}
       - MUTUAL_FRIENDS_THRESHOLD=${MUTUAL_FRIENDS_THRESHOLD:-1}
       - SKILLS_MATCH_THRESHOLD=${SKILLS_MATCH_THRESHOLD:-2}
-      - MAX_FRIENDS_FOR_CALCULATION=${MAX_FRIENDS_FOR_CALCULATION:-50}
-      - NODE_OPTIONS=${COMMUNITIES_NODE_OPTIONS:-"--max-old-space-size=2048"}
+      - MAX_FRIENDS_FOR_CALCULATION=${MAX_FRIENDS_FOR_CALCULATION:-15}
+      - NODE_OPTIONS=--max-old-space-size=1024 --expose-gc --max-semi-space-size=64
+      - NATS_TIMEOUT=30000
+      - NATS_MAX_RECONNECT_ATTEMPTS=10
     command: npm run start:dev
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+        reservations:
+          memory: 512M
 
   communities-db:
     build:
@@ -158,10 +213,10 @@ services:
       - POSTGRES_USER=${COMMUNITIES_DB_USER}
       - POSTGRES_PASSWORD=${COMMUNITIES_DB_PASSWORD}
       - POSTGRES_DB=${COMMUNITIES_DB_NAME}
-      # Configuraciones optimizadas para recomendaciones
-      - POSTGRES_WORK_MEM=${POSTGRES_WORK_MEM:-128MB}
-      - POSTGRES_SHARED_BUFFERS=${POSTGRES_SHARED_BUFFERS:-256MB}
-      - POSTGRES_EFFECTIVE_CACHE_SIZE=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      # Configuraciones optimizadas para recomendaciones (MEMORY OPTIMIZED)
+      - POSTGRES_WORK_MEM=${POSTGRES_WORK_MEM:-64MB}
+      - POSTGRES_SHARED_BUFFERS=${POSTGRES_SHARED_BUFFERS:-128MB}
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=${POSTGRES_EFFECTIVE_CACHE_SIZE:-512MB}
       - POSTGRES_RANDOM_PAGE_COST=${POSTGRES_RANDOM_PAGE_COST:-1.1}
     volumes:
       - ./communities/postgres-data:/var/lib/postgresql/data
@@ -170,9 +225,9 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
-      -c work_mem=${POSTGRES_WORK_MEM:-128MB}
-      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
-      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-1GB}
+      -c work_mem=${POSTGRES_WORK_MEM:-64MB}
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS:-128MB}
+      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-512MB}
       -c random_page_cost=${POSTGRES_RANDOM_PAGE_COST:-1.1}
       -c seq_page_cost=1.0
       -c cpu_tuple_cost=0.01

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { USERS_SERVICE } from 'src/config';
 
 @Injectable()
@@ -94,7 +94,9 @@ export class UsersClientService {
   async getLocalityById(localityId: number): Promise<any> {
     try {
       const locality = await firstValueFrom(
-        this.client.send('getLocalityById', { id: localityId }),
+        this.client.send('getLocalityById', { id: localityId }).pipe(
+          timeout(1500), // 1.5 segundos timeout
+        ),
       );
       return locality;
     } catch (error) {
@@ -106,7 +108,9 @@ export class UsersClientService {
   async getUserWithProfile(userId: number): Promise<any> {
     try {
       const result = await firstValueFrom(
-        this.client.send('getUserWithProfile', { userId }),
+        this.client.send('getUserWithProfile', { userId }).pipe(
+          timeout(2000), // 2 segundos timeout
+        ),
       );
 
       return result;

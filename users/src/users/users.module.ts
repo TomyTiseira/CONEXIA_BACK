@@ -18,7 +18,9 @@ import { FindUserByIdUseCase } from './service/use-cases/find-user-by-id.use-cas
 import { FindUsersByIdsUseCase } from './service/use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './service/use-cases/get-role-by-id.use-cases';
 import { GetRoleByNameUseCase } from './service/use-cases/get-role-by-name.use-cases';
+import { GetUserWithProfileAndSkillsUseCase } from './service/use-cases/get-user-with-profile-and-skills.use-cases';
 import { GetUserWithProfileUseCase } from './service/use-cases/get-user-with-profile.use-cases';
+import { GetUsersSkillsOnlyUseCase } from './service/use-cases/get-users-skills-only.use-case';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
 import { UpdateUserUseCase } from './service/use-cases/update-user.use-cases';
@@ -47,6 +49,8 @@ import { UsersService } from './service/users.service';
     GetRoleByNameUseCase,
     FindUserByIdUseCase,
     GetUserWithProfileUseCase,
+    GetUserWithProfileAndSkillsUseCase,
+    GetUsersSkillsOnlyUseCase,
     FindUsersByIdsUseCase,
     {
       provide: MockEmailService,

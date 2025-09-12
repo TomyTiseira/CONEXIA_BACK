@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { USERS_SERVICE } from 'src/config';
 import { SkillService } from '../../shared/services/skill.service';
 
@@ -86,7 +86,9 @@ export class UsersClientService {
   async getUserWithProfile(userId: number): Promise<any> {
     try {
       const result = await firstValueFrom(
-        this.client.send('getUserWithProfile', { userId }),
+        this.client.send('getUserWithProfile', { userId }).pipe(
+          timeout(2000), // 2 segundos timeout
+        ),
       );
       return result;
     } catch (error) {

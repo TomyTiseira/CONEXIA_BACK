@@ -4,7 +4,6 @@ import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { GetProjectsDto } from '../../dtos/get-projects.dto';
-import { Project } from '../../entities/project.entity';
 import { ProjectRepository } from '../../repositories/project.repository';
 
 @Injectable()
@@ -22,28 +21,14 @@ export class GetProjectsUseCase {
       limit: getProjectsDto.limit || 10,
     };
 
-    // 1. Obtener todos los IDs de proyectos donde el usuario NO es dueño
-    const [allProjects] = await this.projectRepository.findProjectsWithFilters({
-      ...params,
-      page: 1,
-      limit: 10000,
-    });
-    const now = new Date();
-    const notOwnerIds = allProjects
-      .filter((p) => p.userId !== currentUserId)
-      .filter((p) => !p.endDate || new Date(p.endDate) >= now)
-      .map((p) => p.id);
-
-    // 2. Paginar sobre esos IDs
-    const start = (params.page - 1) * params.limit;
-    const end = start + params.limit;
-    const paginatedIds = notOwnerIds.slice(start, end);
-
-    // 3. Traer los proyectos completos con relaciones usando los IDs paginados
-    let projects: Project[] = [];
-    if (paginatedIds.length > 0) {
-      projects = await this.projectRepository.findProjectsByIds(paginatedIds);
-    }
+    // Obtener proyectos con filtros aplicados directamente en la base de datos
+    // Esto evita cargar miles de registros en memoria
+    const [projects, total] =
+      await this.projectRepository.findProjectsWithFilters({
+        ...params,
+        excludeUserId: currentUserId, // Excluir proyectos del usuario actual
+        onlyActive: true, // Solo proyectos activos (no vencidos)
+      });
 
     // Obtener información de los dueños de los proyectos
     const userIds = [...new Set(projects.map((project) => project.userId))];
@@ -70,15 +55,16 @@ export class GetProjectsUseCase {
       );
     }
 
-    // Obtener las postulaciones del usuario autenticado a los proyectos listados
-    const userPostulationsArr =
-      (
-        await this.postulationRepository.findByUserWithState(
+    // Obtener las postulaciones del usuario autenticado SOLO para los proyectos actuales
+    const projectIds = projects.map((p) => p.id);
+    let userPostulationsArr: any[] = [];
+    if (projectIds.length > 0) {
+      userPostulationsArr =
+        (await this.postulationRepository.findByUserForProjects(
           currentUserId,
-          1,
-          10000,
-        )
-      )[0] || [];
+          projectIds,
+        )) || [];
+    }
     const appliedProjectIds = new Set(
       userPostulationsArr.map((p: any) => p.projectId),
     );
@@ -104,19 +90,16 @@ export class GetProjectsUseCase {
       postulationStatusMap.set(k, { code: v.code });
     }
 
-    // Obtener la cantidad de postulaciones aprobadas para cada proyecto
-    const approvedApplicationsMap = new Map<number, number>();
+    // Obtener la cantidad de postulaciones aprobadas para cada proyecto EN BATCH
+    let approvedApplicationsMap = new Map<number, number>();
     if (projects.length > 0) {
       const statusAccepted = 2; // Ajusta este valor si el ID de estado "aprobada" es diferente
-      for (const project of projects) {
-        const [, count] =
-          await this.postulationRepository.findAndCountWithFilters(
-            { projectId: project.id, statusId: statusAccepted },
-            1,
-            1,
-          );
-        approvedApplicationsMap.set(project.id, count);
-      }
+      const projectIds = projects.map((p) => p.id);
+      approvedApplicationsMap =
+        await this.postulationRepository.getApprovedCountsByProjects(
+          projectIds,
+          statusAccepted,
+        );
     }
 
     // Transformar los proyectos usando la función común
@@ -130,8 +113,8 @@ export class GetProjectsUseCase {
       postulationStatusMap,
     );
 
-    // Calcular información de paginación usando solo los proyectos donde no es dueño
-    const pagination = calculatePagination(notOwnerIds.length, params);
+    // Calcular información de paginación usando el total correcto
+    const pagination = calculatePagination(total, params);
 
     return {
       projects: transformedProjects,

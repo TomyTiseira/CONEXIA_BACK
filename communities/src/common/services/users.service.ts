@@ -49,6 +49,18 @@ export class UsersService {
       );
       return user;
     } catch (error) {
+      console.error(`Error getting user with profile ${userId}:`, error);
+      return null;
+    }
+  }
+
+  async getUserWithProfileAndSkills(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('getUserWithProfileAndSkills', { userId: userId }),
+      );
+      return user;
+    } catch (error) {
       console.error('Error getting user by ID:', error);
       return null;
     }
@@ -80,6 +92,31 @@ export class UsersService {
       );
       return users;
     } catch {
+      return [];
+    }
+  }
+
+  // Método optimizado para obtener solo skills sin cargar perfiles completos
+  async getUsersSkillsOnly(
+    userIds: number[],
+  ): Promise<Array<{ userId: number; skillIds: number[] }>> {
+    if (!userIds || userIds.length === 0) return [];
+
+    console.log(
+      `[UsersService] Llamando getUsersSkillsOnly con userIds: [${userIds.join(', ')}]`,
+    );
+
+    try {
+      const result = await firstValueFrom(
+        this.client.send('getUsersSkillsOnly', { userIds }),
+      );
+      console.log(
+        `[UsersService] Respuesta de getUsersSkillsOnly:`,
+        JSON.stringify(result),
+      );
+      return result;
+    } catch (error) {
+      console.error('Error getting users skills only:', error);
       return [];
     }
   }
