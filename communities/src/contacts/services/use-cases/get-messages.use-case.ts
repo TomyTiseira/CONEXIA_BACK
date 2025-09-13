@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
-  calculatePagination,
+  calculateCumulativePagination,
   PaginationInfo,
 } from '../../../common/utils/pagination.utils';
 import { GetMessagesDto } from '../../dto/get-messages.dto';
@@ -52,7 +52,7 @@ export class GetMessagesUseCase {
       );
 
     // Calcular información de paginación acumulativa
-    const pagination = calculatePagination(total, { page, limit });
+    const pagination = calculateCumulativePagination(total, { page, limit });
 
     // Formatear mensajes
     const formattedMessages = messages.map((message) => ({

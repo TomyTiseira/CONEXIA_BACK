@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
 import {
-  calculatePagination,
+  calculateCumulativePagination,
   PaginationInfo,
 } from '../../../common/utils/pagination.utils';
 import { GetConversationsDto } from '../../dto/get-conversations.dto';
@@ -24,7 +24,7 @@ export class GetConversationsUseCase {
   }> {
     const { page = 1, limit = 10, search } = getConversationsDto;
 
-    const { conversations, total } = search
+    const result = search
       ? await this.conversationRepository.findByUserIdWithSearch(
           currentUserId,
           page,
@@ -37,8 +37,10 @@ export class GetConversationsUseCase {
           limit,
         );
 
-    // Calcular información de paginación
-    const pagination = calculatePagination(total, { page, limit });
+    const { conversations, total } = result;
+
+    // Calcular información de paginación acumulativa
+    const pagination = calculateCumulativePagination(total, { page, limit });
 
     // Obtener IDs de todos los usuarios con los que se tiene conversación
     const otherUserIds = conversations.map((conversation) => {

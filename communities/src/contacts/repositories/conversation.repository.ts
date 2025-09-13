@@ -112,7 +112,7 @@ export class ConversationRepository {
     total: number;
     hasMore: boolean;
   }> {
-    // Si no hay búsqueda, usar el método normal
+    // Si no hay búsqueda, usar el método acumulativo
     if (!search || !search.trim()) {
       return this.findByUserIdCumulative(userId, page, limit);
     }
@@ -141,7 +141,7 @@ export class ConversationRepository {
       )
       .getCount();
 
-    // Obtener las conversaciones filtradas
+    // Obtener las conversaciones filtradas con paginación acumulativa
     const conversations = await this.repository
       .createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.messages', 'messages')
