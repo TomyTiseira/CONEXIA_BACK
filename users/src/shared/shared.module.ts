@@ -16,6 +16,7 @@ import { LocalityRepository } from './repository/locality.repository';
 import { ProfileSkillRepository } from './repository/profile-skill.repository';
 import { ConnectionInfoService } from './services/connection-info.service';
 import { ConnectionStatusService } from './services/connection-status.service';
+import { ConversationInfoService } from './services/conversation-info.service';
 import { SkillsValidationService } from './services/skills-validation.service';
 
 @Module({
@@ -52,6 +53,7 @@ import { SkillsValidationService } from './services/skills-validation.service';
     SkillsValidationService,
     ConnectionStatusService,
     ConnectionInfoService,
+    ConversationInfoService,
     UserRepository,
     UserBaseService,
     ProfileRepository,
@@ -62,6 +64,7 @@ import { SkillsValidationService } from './services/skills-validation.service';
     SkillsValidationService,
     ConnectionStatusService,
     ConnectionInfoService,
+    ConversationInfoService,
     UserRepository,
     UserBaseService,
     ProfileRepository,

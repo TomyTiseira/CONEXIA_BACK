@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class GetConversationsDto {
   @Transform(({ value }) => parseInt(value))
@@ -13,4 +13,8 @@ export class GetConversationsDto {
   @IsPositive()
   @IsOptional()
   limit?: number = 10;
+
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

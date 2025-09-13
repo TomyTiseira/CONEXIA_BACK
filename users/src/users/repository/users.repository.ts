@@ -125,6 +125,18 @@ export class UserRepository {
       .getMany();
   }
 
+  async searchUsers(searchTerm: string): Promise<User[]> {
+    return this.ormRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .where(
+        "(user.email ILIKE :searchTerm OR profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
+        { searchTerm: `%${searchTerm}%` },
+      )
+      .limit(50) // Limitar resultados para evitar sobrecarga
+      .getMany();
+  }
+
   ping(): string {
     return 'pong';
   }

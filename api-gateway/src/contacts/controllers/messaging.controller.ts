@@ -6,10 +6,12 @@ import {
   ParseIntPipe,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -88,11 +90,12 @@ export class MessagingController {
 
   @Get('conversations')
   async getConversations(
+    @User() user: AuthenticatedUser,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
-    @User() user: AuthenticatedUser,
+    @Query('search') search?: string,
   ) {
-    return this.messagingService.getConversations(user.id, page, limit);
+    return this.messagingService.getConversations(user.id, page, limit, search);
   }
 
   @Get('conversations/:conversationId/messages')
@@ -127,5 +130,14 @@ export class MessagingController {
   @Get('unread-count')
   async getUnreadCount(@User() user: AuthenticatedUser) {
     return this.messagingService.getUnreadCount(user.id);
+  }
+
+  @Get('messages/:messageId/file')
+  getMessageFile(
+    @Param('messageId', ParseIntPipe) messageId: number,
+    @User() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    return this.messagingService.getMessageFile(messageId, user.id, res);
   }
 }

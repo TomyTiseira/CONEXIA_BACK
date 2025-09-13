@@ -5,6 +5,7 @@ import { envs, USERS_SERVICE } from 'src/config';
 import { EmailService } from '../common/services/email.service';
 import { MockEmailService } from '../common/services/mock-email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
+import { UserSearchService } from '../common/services/user-search.service';
 import { UsersService } from '../common/services/users.service';
 import { ContactsController } from './controllers/contacts.controller';
 import { MessagingController } from './controllers/messaging.controller';
@@ -60,6 +61,7 @@ import {
     GetUnreadCountUseCase,
     MarkMessagesReadUseCase,
     UsersService,
+    UserSearchService,
     {
       provide: MockEmailService,
       useClass: NodemailerService,

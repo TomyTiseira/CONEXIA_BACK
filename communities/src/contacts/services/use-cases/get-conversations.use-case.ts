@@ -22,14 +22,20 @@ export class GetConversationsUseCase {
     conversations: any[];
     pagination: PaginationInfo;
   }> {
-    const { page = 1, limit = 10 } = getConversationsDto;
+    const { page = 1, limit = 10, search } = getConversationsDto;
 
-    const { conversations, total } =
-      await this.conversationRepository.findByUserIdCumulative(
-        currentUserId,
-        page,
-        limit,
-      );
+    const { conversations, total } = search
+      ? await this.conversationRepository.findByUserIdWithSearch(
+          currentUserId,
+          page,
+          limit,
+          search,
+        )
+      : await this.conversationRepository.findByUserIdCumulative(
+          currentUserId,
+          page,
+          limit,
+        );
 
     // Calcular información de paginación
     const pagination = calculatePagination(total, { page, limit });

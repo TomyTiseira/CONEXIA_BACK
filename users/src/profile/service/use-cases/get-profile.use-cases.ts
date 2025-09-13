@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
 import { Skill } from '../../../shared/interfaces/skill.interface';
 import { ConnectionInfoService } from '../../../shared/services/connection-info.service';
+import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
   ProfileSkillResponse,
@@ -16,6 +17,7 @@ export class GetProfileUseCase {
     private readonly profileRepository: ProfileRepository,
     private readonly skillsValidationService: SkillsValidationService,
     private readonly connectionInfoService: ConnectionInfoService,
+    private readonly conversationInfoService: ConversationInfoService,
   ) {}
 
   async execute(getProfileDto: GetProfileDto) {
@@ -71,6 +73,16 @@ export class GetProfileUseCase {
     } else {
       transformedProfile.connectionData = null;
     }
+
+    // Obtener la información de conversación entre los usuarios
+    const conversationInfo =
+      await this.conversationInfoService.getConversationInfo(
+        getProfileDto.authenticatedUser.id,
+        getProfileDto.targetUserId,
+      );
+
+    // Agregar el ID de conversación al perfil
+    transformedProfile.conversationId = conversationInfo?.id || null;
 
     return {
       profile: transformedProfile,

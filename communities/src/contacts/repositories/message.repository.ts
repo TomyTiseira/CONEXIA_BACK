@@ -100,4 +100,19 @@ export class MessageRepository {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async findByIdWithAccessCheck(
+    messageId: number,
+    currentUserId: number,
+  ): Promise<Message | null> {
+    return this.repository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.conversation', 'conversation')
+      .where('message.id = :messageId', { messageId })
+      .andWhere(
+        '(conversation.user1Id = :currentUserId OR conversation.user2Id = :currentUserId)',
+        { currentUserId },
+      )
+      .getOne();
+  }
 }

@@ -7,6 +7,7 @@ export interface FriendResponse {
   profilePicture?: string;
   connectionId: number;
   status: string;
+  conversationId: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

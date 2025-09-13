@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { join } from 'path';
 import { NATS_SERVICE } from '../../config/service';
 import { MessagingGateway } from '../websockets/messaging.gateway';
 
@@ -25,15 +26,33 @@ export class MessagingService {
 
       // Si el mensaje se guardó correctamente, enviarlo por WebSocket
       if (result && result.messageId) {
+        // Generar URL absoluta para archivos
+        const baseUrl =
+          process.env.API_BASE_URL ||
+          `http://localhost:${process.env.PORT || 8080}`;
+        const fileUrl =
+          data.type !== 'text' && data.content
+            ? `${baseUrl}/api/messaging/messages/${result.messageId}/file`
+            : null;
+
+        // Determinar el tipo MIME correcto
+        const mimeType =
+          data.type === 'image'
+            ? 'image/*'
+            : data.type === 'pdf'
+              ? 'application/pdf'
+              : 'text/plain';
+
         const messageData = {
           id: result.messageId,
           conversationId: result.conversationId,
           senderId: data.currentUserId,
           receiverId: data.receiverId,
           type: data.type,
-          content: data.content,
+          content: fileUrl,
           fileName: data.fileName,
           fileSize: data.fileSize,
+          mimeType: mimeType,
           timestamp: new Date(),
           isRead: false,
         };
@@ -72,12 +91,18 @@ export class MessagingService {
     }
   }
 
-  async getConversations(currentUserId: number, page = 1, limit = 10) {
+  async getConversations(
+    currentUserId: number,
+    page = 1,
+    limit = 10,
+    search?: string,
+  ) {
     return this.client
       .send('getConversations', {
         currentUserId,
         page,
         limit,
+        search,
       })
       .toPromise();
   }
@@ -135,5 +160,45 @@ export class MessagingService {
         currentUserId,
       })
       .toPromise();
+  }
+
+  async getMessageFile(messageId: number, currentUserId: number, res: any) {
+    try {
+      // Obtener información del mensaje
+      const messageInfo = await this.client
+        .send('getMessageById', { messageId, currentUserId })
+        .toPromise();
+
+      if (!messageInfo || !messageInfo.fileUrl) {
+        return res.status(404).json({ message: 'File not found' });
+      }
+
+      // Construir la ruta absoluta del archivo
+      const filePath = join(process.cwd(), messageInfo.fileUrl);
+
+      // Verificar que el archivo existe
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs');
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'File not found on disk' });
+      }
+
+      // Determinar el tipo de contenido
+      const mimeType =
+        messageInfo.type === 'image' ? 'image/*' : 'application/pdf';
+
+      // Configurar headers para descarga
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader(
+        'Content-Disposition',
+        `inline; filename="${messageInfo.fileName}"`,
+      );
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache por 1 año
+
+      // Enviar el archivo
+      return res.sendFile(filePath);
+    } catch {
+      return res.status(500).json({ message: 'Error retrieving file' });
+    }
   }
 }

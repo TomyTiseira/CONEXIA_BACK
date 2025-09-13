@@ -50,4 +50,19 @@ export class MessagingController {
   async getUnreadCount(@Payload() data: { currentUserId: number }) {
     return this.contactsService.getUnreadCount(data.currentUserId);
   }
+
+  @MessagePattern('getConversationInfo')
+  getConversationInfo(@Payload() data: { userId1: number; userId2: number }) {
+    return this.contactsService.getConversationInfo(data.userId1, data.userId2);
+  }
+
+  @MessagePattern('getMessageById')
+  getMessageById(
+    @Payload() data: { messageId: number; currentUserId: number },
+  ) {
+    return this.contactsService.getMessageById(
+      data.messageId,
+      data.currentUserId,
+    );
+  }
 }

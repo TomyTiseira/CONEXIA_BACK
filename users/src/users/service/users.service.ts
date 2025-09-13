@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { Locality } from '../../shared/entities/locality.entity';
 import { User } from '../../shared/entities/user.entity';
 import { LocalityRepository } from '../../shared/repository/locality.repository';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserRepository } from '../repository/users.repository';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-cases';
@@ -31,6 +33,7 @@ export class UsersService {
     private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
     private readonly getRoleByNameUseCase: GetRoleByNameUseCase,
+    private readonly userRepository: UserRepository,
   ) {}
 
   ping() {
@@ -96,5 +99,19 @@ export class UsersService {
     userId: number,
   ): Promise<{ user: User; profile: any } | null> {
     return this.getUserWithProfileUseCase.execute(userId);
+  }
+
+  async searchUsers(
+    searchTerm: string,
+  ): Promise<
+    Array<{ id: number; name: string; lastName: string; email: string }>
+  > {
+    const users = await this.userRepository.searchUsers(searchTerm);
+    return users.map((user) => ({
+      id: user.id,
+      name: user.profile?.name || '',
+      lastName: user.profile?.lastName || '',
+      email: user.email,
+    }));
   }
 }
