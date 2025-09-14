@@ -11,10 +11,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import * as cookie from 'cookie';
-import { existsSync, mkdirSync } from 'fs';
-import { extname, join } from 'path';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { Server, Socket } from 'socket.io';
-import { InvalidFileTypeException } from '../exceptions/messaging.exceptions';
 
 interface AuthenticatedSocket extends Socket {
   userId?: number;
@@ -142,17 +141,14 @@ export class MessagingGateway
       let processedFileName: string | undefined;
       let processedFileSize: number | undefined;
 
-      // Si es un archivo, procesarlo como lo hace el endpoint REST
       if (data.type !== 'text' && data.content) {
-        // El content debe contener los datos del archivo en base64
-        // Formato esperado: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
         const base64Match = data.content.match(/^data:([^;]+);base64,(.+)$/);
 
         if (base64Match) {
           const mimeType = base64Match[1];
           const fileData = base64Match[2];
 
-          // Generar nombre de archivo basado en el tipo
+          // Generar nombre de archivo
           const extension =
             data.type === 'image'
               ? mimeType.includes('png')
@@ -161,15 +157,22 @@ export class MessagingGateway
               : '.pdf';
           const fileName = `file_${Date.now()}${extension}`;
 
-          const result = this.processFile(
-            fileData,
-            fileName,
-            mimeType,
-            data.type,
-          );
-          fileUrl = result.fileUrl;
-          processedFileName = result.fileName;
-          processedFileSize = result.fileSize;
+          // Calcula la carpeta
+          const folder = mimeType.startsWith('image/')
+            ? join(process.cwd(), 'uploads', 'messages', 'images')
+            : join(process.cwd(), 'uploads', 'messages', 'pdfs');
+          if (!existsSync(folder)) {
+            mkdirSync(folder, { recursive: true });
+          }
+          const filePath = join(folder, fileName);
+          // Escribe el archivo
+          const buffer = Buffer.from(fileData, 'base64');
+          writeFileSync(filePath, buffer);
+
+          // URL pública igual que en REST
+          fileUrl = `/uploads/messages/${mimeType.startsWith('image/') ? 'images' : 'pdfs'}/${fileName}`;
+          processedFileName = fileName;
+          processedFileSize = buffer.length;
         }
       }
 
@@ -365,60 +368,5 @@ export class MessagingGateway
   // Método para obtener usuarios conectados (útil para mostrar estado en línea)
   getConnectedUsers(): number[] {
     return Array.from(this.connectedUsers.keys());
-  }
-
-  // Método para procesar archivos de la misma manera que el endpoint REST
-  private processFile(
-    fileData: string, // Base64 encoded
-    originalFileName: string,
-    mimeType: string,
-    type: 'image' | 'pdf',
-  ): { fileUrl: string; fileName: string; fileSize: number } {
-    // Validar tipo de archivo
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!allowedTypes.includes(mimeType)) {
-      throw new InvalidFileTypeException(allowedTypes);
-    }
-
-    // Validar que el tipo coincida con el mimeType
-    if (type === 'image' && !mimeType.startsWith('image/')) {
-      throw new Error('Tipo de archivo no coincide: se esperaba imagen');
-    }
-    if (type === 'pdf' && mimeType !== 'application/pdf') {
-      throw new Error('Tipo de archivo no coincide: se esperaba PDF');
-    }
-
-    // Decodificar base64
-    const base64Data = fileData.replace(/^data:.*,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-
-    // Determinar directorio de destino
-    const uploadPath = mimeType.startsWith('image/')
-      ? join(process.cwd(), 'uploads', 'messages', 'images')
-      : join(process.cwd(), 'uploads', 'messages', 'pdfs');
-
-    // Crear directorio si no existe
-    if (!existsSync(uploadPath)) {
-      mkdirSync(uploadPath, { recursive: true });
-    }
-
-    // Generar nombre único para el archivo
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const fileName = uniqueSuffix + extname(originalFileName);
-    const filePath = join(uploadPath, fileName);
-
-    // Escribir archivo al disco
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs');
-    fs.writeFileSync(filePath, buffer);
-
-    // Generar URL relativa
-    const fileUrl = `/uploads/messages/${mimeType.startsWith('image/') ? 'images' : 'pdfs'}/${fileName}`;
-
-    return {
-      fileUrl,
-      fileName: originalFileName,
-      fileSize: buffer.length,
-    };
   }
 }
