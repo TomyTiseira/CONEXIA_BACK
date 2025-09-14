@@ -11,7 +11,10 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import * as cookie from 'cookie';
+import { existsSync, mkdirSync } from 'fs';
+import { extname, join } from 'path';
 import { Server, Socket } from 'socket.io';
+import { InvalidFileTypeException } from '../exceptions/messaging.exceptions';
 
 interface AuthenticatedSocket extends Socket {
   userId?: number;
@@ -129,47 +132,152 @@ export class MessagingGateway
       receiverId: number;
       type: 'text' | 'image' | 'pdf';
       content: string;
-      fileName?: string;
-      fileSize?: number;
     },
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
     if (!client.userId) return;
 
-    const messageData = {
-      id: Date.now(), // ID temporal
-      conversationId: data.conversationId,
-      senderId: client.userId,
-      receiverId: data.receiverId,
-      type: data.type,
-      content: data.content,
-      fileName: data.fileName,
-      fileSize: data.fileSize,
-      timestamp: new Date(),
-      isRead: false,
-    };
+    try {
+      let fileUrl: string | undefined;
+      let processedFileName: string | undefined;
+      let processedFileSize: number | undefined;
 
-    // Para chat 1 a 1, enviar mensaje a la sala específica de la conversación
-    const roomName = this.getConversationRoomName(
-      client.userId,
-      data.receiverId,
-    );
-    this.server.to(roomName).emit('newMessage', messageData);
+      // Si es un archivo, procesarlo como lo hace el endpoint REST
+      if (data.type !== 'text' && data.content) {
+        // El content debe contener los datos del archivo en base64
+        // Formato esperado: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ..."
+        const base64Match = data.content.match(/^data:([^;]+);base64,(.+)$/);
 
-    // Enviar notificación al receptor si no está en la sala
-    const receiverSocketId = this.connectedUsers.get(data.receiverId);
-    if (receiverSocketId && !client.rooms.has(roomName)) {
-      this.server.to(receiverSocketId).emit('messageNotification', {
+        if (base64Match) {
+          const mimeType = base64Match[1];
+          const fileData = base64Match[2];
+
+          // Generar nombre de archivo basado en el tipo
+          const extension =
+            data.type === 'image'
+              ? mimeType.includes('png')
+                ? '.png'
+                : '.jpg'
+              : '.pdf';
+          const fileName = `file_${Date.now()}${extension}`;
+
+          const result = this.processFile(
+            fileData,
+            fileName,
+            mimeType,
+            data.type,
+          );
+          fileUrl = result.fileUrl;
+          processedFileName = result.fileName;
+          processedFileSize = result.fileSize;
+        }
+      }
+
+      // Función para formatear el tamaño del archivo
+      const formatFileSize = (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
+
+      // Función para obtener el icono según el tipo de archivo
+      const getFileIcon = (type: string): string => {
+        if (type === 'image') return '🖼️';
+        if (type === 'pdf') return '📄';
+        return '📎';
+      };
+
+      // Función para generar preview del contenido
+      const generatePreview = (
+        type: string,
+        content: string,
+        fileName?: string,
+      ): string => {
+        switch (type) {
+          case 'text':
+            return content.length > 100
+              ? content.substring(0, 100) + '...'
+              : content;
+          case 'image':
+            return `Imagen: ${fileName || 'Sin nombre'}`;
+          case 'pdf':
+            return `PDF: ${fileName || 'Documento PDF'}`;
+          default:
+            return `Archivo: ${fileName || 'Sin nombre'}`;
+        }
+      };
+
+      const messageData = {
+        id: Date.now(), // ID temporal
         conversationId: data.conversationId,
         senderId: client.userId,
-        message:
-          data.type === 'text' ? data.content : `Archivo: ${data.fileName}`,
+        receiverId: data.receiverId,
+        type: data.type,
+        content: data.type === 'text' ? data.content : fileUrl || data.content,
+        fileName: processedFileName,
+        fileSize: processedFileSize,
+        fileSizeFormatted: processedFileSize
+          ? formatFileSize(processedFileSize)
+          : undefined,
+        fileIcon: getFileIcon(data.type),
+        preview: generatePreview(
+          data.type,
+          data.content || '',
+          processedFileName,
+        ),
+        timestamp: new Date(),
+        isRead: false,
+        // Metadatos adicionales para mejor visualización
+        metadata: {
+          isFile: data.type !== 'text',
+          canDownload: data.type !== 'text' && (fileUrl || data.content),
+          fileExtension: processedFileName
+            ? processedFileName.split('.').pop()?.toUpperCase()
+            : undefined,
+        },
+      };
+
+      // Para chat 1 a 1, enviar mensaje a la sala específica de la conversación
+      const roomName = this.getConversationRoomName(
+        client.userId,
+        data.receiverId,
+      );
+      this.server.to(roomName).emit('newMessage', messageData);
+
+      // Enviar notificación al receptor si no está en la sala
+      const receiverSocketId = this.connectedUsers.get(data.receiverId);
+      if (receiverSocketId && !client.rooms.has(roomName)) {
+        const notificationMessage =
+          data.type === 'text'
+            ? data.content
+            : `${getFileIcon(data.type)} ${processedFileName || 'Archivo'}`;
+
+        this.server.to(receiverSocketId).emit('messageNotification', {
+          conversationId: data.conversationId,
+          senderId: client.userId,
+          message: notificationMessage,
+          type: data.type,
+          fileIcon: getFileIcon(data.type),
+          preview: generatePreview(
+            data.type,
+            data.content || '',
+            processedFileName,
+          ),
+        });
+      }
+
+      this.logger.log(
+        `1-to-1 message sent from user ${client.userId} to user ${data.receiverId} (${data.type})`,
+      );
+    } catch (error) {
+      this.logger.error('Error processing message:', error);
+      client.emit('messageError', {
+        error: 'Error al procesar el mensaje',
+        type: data.type,
       });
     }
-
-    this.logger.log(
-      `1-to-1 message sent from user ${client.userId} to user ${data.receiverId}`,
-    );
   }
 
   @SubscribeMessage('typing')
@@ -257,5 +365,60 @@ export class MessagingGateway
   // Método para obtener usuarios conectados (útil para mostrar estado en línea)
   getConnectedUsers(): number[] {
     return Array.from(this.connectedUsers.keys());
+  }
+
+  // Método para procesar archivos de la misma manera que el endpoint REST
+  private processFile(
+    fileData: string, // Base64 encoded
+    originalFileName: string,
+    mimeType: string,
+    type: 'image' | 'pdf',
+  ): { fileUrl: string; fileName: string; fileSize: number } {
+    // Validar tipo de archivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(mimeType)) {
+      throw new InvalidFileTypeException(allowedTypes);
+    }
+
+    // Validar que el tipo coincida con el mimeType
+    if (type === 'image' && !mimeType.startsWith('image/')) {
+      throw new Error('Tipo de archivo no coincide: se esperaba imagen');
+    }
+    if (type === 'pdf' && mimeType !== 'application/pdf') {
+      throw new Error('Tipo de archivo no coincide: se esperaba PDF');
+    }
+
+    // Decodificar base64
+    const base64Data = fileData.replace(/^data:.*,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Determinar directorio de destino
+    const uploadPath = mimeType.startsWith('image/')
+      ? join(process.cwd(), 'uploads', 'messages', 'images')
+      : join(process.cwd(), 'uploads', 'messages', 'pdfs');
+
+    // Crear directorio si no existe
+    if (!existsSync(uploadPath)) {
+      mkdirSync(uploadPath, { recursive: true });
+    }
+
+    // Generar nombre único para el archivo
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const fileName = uniqueSuffix + extname(originalFileName);
+    const filePath = join(uploadPath, fileName);
+
+    // Escribir archivo al disco
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs');
+    fs.writeFileSync(filePath, buffer);
+
+    // Generar URL relativa
+    const fileUrl = `/uploads/messages/${mimeType.startsWith('image/') ? 'images' : 'pdfs'}/${fileName}`;
+
+    return {
+      fileUrl,
+      fileName: originalFileName,
+      fileSize: buffer.length,
+    };
   }
 }
