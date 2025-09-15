@@ -72,17 +72,29 @@ export class ConversationRepository {
       .getCount();
 
     // Obtener todas las conversaciones hasta la página actual (acumulativo)
+    // Primero obtenemos las conversaciones sin duplicados
     const conversations = await this.repository
       .createQueryBuilder('conversation')
-      .leftJoinAndSelect('conversation.messages', 'messages')
       .where(
         'conversation.user1Id = :userId OR conversation.user2Id = :userId',
         { userId },
       )
       .orderBy('conversation.updatedAt', 'DESC')
-      .addOrderBy('messages.createdAt', 'DESC')
       .take(page * limit)
       .getMany();
+
+    // Luego obtenemos el último mensaje de cada conversación
+    for (const conversation of conversations) {
+      const lastMessage = await this.repository.manager
+        .createQueryBuilder('Message', 'message')
+        .where('message.conversationId = :conversationId', {
+          conversationId: conversation.id,
+        })
+        .orderBy('message.createdAt', 'DESC')
+        .getOne();
+
+      conversation.messages = lastMessage ? [lastMessage] : [];
+    }
 
     const hasMore = conversations.length < total;
 
