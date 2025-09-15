@@ -59,6 +59,14 @@ export class PublicationsController {
     );
   }
 
+  @MessagePattern('getPublicationDetail')
+  getPublicationDetail(@Payload() data: GetPublicationByIdDto) {
+    return this.publicationsService.getPublicationDetail(
+      data.id,
+      data.currentUserId,
+    );
+  }
+
   @MessagePattern('deletePublication')
   async deletePublication(@Payload() data: DeletePublicationDto) {
     try {

@@ -55,6 +55,20 @@ export class ConnectionRepository {
     });
   }
 
+  async findPendingBySender(
+    senderId: number,
+    limit: number = 10,
+    page: number = 1,
+  ): Promise<Connection[]> {
+    const offset = (page - 1) * limit;
+    return this.connectionRepository.find({
+      where: { senderId, status: ConnectionStatus.PENDING },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
+
   async updateStatus(id: number, status: ConnectionStatus): Promise<void> {
     await this.connectionRepository.update(id, { status });
   }

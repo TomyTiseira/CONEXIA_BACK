@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { AcceptConnectionDto } from '../dto/accept-connection.dto';
+import { DeleteConnectionRequestDto } from '../dto/delete-connection-request.dto';
 import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetConversationsDto } from '../dto/get-conversations.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
 import { GetMessagesDto } from '../dto/get-messages.dto';
 import { MarkMessagesReadDto } from '../dto/mark-messages-read.dto';
+import { GetSentConnectionRequestsDto } from '../dto/get-sent-connection-requests.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
@@ -12,6 +14,7 @@ import { ConversationRepository } from '../repositories/conversation.repository'
 import { MessageRepository } from '../repositories/message.repository';
 import {
   AcceptConnectionUseCase,
+  DeleteConnectionRequestUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
@@ -20,6 +23,7 @@ import {
   GetMessagesUseCase,
   GetUnreadCountUseCase,
   MarkMessagesReadUseCase,
+  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
   SendMessageUseCase,
 } from './use-cases';
@@ -30,7 +34,9 @@ export class ContactsService {
   constructor(
     private readonly sendConnectionRequestUseCase: SendConnectionRequestUseCase,
     private readonly getConnectionRequestsUseCase: GetConnectionRequestsUseCase,
+    private readonly getSentConnectionRequestsUseCase: GetSentConnectionRequestsUseCase,
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
+    private readonly deleteConnectionRequestUseCase: DeleteConnectionRequestUseCase,
     private readonly getFriendsUseCase: GetFriendsUseCase,
     private readonly getConnectionStatusUseCase: GetConnectionStatusUseCase,
     private readonly getConnectionInfoUseCase: GetConnectionInfoUseCase,
@@ -49,6 +55,10 @@ export class ContactsService {
 
   async getConnectionRequests(data: GetConnectionRequestsDto) {
     return this.getConnectionRequestsUseCase.execute(data);
+  }
+
+  async getSentConnectionRequests(data: GetSentConnectionRequestsDto) {
+    return this.getSentConnectionRequestsUseCase.execute(data);
   }
 
   acceptConnection(currentUserId: number, data: AcceptConnectionDto) {
@@ -110,5 +120,12 @@ export class ContactsService {
       messageId,
       currentUserId,
     );
+  }
+
+  deleteConnectionRequest(
+    currentUserId: number,
+    data: DeleteConnectionRequestDto,
+  ) {
+    return this.deleteConnectionRequestUseCase.execute(currentUserId, data);
   }
 }

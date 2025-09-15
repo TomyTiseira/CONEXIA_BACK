@@ -18,6 +18,7 @@ import { MessageRepository } from './repositories/message.repository';
 import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
+  DeleteConnectionRequestUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
@@ -26,6 +27,7 @@ import {
   GetMessagesUseCase,
   GetUnreadCountUseCase,
   MarkMessagesReadUseCase,
+  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
   SendMessageUseCase,
 } from './services/use-cases';
@@ -51,9 +53,11 @@ import {
     MessageRepository,
     SendConnectionRequestUseCase,
     GetConnectionRequestsUseCase,
+    GetSentConnectionRequestsUseCase,
     GetConnectionStatusUseCase,
     GetConnectionInfoUseCase,
     AcceptConnectionUseCase,
+    DeleteConnectionRequestUseCase,
     GetFriendsUseCase,
     SendMessageUseCase,
     GetConversationsUseCase,

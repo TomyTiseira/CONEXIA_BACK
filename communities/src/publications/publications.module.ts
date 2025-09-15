@@ -9,8 +9,8 @@ import { PublicationReaction } from './entities/publication-reaction.entity';
 import { Publication } from './entities/publication.entity';
 import { CommentRepository } from './repositories/comment.repository';
 import { PublicationRepository } from './repositories/publication.repository';
-import { ConnectionStatusService } from './services/helpers/connection-status.service';
 import { ReactionRepository } from './repositories/reaction.repository';
+import { ConnectionStatusService } from './services/helpers/connection-status.service';
 import { ContactHelperService } from './services/helpers/contact-helper.service';
 import { OwnerHelperService } from './services/helpers/owner-helper.service';
 import { PublicationsService } from './services/publications.service';
@@ -26,6 +26,7 @@ import {
   EditReactionUseCase,
   GetPublicationByIdUseCase,
   GetPublicationCommentsUseCase,
+  GetPublicationDetailUseCase,
   GetPublicationReactionsUseCase,
   GetPublicationsUseCase,
   GetUserPublicationsUseCase,
@@ -63,6 +64,7 @@ import { UserInfoService } from './services/user-info.service';
     DeletePublicationUseCase,
     GetPublicationsUseCase,
     GetPublicationByIdUseCase,
+    GetPublicationDetailUseCase,
     GetUserPublicationsUseCase,
     // Casos de uso de comentarios
     CreateCommentUseCase,
@@ -75,5 +77,6 @@ import { UserInfoService } from './services/user-info.service';
     DeleteReactionUseCase,
     GetPublicationReactionsUseCase,
   ],
+  exports: [PublicationRepository],
 })
 export class PublicationsModule {}
