@@ -7,6 +7,7 @@ import {
 } from '../../../common/utils/pagination.utils';
 import { GetFriendsDto } from '../../dto/get-friends.dto';
 import { ConnectionRepository } from '../../repositories/connection.repository';
+import { ConversationRepository } from '../../repositories/conversation.repository';
 import { FriendResponse } from '../../response/friend.response';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class GetFriendsUseCase {
   constructor(
     private readonly connectionRepository: ConnectionRepository,
     private readonly usersService: UsersService,
+    private readonly conversationRepository: ConversationRepository,
   ) {}
 
   async execute(getFriendsDto: GetFriendsDto): Promise<{
@@ -70,12 +72,25 @@ export class GetFriendsUseCase {
         }
       });
 
-      const friends = connections.map((connection) => {
+      // Obtener conversaciones para cada amigo
+      const conversationPromises = friendIds.map((friendId) =>
+        this.conversationRepository.findByUsers(userId, friendId),
+      );
+      const conversations = await Promise.allSettled(conversationPromises);
+
+      const friends = connections.map((connection, index) => {
         const friendId =
           connection.senderId === userId
             ? connection.receiverId
             : connection.senderId;
         const friendInfo = usersMap.get(friendId);
+
+        // Obtener la conversación correspondiente
+        const conversationResult = conversations[index];
+        const conversation =
+          conversationResult.status === 'fulfilled'
+            ? conversationResult.value
+            : null;
 
         return {
           id: friendId,
@@ -86,6 +101,7 @@ export class GetFriendsUseCase {
           profilePicture: friendInfo?.profilePicture,
           connectionId: connection.id,
           status: connection.status,
+          conversationId: conversation?.id || null,
           createdAt: connection.createdAt,
           updatedAt: connection.updatedAt,
         };

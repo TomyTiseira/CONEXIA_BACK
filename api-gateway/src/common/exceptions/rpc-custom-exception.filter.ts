@@ -22,8 +22,9 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
         : Number(rpcError.status);
 
       const errorResponse: any = {
-        status,
+        status: 'error',
         message: rpcError.message,
+        statusCode: status,
       };
 
       // Si hay errores de validación específicos, los incluimos
@@ -40,14 +41,16 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
       rpcError.includes('Validation failed')
     ) {
       return response.status(400).json({
-        status: 400,
+        status: 'error',
         message: rpcError,
+        statusCode: 400,
       });
     }
 
     return response.status(500).json({
-      status: 500,
+      status: 'error',
       message: 'Internal server error',
+      statusCode: 500,
     });
   }
 }

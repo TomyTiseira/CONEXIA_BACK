@@ -6,6 +6,8 @@ import { ContactsModule } from './contacts/contacts.module';
 import { Connection } from './contacts/entities/connection.entity';
 import { PublicationReport } from './publication-reports/entities/publication-report.entity';
 import { PublicationReportsModule } from './publication-reports/publication-reports.module';
+import { Conversation } from './contacts/entities/conversation.entity';
+import { Message } from './contacts/entities/message.entity';
 import { PublicationComment } from './publications/entities/publication-comment.entity';
 import { PublicationReaction } from './publications/entities/publication-reaction.entity';
 import { Publication } from './publications/entities/publication.entity';
@@ -23,6 +25,8 @@ import { PublicationsModule } from './publications/publications.module';
       entities: [
         Publication,
         Connection,
+        Conversation,
+        Message,
         PublicationComment,
         PublicationReaction,
         PublicationReport,

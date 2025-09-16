@@ -139,4 +139,10 @@ export class UsersController {
     const result = await this.usersService.getUserWithProfile(data.userId);
     return result;
   }
+
+  @MessagePattern('searchUsers')
+  async searchUsers(@Payload() data: { searchTerm: string }) {
+    const users = await this.usersService.searchUsers(data.searchTerm);
+    return users;
+  }
 }

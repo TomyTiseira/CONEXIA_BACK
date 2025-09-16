@@ -36,6 +36,7 @@ export type ProfileWithSkills = {
   certifications?: any[];
   skills: ProfileSkillResponse[];
   connectionData?: ConnectionData | null;
+  conversationId?: number | null;
 };
 
 /**
