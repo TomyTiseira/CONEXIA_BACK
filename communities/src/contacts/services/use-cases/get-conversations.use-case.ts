@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
 import {
@@ -80,10 +79,7 @@ export class GetConversationsUseCase {
               createdAt: lastMessage.createdAt,
             }
           : null,
-        unreadCount:
-          conversation.messages?.filter(
-            (m) => m.receiverId === currentUserId && !m.isRead,
-          ).length || 0,
+        unreadCount: (conversation as any).unreadMessages?.length || 0,
         updatedAt: conversation.updatedAt,
       };
     });

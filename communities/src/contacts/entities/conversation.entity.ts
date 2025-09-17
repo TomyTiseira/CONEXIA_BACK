@@ -21,6 +21,9 @@ export class Conversation {
   @OneToMany('Message', 'conversation')
   messages: any[];
 
+  // Propiedad temporal para almacenar mensajes no leídos (no se persiste en BD)
+  unreadMessages?: any[];
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

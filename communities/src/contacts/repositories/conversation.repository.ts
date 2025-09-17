@@ -83,7 +83,7 @@ export class ConversationRepository {
       .take(page * limit)
       .getMany();
 
-    // Luego obtenemos el último mensaje de cada conversación
+    // Luego obtenemos el último mensaje y todos los mensajes no leídos de cada conversación
     for (const conversation of conversations) {
       const lastMessage = await this.repository.manager
         .createQueryBuilder('Message', 'message')
@@ -93,7 +93,18 @@ export class ConversationRepository {
         .orderBy('message.createdAt', 'DESC')
         .getOne();
 
+      // Obtener todos los mensajes no leídos para esta conversación
+      const unreadMessages = await this.repository.manager
+        .createQueryBuilder('Message', 'message')
+        .where('message.conversationId = :conversationId', {
+          conversationId: conversation.id,
+        })
+        .andWhere('message.receiverId = :userId', { userId })
+        .andWhere('message.isRead = false')
+        .getMany();
+
       conversation.messages = lastMessage ? [lastMessage] : [];
+      conversation.unreadMessages = unreadMessages;
     }
 
     const hasMore = conversations.length < total;
@@ -156,7 +167,6 @@ export class ConversationRepository {
     // Obtener las conversaciones filtradas con paginación acumulativa
     const conversations = await this.repository
       .createQueryBuilder('conversation')
-      .leftJoinAndSelect('conversation.messages', 'messages')
       .where(
         '(conversation.user1Id = :userId OR conversation.user2Id = :userId)',
         { userId },
@@ -166,9 +176,32 @@ export class ConversationRepository {
         { matchingUserIds },
       )
       .orderBy('conversation.updatedAt', 'DESC')
-      .addOrderBy('messages.createdAt', 'DESC')
       .take(page * limit)
       .getMany();
+
+    // Obtener el último mensaje y todos los mensajes no leídos de cada conversación
+    for (const conversation of conversations) {
+      const lastMessage = await this.repository.manager
+        .createQueryBuilder('Message', 'message')
+        .where('message.conversationId = :conversationId', {
+          conversationId: conversation.id,
+        })
+        .orderBy('message.createdAt', 'DESC')
+        .getOne();
+
+      // Obtener todos los mensajes no leídos para esta conversación
+      const unreadMessages = await this.repository.manager
+        .createQueryBuilder('Message', 'message')
+        .where('message.conversationId = :conversationId', {
+          conversationId: conversation.id,
+        })
+        .andWhere('message.receiverId = :userId', { userId })
+        .andWhere('message.isRead = false')
+        .getMany();
+
+      conversation.messages = lastMessage ? [lastMessage] : [];
+      conversation.unreadMessages = unreadMessages;
+    }
 
     const hasMore = conversations.length < total;
 
