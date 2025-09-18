@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { take, timeout } from 'rxjs/operators';
 import { USERS_SERVICE } from 'src/config';
 import { OwnerInfo } from 'src/publications/services/helpers/owner-helper.service';
 
@@ -17,9 +18,10 @@ export class UsersService {
   async getUsersByIds(userIds: number[]): Promise<OwnerInfo[]> {
     try {
       const users = await firstValueFrom(
-        this.client.send('findUsersByIds', { ids: userIds }),
+        this.client
+          .send('findUsersByIds', { ids: userIds })
+          .pipe(take(1), timeout(3000)),
       );
-
       return users.map((user: any) => ({
         id: user.id,
         name: user.profile?.name || `Usuario ${user.id}`,
@@ -45,7 +47,9 @@ export class UsersService {
   async getUserWithProfile(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(
-        this.client.send('getUserWithProfile', { userId: userId }),
+        this.client
+          .send('getUserWithProfile', { userId: userId })
+          .pipe(take(1), timeout(3000)),
       );
       return user;
     } catch (error) {
@@ -57,7 +61,9 @@ export class UsersService {
   async getUserWithProfileAndSkills(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(
-        this.client.send('getUserWithProfileAndSkills', { userId: userId }),
+        this.client
+          .send('getUserWithProfileAndSkills', { userId: userId })
+          .pipe(take(1), timeout(3000)),
       );
       return user;
     } catch (error) {
@@ -69,7 +75,9 @@ export class UsersService {
   async getSkillsByIds(skillIds: number[]): Promise<any[]> {
     try {
       const skills = await firstValueFrom(
-        this.client.send('findSkillsByIds', { ids: skillIds }),
+        this.client
+          .send('findSkillsByIds', { ids: skillIds })
+          .pipe(take(1), timeout(3000)),
       );
       return skills;
     } catch {
@@ -84,11 +92,13 @@ export class UsersService {
   ): Promise<number[]> {
     try {
       const users = await firstValueFrom(
-        this.client.send('getAllUsersExcept', {
-          currentUserId,
-          excludedIds,
-          limit,
-        }),
+        this.client
+          .send('getAllUsersExcept', {
+            currentUserId,
+            excludedIds,
+            limit,
+          })
+          .pipe(take(1), timeout(3000)),
       );
       return users;
     } catch {
@@ -108,7 +118,9 @@ export class UsersService {
 
     try {
       const result = await firstValueFrom(
-        this.client.send('getUsersSkillsOnly', { userIds }),
+        this.client
+          .send('getUsersSkillsOnly', { userIds })
+          .pipe(take(1), timeout(3000)),
       );
       console.log(
         `[UsersService] Respuesta de getUsersSkillsOnly:`,

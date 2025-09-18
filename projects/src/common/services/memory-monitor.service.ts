@@ -6,12 +6,13 @@ export class MemoryMonitorService implements OnModuleDestroy {
   private intervalId: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Forzar garbage collection cada 30 segundos en desarrollo - CON LIMPIEZA
-    if (process.env.NODE_ENV !== 'production') {
-      this.intervalId = setInterval(() => {
-        this.forceGarbageCollection();
-      }, 30000);
-    }
+    // DISABLED: Aggressive GC was causing memory thrashing and service crashes
+    // Only enable monitoring in production for critical scenarios
+    // if (process.env.NODE_ENV === 'production' && process.env.ENABLE_AGGRESSIVE_GC === 'true') {
+    //   this.intervalId = setInterval(() => {
+    //     this.forceGarbageCollection();
+    //   }, 300000); // 5 minutes instead of 30 seconds
+    // }
   }
 
   onModuleDestroy() {

@@ -25,14 +25,16 @@ export class NodemailerService extends EmailService {
       },
     });
 
-    // Verificar la conexión
-    this.transporter.verify((error) => {
-      if (error) {
-        this.logger.error('Error al verificar la conexión SMTP:', error);
-      } else {
-        this.logger.log('Servidor SMTP listo para enviar emails');
-      }
-    });
+    // DESHABILITADO TEMPORALMENTE PARA DESARROLLO
+    // this.transporter.verify((error) => {
+    //   if (error) {
+    //     this.logger.error('Error al verificar la conexión SMTP:', error);
+    //   } else {
+    //     this.logger.log('Servidor SMTP listo para enviar emails');
+    //   }
+    // });
+
+    this.logger.log('⚠️ Verificación SMTP deshabilitada para desarrollo');
   }
 
   async sendPostulationApprovedEmail(

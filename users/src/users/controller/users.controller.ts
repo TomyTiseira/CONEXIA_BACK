@@ -10,6 +10,12 @@ import { UsersService } from '../service/users.service';
 
 @Controller()
 export class UsersController {
+  private logMemoryUsage(context: string) {
+    const mem = process.memoryUsage();
+    console.log(
+      `[MEMORY][${context}] HeapUsed: ${(mem.heapUsed / 1024 / 1024).toFixed(2)} MB, RSS: ${(mem.rss / 1024 / 1024).toFixed(2)} MB`,
+    );
+  }
   constructor(private readonly usersService: UsersService) {}
 
   @MessagePattern('ping')
@@ -163,16 +169,21 @@ export class UsersController {
       limit: number;
     },
   ) {
+    this.logMemoryUsage('BEFORE getAllUsersExcept');
     const users = await this.usersService.getAllUsersExcept(
       data.currentUserId,
       data.excludedIds,
       data.limit,
     );
+    this.logMemoryUsage('AFTER getAllUsersExcept');
     return users;
   }
 
   @MessagePattern('getUsersSkillsOnly')
   async getUsersSkillsOnly(@Payload() data: { userIds: number[] }) {
-    return await this.usersService.getUsersSkillsOnly(data.userIds);
+    this.logMemoryUsage('BEFORE getUsersSkillsOnly');
+    const result = await this.usersService.getUsersSkillsOnly(data.userIds);
+    this.logMemoryUsage('AFTER getUsersSkillsOnly');
+    return result;
   }
 }

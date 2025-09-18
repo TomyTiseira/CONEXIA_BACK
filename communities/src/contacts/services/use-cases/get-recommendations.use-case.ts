@@ -1,9 +1,23 @@
 /*
 ============================================
-SISTEMA DE RECOMENDACI      // 1. Check de memoria inicial
+SISTEMA DE RECOMENDACI      /    if (cachedResult) {
+      this.logger.log(`🎯 Cache hit para usuario ${userId} - devolviendo resultado cacheado`);
+      return cachedResult;
+    }
+
+    try:
+      // CIRCUIT BREAKER GLOBAL - Ultra agresivo
       const initialMemory = process.memoryUsage();
-      if (initialMemory.heapUsed > 800 * 1024 * 1024) {
-        // Si ya usamos más de 800MB
+      if (initialMemory.heapUsed > 256 * 1024 * 1024) {
+        // Reducido a 256MB (era 800MB)
+        this.logger.error(
+          `🚨 CIRCUIT BREAKER: Memoria inicial ${(initialMemory.heapUsed / 1024 / 1024).toFixed(2)}MB. Abortando para prevenir crash sistémico.`,
+        );
+        return []; // Devolver resultado vacío para evitar crash
+      }memoria inicial
+      const initialMemory = process.memoryUsage();
+      if (initialMemory.heapUsed > 512 * 1024 * 1024) {
+        // Si ya usamos más de 512MB (reducido de 800MB)
         this.logger.warn(
           `🚨 Memoria alta detectada: ${(
             initialMemory.heapUsed /
@@ -82,17 +96,7 @@ export class GetRecommendationsUseCase {
     }
 
     try {
-      // 1. Check de memoria inicial
-      const initialMemory = process.memoryUsage();
-      if (initialMemory.heapUsed > 800 * 1024 * 1024) {
-        // Si ya usamos más de 800MB
-        this.logger.warn(
-          `🚨 Memoria alta detectada: ${(initialMemory.heapUsed / 1024 / 1024).toFixed(2)}MB. Devolviendo caché o resultado vacío.`,
-        );
-        return []; // Devolver resultado vacío para evitar crash
-      }
-
-      // 2. Obtener perfil del usuario actual con habilidades
+      // Obtener perfil del usuario actual con habilidades
       const currentUserProfile =
         await this.usersService.getUserWithProfileAndSkills(userId);
       if (!currentUserProfile?.profile) {
@@ -102,11 +106,11 @@ export class GetRecommendationsUseCase {
       const currentUserSkills =
         currentUserProfile.profile.profileSkills?.map((ps) => ps.skillId) || [];
 
-      // 3. Obtener contactos actuales para excluirlos (LIMITADO para memoria)
+      // Obtener contactos actuales para excluirlos
       const [existingConnections] =
         await this.connectionRepository.findAcceptedConnectionsByUserId(
           userId,
-          30, // Reducir de 50 a 30 para memoria
+          50, // Valor normal, sin emergencia
           1,
         );
       const connectedUserIds = new Set(
@@ -118,22 +122,22 @@ export class GetRecommendationsUseCase {
       );
       connectedUserIds.add(userId); // Excluir al usuario mismo
 
-      // 3. Obtener candidatos con sistema híbrido (límite más conservador)
+      // Obtener candidatos con sistema híbrido
       const candidates = await this.getHybridRecommendations(
         userId,
         currentUserSkills,
         connectedUserIds,
-        maxLimit, // Reducir el multiplicador para controlar memoria
+        maxLimit,
       );
 
-      // 4. Aplicar paginación
+      // Aplicar paginación
       const startIndex = (page - 1) * maxLimit;
       const finalRecommendations = candidates.slice(
         startIndex,
         startIndex + maxLimit,
       );
 
-      // 5. Cachear resultado con TTL optimizado
+      // Cachear resultado con TTL optimizado
       this.cacheService.setRecommendations(
         userId,
         maxLimit,
@@ -158,9 +162,8 @@ export class GetRecommendationsUseCase {
     maxCandidates: number,
   ): Promise<RecommendationResponse[]> {
     const candidates: UserCandidate[] = [];
-    // Aumentar candidatos potenciales para tener suficientes recomendaciones
-    // pero mantenerlo razonable para evitar memory leak
-    const MAX_POTENTIAL_CANDIDATES = Math.min(maxCandidates * 3, 36); // 3x el límite solicitado, max 36
+    // Usar el límite real solicitado
+    const MAX_POTENTIAL_CANDIDATES = maxCandidates;
 
     try {
       // 0. Los usuarios nuevos SIN conexiones también necesitan recomendaciones
@@ -218,6 +221,8 @@ export class GetRecommendationsUseCase {
         const candidateId = potentialCandidates[i];
         const candidateSkills = skillsMap.get(candidateId) || [];
 
+        // ...sin monitoreo de memoria ni GC forzado...
+
         this.logger.log(
           `🔄 Evaluando candidato ${i + 1}/${maxToProcess}: userId=${candidateId}, skills=[${candidateSkills.join(',')}]`,
         );
@@ -271,9 +276,21 @@ export class GetRecommendationsUseCase {
         }
       }
 
-      // Limpiar variables grandes antes de retornar
+      // Limpiar variables grandes antes de retornar y forzar GC
       candidates.length = 0;
       potentialCandidates.length = 0;
+      skillsMap.clear();
+
+      // Forzar garbage collection antes de retornar
+      if (global.gc) {
+        global.gc();
+        this.logger.log('🧹 Memoria liberada después de recomendaciones');
+      }
+
+      const finalMemUsage = process.memoryUsage();
+      this.logger.log(
+        `💾 Memoria final: Heap=${(finalMemUsage.heapUsed / 1024 / 1024).toFixed(0)}MB`,
+      );
 
       return finalRecommendations;
     } catch (error) {

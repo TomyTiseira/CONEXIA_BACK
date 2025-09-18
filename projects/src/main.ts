@@ -26,5 +26,13 @@ async function bootstrap() {
 
   await app.listen();
   logger.log('Projects microservice is running');
+
+  // Log de memoria cada 10 segundos
+  setInterval(() => {
+    const mem = process.memoryUsage();
+    logger.log(
+      `💾 Memoria: Heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB, RSS=${(mem.rss / 1024 / 1024).toFixed(1)}MB, Externo=${(mem.external / 1024 / 1024).toFixed(1)}MB, ArrayBuffers=${(mem.arrayBuffers / 1024 / 1024).toFixed(1)}MB`,
+    );
+  }, 10000);
 }
 bootstrap();

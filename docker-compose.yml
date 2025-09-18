@@ -55,7 +55,7 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - JWT_SECRET=${JWT_SECRET}
-      - NODE_OPTIONS=--max-old-space-size=2048 --expose-gc --max-semi-space-size=128
+      - NODE_OPTIONS=--max-old-space-size=2560 --expose-gc --max-semi-space-size=256
       - NATS_TIMEOUT=30000
       - NATS_MAX_RECONNECT_ATTEMPTS=10
     deploy:
@@ -103,6 +103,9 @@ services:
     depends_on:
       projects-db:
         condition: service_healthy
+    ports:
+      - "3002:3002"
+      - "9229:9229" # Debug Node.js
     environment:
       - NATS_SERVERS=nats://nats-server:4222
       - DB_HOST=projects-db
@@ -117,7 +120,7 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
-      - NODE_OPTIONS=--max-old-space-size=1024 --expose-gc --max-semi-space-size=64
+      - NODE_OPTIONS=--max-old-space-size=1280 --expose-gc --max-semi-space-size=128
       - NATS_TIMEOUT=30000
       - NATS_MAX_RECONNECT_ATTEMPTS=10
     deploy:
@@ -190,7 +193,7 @@ services:
       - MUTUAL_FRIENDS_THRESHOLD=${MUTUAL_FRIENDS_THRESHOLD:-1}
       - SKILLS_MATCH_THRESHOLD=${SKILLS_MATCH_THRESHOLD:-2}
       - MAX_FRIENDS_FOR_CALCULATION=${MAX_FRIENDS_FOR_CALCULATION:-15}
-      - NODE_OPTIONS=--max-old-space-size=1024 --expose-gc --max-semi-space-size=64
+      - NODE_OPTIONS=--max-old-space-size=1280 --expose-gc --max-semi-space-size=128
       - NATS_TIMEOUT=30000
       - NATS_MAX_RECONNECT_ATTEMPTS=10
     deploy:

@@ -22,15 +22,17 @@ export class MemoryMonitorService implements OnModuleDestroy {
   }
 
   /**
-   * Inicia el monitoreo de memoria
+   * Inicia el monitoreo de memoria - DISABLED for memory thrashing prevention
    */
   private startMemoryMonitoring(): void {
-    this.intervalId = setInterval(() => {
-      this.checkMemoryUsage();
-    }, this.GC_INTERVAL);
-
-    // Log inicial de memoria
+    // DISABLED: Aggressive memory monitoring was causing cascading memory issues
+    // Only log memory usage without automatic GC intervention
     this.logMemoryUsage();
+
+    // Optional: Monitor only every 5 minutes instead of 30 seconds
+    // this.intervalId = setInterval(() => {
+    //   this.logMemoryUsage();
+    // }, 300000); // 5 minutes
   }
 
   /**

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, timeout } from 'rxjs';
+import { firstValueFrom, take, timeout } from 'rxjs';
 import { USERS_SERVICE } from 'src/config';
 
 @Injectable()
@@ -11,7 +11,9 @@ export class UsersClientService {
   async validateUserExists(userId: number): Promise<boolean> {
     try {
       const user = await firstValueFrom(
-        this.client.send('findUserById', { id: userId }),
+        this.client
+          .send('findUserById', { id: userId })
+          .pipe(take(1), timeout(3000)),
       );
       return !!user;
     } catch (error) {
@@ -25,7 +27,9 @@ export class UsersClientService {
   ): Promise<{ valid: boolean; invalidIds: number[] }> {
     try {
       const skills = await firstValueFrom(
-        this.client.send('findSkillsByIds', { ids: skillIds }),
+        this.client
+          .send('findSkillsByIds', { ids: skillIds })
+          .pipe(take(1), timeout(3000)),
       );
 
       const foundSkillIds = skills.map((skill: any) => skill.id);
@@ -47,7 +51,9 @@ export class UsersClientService {
   async validateLocalityExists(localityId: number): Promise<boolean> {
     try {
       const locality = await firstValueFrom(
-        this.client.send('validateLocalityExists', { id: localityId }),
+        this.client
+          .send('validateLocalityExists', { id: localityId })
+          .pipe(take(1), timeout(3000)),
       );
       return !!locality;
     } catch {
@@ -58,7 +64,9 @@ export class UsersClientService {
   async getUsersByIds(userIds: number[]): Promise<any[]> {
     try {
       const users = await firstValueFrom(
-        this.client.send('findUsersByIds', { ids: userIds }),
+        this.client
+          .send('findUsersByIds', { ids: userIds })
+          .pipe(take(1), timeout(3000)),
       );
       return users || [];
     } catch (error) {
@@ -70,7 +78,9 @@ export class UsersClientService {
   async getUserById(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(
-        this.client.send('findUserById', { id: userId }),
+        this.client
+          .send('findUserById', { id: userId })
+          .pipe(take(1), timeout(3000)),
       );
       return user;
     } catch (error) {
@@ -82,7 +92,9 @@ export class UsersClientService {
   async getSkillsByIds(skillIds: number[]): Promise<any[]> {
     try {
       const skills = await firstValueFrom(
-        this.client.send('findSkillsByIds', { ids: skillIds }),
+        this.client
+          .send('findSkillsByIds', { ids: skillIds })
+          .pipe(take(1), timeout(3000)),
       );
       return skills || [];
     } catch (error) {
@@ -94,9 +106,9 @@ export class UsersClientService {
   async getLocalityById(localityId: number): Promise<any> {
     try {
       const locality = await firstValueFrom(
-        this.client.send('getLocalityById', { id: localityId }).pipe(
-          timeout(1500), // 1.5 segundos timeout
-        ),
+        this.client
+          .send('getLocalityById', { id: localityId })
+          .pipe(take(1), timeout(3000)),
       );
       return locality;
     } catch (error) {
@@ -108,9 +120,9 @@ export class UsersClientService {
   async getUserWithProfile(userId: number): Promise<any> {
     try {
       const result = await firstValueFrom(
-        this.client.send('getUserWithProfile', { userId }).pipe(
-          timeout(2000), // 2 segundos timeout
-        ),
+        this.client
+          .send('getUserWithProfile', { userId })
+          .pipe(take(1), timeout(3000)),
       );
 
       return result;
@@ -123,7 +135,9 @@ export class UsersClientService {
   async getUserRole(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(
-        this.client.send('findUserById', { id: userId }),
+        this.client
+          .send('findUserById', { id: userId })
+          .pipe(take(1), timeout(3000)),
       );
 
       if (!user || !user.roleId) {
@@ -131,7 +145,9 @@ export class UsersClientService {
       }
 
       const role = await firstValueFrom(
-        this.client.send('getRoleById', user.roleId.toString()),
+        this.client
+          .send('getRoleById', user.roleId.toString())
+          .pipe(take(1), timeout(3000)),
       );
 
       return role;

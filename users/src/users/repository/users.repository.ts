@@ -150,59 +150,39 @@ export class UserRepository {
   ): Promise<Array<{ userId: number; skillIds: number[] }>> {
     if (userIds.length === 0) return [];
 
-    console.log(
-      `[getUsersSkillsOnly] Obteniendo skills para usuarios: [${userIds.join(', ')}]`,
-    );
-
-    const query = this.ormRepository
+    // Optimized query: directly get only the needed data without loading full entities
+    const rawResults = await this.ormRepository
       .createQueryBuilder('user')
       .leftJoin('user.profile', 'profile')
       .leftJoin('profile.profileSkills', 'profileSkills')
-      .select(['user.id as userId', 'profileSkills.skillId as skillId'])
+      .select(['user.id', 'profileSkills.skillId'])
       .where('user.id IN (:...userIds)', { userIds })
       .andWhere('profile.deletedAt IS NULL')
       .getRawMany();
 
-    const results = await query;
-    console.log(
-      `[getUsersSkillsOnly] Query ejecutado, ${results.length} filas obtenidas`,
-    );
-    console.log(
-      `[getUsersSkillsOnly] Primeras 3 filas:`,
-      JSON.stringify(results.slice(0, 3)),
-    );
+    // Group skills by user ID efficiently
+    const userSkillsMap = new Map<number, number[]>();
 
-    // Agrupar skills por usuario
-    const usersSkills = new Map<number, number[]>();
+    // Initialize all users with empty arrays
+    userIds.forEach((userId) => userSkillsMap.set(userId, []));
 
-    results.forEach((row) => {
-      const userId = row.userid as number; // PostgreSQL devuelve en minúsculas
-      const skillId = row.skillid as number; // PostgreSQL devuelve en minúsculas
-
-      console.log(
-        `[getUsersSkillsOnly] Procesando fila: userId=${userId}, skillId=${skillId}`,
-      );
-
-      if (!usersSkills.has(userId)) {
-        usersSkills.set(userId, []);
-      }
+    // Populate skills for each user
+    rawResults.forEach((row) => {
+      const userId = row.user_id as number;
+      const skillId = row.profileSkills_skillId as number;
 
       if (skillId) {
-        usersSkills.get(userId)!.push(skillId);
+        const skills = userSkillsMap.get(userId) || [];
+        skills.push(skillId);
+        userSkillsMap.set(userId, skills);
       }
     });
 
-    const finalResult = Array.from(usersSkills.entries()).map(
-      ([userId, skillIds]) => ({
-        userId,
-        skillIds: [...new Set(skillIds)], // Remover duplicados
-      }),
-    );
-
-    console.log(
-      `[getUsersSkillsOnly] Resultado final: ${JSON.stringify(finalResult)}`,
-    );
-    return finalResult;
+    // Convert map to expected format
+    return Array.from(userSkillsMap.entries()).map(([userId, skillIds]) => ({
+      userId,
+      skillIds: [...new Set(skillIds)], // Remove duplicates
+    }));
   }
 
   async getAllUsersExcept(
