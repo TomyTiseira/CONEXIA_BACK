@@ -26,6 +26,23 @@ import { GetFriendsDto } from './dto/get-friends.dto';
 export class ContactsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
+  @Get('recommendations')
+  @AuthRoles([ROLES.USER])
+  getRecommendations(
+    @User() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    const payload = {
+      currentUserId: user.id,
+      limit: limit ? parseInt(limit, 10) : 12,
+    };
+    return this.client.send('getRecommendations', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
   @Post('send-request')
   @AuthRoles([ROLES.USER])
   sendConnectionRequest(

@@ -25,12 +25,13 @@ import {
   GetConversationsUseCase,
   GetFriendsUseCase,
   GetMessagesUseCase,
+  GetSentConnectionRequestsUseCase,
   GetUnreadCountUseCase,
   MarkMessagesReadUseCase,
-  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
   SendMessageUseCase,
 } from './services/use-cases';
+import { GetRecommendationsUseCase } from './services/use-cases/get-recommendations.use-case';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import {
     MarkMessagesReadUseCase,
     UsersService,
     UserSearchService,
+    GetRecommendationsUseCase,
     {
       provide: MockEmailService,
       useClass: NodemailerService,

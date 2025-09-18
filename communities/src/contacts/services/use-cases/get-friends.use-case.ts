@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from '../../../common/services/users.service';
 import {
@@ -68,6 +67,7 @@ export class GetFriendsUseCase {
             email: userData.user?.email,
             profession: userData.profile?.profession || '',
             profilePicture: userData.profile?.profilePicture,
+            coverPicture: userData.profile?.coverPicture || null,
           });
         }
       });
@@ -99,6 +99,7 @@ export class GetFriendsUseCase {
           userEmail: friendInfo?.email || '',
           profession: friendInfo?.profession || 'Sin profesión',
           profilePicture: friendInfo?.profilePicture,
+          coverPicture: friendInfo?.coverPicture || null,
           connectionId: connection.id,
           status: connection.status,
           conversationId: conversation?.id || null,

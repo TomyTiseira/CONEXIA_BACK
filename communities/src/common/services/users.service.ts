@@ -26,6 +26,7 @@ export class UsersService {
         lastName: user.profile?.lastName || '',
         email: user.email || '',
         profilePicture: user.profile?.profilePicture || null,
+        coverPicture: user.profile?.coverPicture || null,
         profession: user.profile?.profession || 'Sin profesión',
       }));
     } catch (error) {
