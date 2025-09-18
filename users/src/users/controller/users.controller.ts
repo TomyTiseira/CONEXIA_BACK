@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { DeleteUserDto } from '../dto/delete-user.dto';
 import { ResendVerificationDto } from '../dto/resend-verification.dto';
+import { SearchUsersDto } from '../dto/search-users.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import { UsersService } from '../service/users.service';
@@ -144,5 +145,20 @@ export class UsersController {
   async searchUsers(@Payload() data: { searchTerm: string }) {
     const users = await this.usersService.searchUsers(data.searchTerm);
     return users;
+  }
+
+  @MessagePattern('searchUsersPaginated')
+  async searchUsersPaginated(@Payload() searchParams: SearchUsersDto) {
+    const result = await this.usersService.searchUsersPaginated(searchParams);
+    return {
+      data: result.users,
+      pagination: result.pagination,
+    };
+  }
+
+  @MessagePattern('getUsers')
+  async getUsers(@Payload() searchParams: SearchUsersDto) {
+    const result = await this.usersService.searchUsersPaginated(searchParams);
+    return result;
   }
 }

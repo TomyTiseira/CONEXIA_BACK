@@ -25,9 +25,9 @@ import {
   GetConversationsUseCase,
   GetFriendsUseCase,
   GetMessagesUseCase,
+  GetSentConnectionRequestsUseCase,
   GetUnreadCountUseCase,
   MarkMessagesReadUseCase,
-  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
   SendMessageUseCase,
 } from './services/use-cases';

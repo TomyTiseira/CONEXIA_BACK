@@ -31,6 +31,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { CreateProfileHttpDto } from './dto/create-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
+import { GetUsersDto } from './dto/get-users.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileHttpDto } from './dto/update-profile.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -44,6 +45,15 @@ export class UsersController {
   @Get('ping')
   ping() {
     return this.client.send('ping', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get()
+  getUsers(@Query() getUsersDto: GetUsersDto) {
+    return this.client.send('getUsers', getUsersDto).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

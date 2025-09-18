@@ -137,6 +137,36 @@ export class UserRepository {
       .getMany();
   }
 
+  async searchUsersPaginated(
+    searchTerm: string,
+    limit: number,
+    offset: number,
+  ): Promise<{ users: User[]; total: number }> {
+    const queryBuilder = this.ormRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .where('user.deletedAt IS NULL'); // Excluir usuarios eliminados
+
+    if (searchTerm) {
+      queryBuilder.andWhere(
+        "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
+        { searchTerm: `%${searchTerm}%` },
+      );
+    }
+
+    // Obtener el total de registros
+    const total = await queryBuilder.getCount();
+
+    // Obtener los usuarios con paginación
+    const users = await queryBuilder
+      .orderBy('user.createdAt', 'DESC')
+      .limit(limit)
+      .offset(offset)
+      .getMany();
+
+    return { users, total };
+  }
+
   ping(): string {
     return 'pong';
   }
