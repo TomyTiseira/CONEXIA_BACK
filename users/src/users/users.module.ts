@@ -21,6 +21,7 @@ import { GetRoleByNameUseCase } from './service/use-cases/get-role-by-name.use-c
 import { GetUserWithProfileUseCase } from './service/use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './service/use-cases/ping';
 import { ResendVerificationUseCase } from './service/use-cases/resend-verification.use-cases';
+import { SearchUsersPaginatedUseCase } from './service/use-cases/search-users-paginated.use-cases';
 import { UpdateUserUseCase } from './service/use-cases/update-user.use-cases';
 import { VerifyUserUseCase } from './service/use-cases/verify-user.use-cases';
 import { UsersService } from './service/users.service';
@@ -48,6 +49,7 @@ import { UsersService } from './service/users.service';
     FindUserByIdUseCase,
     GetUserWithProfileUseCase,
     FindUsersByIdsUseCase,
+    SearchUsersPaginatedUseCase,
     {
       provide: MockEmailService,
       useClass: NodemailerService,

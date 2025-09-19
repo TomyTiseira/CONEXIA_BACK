@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { Locality } from '../../shared/entities/locality.entity';
 import { User } from '../../shared/entities/user.entity';
@@ -15,6 +14,7 @@ import { GetRoleByNameUseCase } from './use-cases/get-role-by-name.use-cases';
 import { GetUserWithProfileUseCase } from './use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './use-cases/ping';
 import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
+import { SearchUsersPaginatedUseCase } from './use-cases/search-users-paginated.use-cases';
 import { UpdateUserUseCase } from './use-cases/update-user.use-cases';
 import { VerifyUserUseCase } from './use-cases/verify-user.use-cases';
 
@@ -34,6 +34,7 @@ export class UsersService {
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
     private readonly getRoleByNameUseCase: GetRoleByNameUseCase,
     private readonly userRepository: UserRepository,
+    private readonly searchUsersPaginatedUseCase: SearchUsersPaginatedUseCase,
   ) {}
 
   ping() {
@@ -113,5 +114,9 @@ export class UsersService {
       lastName: user.profile?.lastName || '',
       email: user.email,
     }));
+  }
+
+  async searchUsersPaginated(searchParams: any) {
+    return this.searchUsersPaginatedUseCase.execute(searchParams);
   }
 }

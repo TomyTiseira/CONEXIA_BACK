@@ -7,6 +7,7 @@ export * from './get-conversations.use-case';
 export * from './get-friends.use-case';
 export * from './get-messages.use-case';
 export * from './get-recommendations.use-case';
+export * from './get-messages.use-case';
 export * from './get-sent-connection-requests.use-case';
 export * from './get-unread-count.use-case';
 export * from './mark-messages-read.use-case';
