@@ -118,6 +118,9 @@ export class UserRepository {
   }
 
   async findUsersByIds(userIds: number[]): Promise<User[]> {
+    if (!userIds || userIds.length === 0) {
+      return [];
+    }
     return this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
