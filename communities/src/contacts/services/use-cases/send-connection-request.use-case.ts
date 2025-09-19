@@ -19,7 +19,13 @@ export class SendConnectionRequestUseCase {
   async execute(
     currentUserId: number,
     sendConnectionRequestDto: SendConnectionDto,
-  ): Promise<{ message: string }> {
+  ): Promise<{
+    id: number;
+    state: string;
+    senderId: number;
+    receiverId: number;
+    message: string;
+  }> {
     const { receiverId, message } = sendConnectionRequestDto;
 
     // Validar que no se envíe solicitud a sí mismo
@@ -39,14 +45,14 @@ export class SendConnectionRequestUseCase {
     }
 
     // Obtener información de los usuarios con perfiles
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const [senderResult, receiverResult] = await Promise.all([
       this.usersService.getUserWithProfile(currentUserId),
       this.usersService.getUserWithProfile(receiverId),
     ]);
 
-    // Crear la solicitud de conexión
-    await this.connectionRepository.create({
+    // Crear la solicitud de conexión y obtener el objeto creado
+    const created = await this.connectionRepository.create({
       senderId: currentUserId,
       receiverId,
       message,
@@ -75,7 +81,12 @@ export class SendConnectionRequestUseCase {
       }
     }
 
+    // Retornar los datos relevantes de la solicitud creada
     return {
+      id: created.id,
+      state: created.status || 'pending',
+      senderId: created.senderId,
+      receiverId: created.receiverId,
       message: 'connection request sent successfully',
     };
   }
