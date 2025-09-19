@@ -5,8 +5,8 @@ import { GetConnectionRequestsDto } from '../dto/get-connection-requests.dto';
 import { GetConversationsDto } from '../dto/get-conversations.dto';
 import { GetFriendsDto } from '../dto/get-friends.dto';
 import { GetMessagesDto } from '../dto/get-messages.dto';
-import { MarkMessagesReadDto } from '../dto/mark-messages-read.dto';
 import { GetSentConnectionRequestsDto } from '../dto/get-sent-connection-requests.dto';
+import { MarkMessagesReadDto } from '../dto/mark-messages-read.dto';
 import { SendConnectionDto } from '../dto/send-connection-request.dto';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { ConnectionStatus } from '../entities/connection.entity';
@@ -21,9 +21,10 @@ import {
   GetConversationsUseCase,
   GetFriendsUseCase,
   GetMessagesUseCase,
+  GetRecommendationsUseCase,
+  GetSentConnectionRequestsUseCase,
   GetUnreadCountUseCase,
   MarkMessagesReadUseCase,
-  GetSentConnectionRequestsUseCase,
   SendConnectionRequestUseCase,
   SendMessageUseCase,
 } from './use-cases';
@@ -47,7 +48,12 @@ export class ContactsService {
     private readonly markMessagesReadUseCase: MarkMessagesReadUseCase,
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
+    private readonly getRecommendationsUseCase: GetRecommendationsUseCase,
   ) {}
+
+  async getRecommendations(currentUserId: number, limit = 12) {
+    return this.getRecommendationsUseCase.execute(currentUserId, limit);
+  }
 
   async sendConnectionRequest(currentUserId: number, data: SendConnectionDto) {
     return this.sendConnectionRequestUseCase.execute(currentUserId, data);

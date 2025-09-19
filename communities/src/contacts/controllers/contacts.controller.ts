@@ -12,6 +12,16 @@ import { ContactsService } from '../services/contacts.service';
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
+  @MessagePattern('getRecommendations')
+  async getRecommendations(
+    @Payload() data: { currentUserId: number; limit?: number },
+  ) {
+    return this.contactsService.getRecommendations(
+      data.currentUserId,
+      data.limit ?? 12,
+    );
+  }
+
   @MessagePattern('sendConnectionRequest')
   async sendConnectionRequest(
     @Payload() data: SendConnectionDto & { currentUserId: number },
