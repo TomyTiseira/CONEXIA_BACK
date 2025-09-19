@@ -13,6 +13,7 @@ export interface SearchUsersResult {
     lastName: string;
     email: string;
     profilePicture: string;
+    coverPicture: string;
     profession: string;
   }>;
   pagination: PaginationInfo;
@@ -45,6 +46,7 @@ export class SearchUsersPaginatedUseCase {
       lastName: user.profile?.lastName || '',
       email: user.email,
       profilePicture: user.profile?.profilePicture || '',
+      coverPicture: user.profile?.coverPicture || '',
       profession: user.profile?.profession || '',
     }));
 
