@@ -67,6 +67,7 @@ export class GetConversationsUseCase {
         otherUser: {
           id: otherUserId,
           userName: otherUserInfo?.name || '',
+          userLastName: otherUserInfo?.lastName || '',
           userProfilePicture: otherUserInfo?.profilePicture || null,
         },
         lastMessage: lastMessage
