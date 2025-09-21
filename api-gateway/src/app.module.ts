@@ -8,6 +8,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { PublicationReportsModule } from './publication-reports/publication-reports.module';
 import { PublicationsModule } from './publications/publications.module';
 import { ReportsModule } from './reports/reports.module';
+import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     ContactsModule,
     MessagingModule,
     PublicationReportsModule,
+    ServicesModule,
   ],
   controllers: [],
   providers: [],
