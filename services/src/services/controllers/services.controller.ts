@@ -24,4 +24,9 @@ export class ServicesController {
       data.userId,
     );
   }
+
+  @MessagePattern('getServiceCategories')
+  async getServiceCategories() {
+    return this.servicesService.getCategories();
+  }
 }

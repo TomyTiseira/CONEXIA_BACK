@@ -12,6 +12,7 @@ sleep 15
 
 # Ejecutar seeds
 echo "Ejecutando seeds..."
+npx ts-node src/scripts/seed-service-categories.ts
 
 # Esperar a que la aplicación termine
 wait $APP_PID 
