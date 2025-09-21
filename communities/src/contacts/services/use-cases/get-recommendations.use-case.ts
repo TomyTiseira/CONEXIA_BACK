@@ -21,12 +21,21 @@ export class GetRecommendationsUseCase {
     const connectedIds = await this.getConnectedUserIds(userId);
 
     // 2. Obtener IDs de usuarios a los que ya se les envió solicitud pendiente
-    const pendingRequests = await this.connectionRepository.findPendingBySender(
-      userId,
-      1000,
-      1,
+    const pendingRequestsSent =
+      await this.connectionRepository.findPendingBySender(userId, 1000, 1);
+    const pendingSentIds = pendingRequestsSent.map(
+      (req: any) => req.receiverId,
     );
-    const pendingIds = pendingRequests.map((req: any) => req.receiverId);
+
+    // 2.1. Obtener IDs de usuarios que enviaron solicitud pendiente al usuario actual
+    const pendingRequestsReceived =
+      await this.connectionRepository.findPendingByReceiver(userId, 1000, 1);
+    const pendingReceivedIds = pendingRequestsReceived.map(
+      (req: any) => req.senderId,
+    );
+
+    // Combinar ambas listas de IDs pendientes
+    const pendingIds = [...pendingSentIds, ...pendingReceivedIds];
 
     // 3. Obtener todos los candidatos (no conectados, no admins/moderadores, no el mismo usuario, no pendientes)
     const excludeIds = [...connectedIds, ...pendingIds];
