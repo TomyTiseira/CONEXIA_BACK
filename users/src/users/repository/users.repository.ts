@@ -133,7 +133,7 @@ export class UserRepository {
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
       .where(
-        "(user.email ILIKE :searchTerm OR profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
+        "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
         { searchTerm: `%${searchTerm}%` },
       )
       .limit(50) // Limitar resultados para evitar sobrecarga
