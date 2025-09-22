@@ -142,8 +142,13 @@ export class UsersController {
   }
 
   @MessagePattern('searchUsers')
-  async searchUsers(@Payload() data: { searchTerm: string }) {
-    const users = await this.usersService.searchUsers(data.searchTerm);
+  async searchUsers(
+    @Payload() data: { searchTerm: string; excludeUserId?: number },
+  ) {
+    const users = await this.usersService.searchUsers(
+      data.searchTerm,
+      data.excludeUserId,
+    );
     return users;
   }
 

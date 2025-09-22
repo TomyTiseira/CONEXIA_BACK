@@ -104,10 +104,14 @@ export class UsersService {
 
   async searchUsers(
     searchTerm: string,
+    excludeUserId?: number,
   ): Promise<
     Array<{ id: number; name: string; lastName: string; email: string }>
   > {
-    const users = await this.userRepository.searchUsers(searchTerm);
+    const users = await this.userRepository.searchUsers(
+      searchTerm,
+      excludeUserId,
+    );
     return users.map((user) => ({
       id: user.id,
       name: user.profile?.name || '',

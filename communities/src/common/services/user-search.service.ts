@@ -19,12 +19,16 @@ export class UserSearchService {
   /**
    * Busca usuarios por nombre o email
    * @param searchTerm Término de búsqueda
+   * @param excludeUserId ID del usuario a excluir de la búsqueda
    * @returns Array de usuarios que coinciden con la búsqueda
    */
-  async searchUsers(searchTerm: string): Promise<UserSearchResult[]> {
+  async searchUsers(
+    searchTerm: string,
+    excludeUserId?: number,
+  ): Promise<UserSearchResult[]> {
     try {
       const result = (await this.usersClient
-        .send('searchUsers', { searchTerm })
+        .send('searchUsers', { searchTerm, excludeUserId })
         .toPromise()) as UserSearchResult[];
       return result || [];
     } catch {

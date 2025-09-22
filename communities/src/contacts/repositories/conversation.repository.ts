@@ -140,9 +140,10 @@ export class ConversationRepository {
       return this.findByUserIdCumulative(userId, page, limit);
     }
 
-    // Buscar usuarios que coincidan con el término de búsqueda
+    // Buscar usuarios que coincidan con el término de búsqueda (excluyendo al usuario actual)
     const matchingUsers = await this.userSearchService.searchUsers(
       search.trim(),
+      userId,
     );
     const matchingUserIds = matchingUsers.map((user) => user.id);
 
