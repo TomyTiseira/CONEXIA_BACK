@@ -128,14 +128,24 @@ export class UserRepository {
       .getMany();
   }
 
-  async searchUsers(searchTerm: string): Promise<User[]> {
-    return this.ormRepository
+  async searchUsers(
+    searchTerm: string,
+    excludeUserId?: number,
+  ): Promise<User[]> {
+    const queryBuilder = this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
       .where(
         "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
         { searchTerm: `%${searchTerm}%` },
-      )
+      );
+
+    // Excluir al usuario actual si se proporciona
+    if (excludeUserId) {
+      queryBuilder.andWhere('user.id != :excludeUserId', { excludeUserId });
+    }
+
+    return queryBuilder
       .limit(50) // Limitar resultados para evitar sobrecarga
       .getMany();
   }
