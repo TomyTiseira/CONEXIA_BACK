@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { PublicationPrivacy } from '../enums/privacy.enum';
 import { PublicationComment } from './publication-comment.entity';
+import { PublicationMedia } from './publication-media.entity';
 import { PublicationReaction } from './publication-reaction.entity';
 
 @Entity('publications')
@@ -56,6 +57,12 @@ export class Publication {
     eager: false,
   })
   reactions: PublicationReaction[];
+
+  @OneToMany(() => PublicationMedia, (media) => media.publication, {
+    cascade: true,
+    eager: false,
+  })
+  media: PublicationMedia[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

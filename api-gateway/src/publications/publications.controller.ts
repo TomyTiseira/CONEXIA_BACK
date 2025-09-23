@@ -8,12 +8,12 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { diskStorage } from 'multer';
@@ -56,7 +56,7 @@ export class PublicationsController {
   @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileInterceptor('media', {
+    FilesInterceptor('media', 5, {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'publications'),
         filename: (req, file, cb) => {
@@ -89,7 +89,7 @@ export class PublicationsController {
   )
   async createPublication(
     @Body() createPublicationDto: CreatePublicationDto,
-    @UploadedFile() media: Express.Multer.File,
+    @UploadedFiles() media: Express.Multer.File[],
     @User() user: AuthenticatedUser,
   ) {
     const dto = plainToInstance(CreatePublicationDto, createPublicationDto);
@@ -105,17 +105,45 @@ export class PublicationsController {
         })),
       });
     }
-    const mediaData = media
-      ? {
-          mediaFilename: media.filename,
-          mediaSize: media.size,
-          mediaType: this.getMediaType(media.mimetype),
-          mediaUrl: `/uploads/publications/${media.filename}`,
-        }
-      : undefined;
+
+    // Validar límites de archivos
+    if (media && media.length > 0) {
+      // Validar máximo 5 archivos
+      if (media.length > 5) {
+        throw new RpcException({
+          status: 400,
+          message: 'Maximum 5 files allowed per publication',
+        });
+      }
+
+      // Validar máximo 1 video
+      const videoFiles = media.filter((file) =>
+        file.mimetype.startsWith('video/'),
+      );
+      if (videoFiles.length > 1) {
+        throw new RpcException({
+          status: 400,
+          message: 'Maximum 1 video file allowed per publication',
+        });
+      }
+    }
+
+    // Procesar archivos múltiples
+    const mediaArray =
+      media && media.length > 0
+        ? media.map((file, index) => ({
+            filename: file.filename,
+            fileUrl: `/uploads/publications/${file.filename}`,
+            fileType: file.mimetype,
+            fileSize: file.size,
+            displayOrder: index + 1,
+          }))
+        : undefined;
+
+    // Preparar payload - usar SOLO el nuevo formato para múltiples archivos
     const payload = {
       ...dto,
-      ...(mediaData ?? {}),
+      media: mediaArray,
       userId: user.id,
     };
     return this.client.send('createPublication', payload).pipe(
@@ -182,9 +210,10 @@ export class PublicationsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileInterceptor('media', {
+    FilesInterceptor('media', 5, {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'publications'),
         filename: (req, file, cb) => {
@@ -218,7 +247,7 @@ export class PublicationsController {
   async editPublication(
     @Param() params: PublicationIdDto,
     @Body() updatePublicationDto: UpdatePublicationDto,
-    @UploadedFile() media: Express.Multer.File,
+    @UploadedFiles() media: Express.Multer.File[],
     @User() user: AuthenticatedUser,
   ) {
     const dto = plainToInstance(UpdatePublicationDto, updatePublicationDto);
@@ -235,42 +264,46 @@ export class PublicationsController {
       });
     }
 
-    // Solo incluir mediaData si se envía un nuevo archivo
-    let mediaData:
-      | {
-          mediaFilename: string;
-          mediaSize: number;
-          mediaType: string;
-          mediaUrl: string;
-        }
-      | undefined = undefined;
+    // Validar límites de archivos nuevos si los hay
+    if (media && media.length > 0) {
+      // Validar máximo 5 archivos totales (se validará en el backend con archivos existentes)
+      if (media.length > 5) {
+        throw new RpcException({
+          status: 400,
+          message: 'Maximum 5 files allowed per publication',
+        });
+      }
 
-    // Si hay un nuevo archivo, procesarlo
-    if (media) {
-      mediaData = {
-        mediaFilename: media.filename,
-        mediaSize: media.size,
-        mediaType: this.getMediaType(media.mimetype),
-        mediaUrl: `/uploads/publications/${media.filename}`,
-      };
-      // Si se recibe un nuevo archivo, no se puede eliminar al mismo tiempo
-      dto.removeMedia = false;
+      // Validar máximo 1 video
+      const videoFiles = media.filter((file) =>
+        file.mimetype.startsWith('video/'),
+      );
+      if (videoFiles.length > 1) {
+        throw new RpcException({
+          status: 400,
+          message: 'Maximum 1 video file allowed per publication',
+        });
+      }
     }
 
-    // Si se indica explícitamente eliminar el medio, asegurarse de que se incluya en el payload
-    // aunque no se envíe un nuevo archivo
+    // Procesar nuevos archivos si los hay
+    const newMediaArray =
+      media && media.length > 0
+        ? media.map((file, index) => ({
+            filename: file.filename,
+            fileUrl: `/uploads/publications/${file.filename}`,
+            fileType: file.mimetype,
+            fileSize: file.size,
+            displayOrder: index + 1, // Se reordenará en el backend
+          }))
+        : undefined;
 
     const payload = {
       id: params.id,
       userId: user.id,
       updatePublicationDto: {
         ...dto,
-        ...(mediaData && {
-          mediaFilename: mediaData.mediaFilename,
-          mediaSize: mediaData.mediaSize,
-          mediaType: mediaData.mediaType,
-          mediaUrl: mediaData.mediaUrl,
-        }),
+        media: newMediaArray,
       },
     };
     // Si se solicita eliminar el archivo y la publicación ya existe
@@ -295,6 +328,30 @@ export class PublicationsController {
       userId: user.id,
     };
     return this.client.send('deletePublication', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  // Endpoint para eliminar archivo específico de una publicación
+  @Delete(':id/media/:mediaId')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.USER])
+  deletePublicationMedia(
+    @Param('id') publicationId: string,
+    @Param('mediaId') mediaId: string,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      id: parseInt(publicationId, 10),
+      userId: user.id,
+      updatePublicationDto: {
+        removeMediaIds: [parseInt(mediaId, 10)],
+      },
+    };
+
+    return this.client.send('editPublication', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
@@ -499,6 +556,29 @@ export class PublicationsController {
     };
 
     return this.client.send('deleteReaction', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  // Endpoints para migración de datos legacy (solo para desarrollo/administración)
+  @Post('admin/migrate-legacy-media')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.ADMIN])
+  migrateLegacyMedia() {
+    return this.client.send('migrateLegacyMedia', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Post('admin/cleanup-legacy-fields')
+  @UseGuards(JwtAuthGuard)
+  @AuthRoles([ROLES.ADMIN])
+  cleanupLegacyFields() {
+    return this.client.send('cleanupLegacyFields', {}).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
