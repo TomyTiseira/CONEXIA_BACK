@@ -161,3 +161,52 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  services:
+    build: ./services
+    volumes:
+      - ./services/src:/src/app/src
+    depends_on:
+      services-db:
+        condition: service_healthy
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DB_HOST=services-db
+      - DB_PORT=5432
+      - DB_USERNAME=${SERVICES_DB_USER}
+      - DB_PASSWORD=${SERVICES_DB_PASSWORD}
+      - DB_DATABASE=${SERVICES_DB_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
+
+  services-db:
+    build:
+      context: ./services
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "${SERVICES_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${SERVICES_DB_USER}
+      - POSTGRES_PASSWORD=${SERVICES_DB_PASSWORD}
+      - POSTGRES_DB=${SERVICES_DB_NAME}
+    volumes:
+      - ./services/postgres-data:/var/lib/postgresql/data
+      - ./services/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${SERVICES_DB_USER} -d ${SERVICES_DB_NAME}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
