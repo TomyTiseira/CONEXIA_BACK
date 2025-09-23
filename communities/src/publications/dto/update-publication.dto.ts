@@ -1,18 +1,43 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 import { PublicationPrivacy } from '../enums/privacy.enum';
+import { MediaFileDto } from './media-file.dto';
 
 export class UpdatePublicationDto {
   @IsOptional()
   @IsString({ message: 'description must be a string' })
   description?: string;
 
+  @IsOptional()
+  @IsArray({ message: 'media must be an array' })
+  @ValidateNested({ each: true })
+  @Type(() => MediaFileDto)
+  media?: MediaFileDto[];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
+  @IsArray({ message: 'removeMediaIds must be an array of numbers' })
+  @IsNumber({}, { each: true, message: 'each removeMediaId must be a number' })
+  removeMediaIds?: number[];
+
+  // Campos legacy para compatibilidad temporal
   @IsOptional()
   @IsString({ message: 'mediaUrl must be a string' })
   mediaUrl?: string;

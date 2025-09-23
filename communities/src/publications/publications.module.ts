@@ -3,16 +3,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { NatsModule } from '../common/nats/nats.module';
 import { ContactsModule } from '../contacts/contacts.module';
+import { MigrationController } from './controllers/migration.controller';
 import { PublicationsController } from './controllers/publications.controller';
 import { PublicationComment } from './entities/publication-comment.entity';
+import { PublicationMedia } from './entities/publication-media.entity';
 import { PublicationReaction } from './entities/publication-reaction.entity';
 import { Publication } from './entities/publication.entity';
 import { CommentRepository } from './repositories/comment.repository';
+import { PublicationMediaRepository } from './repositories/publication-media.repository';
 import { PublicationRepository } from './repositories/publication.repository';
 import { ReactionRepository } from './repositories/reaction.repository';
 import { ConnectionStatusService } from './services/helpers/connection-status.service';
 import { ContactHelperService } from './services/helpers/contact-helper.service';
 import { OwnerHelperService } from './services/helpers/owner-helper.service';
+import { MigrateLegacyMediaService } from './services/migrate-legacy-media.service';
 import { PublicationsService } from './services/publications.service';
 import {
   CreateCommentUseCase,
@@ -39,24 +43,27 @@ import { UserInfoService } from './services/user-info.service';
       Publication,
       PublicationComment,
       PublicationReaction,
+      PublicationMedia,
     ]),
     CommonModule,
     ContactsModule,
     // Importar el módulo NatsModule para usar USERS_SERVICE
     NatsModule,
   ],
-  controllers: [PublicationsController],
+  controllers: [PublicationsController, MigrationController],
   providers: [
     PublicationsService,
     // Repositorios
     PublicationRepository,
     CommentRepository,
     ReactionRepository,
+    PublicationMediaRepository,
     // Helpers
     OwnerHelperService,
     ContactHelperService,
     // Servicios de información
     UserInfoService,
+    MigrateLegacyMediaService,
     // Casos de uso de publicaciones
     ConnectionStatusService,
     CreatePublicationUseCase,

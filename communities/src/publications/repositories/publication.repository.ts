@@ -10,8 +10,10 @@ export class PublicationRepository extends Repository<Publication> {
 
   async findActivePublications(): Promise<Publication[]> {
     return this.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.media', 'media')
       .where('publication.deletedAt IS NULL')
       .orderBy('publication.createdAt', 'DESC')
+      .addOrderBy('media.displayOrder', 'ASC')
       .getMany();
   }
 
@@ -23,8 +25,10 @@ export class PublicationRepository extends Repository<Publication> {
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.media', 'media')
       .where('publication.deletedAt IS NULL')
-      .orderBy('publication.createdAt', 'DESC');
+      .orderBy('publication.createdAt', 'DESC')
+      .addOrderBy('media.displayOrder', 'ASC');
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
     if (currentUserId) {
@@ -57,6 +61,7 @@ export class PublicationRepository extends Repository<Publication> {
 
     // Usar una subconsulta para crear un campo de prioridad y ordenar correctamente
     const queryBuilder = this.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.media', 'media')
       .leftJoin(
         'connections',
         'connection',
@@ -90,7 +95,8 @@ export class PublicationRepository extends Repository<Publication> {
         },
       )
       .orderBy('priority', 'ASC')
-      .addOrderBy('publication.createdAt', 'DESC');
+      .addOrderBy('publication.createdAt', 'DESC')
+      .addOrderBy('media.displayOrder', 'ASC');
 
     return queryBuilder.skip(skip).take(limit).getManyAndCount();
   }
@@ -100,8 +106,10 @@ export class PublicationRepository extends Repository<Publication> {
     currentUserId?: number,
   ): Promise<Publication | null> {
     const queryBuilder = this.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.media', 'media')
       .where('publication.id = :id', { id })
-      .andWhere('publication.deletedAt IS NULL');
+      .andWhere('publication.deletedAt IS NULL')
+      .orderBy('media.displayOrder', 'ASC');
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
     if (currentUserId) {
@@ -148,9 +156,11 @@ export class PublicationRepository extends Repository<Publication> {
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.media', 'media')
       .where('publication.userId = :userId', { userId })
       .andWhere('publication.deletedAt IS NULL')
-      .orderBy('publication.createdAt', 'DESC');
+      .orderBy('publication.createdAt', 'DESC')
+      .addOrderBy('media.displayOrder', 'ASC');
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
     if (currentUserId) {
