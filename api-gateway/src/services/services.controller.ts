@@ -3,7 +3,9 @@ import {
   Controller,
   Get,
   Inject,
+  Param,
   Post,
+  Query,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -17,7 +19,7 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
-import { CreateServiceDto } from './dto';
+import { CreateServiceDto, GetServicesDto } from './dto';
 
 @Controller('services')
 export class ServicesController {
@@ -84,6 +86,64 @@ export class ServicesController {
 
     return this.client
       .send('createService', { createServiceDto, userId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get()
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getServices(
+    @Query() getServicesDto: GetServicesDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getServices', { getServicesDto, currentUserId: user.id })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('profile/:userId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getServicesByUser(
+    @Param('userId') userId: number,
+    @User() user: AuthenticatedUser,
+    @Query('includeInactive') includeInactive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const includeInactiveBoolean = includeInactive === 'true';
+    const pageNumber = page ? parseInt(page, 10) : undefined;
+    const limitNumber = limit ? parseInt(limit, 10) : undefined;
+
+    return this.client
+      .send('getServicesByUser', {
+        userId,
+        currentUserId: user.id,
+        includeInactive: includeInactiveBoolean,
+        page: pageNumber,
+        limit: limitNumber,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':id')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
+  getServiceById(@Param('id') id: number, @User() user: AuthenticatedUser) {
+    return this.client
+      .send('getServiceById', {
+        id,
+        currentUserId: user.id,
+      })
       .pipe(
         catchError((error) => {
           throw new RpcException(error);

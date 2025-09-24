@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GetServicesDto } from '../dto/get-services.dto';
 import { Service } from '../entities/service.entity';
 
 @Injectable()
@@ -17,33 +16,81 @@ export class ServiceRepository {
   }
 
   async findById(id: number): Promise<Service | null> {
-    return this.serviceRepository.findOne({ where: { id } });
+    return this.serviceRepository.findOne({
+      where: { id },
+      relations: ['category'],
+    });
   }
 
-  async findAll(getServicesDto: GetServicesDto): Promise<[Service[], number]> {
-    const { page = 1, limit = 10, search, status, userId } = getServicesDto;
-    const offset = (page - 1) * limit;
+  async findByIdWithRelations(id: number): Promise<Service | null> {
+    return this.serviceRepository.findOne({
+      where: { id },
+      relations: ['category'],
+    });
+  }
 
-    const queryBuilder = this.serviceRepository.createQueryBuilder('service');
+  async findServicesWithFilters(filters: {
+    search?: string;
+    categoryIds?: number[];
+    page: number;
+    limit: number;
+  }): Promise<[Service[], number]> {
+    const queryBuilder = this.serviceRepository
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.category', 'category')
+      .where('service.status = :status', { status: 'active' });
 
-    if (search) {
+    if (filters.search) {
       queryBuilder.andWhere(
-        '(service.name ILIKE :search OR service.description ILIKE :search)',
-        { search: `%${search}%` },
+        '(service.title ILIKE :search OR service.description ILIKE :search)',
+        { search: `%${filters.search}%` },
       );
     }
 
-    if (status) {
-      queryBuilder.andWhere('service.status = :status', { status });
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      queryBuilder.andWhere('service.categoryId IN (:...categoryIds)', {
+        categoryIds: filters.categoryIds,
+      });
     }
 
-    if (userId) {
-      queryBuilder.andWhere('service.userId = :userId', { userId });
-    }
+    queryBuilder.orderBy('service.createdAt', 'DESC');
 
-    queryBuilder.orderBy('service.createdAt', 'DESC').skip(offset).take(limit);
+    const skip = (filters.page - 1) * filters.limit;
+    queryBuilder.skip(skip).take(filters.limit);
 
     return queryBuilder.getManyAndCount();
+  }
+
+  async findByUserId(
+    userId: number,
+    includeInactive: boolean = false,
+    page: number = 1,
+    limit: number = 12,
+  ): Promise<[Service[], number]> {
+    const queryBuilder = this.serviceRepository
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.category', 'category')
+      .where('service.userId = :userId', { userId });
+
+    // Incluir servicios inactivos si se solicita
+    if (!includeInactive) {
+      queryBuilder.andWhere('service.status = :status', { status: 'active' });
+    }
+
+    // Aplicar paginación
+    const skip = (page - 1) * limit;
+    queryBuilder.skip(skip).take(limit).orderBy('service.createdAt', 'DESC');
+
+    return queryBuilder.getManyAndCount();
+  }
+
+  async findServicesByIds(serviceIds: number[]): Promise<Service[]> {
+    return this.serviceRepository
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.category', 'category')
+      .where('service.id IN (:...serviceIds)', { serviceIds })
+      .orderBy('service.createdAt', 'DESC')
+      .getMany();
   }
 
   async update(id: number, data: Partial<Service>): Promise<void> {
@@ -52,12 +99,5 @@ export class ServiceRepository {
 
   async delete(id: number): Promise<void> {
     await this.serviceRepository.delete(id);
-  }
-
-  async findByUserId(
-    userId: number,
-    getServicesDto: GetServicesDto,
-  ): Promise<[Service[], number]> {
-    return this.findAll({ ...getServicesDto, userId });
   }
 }

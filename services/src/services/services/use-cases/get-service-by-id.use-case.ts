@@ -1,0 +1,40 @@
+import { Injectable } from '@nestjs/common';
+import { ServiceNotFoundException } from '../../../common/exceptions/services.exceptions';
+import { UsersClientService } from '../../../common/services/users-client.service';
+import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
+import { GetServiceByIdDto } from '../../dto/get-service-by-id.dto';
+import { ServiceRepository } from '../../repositories/service.repository';
+
+@Injectable()
+export class GetServiceByIdUseCase {
+  constructor(
+    private readonly serviceRepository: ServiceRepository,
+    private readonly usersClientService: UsersClientService,
+  ) {}
+
+  async execute(data: GetServiceByIdDto) {
+    // Buscar el servicio con relaciones
+    const service = await this.serviceRepository.findByIdWithRelations(data.id);
+    
+    if (!service) {
+      throw new ServiceNotFoundException(data.id);
+    }
+
+    // Obtener información del dueño del servicio
+    const users = await this.usersClientService.getUsersByIds([service.userId]);
+    
+    if (!users || users.length === 0) {
+      throw new ServiceNotFoundException(data.id);
+    }
+
+    // Transformar el servicio usando la función común
+    const transformedServices = transformServicesWithOwners(
+      [service],
+      users,
+      data.currentUserId,
+    );
+
+    // Retornar el primer (y único) servicio transformado
+    return transformedServices[0];
+  }
+}
