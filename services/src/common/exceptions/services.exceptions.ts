@@ -29,3 +29,23 @@ export class ServiceInternalServerErrorException extends RpcException {
     });
   }
 }
+
+export class UserNotFoundException extends RpcException {
+  constructor(userId: number) {
+    super({
+      message: `User with ID ${userId} not found`,
+      status: 404,
+      error: 'User Not Found',
+    });
+  }
+}
+
+export class ServiceAccessForbiddenException extends RpcException {
+  constructor(serviceId: number, userId: number) {
+    super({
+      message: `User ${userId} does not have access to service ${serviceId}`,
+      status: 403,
+      error: 'Access Forbidden',
+    });
+  }
+}

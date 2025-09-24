@@ -2,6 +2,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { join } from 'path';
+import { catchError, of, timeout } from 'rxjs';
 import { NATS_SERVICE } from '../../config/service';
 import { MessagingGateway } from '../websockets/messaging.gateway';
 
@@ -97,14 +98,23 @@ export class MessagingService {
     limit = 10,
     search?: string,
   ) {
-    return this.client
-      .send('getConversations', {
-        currentUserId,
-        page,
-        limit,
-        search,
-      })
-      .toPromise();
+    try {
+      return await this.client
+        .send('getConversations', {
+          currentUserId,
+          page,
+          limit,
+          search,
+        })
+        .pipe(
+          timeout(5000),
+          catchError(() => of({ conversations: [], total: 0, page, limit })),
+        )
+        .toPromise();
+    } catch (error) {
+      console.warn('Communities microservice not available:', error.message);
+      return { conversations: [], total: 0, page, limit };
+    }
   }
 
   async getMessages(
@@ -155,11 +165,20 @@ export class MessagingService {
   }
 
   async getUnreadCount(currentUserId: number) {
-    return this.client
-      .send('getUnreadCount', {
-        currentUserId,
-      })
-      .toPromise();
+    try {
+      return await this.client
+        .send('getUnreadCount', {
+          currentUserId,
+        })
+        .pipe(
+          timeout(5000),
+          catchError(() => of({ unreadCount: 0 })),
+        )
+        .toPromise();
+    } catch (error) {
+      console.warn('Communities microservice not available:', error.message);
+      return { unreadCount: 0 };
+    }
   }
 
   async getMessageFile(messageId: number, currentUserId: number, res: any) {
