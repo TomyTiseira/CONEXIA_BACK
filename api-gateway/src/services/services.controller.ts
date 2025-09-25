@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFiles,
@@ -19,7 +21,12 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
-import { CreateServiceDto, GetServicesDto } from './dto';
+import {
+  CreateServiceDto,
+  DeleteServiceDto,
+  GetServicesDto,
+  UpdateServiceDto,
+} from './dto';
 
 @Controller('services')
 export class ServicesController {
@@ -143,6 +150,47 @@ export class ServicesController {
       .send('getServiceById', {
         id,
         currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Patch(':id')
+  @AuthRoles([ROLES.USER])
+  updateService(
+    @Param('id') id: number,
+    @Body() updateServiceDto: UpdateServiceDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('updateService', {
+        serviceId: +id,
+        userId: user.id,
+        price: updateServiceDto.price,
+        estimatedHours: updateServiceDto.estimatedHours,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Delete(':id')
+  @AuthRoles([ROLES.USER])
+  deleteService(
+    @Param('id') id: number,
+    @Body() deleteServiceDto: DeleteServiceDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('deleteService', {
+        serviceId: +id,
+        reason: deleteServiceDto.reason,
+        userId: user.id,
       })
       .pipe(
         catchError((error) => {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Service } from '../entities/service.entity';
 
 @Injectable()
@@ -16,6 +16,13 @@ export class ServiceRepository {
   }
 
   async findById(id: number): Promise<Service | null> {
+    return this.serviceRepository.findOne({
+      where: { id, deletedAt: IsNull() },
+      relations: ['category'],
+    });
+  }
+
+  async findByIdIncludingDeleted(id: number): Promise<Service | null> {
     return this.serviceRepository.findOne({
       where: { id },
       relations: ['category'],
@@ -38,7 +45,8 @@ export class ServiceRepository {
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.category', 'category')
-      .where('service.status = :status', { status: 'active' });
+      .where('service.status = :status', { status: 'active' })
+      .andWhere('service.deletedAt IS NULL');
 
     if (filters.search) {
       queryBuilder.andWhere(
@@ -72,9 +80,16 @@ export class ServiceRepository {
       .leftJoinAndSelect('service.category', 'category')
       .where('service.userId = :userId', { userId });
 
-    // Incluir servicios inactivos si se solicita
-    if (!includeInactive) {
-      queryBuilder.andWhere('service.status = :status', { status: 'active' });
+    if (includeInactive) {
+      // Incluir servicios activos y dados de baja (deleted)
+      queryBuilder.andWhere('service.status IN (:...statuses)', {
+        statuses: ['active', 'deleted'],
+      });
+    } else {
+      // Solo servicios activos (no dados de baja)
+      queryBuilder
+        .andWhere('service.deletedAt IS NULL')
+        .andWhere('service.status = :status', { status: 'active' });
     }
 
     // Aplicar paginación
@@ -95,6 +110,21 @@ export class ServiceRepository {
 
   async update(id: number, data: Partial<Service>): Promise<void> {
     await this.serviceRepository.update(id, data);
+  }
+
+  async updateService(
+    service: Service,
+    updates: Partial<Service>,
+  ): Promise<Service> {
+    Object.assign(service, updates);
+    return this.serviceRepository.save(service);
+  }
+
+  async deleteService(service: Service, reason: string): Promise<void> {
+    service.deletedAt = new Date();
+    service.deleteReason = reason;
+    service.status = 'deleted';
+    await this.serviceRepository.save(service);
   }
 
   async delete(id: number): Promise<void> {

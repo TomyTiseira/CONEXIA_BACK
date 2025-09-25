@@ -1,10 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
-    CreateServiceDto,
-    GetServiceByIdDto,
-    GetServicesByUserDto,
-    GetServicesDto
+  CreateServiceDto,
+  DeleteServiceDto,
+  GetServiceByIdDto,
+  GetServicesByUserDto,
+  GetServicesDto,
+  UpdateServiceDataDto,
 } from '../dto';
 import { ServicesService } from '../services/services.service';
 
@@ -62,6 +64,39 @@ export class ServicesController {
     try {
       const result = await this.servicesService.getServiceById(data);
       return result;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('updateService')
+  async updateService(@Payload() updateServiceDataDto: UpdateServiceDataDto) {
+    try {
+      const result =
+        await this.servicesService.updateService(updateServiceDataDto);
+      return {
+        id: result.id,
+        title: result.title,
+        price: result.price,
+        estimatedHours: result.estimatedHours,
+        message: 'Service updated successfully.',
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('deleteService')
+  async deleteService(@Payload() deleteServiceDto: DeleteServiceDto) {
+    try {
+      const result = await this.servicesService.deleteService(deleteServiceDto);
+      return {
+        id: result.id,
+        title: result.title,
+        message: 'Service deleted successfully.',
+      };
     } catch (error) {
       console.error(error);
       throw error;
