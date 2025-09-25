@@ -97,6 +97,28 @@ export class ServiceRepository {
     await this.serviceRepository.update(id, data);
   }
 
+  async findByIdIncludingDeleted(id: number): Promise<Service | null> {
+    return this.serviceRepository.findOne({
+      where: { id },
+      relations: ['category'],
+    });
+  }
+
+  async updateService(
+    service: Service,
+    updates: Partial<Service>,
+  ): Promise<Service> {
+    Object.assign(service, updates);
+    return this.serviceRepository.save(service);
+  }
+
+  async deleteService(service: Service, reason: string): Promise<void> {
+    service.deletedAt = new Date();
+    service.deleteReason = reason;
+    service.status = 'deleted';
+    await this.serviceRepository.save(service);
+  }
+
   async delete(id: number): Promise<void> {
     await this.serviceRepository.delete(id);
   }

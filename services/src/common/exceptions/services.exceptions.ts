@@ -49,3 +49,33 @@ export class ServiceAccessForbiddenException extends RpcException {
     });
   }
 }
+
+export class ServiceNotOwnedByUserException extends RpcException {
+  constructor(serviceId: number, userId: number) {
+    super({
+      message: `Service ${serviceId} does not belong to user ${userId}`,
+      status: 403,
+      error: 'Service Not Owned By User',
+    });
+  }
+}
+
+export class ServiceAlreadyDeletedException extends RpcException {
+  constructor(serviceId: number) {
+    super({
+      message: `Service with ID ${serviceId} has already been deleted`,
+      status: 409,
+      error: 'Service Already Deleted',
+    });
+  }
+}
+
+export class ServiceHasActiveContractsException extends RpcException {
+  constructor(serviceId: number) {
+    super({
+      message: `Service with ID ${serviceId} cannot be deleted because it has active contracts`,
+      status: 409,
+      error: 'Service Has Active Contracts',
+    });
+  }
+}

@@ -31,7 +31,7 @@ export class Service {
   category: ServiceCategory;
 
   @Column({ type: 'int', nullable: true })
-  estimatedHours: number;
+  estimatedHours: number | null;
 
   @Column({ type: 'json', nullable: true })
   images: string[];
@@ -41,6 +41,12 @@ export class Service {
 
   @Column({ type: 'int' })
   userId: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  deleteReason: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

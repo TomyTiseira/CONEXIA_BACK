@@ -5,7 +5,7 @@ export interface TransformedService {
   title: string;
   description: string;
   price: number;
-  estimatedHours?: number;
+  estimatedHours?: number | null;
   images?: string[];
   status: string;
   createdAt: Date;
