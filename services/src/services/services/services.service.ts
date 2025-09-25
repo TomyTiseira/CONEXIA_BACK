@@ -19,8 +19,8 @@ import { UpdateServiceUseCase } from './use-cases/update-service.use-case';
 export class ServicesService {
   constructor(
     private readonly createServiceUseCase: CreateServiceUseCase,
-    private readonly deleteServiceUseCase: DeleteServiceUseCase,
     private readonly updateServiceUseCase: UpdateServiceUseCase,
+    private readonly deleteServiceUseCase: DeleteServiceUseCase,
     private readonly getServicesUseCase: GetServicesUseCase,
     private readonly getServicesByUserUseCase: GetServicesByUserUseCase,
     private readonly getServiceByIdUseCase: GetServiceByIdUseCase,
