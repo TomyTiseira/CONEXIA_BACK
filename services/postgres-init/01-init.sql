@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS services (
     images JSON,
     status VARCHAR(50) DEFAULT 'active',
     "userId" INTEGER NOT NULL,
+    "deletedAt" TIMESTAMP NULL,
+    "deleteReason" VARCHAR(500) NULL,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -33,6 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_services_status ON services(status);
 CREATE INDEX IF NOT EXISTS idx_services_category_id ON services("categoryId");
 CREATE INDEX IF NOT EXISTS idx_services_title ON services USING gin(title gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_services_created_at ON services("createdAt");
+CREATE INDEX IF NOT EXISTS idx_services_deleted_at ON services("deletedAt");
 
 -- Crear función para actualizar updatedAt timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

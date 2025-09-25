@@ -5,9 +5,10 @@ export interface TransformedService {
   title: string;
   description: string;
   price: number;
-  estimatedHours?: number;
+  estimatedHours?: number | null;
   images?: string[];
   status: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   category: {
@@ -42,6 +43,7 @@ export function transformServicesWithOwners(
       estimatedHours: service.estimatedHours,
       images: service.images,
       status: service.status,
+      isActive: service.status === 'active',
       createdAt: service.createdAt,
       updatedAt: service.updatedAt,
       category: {
