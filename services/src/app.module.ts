@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { envs } from './config';
+import { ServiceHiring, ServiceHiringStatus } from './service-hirings/entities';
+import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { Service, ServiceCategory } from './services/entities';
 import { ServicesModule } from './services/services.module';
 
@@ -16,11 +18,12 @@ import { ServicesModule } from './services/services.module';
       username: envs.dbUsername,
       password: envs.dbPassword,
       database: envs.dbDatabase,
-      entities: [Service, ServiceCategory],
+      entities: [Service, ServiceCategory, ServiceHiring, ServiceHiringStatus],
       synchronize: true,
     }),
     CommonModule,
     ServicesModule,
+    ServiceHiringsModule,
   ],
   controllers: [],
   providers: [

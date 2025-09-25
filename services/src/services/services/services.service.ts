@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
   CreateServiceDto,
-  DeleteServiceDto,
   GetServiceByIdDto,
   GetServicesByUserDto,
   GetServicesDto,
   ServiceCategoryResponseDto,
-  UpdateServiceDataDto,
 } from '../dto';
+import { Service } from '../entities/service.entity';
 import { CategoryService } from './category.service';
 import { CreateServiceUseCase } from './use-cases/create-service.use-case';
 import { DeleteServiceUseCase } from './use-cases/delete-service.use-case';
@@ -32,25 +31,6 @@ export class ServicesService {
     return this.createServiceUseCase.execute(createServiceDto, userId);
   }
 
-  async updateService(updateServiceDataDto: UpdateServiceDataDto) {
-    return this.updateServiceUseCase.execute(
-      updateServiceDataDto.serviceId,
-      updateServiceDataDto.userId,
-      {
-        price: updateServiceDataDto.price,
-        estimatedHours: updateServiceDataDto.estimatedHours,
-      },
-    );
-  }
-
-  async deleteService(deleteServiceDto: DeleteServiceDto) {
-    return this.deleteServiceUseCase.execute(
-      deleteServiceDto.serviceId,
-      deleteServiceDto.reason,
-      deleteServiceDto.userId,
-    );
-  }
-
   async getServices(getServicesDto: GetServicesDto, currentUserId: number) {
     return this.getServicesUseCase.execute(getServicesDto, currentUserId);
   }
@@ -65,5 +45,21 @@ export class ServicesService {
 
   async getCategories(): Promise<ServiceCategoryResponseDto> {
     return this.categoryService.getCategories();
+  }
+
+  async deleteService(
+    serviceId: number,
+    reason: string,
+    userId: number,
+  ): Promise<Service> {
+    return this.deleteServiceUseCase.execute(serviceId, reason, userId);
+  }
+
+  async updateService(
+    serviceId: number,
+    userId: number,
+    updates: { price?: number; estimatedHours?: number | null },
+  ) {
+    return this.updateServiceUseCase.execute(serviceId, userId, updates);
   }
 }

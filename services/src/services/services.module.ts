@@ -27,7 +27,8 @@ import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
     GetServicesUseCase,
     GetServicesByUserUseCase,
     GetServiceByIdUseCase,
+    UpdateServiceUseCase,
   ],
-  exports: [ServicesService],
+  exports: [ServicesService, ServiceRepository],
 })
 export class ServicesModule {}
