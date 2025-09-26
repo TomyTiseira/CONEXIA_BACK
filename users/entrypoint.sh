@@ -15,6 +15,7 @@ echo "Ejecutando seeds..."
 npm run seed:roles
 npm run seed:document-types
 npm run seed:localities
+npm run seed:banks-and-platforms
 
 # Esperar a que la aplicación termine
 wait $APP_PID 

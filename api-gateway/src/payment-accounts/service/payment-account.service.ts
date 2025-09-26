@@ -1,0 +1,70 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { NATS_SERVICE } from '../../config';
+import { BankResponseDto } from '../dto/bank-response.dto';
+import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
+import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
+import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
+import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
+
+@Injectable()
+export class PaymentAccountService {
+  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+
+  async createBankAccount(
+    userId: number,
+    createBankAccountDto: CreateBankAccountDto,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.client
+      .send('payment-account.create-bank-account', {
+        userId,
+        createBankAccountDto,
+      })
+      .toPromise();
+  }
+
+  async createDigitalAccount(
+    userId: number,
+    createDigitalAccountDto: CreateDigitalAccountDto,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.client
+      .send('payment-account.create-digital-account', {
+        userId,
+        createDigitalAccountDto,
+      })
+      .toPromise();
+  }
+
+  async getUserPaymentAccounts(
+    userId: number,
+  ): Promise<PaymentAccountResponseDto[]> {
+    return await this.client
+      .send('payment-account.get-user-accounts', userId)
+      .toPromise();
+  }
+
+  async getPaymentAccountById(
+    id: number,
+    userId: number,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.client
+      .send('payment-account.get-by-id', { id, userId })
+      .toPromise();
+  }
+
+  async deletePaymentAccount(id: number, userId: number): Promise<void> {
+    return await this.client
+      .send('payment-account.delete', { id, userId })
+      .toPromise();
+  }
+
+  async getBanks(): Promise<BankResponseDto[]> {
+    return await this.client.send('payment-account.get-banks', {}).toPromise();
+  }
+
+  async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
+    return await this.client
+      .send('payment-account.get-digital-platforms', {})
+      .toPromise();
+  }
+}
