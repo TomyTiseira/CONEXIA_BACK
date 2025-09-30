@@ -406,8 +406,12 @@ export class UsersController {
     const payload = {
       userId: req.user?.id,
       ...dto,
-      profilePicture: files?.profilePicture?.[0]?.filename,
-      coverPicture: files?.coverPicture?.[0]?.filename,
+      ...(files?.profilePicture?.[0]?.filename && {
+        profilePicture: files.profilePicture[0].filename,
+      }),
+      ...(files?.coverPicture?.[0]?.filename && {
+        coverPicture: files.coverPicture[0].filename,
+      }),
     };
 
     // Retornamos el observable sin usar @Res()
@@ -576,8 +580,12 @@ export class UsersController {
     const payload = {
       userId: req.user?.id,
       ...dto,
-      profilePicture: files?.profilePicture?.[0]?.filename,
-      coverPicture: files?.coverPicture?.[0]?.filename,
+      ...(files?.profilePicture?.[0]?.filename && {
+        profilePicture: files.profilePicture[0].filename,
+      }),
+      ...(files?.coverPicture?.[0]?.filename && {
+        coverPicture: files.coverPicture[0].filename,
+      }),
     };
 
     return this.client.send('updateProfile', payload).pipe(
