@@ -15,9 +15,10 @@ import { RoleGuard } from '../../auth/guards/role.guard';
 import { BankResponseDto } from '../dto/bank-response.dto';
 import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
+import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
 import { PaymentAccountService } from '../service/payment-account.service';
-import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
+import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 
 @Controller('payment-accounts')
 @UseGuards(AutoRefreshJwtGuard, RoleGuard)
@@ -27,47 +28,24 @@ export class PaymentAccountController {
 
   @Post('bank-account')
   async createBankAccount(
-    @User('id') userId: number,
+    @User() user: AuthenticatedUser,
     @Body() createBankAccountDto: CreateBankAccountDto,
   ): Promise<PaymentAccountResponseDto> {
     return await this.paymentAccountService.createBankAccount(
-      userId,
+      user.id,
       createBankAccountDto,
     );
   }
 
   @Post('digital-account')
   async createDigitalAccount(
-    @User('id') userId: number,
+    @User() user: AuthenticatedUser,
     @Body() createDigitalAccountDto: CreateDigitalAccountDto,
   ): Promise<PaymentAccountResponseDto> {
     return await this.paymentAccountService.createDigitalAccount(
-      userId,
+      user.id,
       createDigitalAccountDto,
     );
-  }
-
-  @Get()
-  async getUserPaymentAccounts(
-    @User('id') userId: number,
-  ): Promise<PaymentAccountResponseDto[]> {
-    return await this.paymentAccountService.getUserPaymentAccounts(userId);
-  }
-
-  @Get(':id')
-  async getPaymentAccountById(
-    @Param('id') id: number,
-    @User('id') userId: number,
-  ): Promise<PaymentAccountResponseDto> {
-    return await this.paymentAccountService.getPaymentAccountById(id, userId);
-  }
-
-  @Delete(':id')
-  async deletePaymentAccount(
-    @Param('id') id: number,
-    @User('id') userId: number,
-  ): Promise<void> {
-    return await this.paymentAccountService.deletePaymentAccount(id, userId);
   }
 
   @Get('banks')
@@ -78,5 +56,28 @@ export class PaymentAccountController {
   @Get('digital-platforms')
   async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
     return await this.paymentAccountService.getDigitalPlatforms();
+  }
+
+  @Get()
+  async getUserPaymentAccounts(
+    @User() user: AuthenticatedUser,
+  ): Promise<PaymentAccountResponseDto[]> {
+    return await this.paymentAccountService.getUserPaymentAccounts(user.id);
+  }
+
+  @Get(':id')
+  async getPaymentAccountById(
+    @Param('id') id: number,
+    @User() user: AuthenticatedUser,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.paymentAccountService.getPaymentAccountById(id, user.id);
+  }
+
+  @Delete(':id')
+  async deletePaymentAccount(
+    @Param('id') id: number,
+    @User() user: AuthenticatedUser,
+  ): Promise<void> {
+    return await this.paymentAccountService.deletePaymentAccount(id, user.id);
   }
 }

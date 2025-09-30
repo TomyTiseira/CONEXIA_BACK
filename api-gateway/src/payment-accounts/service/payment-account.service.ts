@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { catchError } from 'rxjs';
 import { NATS_SERVICE } from '../../config';
 import { BankResponseDto } from '../dto/bank-response.dto';
 import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
@@ -20,6 +21,11 @@ export class PaymentAccountService {
         userId,
         createBankAccountDto,
       })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 
@@ -32,6 +38,11 @@ export class PaymentAccountService {
         userId,
         createDigitalAccountDto,
       })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 
@@ -40,6 +51,11 @@ export class PaymentAccountService {
   ): Promise<PaymentAccountResponseDto[]> {
     return await this.client
       .send('payment-account.get-user-accounts', userId)
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 
@@ -49,22 +65,44 @@ export class PaymentAccountService {
   ): Promise<PaymentAccountResponseDto> {
     return await this.client
       .send('payment-account.get-by-id', { id, userId })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 
   async deletePaymentAccount(id: number, userId: number): Promise<void> {
     return await this.client
       .send('payment-account.delete', { id, userId })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 
   async getBanks(): Promise<BankResponseDto[]> {
-    return await this.client.send('payment-account.get-banks', {}).toPromise();
+    return await this.client
+      .send('payment-account.get-banks', {})
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
+      .toPromise();
   }
 
   async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
     return await this.client
       .send('payment-account.get-digital-platforms', {})
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
       .toPromise();
   }
 }
