@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import {
   ServiceAlreadyDeletedException,
+  ServiceHasActiveContractsException,
   ServiceNotFoundException,
   ServiceNotOwnedByUserException,
 } from '../../../common/exceptions/services.exceptions';
+import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
 import { Service } from '../../entities/service.entity';
 import { ServiceRepository } from '../../repositories/service.repository';
 
 @Injectable()
 export class DeleteServiceUseCase {
-  constructor(private readonly serviceRepository: ServiceRepository) {}
+  constructor(
+    private readonly serviceRepository: ServiceRepository,
+    private readonly serviceHiringRepository: ServiceHiringRepository,
+  ) {}
 
   async execute(
     serviceId: number,
@@ -33,10 +38,13 @@ export class DeleteServiceUseCase {
       throw new ServiceNotOwnedByUserException(serviceId, userId);
     }
 
-    // TODO: Validar que no tenga contrataciones activas
-    // Esto requeriría comunicarse con el microservicio de contratos
-    // Por ahora asumimos que no hay contratos activos
-    // En una implementación completa, aquí se haría una consulta al microservicio de contratos
+    // Validar que no tenga contrataciones activas (en curso)
+    // En curso está cuando no está en los estados aceptado, cancelado o rechazado
+    const hasActiveHirings =
+      await this.serviceHiringRepository.hasActiveHiringsForService(serviceId);
+    if (hasActiveHirings) {
+      throw new ServiceHasActiveContractsException(serviceId);
+    }
 
     // Realizar la baja lógica del servicio
     await this.serviceRepository.deleteService(service, reason);

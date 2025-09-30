@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
+import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
 import { ServicesController } from './controllers';
 import { Service, ServiceCategory } from './entities';
 import { ServiceRepository } from './repositories';
@@ -15,7 +16,11 @@ import { GetServicesByUserUseCase } from './services/use-cases/get-services-by-u
 import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Service, ServiceCategory]), CommonModule],
+  imports: [
+    TypeOrmModule.forFeature([Service, ServiceCategory]),
+    CommonModule,
+    forwardRef(() => ServiceHiringsModule),
+  ],
   controllers: [ServicesController],
   providers: [
     ServiceRepository,
