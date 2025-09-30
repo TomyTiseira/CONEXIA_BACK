@@ -5,6 +5,7 @@ import {
   ServiceNotOwnedByUserException,
 } from '../../../common/exceptions/services.exceptions';
 import { Service } from '../../entities/service.entity';
+import { TimeUnit } from '../../enums/time-unit.enum';
 import { ServiceRepository } from '../../repositories/service.repository';
 
 @Injectable()
@@ -14,7 +15,11 @@ export class UpdateServiceUseCase {
   async execute(
     serviceId: number,
     userId: number,
-    updates: { price?: number; estimatedHours?: number | null },
+    updates: {
+      price?: number;
+      estimatedHours?: number | null;
+      timeUnit?: TimeUnit;
+    },
   ): Promise<Service> {
     // Buscar el servicio por ID (incluyendo eliminados para validar si existe)
     const service =

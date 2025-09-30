@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Min, ValidateIf } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, Min, ValidateIf } from 'class-validator';
+import { TimeUnit } from './time-unit.enum';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -19,4 +20,8 @@ export class UpdateServiceDto {
   @IsNumber({}, { message: 'estimatedHours must be a number' })
   @Min(1, { message: 'estimatedHours must be greater than or equal to 1 hour' })
   estimatedHours?: number | null;
+
+  @IsOptional()
+  @IsEnum(TimeUnit)
+  timeUnit?: TimeUnit;
 }

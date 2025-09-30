@@ -171,6 +171,7 @@ export class ServicesController {
         userId: user.id,
         price: updateServiceDto.price,
         estimatedHours: updateServiceDto.estimatedHours,
+        timeUnit: updateServiceDto.timeUnit,
       })
       .pipe(
         catchError((error) => {

@@ -30,7 +30,7 @@ export class RejectServiceHiringUseCase {
     }
 
     // Validar que se puede rechazar
-    if (!this.operationsService.canPerformAction(hiring, 'reject')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'reject'))) {
       throw new RpcException(
         'No se puede rechazar esta contratación en su estado actual',
       );

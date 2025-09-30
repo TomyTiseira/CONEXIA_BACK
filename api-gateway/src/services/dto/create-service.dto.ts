@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,6 +11,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { TimeUnit } from './time-unit.enum';
 
 export class CreateServiceDto {
   @IsString()
@@ -40,6 +42,12 @@ export class CreateServiceDto {
   @IsNumber()
   @Min(1, { message: 'estimatedHours must be greater than or equal to 1 hour' })
   estimatedHours?: number;
+
+  @IsNotEmpty()
+  @IsEnum(TimeUnit, {
+    message: 'timeUnit must be a valid time unit (hours, days, weeks)',
+  })
+  timeUnit: TimeUnit;
 
   @IsOptional()
   @IsArray()

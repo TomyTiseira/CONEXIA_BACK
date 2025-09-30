@@ -35,7 +35,7 @@ export class EditQuotationUseCase {
     }
 
     // Validar que se puede editar la cotización
-    if (!this.operationsService.canPerformAction(hiring, 'edit')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'edit'))) {
       throw new RpcException(
         'No se puede editar esta cotización en su estado actual',
       );
@@ -52,6 +52,7 @@ export class EditQuotationUseCase {
       quotedPrice: quotationDto.quotedPrice,
       estimatedHours: quotationDto.estimatedHours,
       quotationNotes: quotationDto.quotationNotes,
+      quotationValidityDays: quotationDto.quotationValidityDays,
       quotedAt: new Date(),
     });
 

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
+import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
 import { GetServicesDto } from '../../dto/get-services.dto';
 import { Service } from '../../entities/service.entity';
 import { ServiceRepository } from '../../repositories/service.repository';
@@ -11,6 +12,7 @@ export class GetServicesUseCase {
   constructor(
     private readonly serviceRepository: ServiceRepository,
     private readonly usersClientService: UsersClientService,
+    private readonly serviceHiringRepository: ServiceHiringRepository,
   ) {}
 
   async execute(getServicesDto: GetServicesDto, currentUserId: number) {
@@ -26,7 +28,7 @@ export class GetServicesUseCase {
       page: 1,
       limit: 10000,
     });
-    
+
     const notOwnerIds = allServices
       .filter((s) => s.userId !== currentUserId)
       .map((s) => s.id);
@@ -46,11 +48,20 @@ export class GetServicesUseCase {
     const userIds = [...new Set(services.map((service) => service.userId))];
     const users = await this.usersClientService.getUsersByIds(userIds);
 
+    // Obtener información de cotizaciones para los servicios
+    const serviceIds = services.map((service) => service.id);
+    const quotationInfo =
+      await this.serviceHiringRepository.getQuotationInfoForServices(
+        serviceIds,
+        currentUserId,
+      );
+
     // Transformar los servicios usando la función común
     const transformedServices = transformServicesWithOwners(
       services,
       users,
       currentUserId,
+      quotationInfo,
     );
 
     // Calcular información de paginación usando solo los servicios donde no es dueño

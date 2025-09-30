@@ -18,10 +18,10 @@ export class GetServiceHiringsUseCase {
 
     // Obtener acciones disponibles para cada contratación
     const availableActionsMap = new Map<number, string[]>();
-    hirings.forEach((hiring) => {
-      const actions = this.operationsService.getAvailableActions(hiring);
+    for (const hiring of hirings) {
+      const actions = await this.operationsService.getAvailableActions(hiring);
       availableActionsMap.set(hiring.id, actions);
-    });
+    }
 
     return this.transformService.transformToListResponse(
       hirings,

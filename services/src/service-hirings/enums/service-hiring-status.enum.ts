@@ -7,4 +7,5 @@ export enum ServiceHiringStatusCode {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   NEGOTIATING = 'negotiating',
+  EXPIRED = 'expired',
 }

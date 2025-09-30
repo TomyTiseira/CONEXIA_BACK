@@ -40,7 +40,7 @@ export class CreateQuotationUseCase {
     }
 
     // Validar que se puede cotizar
-    if (!this.operationsService.canPerformAction(hiring, 'quote')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'quote'))) {
       throw new RpcException(
         'No se puede cotizar esta contratación en su estado actual',
       );
@@ -62,6 +62,7 @@ export class CreateQuotationUseCase {
       quotedPrice: quotationDto.quotedPrice,
       estimatedHours: quotationDto.estimatedHours,
       quotationNotes: quotationDto.quotationNotes,
+      quotationValidityDays: quotationDto.quotationValidityDays,
       quotedAt: new Date(),
       statusId: quotedStatus.id,
     });

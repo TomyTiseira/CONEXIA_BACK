@@ -7,6 +7,7 @@ import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
 import { ServiceHiringStatusRepository } from './repositories/service-hiring-status.repository';
 import { ServiceHiringRepository } from './repositories/service-hiring.repository';
+import { QuotationExpirationService } from './services/quotation-expiration.service';
 import { ServiceHiringOperationsService } from './services/service-hiring-operations.service';
 import { ServiceHiringStatusService } from './services/service-hiring-status.service';
 import { ServiceHiringTransformService } from './services/service-hiring-transform.service';
@@ -45,6 +46,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ServiceHiringOperationsService,
     ServiceHiringTransformService,
     ServiceHiringStateFactory,
+    QuotationExpirationService,
   ],
   imports: [
     TypeOrmModule.forFeature([ServiceHiring, ServiceHiringStatus]),

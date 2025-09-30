@@ -22,4 +22,9 @@ export class CreateQuotationDto {
   @IsString()
   @MaxLength(1000)
   quotationNotes?: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(1, { message: 'quotationValidityDays must be at least 1 day' })
+  quotationValidityDays: number;
 }

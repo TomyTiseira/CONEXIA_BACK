@@ -7,6 +7,7 @@ import {
   ServiceCategoryResponseDto,
 } from '../dto';
 import { Service } from '../entities/service.entity';
+import { TimeUnit } from '../enums/time-unit.enum';
 import { CategoryService } from './category.service';
 import { CreateServiceUseCase } from './use-cases/create-service.use-case';
 import { DeleteServiceUseCase } from './use-cases/delete-service.use-case';
@@ -58,7 +59,11 @@ export class ServicesService {
   async updateService(
     serviceId: number,
     userId: number,
-    updates: { price?: number; estimatedHours?: number | null },
+    updates: {
+      price?: number;
+      estimatedHours?: number | null;
+      timeUnit?: TimeUnit;
+    },
   ) {
     return this.updateServiceUseCase.execute(serviceId, userId, updates);
   }

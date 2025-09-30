@@ -3,6 +3,7 @@ import { UserNotFoundException } from '../../../common/exceptions/services.excep
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
+import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
 import { GetServicesByUserDto } from '../../dto/get-services-by-user.dto';
 import { ServiceRepository } from '../../repositories/service.repository';
 
@@ -11,6 +12,7 @@ export class GetServicesByUserUseCase {
   constructor(
     private readonly serviceRepository: ServiceRepository,
     private readonly usersClientService: UsersClientService,
+    private readonly serviceHiringRepository: ServiceHiringRepository,
   ) {}
 
   async execute(data: GetServicesByUserDto) {
@@ -34,11 +36,20 @@ export class GetServicesByUserUseCase {
       params.limit,
     );
 
+    // Obtener información de cotizaciones para los servicios
+    const serviceIds = services.map((service) => service.id);
+    const quotationInfo =
+      await this.serviceHiringRepository.getQuotationInfoForServices(
+        serviceIds,
+        data.currentUserId,
+      );
+
     // Transformar los servicios usando la función común
     const transformedServices = transformServicesWithOwners(
       services,
       users,
       data.currentUserId,
+      quotationInfo,
     );
 
     // Calcular información de paginación usando la función común
