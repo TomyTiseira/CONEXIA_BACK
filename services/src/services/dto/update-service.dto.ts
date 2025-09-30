@@ -1,4 +1,5 @@
-import { IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsPositive } from 'class-validator';
+import { TimeUnit } from '../enums/time-unit.enum';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -10,4 +11,10 @@ export class UpdateServiceDto {
   @IsNumber({}, { message: 'Las horas estimadas deben ser un número válido' })
   @IsPositive({ message: 'Las horas estimadas deben ser mayor a 0' })
   estimatedHours?: number;
+
+  @IsOptional()
+  @IsEnum(TimeUnit, {
+    message: 'La unidad de tiempo debe ser hours, days o weeks',
+  })
+  timeUnit?: TimeUnit;
 }

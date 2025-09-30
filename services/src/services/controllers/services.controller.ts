@@ -103,13 +103,18 @@ export class ServicesController {
       userId: number;
       price?: number;
       estimatedHours?: number | null;
+      timeUnit?: string;
     },
   ) {
     try {
       const result = await this.servicesService.updateService(
         data.serviceId,
         data.userId,
-        { price: data.price, estimatedHours: data.estimatedHours },
+        {
+          price: data.price,
+          estimatedHours: data.estimatedHours,
+          timeUnit: data.timeUnit as any,
+        },
       );
       return result;
     } catch (error) {

@@ -125,4 +125,87 @@ export class ServiceHiringRepository {
 
     return count > 0;
   }
+
+  async getQuotationInfoForServices(
+    serviceIds: number[],
+    userId?: number,
+  ): Promise<Map<number, { hasPending: boolean; hasActive: boolean }>> {
+    if (serviceIds.length === 0) {
+      return new Map();
+    }
+
+    const queryBuilder = this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .select('hiring.serviceId', 'serviceId')
+      .addSelect('status.code', 'statusCode')
+      .where('hiring.serviceId IN (:...serviceIds)', { serviceIds });
+
+    if (userId) {
+      queryBuilder.andWhere('hiring.userId = :userId', { userId });
+    }
+
+    const results = await queryBuilder.getRawMany();
+
+    const quotationMap = new Map<
+      number,
+      { hasPending: boolean; hasActive: boolean }
+    >();
+
+    // Initialize all services
+    serviceIds.forEach((serviceId) => {
+      quotationMap.set(serviceId, { hasPending: false, hasActive: false });
+    });
+
+    // Process results
+    results.forEach((result) => {
+      const serviceId = result.serviceId;
+      const statusCode = result.statusCode;
+      const current = quotationMap.get(serviceId) || {
+        hasPending: false,
+        hasActive: false,
+      };
+
+      if (statusCode === 'pending') {
+        current.hasPending = true;
+      }
+
+      if (
+        [
+          'pending',
+          'quoted',
+          'accepted',
+          'in_progress',
+          'negotiating',
+        ].includes(statusCode)
+      ) {
+        current.hasActive = true;
+      }
+
+      quotationMap.set(serviceId, current);
+    });
+
+    return quotationMap;
+  }
+
+  async markExpiredQuotations(expiredStatusId: number): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(ServiceHiring)
+      .set({ statusId: expiredStatusId })
+      .where('quotedAt IS NOT NULL')
+      .andWhere('quotationValidityDays IS NOT NULL')
+      .andWhere(
+        'statusId IN (SELECT id FROM service_hiring_statuses WHERE code IN (:...activeCodes))',
+        {
+          activeCodes: ['quoted', 'negotiating'],
+        },
+      )
+      .andWhere(
+        'DATE_ADD(quotedAt, INTERVAL quotationValidityDays DAY) < NOW()',
+      )
+      .execute();
+
+    return result.affected || 0;
+  }
 }

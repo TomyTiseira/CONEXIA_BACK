@@ -42,6 +42,9 @@ export class ServiceHiring {
   @Column({ type: 'timestamp', nullable: true })
   respondedAt: Date;
 
+  @Column({ type: 'int', nullable: true })
+  quotationValidityDays: number;
+
   @ManyToOne(() => ServiceHiringStatus)
   @JoinColumn({ name: 'status_id' })
   status: ServiceHiringStatus;

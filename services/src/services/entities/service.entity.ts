@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { TimeUnit } from '../enums/time-unit.enum';
 import { ServiceCategory } from './category.entity';
 
 @Entity('services')
@@ -32,6 +33,9 @@ export class Service {
 
   @Column({ type: 'int', nullable: true })
   estimatedHours: number | null;
+
+  @Column({ type: 'enum', enum: TimeUnit, nullable: true, default: 'hours' })
+  timeUnit: TimeUnit | null;
 
   @Column({ type: 'json', nullable: true })
   images: string[];

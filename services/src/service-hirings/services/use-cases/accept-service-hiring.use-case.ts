@@ -30,7 +30,7 @@ export class AcceptServiceHiringUseCase {
     }
 
     // Validar que se puede aceptar
-    if (!this.operationsService.canPerformAction(hiring, 'accept')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'accept'))) {
       throw new RpcException(
         'No se puede aceptar esta contratación en su estado actual',
       );

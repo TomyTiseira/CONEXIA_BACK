@@ -30,7 +30,7 @@ export class NegotiateServiceHiringUseCase {
     }
 
     // Validar que se puede negociar
-    if (!this.operationsService.canPerformAction(hiring, 'negotiate')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'negotiate'))) {
       throw new RpcException(
         'No se puede negociar esta contratación en su estado actual',
       );

@@ -30,7 +30,7 @@ export class CancelServiceHiringUseCase {
     }
 
     // Validar que se puede cancelar
-    if (!this.operationsService.canPerformAction(hiring, 'cancel')) {
+    if (!(await this.operationsService.canPerformAction(hiring, 'cancel'))) {
       throw new RpcException(
         'No se puede cancelar esta contratación en su estado actual',
       );
