@@ -112,4 +112,17 @@ export class ServiceHiringRepository {
 
     return { data, total };
   }
+
+  async hasActiveHiringsForService(serviceId: number): Promise<boolean> {
+    const count = await this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .where('hiring.serviceId = :serviceId', { serviceId })
+      .andWhere('status.code NOT IN (:...finalStatuses)', {
+        finalStatuses: ['completed', 'cancelled', 'rejected'],
+      })
+      .getCount();
+
+    return count > 0;
+  }
 }
