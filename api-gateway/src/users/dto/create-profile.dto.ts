@@ -123,7 +123,13 @@ export class CreateProfileHttpDto {
 
   @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
   @IsOptional()
-  phoneNumber: string;
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return String(value);
+  })
+  phoneNumber?: string;
 
   @IsString({ message: 'country must be a string' })
   @IsOptional()

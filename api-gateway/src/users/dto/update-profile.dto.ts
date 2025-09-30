@@ -117,7 +117,7 @@ export class UpdateProfileHttpDto {
     if (value === '' || value === null || value === undefined) {
       return null;
     }
-    return value;
+    return String(value);
   })
   phoneNumber?: string;
 
