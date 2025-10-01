@@ -15,6 +15,8 @@ interface EnvVars {
   SMTP_PASS: string;
   EMAIL_FROM: string;
   JWT_SECRET: string;
+  ENCRYPTION_KEY: string;
+  ALGORITHM: string;
 }
 
 const envSchema = joi
@@ -32,6 +34,8 @@ const envSchema = joi
     SMTP_PASS: joi.string().required(),
     EMAIL_FROM: joi.string().default('noreply@conexia.com'),
     JWT_SECRET: joi.string().required(),
+    ENCRYPTION_KEY: joi.string().required(),
+    ALGORITHM: joi.string().required(),
   })
   .unknown(true);
 
@@ -49,6 +53,8 @@ const result = envSchema.validate({
   SMTP_PASS: process.env.SMTP_PASS,
   EMAIL_FROM: process.env.EMAIL_FROM,
   JWT_SECRET: process.env.JWT_SECRET,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+  ALGORITHM: process.env.ALGORITHM,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -70,4 +76,6 @@ export const envs = {
   smtpPass: envVars.SMTP_PASS,
   emailFrom: envVars.EMAIL_FROM,
   jwtSecret: envVars.JWT_SECRET,
+  encryptionKey: envVars.ENCRYPTION_KEY,
+  algorithm: envVars.ALGORITHM,
 };
