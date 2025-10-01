@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { envs, USERS_SERVICE } from '../config';
+import { PaymentAccountsClientService } from './services/payment-accounts-client.service';
 import { UsersClientService } from './services/users-client.service';
 
 @Module({
@@ -15,7 +16,7 @@ import { UsersClientService } from './services/users-client.service';
       },
     ]),
   ],
-  providers: [UsersClientService],
-  exports: [UsersClientService],
+  providers: [UsersClientService, PaymentAccountsClientService],
+  exports: [UsersClientService, PaymentAccountsClientService],
 })
 export class CommonModule {}

@@ -113,6 +113,12 @@ export class UsersController {
     return user;
   }
 
+  @MessagePattern('findUserByIdIncludingDeleted')
+  async findUserByIdIncludingDeleted(@Payload() data: { id: number }) {
+    const user = await this.usersService.findUserByIdIncludingDeleted(data.id);
+    return user;
+  }
+
   @MessagePattern('getLocalities')
   async getLocalities() {
     return await this.usersService.getLocalities();

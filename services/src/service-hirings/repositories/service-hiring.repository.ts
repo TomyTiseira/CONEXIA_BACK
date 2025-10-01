@@ -84,7 +84,7 @@ export class ServiceHiringRepository {
     serviceOwnerId: number,
     params: GetServiceHiringsDto,
   ): Promise<{ data: ServiceHiring[]; total: number }> {
-    const { page = 1, limit = 10, status } = params;
+    const { page = 1, limit = 10, status, serviceId } = params;
 
     const queryBuilder: SelectQueryBuilder<ServiceHiring> = this.repository
       .createQueryBuilder('hiring')
@@ -94,6 +94,11 @@ export class ServiceHiringRepository {
 
     if (status) {
       queryBuilder.andWhere('status.code = :status', { status });
+    }
+
+    // Filtrar por serviceId específico si se proporciona
+    if (serviceId) {
+      queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
     }
 
     // Ordenamiento: pendientes primero, luego por fecha

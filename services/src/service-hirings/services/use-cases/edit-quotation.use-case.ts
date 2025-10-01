@@ -45,6 +45,7 @@ export class EditQuotationUseCase {
     await this.validationService.validateServiceOwnerCanQuote(
       serviceOwnerId,
       hiring.userId,
+      hiringId,
     );
 
     // Actualizar la cotización sin cambiar el estado

@@ -44,6 +44,18 @@ export class UsersClientService {
     }
   }
 
+  async getUserByIdIncludingDeleted(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserByIdIncludingDeleted', { id: userId }),
+      );
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID including deleted:', error);
+      return null;
+    }
+  }
+
   async getUserRole(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(

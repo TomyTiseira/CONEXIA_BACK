@@ -50,6 +50,7 @@ export class CreateQuotationUseCase {
     await this.validationService.validateServiceOwnerCanQuote(
       serviceOwnerId,
       hiring.userId,
+      hiringId,
     );
 
     // Obtener el estado "quoted"

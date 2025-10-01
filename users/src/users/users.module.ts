@@ -14,7 +14,10 @@ import { UsersController } from './controller/users.controller';
 import { DocumentTypesService } from './service/document-types.service';
 import { CreateUserUseCase } from './service/use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './service/use-cases/delate-user.use-cases';
-import { FindUserByIdUseCase } from './service/use-cases/find-user-by-id.use-cases';
+import {
+  FindUserByIdIncludingDeletedUseCase,
+  FindUserByIdUseCase,
+} from './service/use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './service/use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './service/use-cases/get-role-by-id.use-cases';
 import { GetRoleByNameUseCase } from './service/use-cases/get-role-by-name.use-cases';
@@ -47,6 +50,7 @@ import { UsersService } from './service/users.service';
     GetRoleByIdUseCase,
     GetRoleByNameUseCase,
     FindUserByIdUseCase,
+    FindUserByIdIncludingDeletedUseCase,
     GetUserWithProfileUseCase,
     FindUsersByIdsUseCase,
     SearchUsersPaginatedUseCase,

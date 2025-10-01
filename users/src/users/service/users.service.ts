@@ -7,7 +7,10 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../repository/users.repository';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
-import { FindUserByIdUseCase } from './use-cases/find-user-by-id.use-cases';
+import {
+  FindUserByIdIncludingDeletedUseCase,
+  FindUserByIdUseCase,
+} from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
 import { GetRoleByNameUseCase } from './use-cases/get-role-by-name.use-cases';
@@ -29,6 +32,7 @@ export class UsersService {
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
+    private readonly findUserByIdIncludingDeletedUseCase: FindUserByIdIncludingDeletedUseCase,
     private readonly getUserWithProfileUseCase: GetUserWithProfileUseCase,
     private readonly localityRepository: LocalityRepository,
     private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
@@ -77,6 +81,10 @@ export class UsersService {
 
   async findUserById(userId: number): Promise<User | null> {
     return this.findUserByIdUseCase.execute(userId);
+  }
+
+  async findUserByIdIncludingDeleted(userId: number): Promise<User | null> {
+    return this.findUserByIdIncludingDeletedUseCase.execute(userId);
   }
 
   async getLocalities(): Promise<Locality[]> {
