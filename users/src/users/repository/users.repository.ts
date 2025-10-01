@@ -74,6 +74,13 @@ export class UserRepository {
     return this.ormRepository.findOne({ where: { id } });
   }
 
+  async findByIdIncludingDeleted(id: number): Promise<User | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
+  }
+
   async findByIdWithRelations(id: number): Promise<User | null> {
     return this.ormRepository.findOne({
       where: { id },

@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { PaymentAccountsClientService } from '../../common/services/payment-accounts-client.service';
 import { UsersClientService } from '../../common/services/users-client.service';
 import { ServicesService } from '../../services/services/services.service';
+import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
+import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
+import { ServiceHiringStatusService } from './service-hiring-status.service';
 
 @Injectable()
 export class ServiceHiringValidationService {
   constructor(
     private readonly usersClientService: UsersClientService,
     private readonly servicesService: ServicesService,
+    private readonly paymentAccountsClientService: PaymentAccountsClientService,
+    private readonly hiringRepository: ServiceHiringRepository,
+    private readonly statusService: ServiceHiringStatusService,
   ) {}
 
   async validateUserCanHireService(
@@ -60,6 +67,7 @@ export class ServiceHiringValidationService {
   async validateServiceOwnerCanQuote(
     serviceOwnerId: number,
     userId: number,
+    hiringId?: number,
   ): Promise<{ serviceOwner: any; user: any }> {
     // Validar que el dueño del servicio existe y está activo
     const serviceOwner =
@@ -72,18 +80,52 @@ export class ServiceHiringValidationService {
       throw new RpcException('El dueño del servicio no está activo');
     }
 
-    // Validar que el usuario solicitante sigue activo
-    const user = await this.usersClientService.getUserById(userId);
+    // Validar que el usuario solicitante sigue activo (incluir eliminados para poder detectar si fue dado de baja)
+    const user =
+      await this.usersClientService.getUserByIdIncludingDeleted(userId);
     if (!user) {
       throw new RpcException('Usuario solicitante no encontrado');
     }
 
     if (!user.isValidate || user.deletedAt) {
+      // Si tenemos el hiringId, rechazar automáticamente la solicitud
+      if (hiringId) {
+        await this.rejectHiringAutomatically(hiringId);
+      }
       throw new RpcException(
-        'El usuario solicitante fue dado de baja o baneado. La solicitud debe ser cancelada.',
+        'El usuario solicitante fue dado de baja o baneado. La solicitud ha sido rechazada automáticamente.',
+      );
+    }
+
+    // Validar que el dueño del servicio tiene al menos una cuenta de pago activa
+    const hasActivePaymentAccount =
+      await this.paymentAccountsClientService.hasActivePaymentAccount(
+        serviceOwnerId,
+      );
+    if (!hasActivePaymentAccount) {
+      throw new RpcException(
+        'Para generar una cotización debes tener al menos una cuenta bancaria o digital activa registrada. Ve a tu perfil para agregar una cuenta de pago.',
       );
     }
 
     return { serviceOwner, user };
+  }
+
+  private async rejectHiringAutomatically(hiringId: number): Promise<void> {
+    try {
+      // Obtener el estado "rejected"
+      const rejectedStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.REJECTED,
+      );
+
+      // Actualizar la contratación a rechazada
+      await this.hiringRepository.update(hiringId, {
+        statusId: rejectedStatus.id,
+        respondedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Error al rechazar automáticamente la solicitud:', error);
+      // No lanzamos la excepción aquí para no interferir con el flujo principal
+    }
   }
 }

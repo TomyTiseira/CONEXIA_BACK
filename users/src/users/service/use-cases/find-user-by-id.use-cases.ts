@@ -10,3 +10,12 @@ export class FindUserByIdUseCase {
     return this.usersRepository.findById(userId);
   }
 }
+
+@Injectable()
+export class FindUserByIdIncludingDeletedUseCase {
+  constructor(private readonly usersRepository: UserRepository) {}
+
+  async execute(userId: number): Promise<User | null> {
+    return this.usersRepository.findByIdIncludingDeleted(userId);
+  }
+}
