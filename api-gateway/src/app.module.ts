@@ -12,6 +12,7 @@ import { ReportsModule } from './reports/reports.module';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
     PublicationReportsModule,
     ServicesModule,
     ServiceHiringsModule,
+    WebhooksModule,
   ],
   controllers: [],
   providers: [],

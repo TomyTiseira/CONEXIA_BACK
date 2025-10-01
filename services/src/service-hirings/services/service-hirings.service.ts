@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
+  ContractServiceDto,
+  ContractServiceResponseDto,
   CreateQuotationDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
 } from '../dto';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './use-cases/cancel-service-hiring.use-case';
+import { ContractServiceUseCase } from './use-cases/contract-service.use-case';
 import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
 import { EditQuotationUseCase } from './use-cases/edit-quotation.use-case';
@@ -13,6 +16,7 @@ import { GetServiceHiringsByServiceOwnerUseCase } from './use-cases/get-service-
 import { GetServiceHiringsByUserUseCase } from './use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-case';
 import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hiring.use-case';
+import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
 
 @Injectable()
@@ -28,6 +32,8 @@ export class ServiceHiringsService {
     private readonly rejectServiceHiringUseCase: RejectServiceHiringUseCase,
     private readonly cancelServiceHiringUseCase: CancelServiceHiringUseCase,
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
+    private readonly contractServiceUseCase: ContractServiceUseCase,
+    private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
   ) {}
 
   async createServiceHiring(userId: number, createDto: CreateServiceHiringDto) {
@@ -90,5 +96,17 @@ export class ServiceHiringsService {
 
   async negotiateServiceHiring(userId: number, hiringId: number) {
     return this.negotiateServiceHiringUseCase.execute(userId, hiringId);
+  }
+
+  async contractService(
+    userId: number,
+    hiringId: number,
+    contractDto: ContractServiceDto,
+  ): Promise<ContractServiceResponseDto> {
+    return this.contractServiceUseCase.execute(userId, hiringId, contractDto);
+  }
+
+  async processPaymentWebhook(paymentId: string): Promise<void> {
+    return this.processPaymentWebhookUseCase.execute(paymentId);
   }
 }

@@ -16,6 +16,7 @@ import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
 import {
+  ContractServiceDto,
   CreateQuotationDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
@@ -193,6 +194,26 @@ export class ServiceHiringsController {
       .send('negotiateServiceHiring', {
         userId: user.id,
         hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post(':hiringId/contract')
+  @AuthRoles([ROLES.USER])
+  contractService(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() contractDto: ContractServiceDto,
+  ) {
+    return this.client
+      .send('contractService', {
+        userId: user.id,
+        hiringId: +hiringId,
+        contractDto,
       })
       .pipe(
         catchError((error) => {

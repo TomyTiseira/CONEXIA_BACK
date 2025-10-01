@@ -213,4 +213,20 @@ export class ServiceHiringRepository {
 
     return result.affected || 0;
   }
+
+  async findActiveHiringByUserAndService(
+    userId: number,
+    serviceId: number,
+  ): Promise<ServiceHiring | null> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoinAndSelect('hiring.status', 'status')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .where('hiring.userId = :userId', { userId })
+      .andWhere('hiring.serviceId = :serviceId', { serviceId })
+      .andWhere('status.code IN (:...activeStatuses)', {
+        activeStatuses: ['approved', 'in_progress'],
+      })
+      .getOne();
+  }
 }

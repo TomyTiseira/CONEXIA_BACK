@@ -49,6 +49,11 @@ async function bootstrap() {
       code: ServiceHiringStatusCode.NEGOTIATING,
       description: 'En proceso de negociación',
     },
+    {
+      name: 'Aprobado',
+      code: ServiceHiringStatusCode.APPROVED,
+      description: 'Pago confirmado y servicio aprobado',
+    },
   ];
 
   for (const status of statuses) {

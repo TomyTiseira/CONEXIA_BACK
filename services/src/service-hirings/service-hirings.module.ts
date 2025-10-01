@@ -3,10 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServicesModule } from '../services/services.module';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
+import { Payment } from './entities/payment.entity';
 import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
+import { PaymentRepository } from './repositories/payment.repository';
 import { ServiceHiringStatusRepository } from './repositories/service-hiring-status.repository';
 import { ServiceHiringRepository } from './repositories/service-hiring.repository';
+import { MercadoPagoService } from './services/mercado-pago.service';
 import { QuotationExpirationService } from './services/quotation-expiration.service';
 import { ServiceHiringOperationsService } from './services/service-hiring-operations.service';
 import { ServiceHiringStatusService } from './services/service-hiring-status.service';
@@ -15,6 +18,7 @@ import { ServiceHiringValidationService } from './services/service-hiring-valida
 import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
+import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
 import { CreateQuotationUseCase } from './services/use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './services/use-cases/create-service-hiring.use-case';
 import { EditQuotationUseCase } from './services/use-cases/edit-quotation.use-case';
@@ -22,6 +26,7 @@ import { GetServiceHiringsByServiceOwnerUseCase } from './services/use-cases/get
 import { GetServiceHiringsByUserUseCase } from './services/use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirings.use-case';
 import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-service-hiring.use-case';
+import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
 import { ServiceHiringStateFactory } from './states/service-hiring-state.factory';
 
@@ -39,17 +44,21 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     RejectServiceHiringUseCase,
     CancelServiceHiringUseCase,
     NegotiateServiceHiringUseCase,
+    ContractServiceUseCase,
+    ProcessPaymentWebhookUseCase,
     ServiceHiringRepository,
     ServiceHiringStatusRepository,
+    PaymentRepository,
     ServiceHiringStatusService,
     ServiceHiringValidationService,
     ServiceHiringOperationsService,
     ServiceHiringTransformService,
     ServiceHiringStateFactory,
     QuotationExpirationService,
+    MercadoPagoService,
   ],
   imports: [
-    TypeOrmModule.forFeature([ServiceHiring, ServiceHiringStatus]),
+    TypeOrmModule.forFeature([ServiceHiring, ServiceHiringStatus, Payment]),
     CommonModule,
     forwardRef(() => ServicesModule),
   ],

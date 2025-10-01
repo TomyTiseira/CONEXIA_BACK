@@ -3,6 +3,7 @@ import { ServiceHiring } from '../entities/service-hiring.entity';
 import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 import { ServiceHiringStateInterface } from '../interfaces/service-hiring-state.interface';
 import { AcceptedServiceHiringState } from './accepted-service-hiring.state';
+import { ApprovedServiceHiringState } from './approved-service-hiring.state';
 import { CancelledServiceHiringState } from './cancelled-service-hiring.state';
 import { NegotiatingServiceHiringState } from './negotiating-service-hiring.state';
 import { PendingServiceHiringState } from './pending-service-hiring.state';
@@ -27,6 +28,8 @@ export class ServiceHiringStateFactory {
         return new RejectedServiceHiringState();
       case ServiceHiringStatusCode.CANCELLED:
         return new CancelledServiceHiringState();
+      case ServiceHiringStatusCode.APPROVED:
+        return new ApprovedServiceHiringState();
       case ServiceHiringStatusCode.NEGOTIATING:
         return new NegotiatingServiceHiringState();
       default:

@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
+  ContractServiceDto,
   CreateQuotationDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
@@ -116,5 +117,26 @@ export class ServiceHiringsController {
       data.userId,
       data.hiringId,
     );
+  }
+
+  @MessagePattern('contractService')
+  async contractService(
+    @Payload()
+    data: {
+      userId: number;
+      hiringId: number;
+      contractDto: ContractServiceDto;
+    },
+  ) {
+    return this.serviceHiringsService.contractService(
+      data.userId,
+      data.hiringId,
+      data.contractDto,
+    );
+  }
+
+  @MessagePattern('processPaymentWebhook')
+  async processPaymentWebhook(@Payload() data: { paymentId: string }) {
+    return this.serviceHiringsService.processPaymentWebhook(data.paymentId);
   }
 }
