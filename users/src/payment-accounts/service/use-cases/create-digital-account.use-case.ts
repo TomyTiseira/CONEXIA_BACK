@@ -57,13 +57,11 @@ export class CreateDigitalAccountUseCase {
     }
 
     // Cifrar datos sensibles
-    const encryptedCvu = await CryptoUtils.hashPassword(
-      createDigitalAccountDto.cvu,
-    );
+    const encryptedCvu = CryptoUtils.encrypt(createDigitalAccountDto.cvu);
     const encryptedAlias = createDigitalAccountDto.alias
-      ? await CryptoUtils.hashPassword(createDigitalAccountDto.alias)
+      ? CryptoUtils.encrypt(createDigitalAccountDto.alias)
       : undefined;
-    const encryptedCuilCuit = await CryptoUtils.hashPassword(
+    const encryptedCuilCuit = CryptoUtils.encrypt(
       createDigitalAccountDto.cuilCuit,
     );
 

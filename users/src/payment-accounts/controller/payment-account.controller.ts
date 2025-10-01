@@ -42,7 +42,7 @@ export class PaymentAccountController {
   @MessagePattern('payment-account.get-user-accounts')
   async getUserPaymentAccounts(
     @Payload() data: number | { userId: number },
-  ): Promise<PaymentAccountResponseDto[]> {
+  ): Promise<Partial<PaymentAccountResponseDto>[]> {
     const userId = typeof data === 'number' ? data : data.userId;
     return await this.paymentAccountService.getUserPaymentAccounts(userId);
   }

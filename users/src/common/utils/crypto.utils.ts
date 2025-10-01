@@ -1,7 +1,11 @@
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { envs } from '../../config/envs';
 
 export class CryptoUtils {
   private static readonly SALT_ROUNDS = 10;
+  private static readonly ENCRYPTION_KEY = envs.encryptionKey;
+  private static readonly ALGORITHM = envs.algorithm;
 
   /**
    * Encripta una contraseña usando bcrypt
@@ -54,6 +58,21 @@ export class CryptoUtils {
     if (!/^\d{22}$/.test(cleanCbu)) return false;
 
     return true;
+  }
+
+  /**
+   * Extrae los últimos 4 dígitos de un CBU o CVU
+   * @param cbu - CBU o CVU del cual extraer los últimos 4 dígitos
+   * @returns Los últimos 4 dígitos como string
+   */
+  static getLastFourDigits(cbu: string): string {
+    if (!cbu || typeof cbu !== 'string') return '';
+
+    // Remover espacios y guiones
+    const cleanCbu = cbu.replace(/[\s-]/g, '');
+
+    // Retornar los últimos 4 dígitos
+    return cleanCbu.slice(-4);
   }
 
   /**
@@ -115,5 +134,51 @@ export class CryptoUtils {
     const checkDigit = remainder < 2 ? remainder : 11 - remainder;
 
     return checkDigit === parseInt(digits[10]);
+  }
+
+  /**
+   * Cifra un texto usando AES-256-CBC
+   * @param text - Texto a cifrar
+   * @returns Texto cifrado en formato base64
+   */
+  static encrypt(text: string): string {
+    if (!text) return '';
+
+    const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.ALGORITHM, key, iv);
+
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    // Combinar IV y texto cifrado
+    const combined = iv.toString('hex') + ':' + encrypted;
+    return Buffer.from(combined).toString('base64');
+  }
+
+  /**
+   * Descifra un texto usando AES-256-CBC
+   * @param encryptedText - Texto cifrado en formato base64
+   * @returns Texto descifrado
+   */
+  static decrypt(encryptedText: string): string {
+    if (!encryptedText) return '';
+
+    try {
+      const combined = Buffer.from(encryptedText, 'base64').toString('utf8');
+      const [ivHex, encrypted] = combined.split(':');
+
+      const key = crypto.scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv(this.ALGORITHM, key, iv);
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+
+      return decrypted;
+    } catch {
+      // Si hay error al descifrar, retornar el texto original (para compatibilidad con datos existentes)
+      return encryptedText;
+    }
   }
 }

@@ -54,13 +54,11 @@ export class CreateBankAccountUseCase {
     }
 
     // Cifrar datos sensibles
-    const encryptedCbu = await CryptoUtils.hashPassword(
-      createBankAccountDto.cbu,
-    );
+    const encryptedCbu = CryptoUtils.encrypt(createBankAccountDto.cbu);
     const encryptedAlias = createBankAccountDto.alias
-      ? await CryptoUtils.hashPassword(createBankAccountDto.alias)
+      ? CryptoUtils.encrypt(createBankAccountDto.alias)
       : undefined;
-    const encryptedCuilCuit = await CryptoUtils.hashPassword(
+    const encryptedCuilCuit = CryptoUtils.encrypt(
       createBankAccountDto.cuilCuit,
     );
 

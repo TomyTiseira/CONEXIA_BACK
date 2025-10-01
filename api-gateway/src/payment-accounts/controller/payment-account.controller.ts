@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ROLES } from 'src/auth/constants/role-ids';
+import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 import { AuthRoles } from '../../auth/decorators/auth-roles.decorator';
 import { User } from '../../auth/decorators/user.decorator';
 import { AutoRefreshJwtGuard } from '../../auth/guards/auto-refresh-jwt.guard';
@@ -18,7 +19,6 @@ import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
 import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
 import { PaymentAccountService } from '../service/payment-account.service';
-import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 
 @Controller('payment-accounts')
 @UseGuards(AutoRefreshJwtGuard, RoleGuard)

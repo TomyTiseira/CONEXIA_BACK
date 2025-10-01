@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CryptoUtils } from '../../../common/utils/crypto.utils';
 import { PaymentAccountResponseDto } from '../../dto/payment-account-response.dto';
 import { PaymentAccountRepository } from '../../repository/payment-account.repository';
 
@@ -8,7 +9,7 @@ export class GetUserPaymentAccountsUseCase {
     private readonly paymentAccountRepository: PaymentAccountRepository,
   ) {}
 
-  async execute(userId: number): Promise<PaymentAccountResponseDto[]> {
+  async execute(userId: number): Promise<Partial<PaymentAccountResponseDto>[]> {
     const paymentAccounts =
       await this.paymentAccountRepository.findByUserId(userId);
 
@@ -20,10 +21,9 @@ export class GetUserPaymentAccountsUseCase {
       bankAccountType: account.bankAccountType,
       digitalPlatformId: account.digitalPlatformId,
       digitalPlatformName: account.digitalPlatform?.name,
-      cbu: account.cbu,
-      alias: account.alias,
+      cbu: CryptoUtils.decrypt(account.cbu),
+      alias: account.alias ? CryptoUtils.decrypt(account.alias) : undefined,
       accountHolderName: account.accountHolderName,
-      cuilCuit: account.cuilCuit,
       isActive: account.isActive,
       isVerified: account.isVerified,
       createdAt: account.createdAt,

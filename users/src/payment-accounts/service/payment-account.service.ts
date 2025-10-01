@@ -43,7 +43,7 @@ export class PaymentAccountService {
 
   async getUserPaymentAccounts(
     userId: number,
-  ): Promise<PaymentAccountResponseDto[]> {
+  ): Promise<Partial<PaymentAccountResponseDto>[]> {
     return this.getUserPaymentAccountsUseCase.execute(userId);
   }
 
