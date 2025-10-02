@@ -6,6 +6,7 @@ import {
   CreateServiceHiringDto,
   GetServiceHiringsDto,
 } from '../dto';
+import { MercadoPagoService } from './mercado-pago.service';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './use-cases/contract-service.use-case';
@@ -34,6 +35,7 @@ export class ServiceHiringsService {
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
   async createServiceHiring(userId: number, createDto: CreateServiceHiringDto) {
@@ -108,5 +110,71 @@ export class ServiceHiringsService {
 
   async processPaymentWebhook(paymentId: string): Promise<void> {
     return this.processPaymentWebhookUseCase.execute(paymentId);
+  }
+
+  async processPreferenceWebhook(preferenceId: string): Promise<void> {
+    console.log('📋 Processing preference webhook:', { preferenceId });
+    console.log(
+      'ℹ️ With test vendor credentials, preference webhooks should work correctly',
+    );
+
+    try {
+      // Con las nuevas credenciales de vendedor de prueba, los webhooks de preferencia
+      // deberían funcionar correctamente. Por ahora, solo logueamos la información.
+      console.log('✅ Preference webhook received for ID:', preferenceId);
+
+      // TODO: Implementar lógica específica de preferencias si es necesario
+      // Por ahora, los webhooks de pago son más importantes
+
+      console.log('✅ Preference webhook processing completed:', {
+        preferenceId,
+        message:
+          'Using test vendor credentials should resolve phantom payment issues',
+      });
+    } catch (error) {
+      console.error('❌ Error processing preference webhook:', {
+        preferenceId,
+        error: error.message,
+      });
+      // No lanzar error para evitar reintentos innecesarios
+    }
+  }
+
+  async updatePaymentStatus(
+    userId: number,
+    hiringId: number,
+    paymentStatusDto: {
+      payment_id: string;
+      status: string;
+      external_reference: string;
+      merchant_order_id?: string;
+      preference_id?: string;
+    },
+  ): Promise<any> {
+    console.log('💰 Processing payment status update:', {
+      userId,
+      hiringId,
+      paymentStatusDto,
+    });
+
+    // Verificar que el payment_id corresponda a un pago real
+    const paymentDetails = await this.mercadoPagoService.getPayment(
+      paymentStatusDto.payment_id,
+    );
+
+    if (!paymentDetails) {
+      throw new Error('Payment not found in MercadoPago');
+    }
+
+    // Procesar el pago usando el webhook handler existente
+    await this.processPaymentWebhookUseCase.execute(
+      paymentStatusDto.payment_id,
+    );
+
+    return {
+      success: true,
+      message: 'Payment status updated successfully',
+      payment: paymentDetails,
+    };
   }
 }

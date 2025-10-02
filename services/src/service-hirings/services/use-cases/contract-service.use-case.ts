@@ -55,10 +55,17 @@ export class ContractServiceUseCase {
           pending: `${process.env.FRONTEND_URL}/service-hirings/payment/pending`,
           failure: `${process.env.FRONTEND_URL}/service-hirings/payment/failure`,
         },
-        notification_url: `${process.env.API_BASE_URL}/service-hirings/payment/notification`,
+        notification_url: `${process.env.API_BASE_URL}/api/webhooks/mercadopago`,
         external_reference: `hiring_${hiring.id}_payment_${payment.id}`,
-        auto_return: 'approved' as const,
+        binary_mode: true,
       };
+
+      console.log('🔍 MercadoPago Preference Created:', {
+        external_reference: preference.external_reference,
+        notification_url: preference.notification_url,
+        frontendUrl: process.env.FRONTEND_URL,
+        apiBaseUrl: process.env.API_BASE_URL,
+      });
 
       const preferenceResponse =
         await this.mercadoPagoService.createPreference(preference);

@@ -18,7 +18,19 @@ export interface MercadoPagoPreference {
   };
   notification_url: string;
   external_reference: string;
-  auto_return: 'approved' | 'all';
+  auto_return?: 'approved' | 'all';
+  binary_mode?: boolean;
+  payment_methods?: {
+    excluded_payment_methods?: string[];
+    excluded_payment_types?: string[];
+    installments?: number;
+    default_installments?: number;
+  };
+  payer?: {
+    name?: string;
+    surname?: string;
+    email?: string;
+  };
 }
 
 export interface MercadoPagoPreferenceResponse {
@@ -41,9 +53,14 @@ export interface MercadoPagoPaymentResponse {
 export class MercadoPagoService {
   private readonly accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
   private readonly baseUrl = 'https://api.mercadopago.com';
-  private readonly isProduction = process.env.NODE_ENV === 'production';
-  private readonly isSandbox =
-    !this.isProduction || this.accessToken?.startsWith('TEST-');
+
+  // NUEVA CONFIGURACIÓN: Usar ambiente productivo con credenciales vendedor de prueba
+  // Esto resuelve el problema de "phantom payments" que ocurre en sandbox
+  private readonly isTestVendorCredentials =
+    this.accessToken?.includes('2726149732'); // Collector ID vendedor prueba
+  private readonly isProduction =
+    process.env.NODE_ENV === 'production' || this.isTestVendorCredentials;
+  private readonly isSandbox = !this.isProduction;
 
   constructor() {
     if (!this.accessToken) {
@@ -113,17 +130,23 @@ export class MercadoPagoService {
   }
 
   getInitPoint(preferenceResponse: MercadoPagoPreferenceResponse): string {
-    // Siempre usar sandbox si tenemos credenciales TEST
-    const usesSandbox = this.isSandbox;
-    const url = usesSandbox
-      ? preferenceResponse.sandbox_init_point
-      : preferenceResponse.init_point;
+    // NUEVA CONFIGURACIÓN: Con credenciales vendedor de prueba, usar init_point productivo
+    // Esto evita los "phantom payments" del sandbox
+    const useProductionUrl = this.isProduction || this.isTestVendorCredentials;
+    const url = useProductionUrl
+      ? preferenceResponse.init_point
+      : preferenceResponse.sandbox_init_point;
 
-    console.log('MercadoPago Init Point:', {
-      usesSandbox,
+    console.log('MercadoPago Init Point Selection:', {
+      isProduction: this.isProduction,
+      isTestVendorCredentials: this.isTestVendorCredentials,
+      useProductionUrl,
       sandboxUrl: preferenceResponse.sandbox_init_point,
       productionUrl: preferenceResponse.init_point,
       selectedUrl: url,
+      reason: useProductionUrl
+        ? 'Using production URL with test vendor credentials'
+        : 'Using sandbox URL',
     });
 
     return url;

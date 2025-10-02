@@ -39,6 +39,18 @@ export class PaymentRepository {
     });
   }
 
+  async findByHiringIdAndPendingStatus(
+    hiringId: number,
+  ): Promise<Payment | null> {
+    return this.repository.findOne({
+      where: {
+        hiringId,
+        status: PaymentStatus.PENDING,
+      },
+      relations: ['hiring'],
+    });
+  }
+
   async update(
     id: number,
     updateData: Partial<Payment>,
@@ -50,6 +62,19 @@ export class PaymentRepository {
   async findPendingPayments(): Promise<Payment[]> {
     return this.repository.find({
       where: { status: PaymentStatus.PENDING },
+      relations: ['hiring'],
+    });
+  }
+
+  async findRecentPendingPayments(limit: number = 5): Promise<Payment[]> {
+    return this.repository.find({
+      where: {
+        status: PaymentStatus.PENDING,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+      take: limit,
       relations: ['hiring'],
     });
   }

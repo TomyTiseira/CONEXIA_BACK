@@ -2,6 +2,7 @@ services:
   nats-server:
     image: nats:2.10.25-alpine3.21
     ports:
+      - "4222:4222"
       - "8222:8222"
 
   api-gateway:
@@ -13,11 +14,14 @@ services:
       - ./api-gateway/uploads:/src/app/uploads
       - ./api-gateway/uploads/cv:/src/app/uploads/cv
     command: npm run start:dev
+    depends_on:
+      - nats-server
     environment:
       - NATS_SERVERS=nats://nats-server:4222
       - PORT=${API_GATEWAY_PORT}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
+      - NODE_ENV=${NODE_ENV}
 
   users:
     build: ./users
@@ -185,10 +189,12 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
+      - API_BASE_URL=${API_BASE_URL}
       - NODE_ENV=${NODE_ENV}
       - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
       - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
       - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
+      - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
 
   services-db:
     build:

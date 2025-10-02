@@ -6,6 +6,7 @@ interface EnvVars {
   PORT: number;
   JWT_SECRET: string;
   CORS_ORIGINS?: string[];
+  NODE_ENV: string;
 }
 
 const envSchema = joi
@@ -14,6 +15,7 @@ const envSchema = joi
     PORT: joi.number().required(),
     JWT_SECRET: joi.string().required(),
     CORS_ORIGINS: joi.array().items(joi.string()).optional(),
+    NODE_ENV: joi.string().default('development'),
   })
   .unknown(true);
 
@@ -22,6 +24,7 @@ const result = envSchema.validate({
   PORT: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
   JWT_SECRET: process.env.JWT_SECRET,
   CORS_ORIGINS: process.env.CORS_ORIGINS?.split(',') || [],
+  NODE_ENV: process.env.NODE_ENV,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -34,4 +37,5 @@ export const envs = {
   port: envVars.PORT,
   jwtSecret: envVars.JWT_SECRET,
   corsOrigins: envVars.CORS_ORIGINS || [],
+  nodeEnv: envVars.NODE_ENV,
 };

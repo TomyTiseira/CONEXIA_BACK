@@ -29,6 +29,13 @@ WHERE NOT EXISTS (
     SELECT 1 FROM service_hiring_statuses WHERE code = 'expired'
 );
 
+-- Add approved status to service_hiring_statuses if it doesn't exist
+INSERT INTO service_hiring_statuses (name, code, description) 
+SELECT 'Aprobada', 'approved', 'Contratación aprobada y pago confirmado'
+WHERE NOT EXISTS (
+    SELECT 1 FROM service_hiring_statuses WHERE code = 'approved'
+);
+
 -- Additional safety update for any remaining NULL values (redundant but safe)
 UPDATE services 
 SET "timeUnit" = 'hours'::time_unit_enum

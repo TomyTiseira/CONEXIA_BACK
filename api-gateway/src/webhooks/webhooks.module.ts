@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { NATS_SERVICE } from '../config/service';
+import { NATS_SERVICE, envs } from '../config';
 import { WebhooksController } from './webhooks.controller';
 
 @Module({
@@ -10,7 +10,7 @@ import { WebhooksController } from './webhooks.controller';
         name: NATS_SERVICE,
         transport: Transport.NATS,
         options: {
-          servers: [process.env.NATS_URI || 'nats://localhost:4222'],
+          servers: envs.natsServers,
         },
       },
     ]),

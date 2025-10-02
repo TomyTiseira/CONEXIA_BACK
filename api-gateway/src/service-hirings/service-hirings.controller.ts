@@ -20,6 +20,7 @@ import {
   CreateQuotationDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  UpdatePaymentStatusDto,
 } from './dto';
 
 @Controller('service-hirings')
@@ -220,5 +221,35 @@ export class ServiceHiringsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Post(':id/payment-status')
+  @AuthRoles([ROLES.USER])
+  updatePaymentStatus(
+    @Param('id') hiringId: number,
+    @Body() paymentStatusDto: UpdatePaymentStatusDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('updatePaymentStatus', {
+        userId: user.id,
+        hiringId,
+        paymentStatusDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('debug/mercadopago-account')
+  @AuthRoles([ROLES.ADMIN])
+  debugMercadoPagoAccount() {
+    return this.client.send('debugMercadoPagoAccount', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

@@ -50,9 +50,14 @@ async function bootstrap() {
       description: 'En proceso de negociación',
     },
     {
-      name: 'Aprobado',
+      name: 'Aprobada',
       code: ServiceHiringStatusCode.APPROVED,
-      description: 'Pago confirmado y servicio aprobado',
+      description: 'Contratación aprobada y pago confirmado',
+    },
+    {
+      name: 'Vencida',
+      code: ServiceHiringStatusCode.EXPIRED,
+      description: 'Cotización vencida por tiempo límite',
     },
   ];
 
