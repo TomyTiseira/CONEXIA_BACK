@@ -32,6 +32,7 @@ export class ProjectRepository {
       .leftJoinAndSelect('project.contractType', 'contractType')
       .leftJoinAndSelect('project.projectSkills', 'projectSkills')
       .where('project.id IN (:...projectIds)', { projectIds })
+      .andWhere('project.deletedAt IS NULL')
       .orderBy('project.createdAt', 'DESC')
       .getMany();
   }

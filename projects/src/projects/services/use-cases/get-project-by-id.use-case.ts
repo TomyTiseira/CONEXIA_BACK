@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
+  ProjectAlreadyDeletedException,
   ProjectNotFoundException,
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
@@ -25,14 +26,19 @@ export class GetProjectByIdUseCase {
   ) {}
 
   async execute(data: GetProjectByIdDto): Promise<ProjectDetailResponse> {
-    // Obtener el proyecto con todas las relaciones, incluyendo eliminados
+    // Obtener el proyecto con todas las relaciones, SIN incluir eliminados
     const project = await this.projectRepository.findByIdWithRelations(
       data.id,
-      true,
+      false,
     );
 
     if (!project) {
       throw new ProjectNotFoundException(data.id);
+    }
+
+    // Verificar si el proyecto está eliminado
+    if (project.deletedAt) {
+      throw new ProjectAlreadyDeletedException(data.id);
     }
 
     // Verificar si el usuario actual es el dueño del proyecto (ahora se calcula en la función utilitaria)
