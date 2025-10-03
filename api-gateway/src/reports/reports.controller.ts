@@ -45,9 +45,6 @@ export class ReportsController {
     @Param('projectId') projectId: string,
     @Query() query: GetProjectReportsDto,
   ) {
-    console.log('🚀 API Gateway - Query recibido:', query);
-    console.log('🚀 API Gateway - ProjectId del param:', projectId);
-
     return this.client
       .send('getProjectReports', {
         projectId: parseInt(projectId, 10),

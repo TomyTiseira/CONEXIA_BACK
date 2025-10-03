@@ -37,12 +37,6 @@ export class ReportRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<[any[], number]> {
-    console.log('🔍 findReportsByProject - Parámetros:', {
-      projectId,
-      page,
-      limit,
-    });
-
     const query = this.repository
       .createQueryBuilder('report')
       .select([
@@ -64,14 +58,6 @@ export class ReportRepository {
     const data = await query.getMany();
     const total = await this.repository.count({ where: { projectId } });
 
-    console.log('🔍 findReportsByProject - Resultados:', {
-      dataLength: data.length,
-      total,
-      projectId,
-      skip,
-      limit,
-    });
-
     return [data, total];
   }
 
@@ -84,7 +70,7 @@ export class ReportRepository {
     const skip = (page - 1) * limit;
 
     // Obtener todos los reportes con información básica del proyecto
-    // Incluir reportes de proyectos eliminados
+    // NO incluir reportes de proyectos eliminados
     const queryBuilder = this.repository
       .createQueryBuilder('report')
       .leftJoinAndSelect('report.project', 'project')
@@ -99,6 +85,7 @@ export class ReportRepository {
         'project.isActive',
         'project.deletedAt',
       ])
+      .where('project.deletedAt IS NULL')
       .orderBy(
         'report.createdAt',
         orderBy === OrderByReport.LAST_REPORT_DATE ? 'DESC' : 'ASC',
@@ -123,6 +110,11 @@ export class ReportRepository {
     >();
 
     reports.forEach((report) => {
+      // Validar que el proyecto existe (protección contra null)
+      if (!report.project) {
+        return; // Skip este reporte si no tiene proyecto
+      }
+
       const projectId = report.projectId;
       const projectTitle = report.project.title;
       const isActive = report.project.isActive;

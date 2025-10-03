@@ -68,6 +68,11 @@ export class ReportsService {
     page: number = 1,
     limit: number = 10,
   ): Promise<[any[], number]> {
+    // Validar que el proyecto existe y NO está eliminado
+    await this.reportValidationService.validateProjectExistsAndActive(
+      projectId,
+    );
+
     return this.reportRepository.findReportsByProject(projectId, page, limit);
   }
 
