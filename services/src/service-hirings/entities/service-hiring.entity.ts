@@ -4,10 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Service } from '../../services/entities/service.entity';
+import { Payment } from './payment.entity';
 import { ServiceHiringStatus } from './service-hiring-status.entity';
 
 @Entity('service_hirings')
@@ -52,6 +54,9 @@ export class ServiceHiring {
   @ManyToOne(() => Service, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_id' })
   service: Service;
+
+  @OneToMany(() => Payment, (payment) => payment.hiring)
+  payments: Payment[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

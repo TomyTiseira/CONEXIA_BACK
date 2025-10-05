@@ -16,9 +16,11 @@ import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
 import {
+  ContractServiceDto,
   CreateQuotationDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  UpdatePaymentStatusDto,
 } from './dto';
 
 @Controller('service-hirings')
@@ -199,5 +201,55 @@ export class ServiceHiringsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Post(':hiringId/contract')
+  @AuthRoles([ROLES.USER])
+  contractService(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() contractDto: ContractServiceDto,
+  ) {
+    return this.client
+      .send('contractService', {
+        userId: user.id,
+        hiringId: +hiringId,
+        contractDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post(':id/payment-status')
+  @AuthRoles([ROLES.USER])
+  updatePaymentStatus(
+    @Param('id') hiringId: number,
+    @Body() paymentStatusDto: UpdatePaymentStatusDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('updatePaymentStatus', {
+        userId: user.id,
+        hiringId,
+        paymentStatusDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('debug/mercadopago-account')
+  @AuthRoles([ROLES.ADMIN])
+  debugMercadoPagoAccount() {
+    return this.client.send('debugMercadoPagoAccount', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

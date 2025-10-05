@@ -4,7 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { envs } from './config';
-import { ServiceHiring, ServiceHiringStatus } from './service-hirings/entities';
+import { SeedService } from './seed/seed.service';
+import {
+  Payment,
+  ServiceHiring,
+  ServiceHiringStatus,
+} from './service-hirings/entities';
+import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { Service, ServiceCategory } from './services/entities';
 import { ServicesModule } from './services/services.module';
@@ -18,9 +24,16 @@ import { ServicesModule } from './services/services.module';
       username: envs.dbUsername,
       password: envs.dbPassword,
       database: envs.dbDatabase,
-      entities: [Service, ServiceCategory, ServiceHiring, ServiceHiringStatus],
+      entities: [
+        Service,
+        ServiceCategory,
+        ServiceHiring,
+        ServiceHiringStatus,
+        Payment,
+      ],
       synchronize: true,
     }),
+    TypeOrmModule.forFeature([ServiceHiringStatus]),
     CommonModule,
     ServicesModule,
     ServiceHiringsModule,
@@ -31,6 +44,8 @@ import { ServicesModule } from './services/services.module';
       provide: APP_INTERCEPTOR,
       useClass: RpcExceptionInterceptor,
     },
+    ServiceHiringStatusRepository,
+    SeedService,
   ],
 })
 export class AppModule {}

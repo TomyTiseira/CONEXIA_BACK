@@ -111,6 +111,55 @@ export class ServiceHiringValidationService {
     return { serviceOwner, user };
   }
 
+  async validateUserCanContractService(
+    userId: number,
+    hiringId: number,
+  ): Promise<{ user: any; hiring: any }> {
+    // Obtener la contratación
+    const hiring = await this.hiringRepository.findById(hiringId);
+    if (!hiring) {
+      throw new RpcException('Contratación no encontrada');
+    }
+
+    // Verificar que el usuario es el solicitante del servicio
+    if (hiring.userId !== userId) {
+      throw new RpcException('No tienes permisos para contratar este servicio');
+    }
+
+    // Validar que el usuario existe y está activo
+    const user =
+      await this.usersClientService.getUserByIdIncludingDeleted(userId);
+    if (!user) {
+      throw new RpcException('Usuario no encontrado');
+    }
+
+    if (!user.isValidate || user.deletedAt) {
+      throw new RpcException('El usuario no está activo');
+    }
+
+    // Validar que la solicitud está en estado "accepted" (aceptada)
+    if (hiring.status.code !== ServiceHiringStatusCode.ACCEPTED) {
+      throw new RpcException(
+        'Solo se pueden contratar servicios con cotización aceptada',
+      );
+    }
+
+    // Validar que no tenga ya una contratación activa del mismo servicio
+    const existingActiveHiring =
+      await this.hiringRepository.findActiveHiringByUserAndService(
+        userId,
+        hiring.serviceId,
+      );
+
+    if (existingActiveHiring && existingActiveHiring.id !== hiringId) {
+      throw new RpcException(
+        'Ya tienes una contratación activa de este servicio. Debes completarla antes de contratar nuevamente.',
+      );
+    }
+
+    return { user, hiring };
+  }
+
   private async rejectHiringAutomatically(hiringId: number): Promise<void> {
     try {
       // Obtener el estado "rejected"

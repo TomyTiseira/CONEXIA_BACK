@@ -49,6 +49,16 @@ async function bootstrap() {
       code: ServiceHiringStatusCode.NEGOTIATING,
       description: 'En proceso de negociación',
     },
+    {
+      name: 'Aprobada',
+      code: ServiceHiringStatusCode.APPROVED,
+      description: 'Contratación aprobada y pago confirmado',
+    },
+    {
+      name: 'Vencida',
+      code: ServiceHiringStatusCode.EXPIRED,
+      description: 'Cotización vencida por tiempo límite',
+    },
   ];
 
   for (const status of statuses) {

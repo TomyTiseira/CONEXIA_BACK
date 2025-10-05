@@ -4,6 +4,7 @@ import { ContactsModule } from './contacts/contacts.module';
 import { MessagingModule } from './contacts/messaging.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { PaymentAccountsModule } from './payment-accounts/payment-accounts.module';
+
 import { PostulationsModule } from './postulations/postulations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { PublicationReportsModule } from './publication-reports/publication-reports.module';
@@ -12,6 +13,7 @@ import { ReportsModule } from './reports/reports.module';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { UsersModule } from './users/users.module';
     PublicationReportsModule,
     ServicesModule,
     ServiceHiringsModule,
+    WebhooksModule,
   ],
   controllers: [],
   providers: [],
