@@ -4,6 +4,7 @@ import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
 import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
+import { UpdatePaymentAccountDto } from '../dto/update-payment-account.dto';
 import { CreateBankAccountUseCase } from './use-cases/create-bank-account.use-case';
 import { CreateDigitalAccountUseCase } from './use-cases/create-digital-account.use-case';
 import { DeletePaymentAccountUseCase } from './use-cases/delete-payment-account.use-case';
@@ -11,6 +12,7 @@ import { GetBanksUseCase } from './use-cases/get-banks.use-case';
 import { GetDigitalPlatformsUseCase } from './use-cases/get-digital-platforms.use-case';
 import { GetPaymentAccountByIdUseCase } from './use-cases/get-payment-account-by-id.use-case';
 import { GetUserPaymentAccountsUseCase } from './use-cases/get-user-payment-accounts.use-case';
+import { UpdatePaymentAccountUseCase } from './use-cases/update-payment-account.use-case';
 
 @Injectable()
 export class PaymentAccountService {
@@ -22,6 +24,7 @@ export class PaymentAccountService {
     private readonly deletePaymentAccountUseCase: DeletePaymentAccountUseCase,
     private readonly getBanksUseCase: GetBanksUseCase,
     private readonly getDigitalPlatformsUseCase: GetDigitalPlatformsUseCase,
+    private readonly updatePaymentAccountUseCase: UpdatePaymentAccountUseCase,
   ) {}
 
   async createBankAccount(
@@ -64,5 +67,17 @@ export class PaymentAccountService {
 
   async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
     return this.getDigitalPlatformsUseCase.execute();
+  }
+
+  async updatePaymentAccount(
+    id: number,
+    userId: number,
+    updatePaymentAccountDto: UpdatePaymentAccountDto,
+  ): Promise<PaymentAccountResponseDto> {
+    return this.updatePaymentAccountUseCase.execute(
+      id,
+      userId,
+      updatePaymentAccountDto,
+    );
   }
 }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +19,7 @@ import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
 import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
+import { UpdatePaymentAccountDto } from '../dto/update-payment-account.dto';
 import { PaymentAccountService } from '../service/payment-account.service';
 
 @Controller('payment-accounts')
@@ -79,5 +81,18 @@ export class PaymentAccountController {
     @User() user: AuthenticatedUser,
   ): Promise<void> {
     return await this.paymentAccountService.deletePaymentAccount(id, user.id);
+  }
+
+  @Patch(':id')
+  async updatePaymentAccount(
+    @Param('id') id: number,
+    @User() user: AuthenticatedUser,
+    @Body() updatePaymentAccountDto: UpdatePaymentAccountDto,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.paymentAccountService.updatePaymentAccount(
+      id,
+      user.id,
+      updatePaymentAccountDto,
+    );
   }
 }

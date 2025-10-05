@@ -7,6 +7,7 @@ import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
 import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
+import { UpdatePaymentAccountDto } from '../dto/update-payment-account.dto';
 
 @Injectable()
 export class PaymentAccountService {
@@ -98,6 +99,25 @@ export class PaymentAccountService {
   async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
     return await this.client
       .send('payment-account.get-digital-platforms', {})
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      )
+      .toPromise();
+  }
+
+  async updatePaymentAccount(
+    id: number,
+    userId: number,
+    updatePaymentAccountDto: UpdatePaymentAccountDto,
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.client
+      .send('payment-account.update', {
+        id,
+        userId,
+        updatePaymentAccountDto,
+      })
       .pipe(
         catchError((error) => {
           throw new RpcException(error);

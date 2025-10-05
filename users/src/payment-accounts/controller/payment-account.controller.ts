@@ -5,6 +5,7 @@ import { CreateBankAccountDto } from '../dto/create-bank-account.dto';
 import { CreateDigitalAccountDto } from '../dto/create-digital-account.dto';
 import { DigitalPlatformResponseDto } from '../dto/digital-platform-response.dto';
 import { PaymentAccountResponseDto } from '../dto/payment-account-response.dto';
+import { UpdatePaymentAccountDto } from '../dto/update-payment-account.dto';
 import { PaymentAccountService } from '../service/payment-account.service';
 
 @Controller()
@@ -75,5 +76,21 @@ export class PaymentAccountController {
   @MessagePattern('payment-account.get-digital-platforms')
   async getDigitalPlatforms(): Promise<DigitalPlatformResponseDto[]> {
     return await this.paymentAccountService.getDigitalPlatforms();
+  }
+
+  @MessagePattern('payment-account.update')
+  async updatePaymentAccount(
+    @Payload()
+    data: {
+      id: number;
+      userId: number;
+      updatePaymentAccountDto: UpdatePaymentAccountDto;
+    },
+  ): Promise<PaymentAccountResponseDto> {
+    return await this.paymentAccountService.updatePaymentAccount(
+      data.id,
+      data.userId,
+      data.updatePaymentAccountDto,
+    );
   }
 }

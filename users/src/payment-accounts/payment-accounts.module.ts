@@ -13,6 +13,7 @@ import { GetBanksUseCase } from './service/use-cases/get-banks.use-case';
 import { GetDigitalPlatformsUseCase } from './service/use-cases/get-digital-platforms.use-case';
 import { GetPaymentAccountByIdUseCase } from './service/use-cases/get-payment-account-by-id.use-case';
 import { GetUserPaymentAccountsUseCase } from './service/use-cases/get-user-payment-accounts.use-case';
+import { UpdatePaymentAccountUseCase } from './service/use-cases/update-payment-account.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PaymentAccount, Bank, DigitalPlatform])],
@@ -27,6 +28,7 @@ import { GetUserPaymentAccountsUseCase } from './service/use-cases/get-user-paym
     DeletePaymentAccountUseCase,
     GetBanksUseCase,
     GetDigitalPlatformsUseCase,
+    UpdatePaymentAccountUseCase,
   ],
   exports: [PaymentAccountService, PaymentAccountRepository],
 })
