@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateIf,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateDigitalAccountDto {
   @IsNumber()
@@ -13,13 +7,11 @@ export class CreateDigitalAccountDto {
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((o) => !o.alias)
   cvu: string;
 
   @IsString()
-  @IsOptional()
-  @ValidateIf((o) => !o.cvu)
-  alias?: string;
+  @IsNotEmpty()
+  alias: string;
 
   @IsString()
   @IsOptional()

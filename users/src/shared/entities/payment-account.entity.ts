@@ -57,8 +57,8 @@ export class PaymentAccount {
   @Column()
   cbu: string;
 
-  @Column({ nullable: true })
-  alias?: string;
+  @Column()
+  alias: string;
 
   @Column({ nullable: true })
   customName?: string;

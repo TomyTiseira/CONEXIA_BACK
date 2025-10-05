@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateIf,
 } from 'class-validator';
 
 export enum BankAccountType {
@@ -23,13 +22,11 @@ export class CreateBankAccountDto {
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((o) => !o.alias)
   cbu: string;
 
   @IsString()
-  @IsOptional()
-  @ValidateIf((o) => !o.cbu)
-  alias?: string;
+  @IsNotEmpty()
+  alias: string;
 
   @IsString()
   @IsOptional()

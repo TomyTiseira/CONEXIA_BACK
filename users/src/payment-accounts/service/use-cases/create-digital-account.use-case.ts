@@ -6,7 +6,6 @@ import {
   InvalidAliasException,
   InvalidCVUException,
   InvalidCuilCuitException,
-  MissingPaymentAccountDataException,
   PaymentAccountAlreadyExistsException,
 } from '../../../common/exceptions/payment-account.exceptions';
 import { CryptoUtils } from '../../../common/utils/crypto.utils';
@@ -44,23 +43,35 @@ export class CreateDigitalAccountUseCase {
       );
     }
 
-    // Verificar que no existe una cuenta con el mismo CVU o alias
-    const existingAccount =
-      await this.paymentAccountRepository.findByCbuOrAlias(
-        createDigitalAccountDto.cvu,
-        createDigitalAccountDto.alias,
+    // Verificar que el usuario no tenga ya una cuenta con el mismo CVU o alias
+    // Como los datos están encriptados, necesitamos obtener las cuentas del usuario y comparar
+    const userAccounts =
+      await this.paymentAccountRepository.findByUserId(userId);
+
+    const duplicateAccount = userAccounts.find((account) => {
+      try {
+        const decryptedCbu = CryptoUtils.decrypt(account.cbu);
+        const decryptedAlias = CryptoUtils.decrypt(account.alias);
+
+        // Verificar si el CVU o el alias coinciden
+        const cvuMatches = decryptedCbu === createDigitalAccountDto.cvu;
+        const aliasMatches = decryptedAlias === createDigitalAccountDto.alias;
+
+        return cvuMatches || aliasMatches;
+      } catch {
+        return false;
+      }
+    });
+
+    if (duplicateAccount) {
+      throw new PaymentAccountAlreadyExistsException(
+        'Ya tienes una cuenta digital registrada con este CVU o alias',
       );
-    if (existingAccount) {
-      const identifier =
-        createDigitalAccountDto.alias || createDigitalAccountDto.cvu;
-      throw new PaymentAccountAlreadyExistsException(identifier);
     }
 
     // Cifrar datos sensibles
     const encryptedCvu = CryptoUtils.encrypt(createDigitalAccountDto.cvu);
-    const encryptedAlias = createDigitalAccountDto.alias
-      ? CryptoUtils.encrypt(createDigitalAccountDto.alias)
-      : undefined;
+    const encryptedAlias = CryptoUtils.encrypt(createDigitalAccountDto.alias);
     const encryptedCuilCuit = CryptoUtils.encrypt(
       createDigitalAccountDto.cuilCuit,
     );
@@ -83,18 +94,13 @@ export class CreateDigitalAccountUseCase {
   }
 
   private validateDigitalAccountData(dto: CreateDigitalAccountDto): void {
-    // Validar que se proporcione CVU o alias
-    if (!dto.cvu && !dto.alias) {
-      throw new MissingPaymentAccountDataException();
-    }
-
-    // Validar formato de CVU si se proporciona
-    if (dto.cvu && !CryptoUtils.validateCVU(dto.cvu)) {
+    // Validar formato de CVU
+    if (!CryptoUtils.validateCVU(dto.cvu)) {
       throw new InvalidCVUException(dto.cvu);
     }
 
-    // Validar formato de alias si se proporciona
-    if (dto.alias && !CryptoUtils.validateAlias(dto.alias)) {
+    // Validar formato de alias
+    if (!CryptoUtils.validateAlias(dto.alias)) {
       throw new InvalidAliasException(dto.alias);
     }
 

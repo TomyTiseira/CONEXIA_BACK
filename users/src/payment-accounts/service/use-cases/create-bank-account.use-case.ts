@@ -6,7 +6,6 @@ import {
   InvalidAliasException,
   InvalidCBUException,
   InvalidCuilCuitException,
-  MissingPaymentAccountDataException,
   PaymentAccountAlreadyExistsException,
 } from '../../../common/exceptions/payment-account.exceptions';
 import { CryptoUtils } from '../../../common/utils/crypto.utils';
@@ -42,22 +41,34 @@ export class CreateBankAccountUseCase {
       throw new BankNotFoundException(createBankAccountDto.bankId);
     }
 
-    // Verificar que no existe una cuenta con el mismo CBU o alias
-    const existingAccount =
-      await this.paymentAccountRepository.findByCbuOrAlias(
-        createBankAccountDto.cbu,
-        createBankAccountDto.alias,
+    // Verificar que el usuario no tenga ya una cuenta con el mismo CBU o alias
+    // Como los datos están encriptados, necesitamos obtener las cuentas del usuario y comparar
+    const userAccounts =
+      await this.paymentAccountRepository.findByUserId(userId);
+    const duplicateAccount = userAccounts.find((account) => {
+      try {
+        const decryptedCbu = CryptoUtils.decrypt(account.cbu);
+        const decryptedAlias = CryptoUtils.decrypt(account.alias);
+
+        // Verificar si el CBU o el alias coinciden
+        const cbuMatches = decryptedCbu === createBankAccountDto.cbu;
+        const aliasMatches = decryptedAlias === createBankAccountDto.alias;
+
+        return cbuMatches || aliasMatches;
+      } catch {
+        return false;
+      }
+    });
+
+    if (duplicateAccount) {
+      throw new PaymentAccountAlreadyExistsException(
+        'already exists with this cbu or alias',
       );
-    if (existingAccount) {
-      const identifier = createBankAccountDto.alias || createBankAccountDto.cbu;
-      throw new PaymentAccountAlreadyExistsException(identifier);
     }
 
     // Cifrar datos sensibles
     const encryptedCbu = CryptoUtils.encrypt(createBankAccountDto.cbu);
-    const encryptedAlias = createBankAccountDto.alias
-      ? CryptoUtils.encrypt(createBankAccountDto.alias)
-      : undefined;
+    const encryptedAlias = CryptoUtils.encrypt(createBankAccountDto.alias);
     const encryptedCuilCuit = CryptoUtils.encrypt(
       createBankAccountDto.cuilCuit,
     );
@@ -81,18 +92,13 @@ export class CreateBankAccountUseCase {
   }
 
   private validateBankAccountData(dto: CreateBankAccountDto): void {
-    // Validar que se proporcione CBU o alias
-    if (!dto.cbu && !dto.alias) {
-      throw new MissingPaymentAccountDataException();
-    }
-
-    // Validar formato de CBU si se proporciona
-    if (dto.cbu && !CryptoUtils.validateCBU(dto.cbu)) {
+    // Validar formato de CBU
+    if (!CryptoUtils.validateCBU(dto.cbu)) {
       throw new InvalidCBUException(dto.cbu);
     }
 
-    // Validar formato de alias si se proporciona
-    if (dto.alias && !CryptoUtils.validateAlias(dto.alias)) {
+    // Validar formato de alias
+    if (!CryptoUtils.validateAlias(dto.alias)) {
       throw new InvalidAliasException(dto.alias);
     }
 

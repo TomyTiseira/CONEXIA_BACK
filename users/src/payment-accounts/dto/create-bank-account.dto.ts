@@ -4,7 +4,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateIf,
 } from 'class-validator';
 import { BankAccountType } from '../../shared/entities/payment-account.entity';
 
@@ -19,13 +18,11 @@ export class CreateBankAccountDto {
 
   @IsString()
   @IsNotEmpty()
-  @ValidateIf((o) => !o.alias)
   cbu: string;
 
   @IsString()
-  @IsOptional()
-  @ValidateIf((o) => !o.cbu)
-  alias?: string;
+  @IsNotEmpty()
+  alias: string;
 
   @IsString()
   @IsOptional()

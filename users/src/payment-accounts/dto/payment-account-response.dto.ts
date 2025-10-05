@@ -12,7 +12,7 @@ export class PaymentAccountResponseDto {
   digitalPlatformId?: number;
   digitalPlatformName?: string;
   cbu: string;
-  alias?: string;
+  alias: string;
   customName?: string;
   accountHolderName: string;
   cuilCuit: string;

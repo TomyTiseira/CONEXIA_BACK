@@ -42,14 +42,29 @@ export class PaymentAccountRepository {
   ): Promise<PaymentAccount | null> {
     const queryBuilder = this.paymentAccountRepository
       .createQueryBuilder('paymentAccount')
-      .where('paymentAccount.cbu = :cbu', { cbu })
-      .andWhere('paymentAccount.deletedAt IS NULL');
-
-    if (alias) {
-      queryBuilder.orWhere('paymentAccount.alias = :alias', { alias });
-    }
+      .where('paymentAccount.deletedAt IS NULL')
+      .andWhere(
+        '(paymentAccount.cbu = :cbu OR paymentAccount.alias = :alias)',
+        {
+          cbu,
+          alias,
+        },
+      );
 
     return await queryBuilder.getOne();
+  }
+
+  async findByCbuAndAlias(
+    cbu: string,
+    alias: string,
+  ): Promise<PaymentAccount | null> {
+    return await this.findByCbuOrAlias(cbu, alias);
+  }
+
+  async findAllActive(): Promise<PaymentAccount[]> {
+    return await this.paymentAccountRepository.find({
+      where: { deletedAt: IsNull() },
+    });
   }
 
   async update(
