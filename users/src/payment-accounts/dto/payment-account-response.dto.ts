@@ -13,6 +13,7 @@ export class PaymentAccountResponseDto {
   digitalPlatformName?: string;
   cbu: string;
   alias?: string;
+  customName?: string;
   accountHolderName: string;
   cuilCuit: string;
   isActive: boolean;

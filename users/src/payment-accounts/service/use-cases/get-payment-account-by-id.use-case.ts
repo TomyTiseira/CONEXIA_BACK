@@ -29,6 +29,7 @@ export class GetPaymentAccountByIdUseCase {
       digitalPlatformName: paymentAccount.digitalPlatform?.name,
       cbu: paymentAccount.cbu,
       alias: paymentAccount.alias,
+      customName: paymentAccount.customName,
       accountHolderName: paymentAccount.accountHolderName,
       cuilCuit: paymentAccount.cuilCuit,
       isActive: paymentAccount.isActive,

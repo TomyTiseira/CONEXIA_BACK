@@ -22,6 +22,10 @@ export class CreateDigitalAccountDto {
   alias?: string;
 
   @IsString()
+  @IsOptional()
+  customName?: string;
+
+  @IsString()
   @IsNotEmpty()
   accountHolderName: string;
 

@@ -71,6 +71,7 @@ export class CreateDigitalAccountUseCase {
       digitalPlatformId: createDigitalAccountDto.digitalPlatformId,
       cbu: encryptedCvu, // Usamos el campo cbu para almacenar CVU cifrado
       alias: encryptedAlias,
+      customName: createDigitalAccountDto.customName,
       accountHolderName: createDigitalAccountDto.accountHolderName,
       cuilCuit: encryptedCuilCuit,
       userId,
@@ -117,6 +118,7 @@ export class CreateDigitalAccountUseCase {
       digitalPlatformName: digitalPlatform?.name,
       cbu: paymentAccount.cbu, // En la respuesta mostramos el CVU cifrado
       alias: paymentAccount.alias,
+      customName: paymentAccount.customName,
       accountHolderName: paymentAccount.accountHolderName,
       cuilCuit: paymentAccount.cuilCuit, // En la respuesta mostramos el CUIL/CUIT cifrado
       isActive: paymentAccount.isActive,

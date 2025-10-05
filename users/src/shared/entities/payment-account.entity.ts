@@ -60,6 +60,9 @@ export class PaymentAccount {
   @Column({ nullable: true })
   alias?: string;
 
+  @Column({ nullable: true })
+  customName?: string;
+
   @Column()
   accountHolderName: string;
 

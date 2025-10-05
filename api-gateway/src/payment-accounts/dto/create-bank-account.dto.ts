@@ -32,6 +32,10 @@ export class CreateBankAccountDto {
   alias?: string;
 
   @IsString()
+  @IsOptional()
+  customName?: string;
+
+  @IsString()
   @IsNotEmpty()
   accountHolderName: string;
 

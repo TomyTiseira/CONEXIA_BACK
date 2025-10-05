@@ -69,6 +69,7 @@ export class CreateBankAccountUseCase {
       bankAccountType: createBankAccountDto.bankAccountType,
       cbu: encryptedCbu,
       alias: encryptedAlias,
+      customName: createBankAccountDto.customName,
       accountHolderName: createBankAccountDto.accountHolderName,
       cuilCuit: encryptedCuilCuit,
       userId,
@@ -115,6 +116,7 @@ export class CreateBankAccountUseCase {
       digitalPlatformName: undefined,
       cbu: paymentAccount.cbu, // En la respuesta mostramos el CBU cifrado
       alias: paymentAccount.alias,
+      customName: paymentAccount.customName,
       accountHolderName: paymentAccount.accountHolderName,
       cuilCuit: paymentAccount.cuilCuit, // En la respuesta mostramos el CUIL/CUIT cifrado
       isActive: paymentAccount.isActive,

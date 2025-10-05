@@ -23,6 +23,7 @@ export class GetUserPaymentAccountsUseCase {
       digitalPlatformName: account.digitalPlatform?.name,
       cbu: CryptoUtils.decrypt(account.cbu),
       alias: account.alias ? CryptoUtils.decrypt(account.alias) : undefined,
+      customName: account.customName,
       accountHolderName: account.accountHolderName,
       isActive: account.isActive,
       isVerified: account.isVerified,
