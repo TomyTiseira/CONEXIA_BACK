@@ -134,7 +134,17 @@ export class ServiceHiringRepository {
   async getQuotationInfoForServices(
     serviceIds: number[],
     userId?: number,
-  ): Promise<Map<number, { hasPending: boolean; hasActive: boolean }>> {
+  ): Promise<
+    Map<
+      number,
+      {
+        hasPending: boolean;
+        hasActive: boolean;
+        pendingQuotationId?: number;
+        activeQuotationId?: number;
+      }
+    >
+  > {
     if (serviceIds.length === 0) {
       return new Map();
     }
@@ -143,6 +153,7 @@ export class ServiceHiringRepository {
       .createQueryBuilder('hiring')
       .leftJoin('hiring.status', 'status')
       .select('hiring.serviceId', 'serviceId')
+      .addSelect('hiring.id', 'hiringId')
       .addSelect('status.code', 'statusCode')
       .where('hiring.serviceId IN (:...serviceIds)', { serviceIds });
 
@@ -154,7 +165,12 @@ export class ServiceHiringRepository {
 
     const quotationMap = new Map<
       number,
-      { hasPending: boolean; hasActive: boolean }
+      {
+        hasPending: boolean;
+        hasActive: boolean;
+        pendingQuotationId?: number;
+        activeQuotationId?: number;
+      }
     >();
 
     // Initialize all services
@@ -165,6 +181,7 @@ export class ServiceHiringRepository {
     // Process results
     results.forEach((result) => {
       const serviceId = result.serviceId;
+      const hiringId = result.hiringId;
       const statusCode = result.statusCode;
       const current = quotationMap.get(serviceId) || {
         hasPending: false,
@@ -173,6 +190,7 @@ export class ServiceHiringRepository {
 
       if (statusCode === 'pending') {
         current.hasPending = true;
+        current.pendingQuotationId = hiringId;
       }
 
       if (
@@ -185,6 +203,7 @@ export class ServiceHiringRepository {
         ].includes(statusCode)
       ) {
         current.hasActive = true;
+        current.activeQuotationId = hiringId;
       }
 
       quotationMap.set(serviceId, current);
