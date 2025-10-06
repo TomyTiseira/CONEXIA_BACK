@@ -222,3 +222,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
+  ngrok:
+    image: ngrok/ngrok:3-alpine
+    restart: unless-stopped
+    command:
+      - "http"
+      - "api-gateway:8080"
+      - "--log"
+      - "stdout"
+      - "--region"
+      - "sa"
+      - "--host-header"
+      - "rewrite"
+    ports:
+      - "4040:4040" # Puerto web UI de ngrok
+    depends_on:
+      - api-gateway
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}

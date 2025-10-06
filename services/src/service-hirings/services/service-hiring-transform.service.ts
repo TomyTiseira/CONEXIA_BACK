@@ -16,6 +16,7 @@ export interface ServiceHiringResponse {
   description: string;
   quotedPrice?: number;
   estimatedHours?: number;
+  estimatedTimeUnit?: TimeUnit;
   quotationNotes?: string;
   quotedAt?: Date;
   respondedAt?: Date;
@@ -62,6 +63,7 @@ export class ServiceHiringTransformService {
       description: hiring.description,
       quotedPrice: hiring.quotedPrice,
       estimatedHours: hiring.estimatedHours,
+      estimatedTimeUnit: hiring.estimatedTimeUnit,
       quotationNotes: hiring.quotationNotes,
       quotedAt: hiring.quotedAt,
       respondedAt: hiring.respondedAt,

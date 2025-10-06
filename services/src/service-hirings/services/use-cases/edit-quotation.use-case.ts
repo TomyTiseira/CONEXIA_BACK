@@ -52,6 +52,7 @@ export class EditQuotationUseCase {
     const updatedHiring = await this.hiringRepository.update(hiring.id, {
       quotedPrice: quotationDto.quotedPrice,
       estimatedHours: quotationDto.estimatedHours,
+      estimatedTimeUnit: quotationDto.estimatedTimeUnit,
       quotationNotes: quotationDto.quotationNotes,
       quotationValidityDays: quotationDto.quotationValidityDays,
       quotedAt: new Date(),

@@ -62,6 +62,12 @@ export class Payment {
   mercadoPagoResponse: any;
 
   @Column({ nullable: true })
+  mercadoPagoPaymentMethodId: string;
+
+  @Column({ nullable: true })
+  mercadoPagoPaymentTypeId: string;
+
+  @Column({ nullable: true })
   failureReason: string;
 
   @Column({ nullable: true, type: 'timestamp' })

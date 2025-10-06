@@ -39,7 +39,7 @@ export class CreateServiceDto {
 
   @IsNotEmpty()
   @IsEnum(TimeUnit, {
-    message: 'timeUnit must be a valid time unit (hours, days, weeks)',
+    message: 'timeUnit must be a valid time unit (hours, days, weeks, months)',
   })
   timeUnit: TimeUnit;
 

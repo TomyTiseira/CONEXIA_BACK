@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -6,6 +7,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { TimeUnit } from '../../services/dto/time-unit.enum';
 
 export class CreateQuotationDto {
   @IsNotEmpty()
@@ -17,6 +19,13 @@ export class CreateQuotationDto {
   @IsNumber()
   @Min(1)
   estimatedHours: number;
+
+  @IsNotEmpty()
+  @IsEnum(TimeUnit, {
+    message:
+      'estimatedTimeUnit must be a valid time unit (hours, days, weeks, months)',
+  })
+  estimatedTimeUnit: TimeUnit;
 
   @IsOptional()
   @IsString()

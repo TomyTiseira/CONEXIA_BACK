@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Service } from '../../services/entities/service.entity';
+import { TimeUnit } from '../../services/enums/time-unit.enum';
 import { Payment } from './payment.entity';
 import { ServiceHiringStatus } from './service-hiring-status.entity';
 
@@ -34,6 +35,9 @@ export class ServiceHiring {
 
   @Column({ type: 'int', nullable: true })
   estimatedHours: number;
+
+  @Column({ type: 'enum', enum: TimeUnit, nullable: true })
+  estimatedTimeUnit: TimeUnit;
 
   @Column({ type: 'text', nullable: true })
   quotationNotes: string;
