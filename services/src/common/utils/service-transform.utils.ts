@@ -13,6 +13,8 @@ export interface TransformedService {
   isActive: boolean;
   hasPendingQuotation?: boolean;
   hasActiveQuotation?: boolean;
+  pendingQuotationId?: number;
+  activeQuotationId?: number;
   createdAt: Date;
   updatedAt: Date;
   category: {
@@ -34,7 +36,15 @@ export function transformServicesWithOwners(
   services: Service[],
   users: any[],
   currentUserId?: number,
-  quotationInfo?: Map<number, { hasPending: boolean; hasActive: boolean }>,
+  quotationInfo?: Map<
+    number,
+    {
+      hasPending: boolean;
+      hasActive: boolean;
+      pendingQuotationId?: number;
+      activeQuotationId?: number;
+    }
+  >,
 ): TransformedService[] {
   return services.map((service) => {
     const owner = users.find((user) => user.id === service.userId);
@@ -53,6 +63,8 @@ export function transformServicesWithOwners(
       isActive: service.status === 'active',
       hasPendingQuotation: quotationData?.hasPending || false,
       hasActiveQuotation: quotationData?.hasActive || false,
+      pendingQuotationId: quotationData?.pendingQuotationId || undefined,
+      activeQuotationId: quotationData?.activeQuotationId || undefined,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt,
       category: {
