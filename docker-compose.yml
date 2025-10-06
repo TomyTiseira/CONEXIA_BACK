@@ -224,21 +224,23 @@ services:
       retries: 5
 
   # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
+  # Configurado para fallar silenciosamente si el endpoint ya existe
   ngrok:
     image: ngrok/ngrok:3-alpine
-    restart: unless-stopped
+    restart: "no" # No reiniciar si falla por endpoint ocupado
     command:
       - "http"
       - "api-gateway:8080"
       - "--log"
       - "stdout"
-      - "--region"
-      - "sa"
       - "--host-header"
       - "rewrite"
+      - "--pooling-enabled" # Permite load balancing con túneles existentes
     ports:
       - "4040:4040" # Puerto web UI de ngrok
     depends_on:
       - api-gateway
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    profiles:
+      - ngrok # Solo se ejecuta si se especifica: docker-compose --profile ngrok up
