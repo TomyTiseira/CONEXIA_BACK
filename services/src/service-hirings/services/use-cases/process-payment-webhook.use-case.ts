@@ -99,6 +99,8 @@ export class ProcessPaymentWebhookUseCase {
       status: PaymentStatus.APPROVED,
       mercadoPagoPaymentId: mpPayment.id.toString(),
       mercadoPagoResponse: mpPayment,
+      mercadoPagoPaymentMethodId: mpPayment.payment_method_id,
+      mercadoPagoPaymentTypeId: mpPayment.payment_type_id,
       processedAt: new Date(),
     });
 

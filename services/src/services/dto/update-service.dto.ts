@@ -14,7 +14,7 @@ export class UpdateServiceDto {
 
   @IsOptional()
   @IsEnum(TimeUnit, {
-    message: 'La unidad de tiempo debe ser hours, days o weeks',
+    message: 'La unidad de tiempo debe ser hours, days, weeks o months',
   })
   timeUnit?: TimeUnit;
 }
