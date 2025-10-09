@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   InvalidAliasException,
+  PaymentAccountAlreadyExistsException,
   PaymentAccountNotFoundException,
 } from '../../../common/exceptions/payment-account.exceptions';
 import { CryptoUtils } from '../../../common/utils/crypto.utils';
@@ -48,7 +49,9 @@ export class UpdatePaymentAccountUseCase {
     });
 
     if (duplicateAlias) {
-      throw new InvalidAliasException('Ya tienes otra cuenta con este alias');
+      throw new PaymentAccountAlreadyExistsException(
+        updatePaymentAccountDto.alias,
+      );
     }
 
     // Encriptar el nuevo alias
