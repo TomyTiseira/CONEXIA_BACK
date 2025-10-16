@@ -18,6 +18,7 @@ import { NATS_SERVICE } from '../config/service';
 import {
   ContractServiceDto,
   CreateQuotationDto,
+  CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
   UpdatePaymentStatusDto,
@@ -83,6 +84,56 @@ export class ServiceHiringsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  @Post(':hiringId/quotation-with-deliverables')
+  @AuthRoles([ROLES.USER])
+  createQuotationWithDeliverables(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.client
+      .send('createQuotationWithDeliverables', {
+        serviceOwnerId: user.id,
+        hiringId: +hiringId,
+        quotationDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Put(':hiringId/quotation-with-deliverables')
+  @AuthRoles([ROLES.USER])
+  editQuotationWithDeliverables(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.client
+      .send('editQuotationWithDeliverables', {
+        serviceOwnerId: user.id,
+        hiringId: +hiringId,
+        quotationDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('payment-modalities')
+  @AuthRoles([ROLES.USER])
+  getPaymentModalities() {
+    return this.client.send('getPaymentModalities', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 
   @Get()

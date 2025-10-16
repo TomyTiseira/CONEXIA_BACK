@@ -24,6 +24,13 @@ export enum PaymentMethod {
   DIGITAL_WALLET = 'digital_wallet',
 }
 
+export enum PaymentType {
+  INITIAL = 'initial', // 25% anticipo para full_payment
+  FINAL = 'final', // 75% restante para full_payment
+  FULL = 'full', // 100% para cotizaciones antiguas
+  DELIVERABLE = 'deliverable', // Pago por entregable individual
+}
+
 @Entity('payments')
 export class Payment {
   @PrimaryGeneratedColumn()
@@ -51,6 +58,19 @@ export class Payment {
     enum: PaymentMethod,
   })
   paymentMethod: PaymentMethod;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentType,
+    default: PaymentType.FULL,
+  })
+  paymentType: PaymentType;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  totalAmount: number;
+
+  @Column({ nullable: true })
+  deliverableId: number;
 
   @Column({ nullable: true })
   mercadoPagoPaymentId: string;

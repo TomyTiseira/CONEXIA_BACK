@@ -3,15 +3,20 @@ import {
   ContractServiceDto,
   ContractServiceResponseDto,
   CreateQuotationDto,
+  CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  PaymentModalityResponseDto,
 } from '../dto';
 import { MercadoPagoService } from './mercado-pago.service';
+import { PaymentModalityService } from './payment-modality.service';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './use-cases/contract-service.use-case';
+import { CreateQuotationWithDeliverablesUseCase } from './use-cases/create-quotation-with-deliverables.use-case';
 import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
+import { EditQuotationWithDeliverablesUseCase } from './use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './use-cases/edit-quotation.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './use-cases/get-service-hirings-by-user.use-case';
@@ -25,7 +30,9 @@ export class ServiceHiringsService {
   constructor(
     private readonly createServiceHiringUseCase: CreateServiceHiringUseCase,
     private readonly createQuotationUseCase: CreateQuotationUseCase,
+    private readonly createQuotationWithDeliverablesUseCase: CreateQuotationWithDeliverablesUseCase,
     private readonly editQuotationUseCase: EditQuotationUseCase,
+    private readonly editQuotationWithDeliverablesUseCase: EditQuotationWithDeliverablesUseCase,
     private readonly getServiceHiringsUseCase: GetServiceHiringsUseCase,
     private readonly getServiceHiringsByUserUseCase: GetServiceHiringsByUserUseCase,
     private readonly getServiceHiringsByServiceOwnerUseCase: GetServiceHiringsByServiceOwnerUseCase,
@@ -35,6 +42,7 @@ export class ServiceHiringsService {
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
@@ -64,6 +72,34 @@ export class ServiceHiringsService {
       hiringId,
       quotationDto,
     );
+  }
+
+  async createQuotationWithDeliverables(
+    serviceOwnerId: number,
+    hiringId: number,
+    quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.createQuotationWithDeliverablesUseCase.execute(
+      serviceOwnerId,
+      hiringId,
+      quotationDto,
+    );
+  }
+
+  async editQuotationWithDeliverables(
+    serviceOwnerId: number,
+    hiringId: number,
+    quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.editQuotationWithDeliverablesUseCase.execute(
+      serviceOwnerId,
+      hiringId,
+      quotationDto,
+    );
+  }
+
+  async getPaymentModalities(): Promise<PaymentModalityResponseDto[]> {
+    return this.paymentModalityService.getAllPaymentModalities();
   }
 
   async getServiceHirings(params: GetServiceHiringsDto) {
