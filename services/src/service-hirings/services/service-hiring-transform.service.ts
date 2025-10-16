@@ -4,8 +4,14 @@ import {
   calculatePagination,
 } from '../../common/utils/pagination.utils';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
-import { GetServiceHiringsDto } from '../dto';
+import {
+  DeliverableResponseDto,
+  GetServiceHiringsDto,
+  PaymentModalityResponseDto,
+} from '../dto';
+import { Deliverable } from '../entities/deliverable.entity';
 import { ServiceHiring } from '../entities/service-hiring.entity';
+import { DeliverableRepository } from '../repositories/deliverable.repository';
 
 export interface ServiceHiringResponse {
   id: number;
@@ -22,6 +28,8 @@ export interface ServiceHiringResponse {
   respondedAt?: Date;
   quotationValidityDays?: number;
   isExpired?: boolean;
+  paymentModality?: PaymentModalityResponseDto;
+  deliverables?: DeliverableResponseDto[];
   status: {
     id: number;
     name: string;
@@ -47,12 +55,20 @@ export interface ServiceHiringListResponse {
 
 @Injectable()
 export class ServiceHiringTransformService {
-  transformToResponse(
+  constructor(private readonly deliverableRepository: DeliverableRepository) {}
+
+  async transformToResponse(
     hiring: ServiceHiring,
     availableActions: string[] = [],
     user?: any,
-  ): ServiceHiringResponse {
+    deliverablesMap?: Map<number, Deliverable[]>,
+  ): Promise<ServiceHiringResponse> {
     const isExpired = this.isQuotationExpired(hiring);
+
+    // Cargar entregables: usar mapa precargado o cargar individualmente
+    const deliverables = deliverablesMap
+      ? deliverablesMap.get(hiring.id) || []
+      : await this.deliverableRepository.findByHiringId(hiring.id);
 
     return {
       id: hiring.id,
@@ -69,6 +85,36 @@ export class ServiceHiringTransformService {
       respondedAt: hiring.respondedAt,
       quotationValidityDays: hiring.quotationValidityDays,
       isExpired,
+      paymentModality: hiring.paymentModality
+        ? {
+            id: hiring.paymentModality.id,
+            name: hiring.paymentModality.name,
+            code: hiring.paymentModality.code,
+            description: hiring.paymentModality.description,
+            initialPaymentPercentage:
+              hiring.paymentModality.initialPaymentPercentage,
+            finalPaymentPercentage:
+              hiring.paymentModality.finalPaymentPercentage,
+            isActive: hiring.paymentModality.isActive,
+          }
+        : undefined,
+      deliverables:
+        deliverables.length > 0
+          ? deliverables.map((d) => ({
+              id: d.id,
+              hiringId: d.hiringId,
+              title: d.title,
+              description: d.description,
+              estimatedDeliveryDate: d.estimatedDeliveryDate,
+              price: d.price,
+              orderIndex: d.orderIndex,
+              status: d.status,
+              deliveredAt: d.deliveredAt,
+              approvedAt: d.approvedAt,
+              createdAt: d.createdAt,
+              updatedAt: d.updatedAt,
+            }))
+          : undefined,
       status: {
         id: hiring.status.id,
         name: hiring.status.name,
@@ -107,20 +153,40 @@ export class ServiceHiringTransformService {
     params: GetServiceHiringsDto,
     availableActionsMap: Map<number, string[]> = new Map(),
     usersMap?: Map<number, any>,
-  ): ServiceHiringListResponse {
-    const data = hirings.map((hiring) =>
-      this.transformToResponse(
-        hiring,
-        availableActionsMap.get(hiring.id) || [],
-        usersMap?.get(hiring.userId),
-      ),
-    );
+  ): Promise<ServiceHiringListResponse> {
+    // Optimización: cargar todos los deliverables de una vez
+    const hiringIds = hirings.map((h) => h.id);
 
-    const pagination = calculatePagination(total, {
-      page: params.page || 1,
-      limit: params.limit || 10,
-    });
+    return this.deliverableRepository
+      .findByHiringIds(hiringIds)
+      .then((allDeliverables) => {
+        // Agrupar deliverables por hiringId
+        const deliverablesMap = new Map<number, Deliverable[]>();
+        allDeliverables.forEach((deliverable) => {
+          const existing = deliverablesMap.get(deliverable.hiringId) || [];
+          existing.push(deliverable);
+          deliverablesMap.set(deliverable.hiringId, existing);
+        });
 
-    return { data, pagination };
+        // Transformar hirings con deliverables precargados
+        const dataPromises = hirings.map((hiring) =>
+          this.transformToResponse(
+            hiring,
+            availableActionsMap.get(hiring.id) || [],
+            usersMap?.get(hiring.userId),
+            deliverablesMap,
+          ),
+        );
+
+        return Promise.all(dataPromises);
+      })
+      .then((data) => {
+        const pagination = calculatePagination(total, {
+          page: params.page || 1,
+          limit: params.limit || 10,
+        });
+
+        return { data, pagination };
+      });
   }
 }

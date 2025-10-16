@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { Service } from '../../services/entities/service.entity';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
+import { Deliverable } from './deliverable.entity';
+import { PaymentModality } from './payment-modality.entity';
 import { Payment } from './payment.entity';
 import { ServiceHiringStatus } from './service-hiring-status.entity';
 
@@ -51,9 +53,16 @@ export class ServiceHiring {
   @Column({ type: 'int', nullable: true })
   quotationValidityDays: number;
 
+  @Column({ name: 'payment_modality_id', nullable: true })
+  paymentModalityId: number;
+
   @ManyToOne(() => ServiceHiringStatus)
   @JoinColumn({ name: 'status_id' })
   status: ServiceHiringStatus;
+
+  @ManyToOne(() => PaymentModality)
+  @JoinColumn({ name: 'payment_modality_id' })
+  paymentModality: PaymentModality;
 
   @ManyToOne(() => Service, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_id' })
@@ -61,6 +70,9 @@ export class ServiceHiring {
 
   @OneToMany(() => Payment, (payment) => payment.hiring)
   payments: Payment[];
+
+  @OneToMany(() => Deliverable, (deliverable) => deliverable.hiring)
+  deliverables: Deliverable[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

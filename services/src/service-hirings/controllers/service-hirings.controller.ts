@@ -3,6 +3,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   ContractServiceDto,
   CreateQuotationDto,
+  CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
 } from '../dto';
@@ -52,6 +53,43 @@ export class ServiceHiringsController {
       data.hiringId,
       data.quotationDto,
     );
+  }
+
+  @MessagePattern('createQuotationWithDeliverables')
+  async createQuotationWithDeliverables(
+    @Payload()
+    data: {
+      serviceOwnerId: number;
+      hiringId: number;
+      quotationDto: CreateQuotationWithDeliverablesDto;
+    },
+  ) {
+    return this.serviceHiringsService.createQuotationWithDeliverables(
+      data.serviceOwnerId,
+      data.hiringId,
+      data.quotationDto,
+    );
+  }
+
+  @MessagePattern('editQuotationWithDeliverables')
+  async editQuotationWithDeliverables(
+    @Payload()
+    data: {
+      serviceOwnerId: number;
+      hiringId: number;
+      quotationDto: CreateQuotationWithDeliverablesDto;
+    },
+  ) {
+    return this.serviceHiringsService.editQuotationWithDeliverables(
+      data.serviceOwnerId,
+      data.hiringId,
+      data.quotationDto,
+    );
+  }
+
+  @MessagePattern('getPaymentModalities')
+  async getPaymentModalities() {
+    return this.serviceHiringsService.getPaymentModalities();
   }
 
   @MessagePattern('getServiceHirings')
