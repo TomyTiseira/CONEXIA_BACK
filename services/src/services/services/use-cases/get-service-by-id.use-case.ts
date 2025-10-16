@@ -36,6 +36,12 @@ export class GetServiceByIdUseCase {
         data.currentUserId,
       );
 
+    // Obtener la cotización activa (service_hirings) para el usuario y el servicio
+    const serviceHiring = await this.serviceHiringRepository.findActiveHiringByUserAndService(
+      data.currentUserId,
+      service.id,
+    );
+
     // Transformar el servicio usando la función común
     const transformedServices = transformServicesWithOwners(
       [service],
@@ -44,7 +50,10 @@ export class GetServiceByIdUseCase {
       quotationInfo,
     );
 
-    // Retornar el primer (y único) servicio transformado
-    return transformedServices[0];
+    // Retornar el primer (y único) servicio transformado junto con la cotización activa
+    return {
+      ...transformedServices[0],
+      serviceHiring,
+    };
   }
 }
