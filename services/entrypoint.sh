@@ -14,9 +14,5 @@ sleep 15
 echo "Ejecutando seeds..."
 npx ts-node src/scripts/seed-service-categories.ts
 
-# Ejecutar script para actualizar profession nulas a "test"
-echo "Actualizando profession nulas a 'test'..."
-npx ts-node src/scripts/set-null-professions-to-test.ts
-
 # Esperar a que la aplicación termine
 wait $APP_PID
