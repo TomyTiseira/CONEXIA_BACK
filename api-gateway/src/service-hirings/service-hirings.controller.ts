@@ -7,8 +7,13 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
@@ -17,10 +22,12 @@ import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.int
 import { NATS_SERVICE } from '../config/service';
 import {
   ContractServiceDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  ReviewDeliveryDto,
   UpdatePaymentStatusDto,
 } from './dto';
 
@@ -302,5 +309,78 @@ export class ServiceHiringsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Post(':hiringId/delivery')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileInterceptor('attachment', {
+      storage: diskStorage({
+        destination: './uploads/deliveries',
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      limits: {
+        fileSize: 20 * 1024 * 1024, // 20MB
+      },
+    }),
+  )
+  createDelivery(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() deliveryDto: CreateDeliveryDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.client
+      .send('createDelivery', {
+        hiringId: +hiringId,
+        serviceOwnerId: user.id,
+        deliveryDto,
+        attachmentPath: file?.filename,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':hiringId/deliveries')
+  @AuthRoles([ROLES.USER])
+  getDeliveriesByHiring(@Param('hiringId') hiringId: number) {
+    return this.client
+      .send('getDeliveriesByHiring', {
+        hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post('deliveries/:deliveryId/review')
+  @AuthRoles([ROLES.USER])
+  reviewDelivery(
+    @User() user: AuthenticatedUser,
+    @Param('deliveryId') deliveryId: number,
+    @Body() reviewDto: ReviewDeliveryDto,
+  ) {
+    return this.client
+      .send('reviewDelivery', {
+        deliveryId: +deliveryId,
+        clientUserId: user.id,
+        reviewDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }

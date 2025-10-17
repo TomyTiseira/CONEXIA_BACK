@@ -4,11 +4,13 @@ import { CommonModule } from '../common/common.module';
 import { ServicesModule } from '../services/services.module';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
 import { Deliverable } from './entities/deliverable.entity';
+import { DeliverySubmission } from './entities/delivery-submission.entity';
 import { PaymentModality } from './entities/payment-modality.entity';
 import { Payment } from './entities/payment.entity';
 import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
 import { DeliverableRepository } from './repositories/deliverable.repository';
+import { DeliverySubmissionRepository } from './repositories/delivery-submission.repository';
 import { PaymentModalityRepository } from './repositories/payment-modality.repository';
 import { PaymentRepository } from './repositories/payment.repository';
 import { ServiceHiringStatusRepository } from './repositories/service-hiring-status.repository';
@@ -24,6 +26,7 @@ import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
+import { CreateDeliveryUseCase } from './services/use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './services/use-cases/create-quotation-with-deliverables.use-case';
 import { CreateQuotationUseCase } from './services/use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './services/use-cases/create-service-hiring.use-case';
@@ -35,6 +38,7 @@ import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirin
 import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
+import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
 import { ServiceHiringStateFactory } from './states/service-hiring-state.factory';
 
 @Module({
@@ -55,11 +59,14 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     NegotiateServiceHiringUseCase,
     ContractServiceUseCase,
     ProcessPaymentWebhookUseCase,
+    CreateDeliveryUseCase,
+    ReviewDeliveryUseCase,
     ServiceHiringRepository,
     ServiceHiringStatusRepository,
     PaymentRepository,
     PaymentModalityRepository,
     DeliverableRepository,
+    DeliverySubmissionRepository,
     ServiceHiringStatusService,
     ServiceHiringValidationService,
     ServiceHiringOperationsService,
@@ -76,6 +83,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
       Payment,
       PaymentModality,
       Deliverable,
+      DeliverySubmission,
     ]),
     CommonModule,
     forwardRef(() => ServicesModule),

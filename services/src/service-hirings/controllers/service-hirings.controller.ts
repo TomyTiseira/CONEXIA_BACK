@@ -2,10 +2,12 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   ContractServiceDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  ReviewDeliveryDto,
 } from '../dto';
 import { ServiceHiringsService } from '../services/service-hirings.service';
 
@@ -221,6 +223,45 @@ export class ServiceHiringsController {
       data.userId,
       data.hiringId,
       data.paymentStatusDto,
+    );
+  }
+
+  @MessagePattern('createDelivery')
+  async createDelivery(
+    @Payload()
+    data: {
+      hiringId: number;
+      serviceOwnerId: number;
+      deliveryDto: CreateDeliveryDto;
+      attachmentPath?: string;
+    },
+  ) {
+    return this.serviceHiringsService.createDelivery(
+      data.hiringId,
+      data.serviceOwnerId,
+      data.deliveryDto,
+      data.attachmentPath,
+    );
+  }
+
+  @MessagePattern('getDeliveriesByHiring')
+  async getDeliveriesByHiring(@Payload() data: { hiringId: number }) {
+    return this.serviceHiringsService.getDeliveriesByHiring(data.hiringId);
+  }
+
+  @MessagePattern('reviewDelivery')
+  async reviewDelivery(
+    @Payload()
+    data: {
+      deliveryId: number;
+      clientUserId: number;
+      reviewDto: ReviewDeliveryDto;
+    },
+  ) {
+    return this.serviceHiringsService.reviewDelivery(
+      data.deliveryId,
+      data.clientUserId,
+      data.reviewDto,
     );
   }
 }

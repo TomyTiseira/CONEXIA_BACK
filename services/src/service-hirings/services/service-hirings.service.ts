@@ -2,17 +2,22 @@ import { Injectable } from '@nestjs/common';
 import {
   ContractServiceDto,
   ContractServiceResponseDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
+  DeliverySubmissionListResponseDto,
+  DeliverySubmissionResponseDto,
   GetServiceHiringsDto,
   PaymentModalityResponseDto,
+  ReviewDeliveryDto,
 } from '../dto';
 import { MercadoPagoService } from './mercado-pago.service';
 import { PaymentModalityService } from './payment-modality.service';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './use-cases/contract-service.use-case';
+import { CreateDeliveryUseCase } from './use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './use-cases/create-quotation-with-deliverables.use-case';
 import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
@@ -24,6 +29,7 @@ import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-ca
 import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
+import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 
 @Injectable()
 export class ServiceHiringsService {
@@ -42,6 +48,8 @@ export class ServiceHiringsService {
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly createDeliveryUseCase: CreateDeliveryUseCase,
+    private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
@@ -212,5 +220,62 @@ export class ServiceHiringsService {
       message: 'Payment status updated successfully',
       payment: paymentDetails,
     };
+  }
+
+  async createDelivery(
+    hiringId: number,
+    serviceOwnerId: number,
+    deliveryDto: CreateDeliveryDto,
+    attachmentPath?: string,
+  ): Promise<DeliverySubmissionResponseDto> {
+    return this.createDeliveryUseCase.execute(
+      hiringId,
+      serviceOwnerId,
+      deliveryDto,
+      attachmentPath,
+    );
+  }
+
+  async getDeliveriesByHiring(
+    hiringId: number,
+  ): Promise<DeliverySubmissionListResponseDto> {
+    const deliveries =
+      await this.createDeliveryUseCase['deliveryRepository'].findByHiringId(
+        hiringId,
+      );
+    return {
+      deliveries: deliveries.map((d) => ({
+        id: d.id,
+        hiringId: d.hiringId,
+        deliverableId: d.deliverableId,
+        deliveryType: d.deliveryType,
+        content: d.content,
+        attachmentPath: d.attachmentPath,
+        attachmentUrl: d.attachmentPath
+          ? `${process.env.API_BASE_URL}/uploads/deliveries/${d.attachmentPath}`
+          : undefined,
+        price: Number(d.price),
+        status: d.status,
+        deliveredAt: d.deliveredAt,
+        reviewedAt: d.reviewedAt,
+        approvedAt: d.approvedAt,
+        revisionNotes: d.revisionNotes,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      })),
+      total: deliveries.length,
+    };
+  }
+
+  async reviewDelivery(
+    deliveryId: number,
+    clientUserId: number,
+    reviewDto: ReviewDeliveryDto,
+  ) {
+    return this.reviewDeliveryUseCase.execute(
+      deliveryId,
+      clientUserId,
+      reviewDto,
+    );
   }
 }

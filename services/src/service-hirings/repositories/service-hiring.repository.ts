@@ -16,10 +16,13 @@ export class ServiceHiringRepository {
     return this.repository.save(newHiring);
   }
 
-  async findById(id: number): Promise<ServiceHiring | null> {
+  async findById(
+    id: number,
+    relations?: string[],
+  ): Promise<ServiceHiring | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['status', 'service', 'paymentModality'],
+      relations: relations || ['status', 'service', 'paymentModality'],
     });
   }
 
