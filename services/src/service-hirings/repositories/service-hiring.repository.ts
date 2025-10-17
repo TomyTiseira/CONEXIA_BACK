@@ -16,10 +16,13 @@ export class ServiceHiringRepository {
     return this.repository.save(newHiring);
   }
 
-  async findById(id: number): Promise<ServiceHiring | null> {
+  async findById(
+    id: number,
+    relations?: string[],
+  ): Promise<ServiceHiring | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['status', 'service'],
+      relations: relations || ['status', 'service', 'paymentModality'],
     });
   }
 
@@ -29,7 +32,7 @@ export class ServiceHiringRepository {
   ): Promise<ServiceHiring | null> {
     return this.repository.findOne({
       where: { userId, serviceId },
-      relations: ['status', 'service'],
+      relations: ['status', 'service', 'paymentModality'],
     });
   }
 
@@ -49,7 +52,8 @@ export class ServiceHiringRepository {
     const queryBuilder: SelectQueryBuilder<ServiceHiring> = this.repository
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.status', 'status')
-      .leftJoinAndSelect('hiring.service', 'service');
+      .leftJoinAndSelect('hiring.service', 'service')
+      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality');
 
     if (status) {
       queryBuilder.andWhere('status.code = :status', { status });
@@ -90,6 +94,7 @@ export class ServiceHiringRepository {
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.status', 'status')
       .leftJoinAndSelect('hiring.service', 'service')
+      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality')
       .where('service.userId = :serviceOwnerId', { serviceOwnerId });
 
     if (status) {

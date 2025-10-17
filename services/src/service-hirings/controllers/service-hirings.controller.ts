@@ -2,9 +2,12 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   ContractServiceDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
+  CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  ReviewDeliveryDto,
 } from '../dto';
 import { ServiceHiringsService } from '../services/service-hirings.service';
 
@@ -54,9 +57,56 @@ export class ServiceHiringsController {
     );
   }
 
+  @MessagePattern('createQuotationWithDeliverables')
+  async createQuotationWithDeliverables(
+    @Payload()
+    data: {
+      serviceOwnerId: number;
+      hiringId: number;
+      quotationDto: CreateQuotationWithDeliverablesDto;
+    },
+  ) {
+    return this.serviceHiringsService.createQuotationWithDeliverables(
+      data.serviceOwnerId,
+      data.hiringId,
+      data.quotationDto,
+    );
+  }
+
+  @MessagePattern('editQuotationWithDeliverables')
+  async editQuotationWithDeliverables(
+    @Payload()
+    data: {
+      serviceOwnerId: number;
+      hiringId: number;
+      quotationDto: CreateQuotationWithDeliverablesDto;
+    },
+  ) {
+    return this.serviceHiringsService.editQuotationWithDeliverables(
+      data.serviceOwnerId,
+      data.hiringId,
+      data.quotationDto,
+    );
+  }
+
+  @MessagePattern('getPaymentModalities')
+  async getPaymentModalities() {
+    return this.serviceHiringsService.getPaymentModalities();
+  }
+
   @MessagePattern('getServiceHirings')
   async getServiceHirings(@Payload() params: GetServiceHiringsDto) {
     return this.serviceHiringsService.getServiceHirings(params);
+  }
+
+  @MessagePattern('getServiceHiringById')
+  async getServiceHiringById(
+    @Payload() data: { userId: number; hiringId: number },
+  ) {
+    return this.serviceHiringsService.getServiceHiringById(
+      data.userId,
+      data.hiringId,
+    );
   }
 
   @MessagePattern('getServiceHiringsByUser')
@@ -183,6 +233,45 @@ export class ServiceHiringsController {
       data.userId,
       data.hiringId,
       data.paymentStatusDto,
+    );
+  }
+
+  @MessagePattern('createDelivery')
+  async createDelivery(
+    @Payload()
+    data: {
+      hiringId: number;
+      serviceOwnerId: number;
+      deliveryDto: CreateDeliveryDto;
+      attachmentPath?: string;
+    },
+  ) {
+    return this.serviceHiringsService.createDelivery(
+      data.hiringId,
+      data.serviceOwnerId,
+      data.deliveryDto,
+      data.attachmentPath,
+    );
+  }
+
+  @MessagePattern('getDeliveriesByHiring')
+  async getDeliveriesByHiring(@Payload() data: { hiringId: number }) {
+    return this.serviceHiringsService.getDeliveriesByHiring(data.hiringId);
+  }
+
+  @MessagePattern('reviewDelivery')
+  async reviewDelivery(
+    @Payload()
+    data: {
+      deliveryId: number;
+      clientUserId: number;
+      reviewDto: ReviewDeliveryDto;
+    },
+  ) {
+    return this.serviceHiringsService.reviewDelivery(
+      data.deliveryId,
+      data.clientUserId,
+      data.reviewDto,
     );
   }
 }

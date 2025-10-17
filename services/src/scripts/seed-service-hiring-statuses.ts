@@ -40,6 +40,12 @@ async function bootstrap() {
       description: 'Servicio en progreso',
     },
     {
+      name: 'Entregado',
+      code: ServiceHiringStatusCode.DELIVERED,
+      description:
+        'Servicio o entregable entregado, esperando revisión del cliente',
+    },
+    {
       name: 'Completado',
       code: ServiceHiringStatusCode.COMPLETED,
       description: 'Servicio completado',

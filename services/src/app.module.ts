@@ -6,10 +6,14 @@ import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.int
 import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
+  Deliverable,
+  DeliverySubmission,
   Payment,
+  PaymentModality,
   ServiceHiring,
   ServiceHiringStatus,
 } from './service-hirings/entities';
+import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { ServiceReport } from './service-reports/entities/service-report.entity';
@@ -33,10 +37,13 @@ import { ServicesModule } from './services/services.module';
         ServiceHiringStatus,
         Payment,
         ServiceReport,
+        PaymentModality,
+        Deliverable,
+        DeliverySubmission,
       ],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([ServiceHiringStatus]),
+    TypeOrmModule.forFeature([ServiceHiringStatus, PaymentModality]),
     CommonModule,
     ServicesModule,
     ServiceHiringsModule,
@@ -49,6 +56,7 @@ import { ServicesModule } from './services/services.module';
       useClass: RpcExceptionInterceptor,
     },
     ServiceHiringStatusRepository,
+    PaymentModalityRepository,
     SeedService,
   ],
 })

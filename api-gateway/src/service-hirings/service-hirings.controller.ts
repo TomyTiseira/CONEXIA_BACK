@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,13 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
@@ -17,9 +23,12 @@ import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.int
 import { NATS_SERVICE } from '../config/service';
 import {
   ContractServiceDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
+  CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  ReviewDeliveryDto,
   UpdatePaymentStatusDto,
 } from './dto';
 
@@ -85,6 +94,56 @@ export class ServiceHiringsController {
       );
   }
 
+  @Post(':hiringId/quotation-with-deliverables')
+  @AuthRoles([ROLES.USER])
+  createQuotationWithDeliverables(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.client
+      .send('createQuotationWithDeliverables', {
+        serviceOwnerId: user.id,
+        hiringId: +hiringId,
+        quotationDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Put(':hiringId/quotation-with-deliverables')
+  @AuthRoles([ROLES.USER])
+  editQuotationWithDeliverables(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() quotationDto: CreateQuotationWithDeliverablesDto,
+  ) {
+    return this.client
+      .send('editQuotationWithDeliverables', {
+        serviceOwnerId: user.id,
+        hiringId: +hiringId,
+        quotationDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('payment-modalities')
+  @AuthRoles([ROLES.USER])
+  getPaymentModalities() {
+    return this.client.send('getPaymentModalities', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
   @Get()
   @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
   getServiceHirings(@Query() query: GetServiceHiringsDto) {
@@ -123,6 +182,24 @@ export class ServiceHiringsController {
       .send('getServiceHiringsByServiceOwner', {
         serviceOwnerId: user.id,
         params: query,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':id')
+  @AuthRoles([ROLES.USER])
+  getServiceHiringById(
+    @User() user: AuthenticatedUser,
+    @Param('id') hiringId: number,
+  ) {
+    return this.client
+      .send('getServiceHiringById', {
+        userId: user.id,
+        hiringId: +hiringId,
       })
       .pipe(
         catchError((error) => {
@@ -251,5 +328,97 @@ export class ServiceHiringsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Post(':hiringId/delivery')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileInterceptor('attachment', {
+      storage: diskStorage({
+        destination: './uploads/deliveries',
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      limits: {
+        fileSize: 20 * 1024 * 1024, // 20MB
+      },
+    }),
+  )
+  createDelivery(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+    @Body() body: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    // Transformar y validar manualmente debido a multipart/form-data
+    const deliveryDto: CreateDeliveryDto = {
+      content: body.content as string,
+      deliverableId: body.deliverableId
+        ? Number(body.deliverableId)
+        : undefined,
+    };
+
+    // Validaciones básicas
+    if (!deliveryDto.content || deliveryDto.content.length < 10) {
+      throw new BadRequestException(
+        'El contenido debe tener al menos 10 caracteres',
+      );
+    }
+
+    if (deliveryDto.deliverableId && isNaN(deliveryDto.deliverableId)) {
+      throw new BadRequestException('deliverableId debe ser un número válido');
+    }
+
+    return this.client
+      .send('createDelivery', {
+        hiringId: +hiringId,
+        serviceOwnerId: user.id,
+        deliveryDto,
+        attachmentPath: file ? `/uploads/deliveries/${file.filename}` : null,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':hiringId/deliveries')
+  @AuthRoles([ROLES.USER])
+  getDeliveriesByHiring(@Param('hiringId') hiringId: number) {
+    return this.client
+      .send('getDeliveriesByHiring', {
+        hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post('deliveries/:deliveryId/review')
+  @AuthRoles([ROLES.USER])
+  reviewDelivery(
+    @User() user: AuthenticatedUser,
+    @Param('deliveryId') deliveryId: number,
+    @Body() reviewDto: ReviewDeliveryDto,
+  ) {
+    return this.client
+      .send('reviewDelivery', {
+        deliveryId: +deliveryId,
+        clientUserId: user.id,
+        reviewDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }

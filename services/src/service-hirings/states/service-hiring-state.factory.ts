@@ -5,6 +5,10 @@ import { ServiceHiringStateInterface } from '../interfaces/service-hiring-state.
 import { AcceptedServiceHiringState } from './accepted-service-hiring.state';
 import { ApprovedServiceHiringState } from './approved-service-hiring.state';
 import { CancelledServiceHiringState } from './cancelled-service-hiring.state';
+import { CompletedServiceHiringState } from './completed-service-hiring.state';
+import { DeliveredServiceHiringState } from './delivered-service-hiring.state';
+import { ExpiredServiceHiringState } from './expired-service-hiring.state';
+import { InProgressServiceHiringState } from './in-progress-service-hiring.state';
 import { NegotiatingServiceHiringState } from './negotiating-service-hiring.state';
 import { PendingServiceHiringState } from './pending-service-hiring.state';
 import { QuotedServiceHiringState } from './quoted-service-hiring.state';
@@ -30,8 +34,16 @@ export class ServiceHiringStateFactory {
         return new CancelledServiceHiringState();
       case ServiceHiringStatusCode.APPROVED:
         return new ApprovedServiceHiringState();
+      case ServiceHiringStatusCode.IN_PROGRESS:
+        return new InProgressServiceHiringState();
+      case ServiceHiringStatusCode.DELIVERED:
+        return new DeliveredServiceHiringState();
+      case ServiceHiringStatusCode.COMPLETED:
+        return new CompletedServiceHiringState();
       case ServiceHiringStatusCode.NEGOTIATING:
         return new NegotiatingServiceHiringState();
+      case ServiceHiringStatusCode.EXPIRED:
+        return new ExpiredServiceHiringState();
       default:
         throw new Error(`Unknown service hiring status: ${hiring.status.code}`);
     }
