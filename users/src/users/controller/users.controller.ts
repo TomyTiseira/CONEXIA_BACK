@@ -119,6 +119,12 @@ export class UsersController {
     return user;
   }
 
+  @MessagePattern('findUserByIdWithRelations')
+  async findUserByIdWithRelations(@Payload() data: { id: number }) {
+    const user = await this.usersService.findUserByIdWithRelations(data.id);
+    return user;
+  }
+
   @MessagePattern('getLocalities')
   async getLocalities() {
     return await this.usersService.getLocalities();

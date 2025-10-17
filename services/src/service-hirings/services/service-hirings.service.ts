@@ -1,18 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { UsersClientService } from '../../common/services/users-client.service';
 import {
   ContractServiceDto,
   ContractServiceResponseDto,
+  CreateDeliveryDto,
   CreateQuotationDto,
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
+  DeliverySubmissionListResponseDto,
+  DeliverySubmissionResponseDto,
   GetServiceHiringsDto,
   PaymentModalityResponseDto,
+  ReviewDeliveryDto,
 } from '../dto';
+import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
 import { PaymentModalityService } from './payment-modality.service';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './use-cases/contract-service.use-case';
+import { CreateDeliveryUseCase } from './use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './use-cases/create-quotation-with-deliverables.use-case';
 import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
@@ -24,10 +35,12 @@ import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-ca
 import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
+import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 
 @Injectable()
 export class ServiceHiringsService {
   constructor(
+    private readonly serviceHiringRepository: ServiceHiringRepository,
     private readonly createServiceHiringUseCase: CreateServiceHiringUseCase,
     private readonly createQuotationUseCase: CreateQuotationUseCase,
     private readonly createQuotationWithDeliverablesUseCase: CreateQuotationWithDeliverablesUseCase,
@@ -42,8 +55,11 @@ export class ServiceHiringsService {
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly createDeliveryUseCase: CreateDeliveryUseCase,
+    private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async createServiceHiring(userId: number, createDto: CreateServiceHiringDto) {
@@ -104,6 +120,45 @@ export class ServiceHiringsService {
 
   async getServiceHirings(params: GetServiceHiringsDto) {
     return this.getServiceHiringsUseCase.execute(params);
+  }
+
+  async getServiceHiringById(userId: number, hiringId: number) {
+    const hiring = await this.serviceHiringRepository.findById(hiringId, [
+      'service',
+      'status',
+      'paymentModality',
+      'deliverables',
+    ]);
+
+    if (!hiring) {
+      throw new NotFoundException('Contratación de servicio no encontrada');
+    }
+
+    // Verificar que el usuario tenga permiso (es el cliente o el prestador)
+    if (hiring.userId !== userId && hiring.service.userId !== userId) {
+      throw new ForbiddenException(
+        'No tienes permisos para ver esta contratación',
+      );
+    }
+
+    // Obtener información del owner del servicio
+    if (hiring.service && hiring.service.userId) {
+      const userWithProfile =
+        await this.usersClientService.getUserByIdWithRelations(
+          hiring.service.userId,
+        );
+      if (userWithProfile) {
+        (hiring.service as any).owner = {
+          id: userWithProfile.id,
+          firstName: userWithProfile.profile?.name || '',
+          lastName: userWithProfile.profile?.lastName || '',
+          email: userWithProfile.email,
+          profilePicture: userWithProfile.profile?.profilePicture || null,
+        };
+      }
+    }
+
+    return hiring;
   }
 
   async getServiceHiringsByUser(userId: number, params: GetServiceHiringsDto) {
@@ -212,5 +267,60 @@ export class ServiceHiringsService {
       message: 'Payment status updated successfully',
       payment: paymentDetails,
     };
+  }
+
+  async createDelivery(
+    hiringId: number,
+    serviceOwnerId: number,
+    deliveryDto: CreateDeliveryDto,
+    attachmentPath?: string,
+  ): Promise<DeliverySubmissionResponseDto> {
+    return this.createDeliveryUseCase.execute(
+      hiringId,
+      serviceOwnerId,
+      deliveryDto,
+      attachmentPath,
+    );
+  }
+
+  async getDeliveriesByHiring(
+    hiringId: number,
+  ): Promise<DeliverySubmissionListResponseDto> {
+    const deliveries =
+      await this.createDeliveryUseCase['deliveryRepository'].findByHiringId(
+        hiringId,
+      );
+    return {
+      deliveries: deliveries.map((d) => ({
+        id: d.id,
+        hiringId: d.hiringId,
+        deliverableId: d.deliverableId,
+        deliveryType: d.deliveryType,
+        content: d.content,
+        attachmentPath: d.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
+        attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
+        price: Number(d.price),
+        status: d.status,
+        deliveredAt: d.deliveredAt,
+        reviewedAt: d.reviewedAt,
+        approvedAt: d.approvedAt,
+        revisionNotes: d.revisionNotes,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      })),
+      total: deliveries.length,
+    };
+  }
+
+  async reviewDelivery(
+    deliveryId: number,
+    clientUserId: number,
+    reviewDto: ReviewDeliveryDto,
+  ) {
+    return this.reviewDeliveryUseCase.execute(
+      deliveryId,
+      clientUserId,
+      reviewDto,
+    );
   }
 }
