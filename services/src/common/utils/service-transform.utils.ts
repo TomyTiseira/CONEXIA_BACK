@@ -73,11 +73,11 @@ export function transformServicesWithOwners(
         description: service.category.description,
       },
       owner: {
-        id: owner.id,
-        firstName: owner.profile?.name || owner.firstName || 'Usuario',
-        lastName: owner.profile?.lastName || owner.lastName || '',
-        email: owner.email || '',
-        profileImage: owner.profile?.profilePicture || null,
+        id: owner?.id || service.userId,
+        firstName: owner?.profile?.name || owner?.firstName || '',
+        lastName: owner?.profile?.lastName || owner?.lastName || '',
+        email: owner?.email || '',
+        profileImage: owner?.profile?.profilePicture || null,
       },
       isOwner,
     };

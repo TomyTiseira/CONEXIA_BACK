@@ -250,4 +250,16 @@ export class ServiceHiringRepository {
       })
       .getOne();
   }
+
+  async findAnyHiringByUserAndService(
+    userId: number,
+    serviceId: number,
+  ): Promise<ServiceHiring | null> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoinAndSelect('hiring.status', 'status')
+      .where('hiring.userId = :userId', { userId })
+      .andWhere('hiring.serviceId = :serviceId', { serviceId })
+      .getOne();
+  }
 }
