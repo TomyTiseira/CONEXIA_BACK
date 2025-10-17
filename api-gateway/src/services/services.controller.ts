@@ -85,7 +85,7 @@ export class ServicesController {
     @User() user: AuthenticatedUser,
   ) {
     // Agregar las URLs de las imágenes al DTO si existen
-    if (files.images && files.images.length > 0) {
+    if (files && files.images && files.images.length > 0) {
       createServiceDto.images = files.images.map(
         (file) => `/uploads/services/${file.filename}`,
       );

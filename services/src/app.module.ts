@@ -16,6 +16,8 @@ import {
 import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
+import { ServiceReport } from './service-reports/entities/service-report.entity';
+import { ServiceReportsModule } from './service-reports/service-reports.module';
 import { Service, ServiceCategory } from './services/entities';
 import { ServicesModule } from './services/services.module';
 
@@ -34,6 +36,7 @@ import { ServicesModule } from './services/services.module';
         ServiceHiring,
         ServiceHiringStatus,
         Payment,
+        ServiceReport,
         PaymentModality,
         Deliverable,
         DeliverySubmission,
@@ -44,6 +47,7 @@ import { ServicesModule } from './services/services.module';
     CommonModule,
     ServicesModule,
     ServiceHiringsModule,
+    ServiceReportsModule,
   ],
   controllers: [],
   providers: [
