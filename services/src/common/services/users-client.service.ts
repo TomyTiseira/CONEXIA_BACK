@@ -56,6 +56,18 @@ export class UsersClientService {
     }
   }
 
+  async getUserByIdWithRelations(userId: number): Promise<any> {
+    try {
+      const user = await firstValueFrom(
+        this.client.send('findUserByIdWithRelations', { id: userId }),
+      );
+      return user;
+    } catch (error) {
+      console.error('Error getting user by ID with relations:', error);
+      return null;
+    }
+  }
+
   async getUserRole(userId: number): Promise<any> {
     try {
       const user = await firstValueFrom(

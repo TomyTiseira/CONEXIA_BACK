@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -189,6 +190,24 @@ export class ServiceHiringsController {
       );
   }
 
+  @Get(':id')
+  @AuthRoles([ROLES.USER])
+  getServiceHiringById(
+    @User() user: AuthenticatedUser,
+    @Param('id') hiringId: number,
+  ) {
+    return this.client
+      .send('getServiceHiringById', {
+        userId: user.id,
+        hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Post(':hiringId/accept')
   @AuthRoles([ROLES.USER])
   acceptServiceHiring(
@@ -333,15 +352,34 @@ export class ServiceHiringsController {
   createDelivery(
     @User() user: AuthenticatedUser,
     @Param('hiringId') hiringId: number,
-    @Body() deliveryDto: CreateDeliveryDto,
+    @Body() body: any,
     @UploadedFile() file?: Express.Multer.File,
   ) {
+    // Transformar y validar manualmente debido a multipart/form-data
+    const deliveryDto: CreateDeliveryDto = {
+      content: body.content as string,
+      deliverableId: body.deliverableId
+        ? Number(body.deliverableId)
+        : undefined,
+    };
+
+    // Validaciones básicas
+    if (!deliveryDto.content || deliveryDto.content.length < 10) {
+      throw new BadRequestException(
+        'El contenido debe tener al menos 10 caracteres',
+      );
+    }
+
+    if (deliveryDto.deliverableId && isNaN(deliveryDto.deliverableId)) {
+      throw new BadRequestException('deliverableId debe ser un número válido');
+    }
+
     return this.client
       .send('createDelivery', {
         hiringId: +hiringId,
         serviceOwnerId: user.id,
         deliveryDto,
-        attachmentPath: file?.filename,
+        attachmentPath: file ? `/uploads/deliveries/${file.filename}` : null,
       })
       .pipe(
         catchError((error) => {

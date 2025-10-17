@@ -6,8 +6,8 @@ export class DeliverySubmissionResponseDto {
   deliverableId?: number;
   deliveryType: string;
   content: string;
-  attachmentPath?: string;
-  attachmentUrl?: string; // URL completa para descargar el archivo
+  attachmentPath?: string; // Path relativo: /uploads/deliveries/archivo.ext
+  attachmentUrl?: string; // Mismo que attachmentPath, el frontend construye la URL completa
   price: number;
   status: string;
   deliveredAt?: Date;

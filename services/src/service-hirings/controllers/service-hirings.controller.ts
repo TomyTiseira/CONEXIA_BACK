@@ -99,6 +99,16 @@ export class ServiceHiringsController {
     return this.serviceHiringsService.getServiceHirings(params);
   }
 
+  @MessagePattern('getServiceHiringById')
+  async getServiceHiringById(
+    @Payload() data: { userId: number; hiringId: number },
+  ) {
+    return this.serviceHiringsService.getServiceHiringById(
+      data.userId,
+      data.hiringId,
+    );
+  }
+
   @MessagePattern('getServiceHiringsByUser')
   async getServiceHiringsByUser(
     @Payload() data: { userId: number; params: GetServiceHiringsDto },

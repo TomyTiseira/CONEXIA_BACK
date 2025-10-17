@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateDeliveryDto {
@@ -6,6 +7,7 @@ export class CreateDeliveryDto {
   content: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   deliverableId?: number; // Solo para entregas por entregables
 }

@@ -7,6 +7,7 @@ import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
   Deliverable,
+  DeliverySubmission,
   Payment,
   PaymentModality,
   ServiceHiring,
@@ -35,6 +36,7 @@ import { ServicesModule } from './services/services.module';
         Payment,
         PaymentModality,
         Deliverable,
+        DeliverySubmission,
       ],
       synchronize: true,
     }),

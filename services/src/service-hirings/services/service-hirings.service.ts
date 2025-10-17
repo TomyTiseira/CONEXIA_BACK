@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { UsersClientService } from '../../common/services/users-client.service';
 import {
   ContractServiceDto,
   ContractServiceResponseDto,
@@ -12,6 +17,7 @@ import {
   PaymentModalityResponseDto,
   ReviewDeliveryDto,
 } from '../dto';
+import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
 import { PaymentModalityService } from './payment-modality.service';
 import { AcceptServiceHiringUseCase } from './use-cases/accept-service-hiring.use-case';
@@ -34,6 +40,7 @@ import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 @Injectable()
 export class ServiceHiringsService {
   constructor(
+    private readonly serviceHiringRepository: ServiceHiringRepository,
     private readonly createServiceHiringUseCase: CreateServiceHiringUseCase,
     private readonly createQuotationUseCase: CreateQuotationUseCase,
     private readonly createQuotationWithDeliverablesUseCase: CreateQuotationWithDeliverablesUseCase,
@@ -52,6 +59,7 @@ export class ServiceHiringsService {
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async createServiceHiring(userId: number, createDto: CreateServiceHiringDto) {
@@ -112,6 +120,45 @@ export class ServiceHiringsService {
 
   async getServiceHirings(params: GetServiceHiringsDto) {
     return this.getServiceHiringsUseCase.execute(params);
+  }
+
+  async getServiceHiringById(userId: number, hiringId: number) {
+    const hiring = await this.serviceHiringRepository.findById(hiringId, [
+      'service',
+      'status',
+      'paymentModality',
+      'deliverables',
+    ]);
+
+    if (!hiring) {
+      throw new NotFoundException('Contratación de servicio no encontrada');
+    }
+
+    // Verificar que el usuario tenga permiso (es el cliente o el prestador)
+    if (hiring.userId !== userId && hiring.service.userId !== userId) {
+      throw new ForbiddenException(
+        'No tienes permisos para ver esta contratación',
+      );
+    }
+
+    // Obtener información del owner del servicio
+    if (hiring.service && hiring.service.userId) {
+      const userWithProfile =
+        await this.usersClientService.getUserByIdWithRelations(
+          hiring.service.userId,
+        );
+      if (userWithProfile) {
+        (hiring.service as any).owner = {
+          id: userWithProfile.id,
+          firstName: userWithProfile.profile?.name || '',
+          lastName: userWithProfile.profile?.lastName || '',
+          email: userWithProfile.email,
+          profilePicture: userWithProfile.profile?.profilePicture || null,
+        };
+      }
+    }
+
+    return hiring;
   }
 
   async getServiceHiringsByUser(userId: number, params: GetServiceHiringsDto) {
@@ -250,10 +297,8 @@ export class ServiceHiringsService {
         deliverableId: d.deliverableId,
         deliveryType: d.deliveryType,
         content: d.content,
-        attachmentPath: d.attachmentPath,
-        attachmentUrl: d.attachmentPath
-          ? `${process.env.API_BASE_URL}/uploads/deliveries/${d.attachmentPath}`
-          : undefined,
+        attachmentPath: d.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
+        attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
         price: Number(d.price),
         status: d.status,
         deliveredAt: d.deliveredAt,

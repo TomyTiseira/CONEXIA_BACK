@@ -12,6 +12,7 @@ import { PaymentModalityCode } from '../../enums/payment-modality.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../../repositories/deliverable.repository';
 import { DeliverySubmissionRepository } from '../../repositories/delivery-submission.repository';
+import { ServiceHiringStatusRepository } from '../../repositories/service-hiring-status.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 
 @Injectable()
@@ -20,6 +21,7 @@ export class CreateDeliveryUseCase {
     private readonly serviceHiringRepository: ServiceHiringRepository,
     private readonly deliverableRepository: DeliverableRepository,
     private readonly deliveryRepository: DeliverySubmissionRepository,
+    private readonly statusRepository: ServiceHiringStatusRepository,
   ) {}
 
   async execute(
@@ -141,7 +143,20 @@ export class CreateDeliveryUseCase {
       });
     }
 
-    // 7. Retornar respuesta
+    // 7. Cambiar el estado del hiring a DELIVERED
+    const deliveredStatus = await this.statusRepository.findByCode(
+      ServiceHiringStatusCode.DELIVERED,
+    );
+
+    if (deliveredStatus) {
+      await this.serviceHiringRepository.update(hiringId, {
+        statusId: deliveredStatus.id,
+      });
+
+      console.log('✅ Hiring status updated to DELIVERED');
+    }
+
+    // 8. Retornar respuesta
     return this.transformToResponse(delivery);
   }
 
@@ -154,10 +169,8 @@ export class CreateDeliveryUseCase {
       deliverableId: delivery.deliverableId,
       deliveryType: delivery.deliveryType,
       content: delivery.content,
-      attachmentPath: delivery.attachmentPath,
-      attachmentUrl: delivery.attachmentPath
-        ? `${process.env.API_BASE_URL}/uploads/deliveries/${delivery.attachmentPath}`
-        : undefined,
+      attachmentPath: delivery.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
+      attachmentUrl: delivery.attachmentPath, // Enviar el mismo path, el frontend construye la URL
       price: Number(delivery.price),
       status: delivery.status,
       deliveredAt: delivery.deliveredAt,
