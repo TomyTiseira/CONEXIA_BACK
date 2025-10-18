@@ -2,13 +2,16 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServicesModule } from '../services/services.module';
+import { ClaimsController } from './controllers/claims.controller';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
+import { Claim } from './entities/claim.entity';
 import { Deliverable } from './entities/deliverable.entity';
 import { DeliverySubmission } from './entities/delivery-submission.entity';
 import { PaymentModality } from './entities/payment-modality.entity';
 import { Payment } from './entities/payment.entity';
 import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
+import { ClaimRepository } from './repositories/claim.repository';
 import { DeliverableRepository } from './repositories/deliverable.repository';
 import { DeliverySubmissionRepository } from './repositories/delivery-submission.repository';
 import { PaymentModalityRepository } from './repositories/payment-modality.repository';
@@ -26,24 +29,27 @@ import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
+import { CreateClaimUseCase } from './services/use-cases/create-claim.use-case';
 import { CreateDeliveryUseCase } from './services/use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './services/use-cases/create-quotation-with-deliverables.use-case';
 import { CreateQuotationUseCase } from './services/use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './services/use-cases/create-service-hiring.use-case';
 import { EditQuotationWithDeliverablesUseCase } from './services/use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './services/use-cases/edit-quotation.use-case';
+import { GetClaimsUseCase } from './services/use-cases/get-claims.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './services/use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './services/use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirings.use-case';
 import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
+import { ResolveClaimUseCase } from './services/use-cases/resolve-claim.use-case';
 import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './services/use-cases/update-delivery.use-case';
 import { ServiceHiringStateFactory } from './states/service-hiring-state.factory';
 
 @Module({
-  controllers: [ServiceHiringsController],
+  controllers: [ServiceHiringsController, ClaimsController],
   providers: [
     ServiceHiringsService,
     CreateServiceHiringUseCase,
@@ -63,7 +69,11 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     CreateDeliveryUseCase,
     ReviewDeliveryUseCase,
     UpdateDeliveryUseCase,
+    CreateClaimUseCase,
+    GetClaimsUseCase,
+    ResolveClaimUseCase,
     ServiceHiringRepository,
+    ClaimRepository,
     ServiceHiringStatusRepository,
     PaymentRepository,
     PaymentModalityRepository,
@@ -86,6 +96,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
       PaymentModality,
       Deliverable,
       DeliverySubmission,
+      Claim,
     ]),
     CommonModule,
     forwardRef(() => ServicesModule),

@@ -6,6 +6,7 @@ import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.int
 import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
+  Claim,
   Deliverable,
   DeliverySubmission,
   Payment,
@@ -40,6 +41,7 @@ import { ServicesModule } from './services/services.module';
         PaymentModality,
         Deliverable,
         DeliverySubmission,
+        Claim,
       ],
       synchronize: true,
     }),
