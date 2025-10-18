@@ -258,8 +258,14 @@ export class ServiceHiringRepository {
     return this.repository
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.status', 'status')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality')
       .where('hiring.userId = :userId', { userId })
       .andWhere('hiring.serviceId = :serviceId', { serviceId })
+      .andWhere('status.code NOT IN (:...finalStatuses)', {
+        finalStatuses: ['completed', 'cancelled', 'rejected'],
+      })
+      .orderBy('hiring.createdAt', 'DESC')
       .getOne();
   }
 }
