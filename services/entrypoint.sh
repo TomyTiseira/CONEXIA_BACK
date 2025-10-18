@@ -10,9 +10,14 @@ APP_PID=$!
 echo "Esperando que TypeORM cree las tablas..."
 sleep 15
 
+# Ejecutar migraciones
+echo "Ejecutando migraciones de base de datos..."
+npx ts-node src/scripts/migrate-delivery-payment-fields.ts
+
 # Ejecutar seeds
 echo "Ejecutando seeds..."
 npx ts-node src/scripts/seed-service-categories.ts
+npx ts-node src/scripts/seed-service-hiring-statuses.ts
 
 # Esperar a que la aplicación termine
 wait $APP_PID 

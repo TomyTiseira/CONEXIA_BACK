@@ -13,6 +13,7 @@ import { NegotiatingServiceHiringState } from './negotiating-service-hiring.stat
 import { PendingServiceHiringState } from './pending-service-hiring.state';
 import { QuotedServiceHiringState } from './quoted-service-hiring.state';
 import { RejectedServiceHiringState } from './rejected-service-hiring.state';
+import { RevisionRequestedServiceHiringState } from './revision-requested-service-hiring.state';
 
 @Injectable()
 export class ServiceHiringStateFactory {
@@ -38,6 +39,8 @@ export class ServiceHiringStateFactory {
         return new InProgressServiceHiringState();
       case ServiceHiringStatusCode.DELIVERED:
         return new DeliveredServiceHiringState();
+      case ServiceHiringStatusCode.REVISION_REQUESTED:
+        return new RevisionRequestedServiceHiringState();
       case ServiceHiringStatusCode.COMPLETED:
         return new CompletedServiceHiringState();
       case ServiceHiringStatusCode.NEGOTIATING:

@@ -253,4 +253,67 @@ export class ServiceHiringRepository {
       })
       .getOne();
   }
+
+  /**
+   * Recalculate the ServiceHiring status based on the statuses of its deliveries.
+   * Rules (matching backend spec):
+   *  - If any delivery has status 'revision_requested' => hiring = 'revision_requested'
+   *  - Else if all deliveries are 'approved' => hiring = 'completed' (the caller may verify payments)
+   *  - Else if all deliveries are 'delivered' or 'approved' => hiring = 'delivered'
+   *  - Else if any delivery is 'pending' => hiring = 'in_progress'
+   *  - Default => 'in_progress'
+   *
+   * IMPORTANT: Solo considera la entrega MÁS RECIENTE de cada deliverable/hiring
+   */
+  async recalculateStatusFromDeliveries(hiringId: number): Promise<void> {
+    // Fetch LATEST delivery status for each deliverable (or for the hiring if no deliverables)
+    // GROUP BY deliverable_id (o NULL si no tiene) y tomar la más reciente por deliveredAt
+    const deliveries = await this.repository.query(
+      `
+      SELECT DISTINCT ON (COALESCE(deliverable_id, 0)) 
+        status,
+        deliverable_id,
+        "deliveredAt"
+      FROM delivery_submissions 
+      WHERE hiring_id = $1
+      ORDER BY COALESCE(deliverable_id, 0), "deliveredAt" DESC
+      `,
+      [hiringId],
+    );
+
+    const statuses = deliveries.map((r: any) => r.status);
+
+    // Determine target code
+    let targetCode = 'in_progress';
+
+    if (statuses.length === 0) {
+      targetCode = 'in_progress';
+    } else if (statuses.includes('revision_requested')) {
+      targetCode = 'revision_requested';
+    } else if (statuses.every((s: string) => s === 'approved')) {
+      targetCode = 'completed';
+    } else if (
+      statuses.every(
+        (s: string) =>
+          s === 'delivered' || s === 'approved' || s === 'pending_payment',
+      )
+    ) {
+      targetCode = 'delivered';
+    } else if (statuses.some((s: string) => s === 'pending')) {
+      targetCode = 'in_progress';
+    }
+
+    console.log('🔄 Recalculating hiring status:', {
+      hiringId,
+      deliveriesCount: deliveries.length,
+      latestStatuses: statuses,
+      newStatus: targetCode,
+    });
+
+    // Update the hiring status if different
+    await this.repository.query(
+      `UPDATE service_hirings SET status_id = (SELECT id FROM service_hiring_statuses WHERE code = $1) WHERE id = $2`,
+      [targetCode, hiringId],
+    );
+  }
 }

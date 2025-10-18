@@ -14,7 +14,6 @@ import {
   PaymentType,
 } from '../../entities/payment.entity';
 import { PaymentModalityCode } from '../../enums/payment-modality.enum';
-import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../../repositories/deliverable.repository';
 import { DeliverySubmissionRepository } from '../../repositories/delivery-submission.repository';
 import { PaymentRepository } from '../../repositories/payment.repository';
@@ -62,11 +61,26 @@ export class ReviewDeliveryUseCase {
       );
     }
 
-    // 3. Validar que la entrega está en estado DELIVERED
-    if (delivery.status !== DeliveryStatus.DELIVERED) {
-      throw new RpcException(
-        `Esta entrega no puede ser revisada. Estado actual: ${delivery.status}`,
-      );
+    // 3. Validar estado de la entrega según la acción
+    if (reviewDto.action === ReviewAction.APPROVE) {
+      // Para aprobar: permitir DELIVERED (primera vez) y PENDING_PAYMENT (reintento)
+      if (
+        delivery.status !== DeliveryStatus.DELIVERED &&
+        delivery.status !== DeliveryStatus.PENDING_PAYMENT
+      ) {
+        throw new RpcException(
+          `Esta entrega no puede ser aprobada. Estado actual: ${delivery.status}. ` +
+            `Solo se pueden aprobar entregas en estado "delivered" o "pending_payment".`,
+        );
+      }
+    } else if (reviewDto.action === ReviewAction.REQUEST_REVISION) {
+      // Para solicitar revisión: solo permitir DELIVERED
+      if (delivery.status !== DeliveryStatus.DELIVERED) {
+        throw new RpcException(
+          `No se puede solicitar revisión de esta entrega. Estado actual: ${delivery.status}. ` +
+            `Solo se puede solicitar revisión de entregas en estado "delivered".`,
+        );
+      }
     }
 
     // 4. Validar notas si se solicita revisión
@@ -99,24 +113,37 @@ export class ReviewDeliveryUseCase {
     hiring: any,
     now: Date,
   ): Promise<{ delivery: DeliverySubmissionResponseDto; paymentUrl?: string }> {
-    // 1. Actualizar estado de la entrega a APPROVED
-    const updatedDelivery = await this.deliveryRepository.update(delivery.id, {
-      status: DeliveryStatus.APPROVED,
-      approvedAt: now,
-      reviewedAt: now,
-    });
+    // 1. Verificar si ya está en PENDING_PAYMENT (reintento)
+    const isRetry = delivery.status === DeliveryStatus.PENDING_PAYMENT;
 
-    if (!updatedDelivery) {
-      throw new RpcException('Error al actualizar la entrega');
-    }
-
-    // 2. Actualizar estado del entregable si aplica
-    if (delivery.deliverableId) {
-      await this.deliverableRepository.update(delivery.deliverableId, {
-        status: DeliverableStatus.APPROVED,
-        approvedAt: now,
+    if (isRetry) {
+      console.log('🔄 Retry payment detected - will regenerate payment link:', {
+        deliveryId: delivery.id,
+        currentStatus: delivery.status,
+        previousPaymentId: delivery.mercadoPagoPaymentId,
       });
     }
+
+    // 2. Actualizar estado a PENDING_PAYMENT (solo si no es reintento)
+    let updatedDelivery: DeliverySubmission;
+    if (!isRetry) {
+      const updated = await this.deliveryRepository.update(delivery.id, {
+        status: DeliveryStatus.PENDING_PAYMENT,
+        reviewedAt: now,
+        // approvedAt se establecerá cuando se confirme el pago en el webhook
+      });
+
+      if (!updated) {
+        throw new RpcException('Error al actualizar la entrega');
+      }
+      updatedDelivery = updated;
+    } else {
+      // Si es reintento, usar la entrega actual
+      updatedDelivery = delivery;
+    }
+
+    // 2. NO actualizar el entregable todavía - se hará en el webhook
+    // El entregable se marcará como APPROVED cuando se confirme el pago
 
     // 3. Crear preferencia de pago en MercadoPago
     // Calcular el monto correcto según la modalidad de pago
@@ -152,7 +179,7 @@ export class ReviewDeliveryUseCase {
       title: itemTitle,
     });
 
-    // 4. Crear registro de pago ANTES de crear la preferencia (para tener el payment.id)
+    // 4. Obtener o crear registro de pago
     const paymentType =
       hiring.paymentModality?.code === PaymentModalityCode.FULL_PAYMENT
         ? PaymentType.FINAL
@@ -160,15 +187,39 @@ export class ReviewDeliveryUseCase {
           ? PaymentType.FULL
           : PaymentType.DELIVERABLE;
 
-    const payment = await this.paymentRepository.create({
-      hiringId: delivery.hiringId,
-      amount: paymentAmount,
-      totalAmount: Number(hiring.quotedPrice),
-      status: PaymentStatus.PENDING,
-      paymentMethod: PaymentMethod.DIGITAL_WALLET,
-      paymentType,
-      deliverableId: delivery.deliverableId,
-    });
+    let payment;
+
+    // Si es reintento y ya existe un payment, reutilizarlo
+    if (isRetry && delivery.mercadoPagoPaymentId) {
+      payment = await this.paymentRepository.findById(
+        parseInt(delivery.mercadoPagoPaymentId),
+      );
+
+      if (payment) {
+        console.log('♻️ Reusing existing payment record:', {
+          paymentId: payment.id,
+          status: payment.status,
+        });
+      }
+    }
+
+    // Si no hay payment (primera vez o no se encontró el existente), crear uno nuevo
+    if (!payment) {
+      payment = await this.paymentRepository.create({
+        hiringId: delivery.hiringId,
+        amount: paymentAmount,
+        totalAmount: Number(hiring.quotedPrice),
+        status: PaymentStatus.PENDING,
+        paymentMethod: PaymentMethod.DIGITAL_WALLET,
+        paymentType,
+        deliverableId: delivery.deliverableId,
+        deliverySubmissionId: delivery.id, // Guardar referencia a la entrega
+      });
+
+      console.log('🆕 Created new payment record:', {
+        paymentId: payment.id,
+      });
+    }
 
     // 3. Crear preferencia de pago en MercadoPago con el payment.id en external_reference
     const preference = await this.mercadoPagoService.createPreference({
@@ -196,7 +247,12 @@ export class ReviewDeliveryUseCase {
       mercadoPagoPreferenceId: preference.id,
     });
 
-    console.log('✅ Delivery approved and payment created:', {
+    // 6. Actualizar la entrega con el payment ID para rastreo
+    await this.deliveryRepository.update(delivery.id, {
+      mercadoPagoPaymentId: payment.id.toString(),
+    });
+
+    console.log('⏳ Delivery marked as PENDING_PAYMENT:', {
       deliveryId: delivery.id,
       hiringId: delivery.hiringId,
       deliverableId: delivery.deliverableId,
@@ -206,6 +262,7 @@ export class ReviewDeliveryUseCase {
       paymentType: paymentType,
       externalReference: `hiring_${hiring.id}_payment_${payment.id}`,
       paymentUrl: preference.init_point,
+      status: 'PENDING_PAYMENT - Waiting for payment confirmation',
     });
 
     // 5. Retornar la entrega actualizada con la URL de pago
@@ -240,22 +297,18 @@ export class ReviewDeliveryUseCase {
     }
 
     // 3. Cambiar el estado del hiring de vuelta a IN_PROGRESS
-    const inProgressStatus = await this.statusRepository.findByCode(
-      ServiceHiringStatusCode.IN_PROGRESS,
-    );
 
-    if (inProgressStatus) {
-      await this.serviceHiringRepository.update(hiring.id, {
-        statusId: inProgressStatus.id,
-      });
-    }
+    // Recalculate hiring status based on all deliveries
+    await this.serviceHiringRepository.recalculateStatusFromDeliveries(
+      hiring.id,
+    );
 
     console.log('🔄 Revision requested:', {
       deliveryId: delivery.id,
       hiringId: delivery.hiringId,
       deliverableId: delivery.deliverableId,
       notes,
-      hiringStatusChanged: inProgressStatus ? 'IN_PROGRESS' : 'NO_CHANGE',
+      action: 'recalculate_hiring_status',
     });
 
     return { delivery: this.transformToDto(updatedDelivery) };

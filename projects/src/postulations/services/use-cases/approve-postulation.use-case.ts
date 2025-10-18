@@ -103,7 +103,7 @@ export class ApprovePostulationUseCase {
             );
           });
       } else {
-        console.log(
+        console.error(
           'No se pudo obtener información del usuario para enviar email',
         );
       }

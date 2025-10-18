@@ -73,6 +73,9 @@ export class Payment {
   deliverableId: number;
 
   @Column({ nullable: true })
+  deliverySubmissionId: number; // ID de la entrega asociada (para rastrear desde webhook)
+
+  @Column({ nullable: true })
   mercadoPagoPaymentId: string;
 
   @Column({ nullable: true })

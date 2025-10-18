@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { DeliverableStatus } from '../../entities/deliverable.entity';
+import { DeliveryStatus } from '../../entities/delivery-submission.entity';
 import { PaymentStatus } from '../../entities/payment.entity';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
+import { DeliverableRepository } from '../../repositories/deliverable.repository';
+import { DeliverySubmissionRepository } from '../../repositories/delivery-submission.repository';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 import { MercadoPagoService } from '../mercado-pago.service';
@@ -12,6 +16,8 @@ export class ProcessPaymentWebhookUseCase {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly hiringRepository: ServiceHiringRepository,
+    private readonly deliveryRepository: DeliverySubmissionRepository,
+    private readonly deliverableRepository: DeliverableRepository,
     private readonly statusService: ServiceHiringStatusService,
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
@@ -103,6 +109,11 @@ export class ProcessPaymentWebhookUseCase {
       mercadoPagoPaymentTypeId: mpPayment.payment_type_id,
       processedAt: new Date(),
     });
+
+    // 🔥 NUEVO: Aprobar la entrega asociada si existe
+    if (payment.deliverySubmissionId) {
+      await this.approveDeliverySubmission(payment.deliverySubmissionId);
+    }
 
     // Determinar el nuevo estado del hiring basado en el tipo de pago
     const hiring = await this.hiringRepository.findById(payment.hiringId, [
@@ -302,6 +313,62 @@ export class ProcessPaymentWebhookUseCase {
       );
     } catch (debugError) {
       console.error('❌ Debug error:', debugError.message);
+    }
+  }
+
+  /**
+   * 🔥 CRÍTICO: Aprobar la entrega solo cuando el pago sea confirmado
+   * Esto previene que las entregas aparezcan como aprobadas si el cliente sale sin pagar
+   */
+  private async approveDeliverySubmission(
+    deliverySubmissionId: number,
+  ): Promise<void> {
+    try {
+      const delivery =
+        await this.deliveryRepository.findById(deliverySubmissionId);
+
+      if (!delivery) {
+        console.error(
+          `❌ Delivery ${deliverySubmissionId} not found for approval`,
+        );
+        return;
+      }
+
+      // Verificar que la entrega esté en estado PENDING_PAYMENT
+      if (delivery.status !== DeliveryStatus.PENDING_PAYMENT) {
+        console.warn(
+          `⚠️ Delivery ${deliverySubmissionId} is in status ${delivery.status}, expected PENDING_PAYMENT`,
+        );
+        // Continuar de todos modos para casos edge
+      }
+
+      // ✅ AQUÍ es donde realmente se aprueba la entrega (después de confirmar el pago)
+      await this.deliveryRepository.update(deliverySubmissionId, {
+        status: DeliveryStatus.APPROVED,
+        approvedAt: new Date(),
+      });
+
+      console.log(
+        `✅ Delivery ${deliverySubmissionId} approved after payment confirmation`,
+      );
+
+      // Si la entrega está asociada a un deliverable, aprobarlo también
+      if (delivery.deliverableId) {
+        await this.deliverableRepository.update(delivery.deliverableId, {
+          status: DeliverableStatus.APPROVED,
+          approvedAt: new Date(),
+        });
+
+        console.log(
+          `✅ Deliverable ${delivery.deliverableId} approved after payment confirmation`,
+        );
+      }
+    } catch (error) {
+      console.error(
+        `❌ Error approving delivery ${deliverySubmissionId}:`,
+        error.message,
+      );
+      // No re-throw para no bloquear el procesamiento del webhook
     }
   }
 }

@@ -18,7 +18,8 @@ export enum DeliveryType {
 export enum DeliveryStatus {
   PENDING = 'pending', // Creada pero no enviada
   DELIVERED = 'delivered', // Entregada, esperando revisión del cliente
-  APPROVED = 'approved', // Aprobada por el cliente
+  PENDING_PAYMENT = 'pending_payment', // Aprobada pero esperando confirmación de pago
+  APPROVED = 'approved', // Aprobada Y pagada
   REVISION_REQUESTED = 'revision_requested', // Cliente solicita revisión
 }
 
@@ -67,6 +68,9 @@ export class DeliverySubmission {
 
   @Column({ type: 'text', nullable: true })
   revisionNotes: string; // Notas del cliente si solicita revisión
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  mercadoPagoPaymentId: string; // ID del payment/preference en MercadoPago para rastrear
 
   @ManyToOne(() => ServiceHiring, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hiring_id' })
