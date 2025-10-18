@@ -49,10 +49,17 @@ export class CreateDeliveryUseCase {
       );
     }
 
-    // 3. Validar que el estado es APPROVED
-    if (hiring.status.code !== ServiceHiringStatusCode.APPROVED) {
+    // 3. Validar que el estado permite entregar
+    // Estados permitidos: APPROVED (inicial), IN_PROGRESS (trabajando), REVISION_REQUESTED (re-entrega)
+    const allowedStatuses = [
+      ServiceHiringStatusCode.APPROVED,
+      ServiceHiringStatusCode.IN_PROGRESS,
+      ServiceHiringStatusCode.REVISION_REQUESTED,
+    ];
+
+    if (!allowedStatuses.includes(hiring.status.code)) {
       throw new RpcException(
-        `No puedes entregar un servicio que no ha sido aprobado. Estado actual: ${hiring.status.name}`,
+        `No puedes entregar un servicio en estado ${hiring.status.name}. Estados permitidos: Aprobado, En Progreso, Revisión Solicitada.`,
       );
     }
 
@@ -79,19 +86,37 @@ export class CreateDeliveryUseCase {
         );
       }
 
-      // Validar que no haya una entrega aprobada para este entregable
+      // Validar estado de entregas existentes
       const existingDelivery =
         await this.deliveryRepository.findLatestByDeliverableId(
           createDto.deliverableId,
         );
 
-      if (
-        existingDelivery &&
-        existingDelivery.status === DeliveryStatus.APPROVED
-      ) {
-        throw new RpcException(
-          'Este entregable ya ha sido entregado y aprobado',
-        );
+      if (existingDelivery) {
+        // No permitir re-entregar si ya está aprobado
+        if (existingDelivery.status === DeliveryStatus.APPROVED) {
+          throw new RpcException(
+            'Este entregable ya ha sido entregado y aprobado',
+          );
+        }
+
+        // No permitir re-entregar si ya hay una entrega esperando revisión
+        // (solo permitir si está en revision_requested)
+        if (
+          existingDelivery.status === DeliveryStatus.DELIVERED ||
+          existingDelivery.status === DeliveryStatus.PENDING_PAYMENT
+        ) {
+          throw new RpcException(
+            'Ya existe una entrega pendiente de revisión. Espera la respuesta del cliente.',
+          );
+        }
+
+        // ✅ Permitir re-entregar si el estado es REVISION_REQUESTED
+        console.log('✅ Re-entregando después de solicitud de revisión', {
+          deliverableId: createDto.deliverableId,
+          previousDeliveryId: existingDelivery.id,
+          previousStatus: existingDelivery.status,
+        });
       }
 
       deliveryType = DeliveryType.DELIVERABLE;
@@ -102,15 +127,35 @@ export class CreateDeliveryUseCase {
       deliveryType = DeliveryType.FULL;
       price = Number(hiring.quotedPrice);
 
-      // Validar que no haya una entrega aprobada para esta contratación
+      // Validar estado de entregas existentes
       const existingDelivery =
         await this.deliveryRepository.findLatestByHiringId(hiringId);
 
-      if (
-        existingDelivery &&
-        existingDelivery.status === DeliveryStatus.APPROVED
-      ) {
-        throw new RpcException('Este servicio ya ha sido entregado y aprobado');
+      if (existingDelivery) {
+        // No permitir re-entregar si ya está aprobado
+        if (existingDelivery.status === DeliveryStatus.APPROVED) {
+          throw new RpcException(
+            'Este servicio ya ha sido entregado y aprobado',
+          );
+        }
+
+        // No permitir re-entregar si ya hay una entrega esperando revisión
+        // (solo permitir si está en revision_requested)
+        if (
+          existingDelivery.status === DeliveryStatus.DELIVERED ||
+          existingDelivery.status === DeliveryStatus.PENDING_PAYMENT
+        ) {
+          throw new RpcException(
+            'Ya existe una entrega pendiente de revisión. Espera la respuesta del cliente.',
+          );
+        }
+
+        // ✅ Permitir re-entregar si el estado es REVISION_REQUESTED
+        console.log('✅ Re-entregando después de solicitud de revisión', {
+          hiringId,
+          previousDeliveryId: existingDelivery.id,
+          previousStatus: existingDelivery.status,
+        });
       }
     }
 
@@ -143,18 +188,18 @@ export class CreateDeliveryUseCase {
       });
     }
 
-    // 7. Cambiar el estado del hiring a DELIVERED
-    const deliveredStatus = await this.statusRepository.findByCode(
-      ServiceHiringStatusCode.DELIVERED,
+    // 7. Actualizar el estado del hiring
+    // Si venía de REVISION_REQUESTED, cambiar a DELIVERED
+    // Para múltiples deliverables, recalcular el estado basándose en todos
+    await this.serviceHiringRepository.recalculateStatusFromDeliveries(
+      hiringId,
     );
 
-    if (deliveredStatus) {
-      await this.serviceHiringRepository.update(hiringId, {
-        statusId: deliveredStatus.id,
-      });
-
-      console.log('✅ Hiring status updated to DELIVERED');
-    }
+    console.log('✅ Hiring status recalculated after delivery submission', {
+      hiringId,
+      deliveryId: delivery.id,
+      previousStatus: hiring.status.code,
+    });
 
     // 8. Retornar respuesta
     return this.transformToResponse(delivery);

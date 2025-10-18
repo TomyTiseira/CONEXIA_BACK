@@ -83,6 +83,11 @@ export class UpdateDeliveryUseCase {
       });
     }
 
+    // Recalculate hiring status in case multiple deliveries affect overall status
+    await this.serviceHiringRepository.recalculateStatusFromDeliveries(
+      hiring.id,
+    );
+
     console.log('🔄 Delivery updated after revision:', {
       deliveryId,
       hiringId: delivery.hiringId,

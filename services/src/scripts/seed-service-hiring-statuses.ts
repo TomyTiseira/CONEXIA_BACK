@@ -46,6 +46,12 @@ async function bootstrap() {
         'Servicio o entregable entregado, esperando revisión del cliente',
     },
     {
+      name: 'Revisión Solicitada',
+      code: ServiceHiringStatusCode.REVISION_REQUESTED,
+      description:
+        'Cliente solicitó cambios en una o más entregas del servicio',
+    },
+    {
       name: 'Completado',
       code: ServiceHiringStatusCode.COMPLETED,
       description: 'Servicio completado',
