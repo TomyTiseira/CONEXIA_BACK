@@ -39,6 +39,7 @@ import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-se
 import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
 import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
+import { UpdateDeliveryUseCase } from './services/use-cases/update-delivery.use-case';
 import { ServiceHiringStateFactory } from './states/service-hiring-state.factory';
 
 @Module({
@@ -61,6 +62,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ProcessPaymentWebhookUseCase,
     CreateDeliveryUseCase,
     ReviewDeliveryUseCase,
+    UpdateDeliveryUseCase,
     ServiceHiringRepository,
     ServiceHiringStatusRepository,
     PaymentRepository,

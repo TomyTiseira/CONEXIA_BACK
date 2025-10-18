@@ -421,4 +421,47 @@ export class ServiceHiringsController {
         }),
       );
   }
+
+  @Put('deliveries/:deliveryId')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileInterceptor('attachment', {
+      storage: diskStorage({
+        destination: './uploads/deliveries',
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      limits: {
+        fileSize: 20 * 1024 * 1024, // 20MB
+      },
+    }),
+  )
+  updateDelivery(
+    @User() user: AuthenticatedUser,
+    @Param('deliveryId') deliveryId: number,
+    @Body() body: any,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const updateDto = {
+      content: body.content as string,
+      attachmentPath: file ? `/uploads/deliveries/${file.filename}` : undefined,
+    };
+
+    return this.client
+      .send('updateDelivery', {
+        deliveryId: +deliveryId,
+        serviceOwnerId: user.id,
+        updateDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
 }

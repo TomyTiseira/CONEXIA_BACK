@@ -173,6 +173,7 @@ export class CreateDeliveryUseCase {
       attachmentUrl: delivery.attachmentPath, // Enviar el mismo path, el frontend construye la URL
       price: Number(delivery.price),
       status: delivery.status,
+      needsWatermark: delivery.status !== DeliveryStatus.APPROVED, // Mostrar marca de agua hasta que se apruebe y pague
       deliveredAt: delivery.deliveredAt,
       reviewedAt: delivery.reviewedAt,
       approvedAt: delivery.approvedAt,

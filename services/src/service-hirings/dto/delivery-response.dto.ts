@@ -10,6 +10,7 @@ export class DeliverySubmissionResponseDto {
   attachmentUrl?: string; // Mismo que attachmentPath, el frontend construye la URL completa
   price: number;
   status: string;
+  needsWatermark: boolean; // true si el contenido debe mostrarse con marca de agua (status !== APPROVED)
   deliveredAt?: Date;
   reviewedAt?: Date;
   approvedAt?: Date;

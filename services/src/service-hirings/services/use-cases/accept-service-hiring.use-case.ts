@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { PaymentModalityCode } from '../../enums/payment-modality.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 import { ServiceHiringOperationsService } from '../service-hiring-operations.service';
@@ -16,8 +17,11 @@ export class AcceptServiceHiringUseCase {
   ) {}
 
   async execute(userId: number, hiringId: number) {
-    // Obtener la contratación
-    const hiring = await this.hiringRepository.findById(hiringId);
+    // Obtener la contratación con sus relaciones
+    const hiring = await this.hiringRepository.findById(hiringId, [
+      'status',
+      'paymentModality',
+    ]);
     if (!hiring) {
       throw new RpcException('Contratación no encontrada');
     }
@@ -36,14 +40,34 @@ export class AcceptServiceHiringUseCase {
       );
     }
 
-    // Obtener el estado "accepted"
-    const acceptedStatus = await this.statusService.getStatusByCode(
-      ServiceHiringStatusCode.ACCEPTED,
-    );
+    // Determinar el estado según la modalidad de pago
+    let targetStatusCode: ServiceHiringStatusCode;
+
+    if (hiring.paymentModality?.code === PaymentModalityCode.BY_DELIVERABLES) {
+      // Para pago por entregables: ir directamente a APPROVED
+      // (no hay pago inicial del 25%, se paga después de cada entrega)
+      targetStatusCode = ServiceHiringStatusCode.APPROVED;
+    } else {
+      // Para pago total: ir a ACCEPTED (luego debe pagar el 25% inicial)
+      targetStatusCode = ServiceHiringStatusCode.ACCEPTED;
+    }
+
+    // Obtener el estado correspondiente
+    let targetStatus;
+    try {
+      targetStatus = await this.statusService.getStatusByCode(targetStatusCode);
+    } catch (error) {
+      console.error('❌ Error getting status:', {
+        targetStatusCode,
+        error: error.message,
+        stack: error.stack,
+      });
+      throw error;
+    }
 
     // Actualizar la contratación
     const updatedHiring = await this.hiringRepository.update(hiring.id, {
-      statusId: acceptedStatus.id,
+      statusId: targetStatus.id,
       respondedAt: new Date(),
     });
 
@@ -51,6 +75,16 @@ export class AcceptServiceHiringUseCase {
       throw new RpcException('Error al aceptar la contratación');
     }
 
-    return this.transformService.transformToResponse(updatedHiring);
+    // Recargar con todas las relaciones necesarias para la respuesta
+    const hiringWithRelations = await this.hiringRepository.findById(
+      hiring.id,
+      ['status', 'service', 'paymentModality', 'deliverables'],
+    );
+
+    if (!hiringWithRelations) {
+      throw new RpcException('Error al cargar la contratación actualizada');
+    }
+
+    return this.transformService.transformToResponse(hiringWithRelations);
   }
 }

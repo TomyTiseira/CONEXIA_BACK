@@ -16,7 +16,9 @@ import {
   GetServiceHiringsDto,
   PaymentModalityResponseDto,
   ReviewDeliveryDto,
+  UpdateDeliveryDto,
 } from '../dto';
+import { DeliveryStatus } from '../entities/delivery-submission.entity';
 import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
 import { PaymentModalityService } from './payment-modality.service';
@@ -36,6 +38,7 @@ import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hir
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
+import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
 
 @Injectable()
 export class ServiceHiringsService {
@@ -57,6 +60,7 @@ export class ServiceHiringsService {
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
+    private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
     private readonly usersClientService: UsersClientService,
@@ -154,6 +158,21 @@ export class ServiceHiringsService {
           lastName: userWithProfile.profile?.lastName || '',
           email: userWithProfile.email,
           profilePicture: userWithProfile.profile?.profilePicture || null,
+        };
+      }
+    }
+
+    // Obtener información del cliente (usuario que contrató)
+    if (hiring.userId) {
+      const clientWithProfile =
+        await this.usersClientService.getUserByIdWithRelations(hiring.userId);
+      if (clientWithProfile) {
+        (hiring as any).client = {
+          id: clientWithProfile.id,
+          firstName: clientWithProfile.profile?.name || '',
+          lastName: clientWithProfile.profile?.lastName || '',
+          email: clientWithProfile.email,
+          profilePicture: clientWithProfile.profile?.profilePicture || null,
         };
       }
     }
@@ -286,10 +305,26 @@ export class ServiceHiringsService {
   async getDeliveriesByHiring(
     hiringId: number,
   ): Promise<DeliverySubmissionListResponseDto> {
+    // Obtener el hiring para verificar su estado
+    const hiring = await this.serviceHiringRepository.findById(hiringId, [
+      'status',
+    ]);
+
+    if (!hiring) {
+      throw new NotFoundException(
+        `Service hiring with ID ${hiringId} not found`,
+      );
+    }
+
+    // Obtener todas las entregas (sin filtrar por estado del hiring)
     const deliveries =
       await this.createDeliveryUseCase['deliveryRepository'].findByHiringId(
         hiringId,
       );
+
+    // Si el hiring está completado, quitar watermark de todas las entregas (ya pagó el 100%)
+    const hiringIsCompleted = hiring.status.code === 'completed';
+
     return {
       deliveries: deliveries.map((d) => ({
         id: d.id,
@@ -301,6 +336,11 @@ export class ServiceHiringsService {
         attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
         price: Number(d.price),
         status: d.status,
+        // Si el hiring está completado, no mostrar watermark (ya pagó)
+        // Si no está completado, mostrar watermark si la entrega no está aprobada
+        needsWatermark: hiringIsCompleted
+          ? false
+          : d.status !== DeliveryStatus.APPROVED,
         deliveredAt: d.deliveredAt,
         reviewedAt: d.reviewedAt,
         approvedAt: d.approvedAt,
@@ -321,6 +361,18 @@ export class ServiceHiringsService {
       deliveryId,
       clientUserId,
       reviewDto,
+    );
+  }
+
+  async updateDelivery(
+    deliveryId: number,
+    serviceOwnerId: number,
+    updateDto: UpdateDeliveryDto,
+  ): Promise<DeliverySubmissionResponseDto> {
+    return this.updateDeliveryUseCase.execute(
+      deliveryId,
+      serviceOwnerId,
+      updateDto,
     );
   }
 }
