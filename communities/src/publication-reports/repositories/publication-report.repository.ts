@@ -144,6 +144,11 @@ export class PublicationReportRepository extends Repository<PublicationReport> {
     >();
 
     reports.forEach((report) => {
+      // Verificar que la publicación existe y no está eliminada
+      if (!report.publication) {
+        return; // Saltar reportes de publicaciones eliminadas
+      }
+
       const publicationId = report.publicationId;
       const publicationTitle = report.publication.description;
       const isActive = report.publication.isActive;
