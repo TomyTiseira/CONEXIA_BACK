@@ -1,3 +1,4 @@
+export * from './claim.entity';
 export * from './deliverable.entity';
 export * from './delivery-submission.entity';
 export * from './payment-modality.entity';

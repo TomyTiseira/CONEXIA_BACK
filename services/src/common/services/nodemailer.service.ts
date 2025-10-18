@@ -1,0 +1,366 @@
+import { Injectable, Logger } from '@nestjs/common';
+import * as nodemailer from 'nodemailer';
+import { EmailOptions, EmailService } from './email.service';
+
+@Injectable()
+export class NodemailerService extends EmailService {
+  private readonly logger = new Logger(NodemailerService.name);
+  private transporter: nodemailer.Transporter;
+
+  constructor() {
+    super();
+    this.initializeTransporter();
+  }
+
+  private initializeTransporter() {
+    const smtpHost = process.env.SMTP_HOST || 'smtp.ethereal.email';
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+    const smtpSecure = process.env.SMTP_SECURE === 'true';
+    const smtpUser = process.env.SMTP_USER || '';
+    const smtpPass = process.env.SMTP_PASS || '';
+
+    this.transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+    // Verificar la conexión
+    this.transporter.verify((error) => {
+      if (error) {
+        this.logger.error('Error al verificar la conexión SMTP:', error);
+      } else {
+        this.logger.log('Servidor SMTP listo para enviar emails (Claims)');
+      }
+    });
+  }
+
+  async sendEmail(options: EmailOptions): Promise<void> {
+    const emailFrom = process.env.EMAIL_FROM || 'noreply@conexia.com';
+
+    // Enviar email de forma asíncrona sin bloquear la respuesta
+    this.transporter
+      .sendMail({
+        from: emailFrom,
+        to: Array.isArray(options.to) ? options.to.join(',') : options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      })
+      .then((info) => {
+        this.logger.log(
+          `[Claims] Email enviado a ${options.to}: ${info.messageId}`,
+        );
+      })
+      .catch((error) => {
+        this.logger.error('[Claims] Error al enviar email:', error);
+      });
+
+    return Promise.resolve();
+  }
+
+  async sendClaimCreatedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      claimType: string;
+      claimantName: string;
+      claimantRole: 'client' | 'provider';
+      description: string;
+    },
+  ): Promise<void> {
+    const isRecipientClient = claimData.claimantRole === 'provider';
+    const roleLabel = isRecipientClient ? 'proveedor' : 'cliente';
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `⚠️ Nuevo Reclamo - ${claimData.hiringTitle}`,
+      html: this.generateClaimCreatedEmailHTML(
+        recipientName,
+        roleLabel,
+        claimData,
+      ),
+      text: this.generateClaimCreatedEmailText(
+        recipientName,
+        roleLabel,
+        claimData,
+      ),
+    });
+  }
+
+  async sendClaimResolvedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      status: 'resolved' | 'rejected';
+      resolution: string;
+    },
+  ): Promise<void> {
+    const statusLabel =
+      claimData.status === 'resolved' ? 'Resuelto' : 'Rechazado';
+    const statusIcon = claimData.status === 'resolved' ? '✅' : '❌';
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `${statusIcon} Reclamo ${statusLabel} - ${claimData.hiringTitle}`,
+      html: this.generateClaimResolvedEmailHTML(
+        recipientName,
+        statusLabel,
+        claimData,
+      ),
+      text: this.generateClaimResolvedEmailText(
+        recipientName,
+        statusLabel,
+        claimData,
+      ),
+    });
+  }
+
+  async sendClaimCreatedAdminEmail(
+    adminEmail: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      claimType: string;
+      claimantName: string;
+      claimantRole: 'client' | 'provider';
+      description: string;
+    },
+  ): Promise<void> {
+    await this.sendEmail({
+      to: adminEmail,
+      subject: `🚨 [ADMIN] Nuevo Reclamo - ${claimData.hiringTitle}`,
+      html: this.generateClaimCreatedAdminEmailHTML(claimData),
+      text: this.generateClaimCreatedAdminEmailText(claimData),
+    });
+  }
+
+  // ===== HTML Templates =====
+
+  private generateClaimCreatedEmailHTML(
+    recipientName: string,
+    roleLabel: string,
+    claimData: any,
+  ): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #dc3545; margin: 0;">⚠️ Nuevo Reclamo</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            El <strong>${roleLabel}</strong> ha creado un reclamo para el servicio:
+          </p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #dc3545; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${claimData.hiringTitle}</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>Motivo:</strong> ${claimData.claimType}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Reclamante:</strong> ${claimData.claimantName}</p>
+          </div>
+          
+          <div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404; font-size: 14px;">
+              <strong>⚠️ Importante:</strong> El servicio y los pagos están congelados hasta que un moderador resuelva el reclamo.
+            </p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">
+            <strong>Descripción del problema:</strong><br>
+            ${claimData.description}
+          </p>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/claims/${claimData.claimId}" 
+               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Ver Detalles del Reclamo
+            </a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+              Recibirás una notificación cuando el reclamo sea resuelto.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateClaimResolvedEmailHTML(
+    recipientName: string,
+    statusLabel: string,
+    claimData: any,
+  ): string {
+    const statusColor = claimData.status === 'resolved' ? '#28a745' : '#dc3545';
+    const statusIcon = claimData.status === 'resolved' ? '✅' : '❌';
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: ${statusColor}; margin: 0;">${statusIcon} Reclamo ${statusLabel}</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            El reclamo para el servicio <strong>${claimData.hiringTitle}</strong> ha sido ${statusLabel.toLowerCase()} por un moderador.
+          </p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${statusColor}; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">Resolución:</h3>
+            <p style="margin: 0; color: #666;">${claimData.resolution}</p>
+          </div>
+          
+          <div style="background-color: ${claimData.status === 'resolved' ? '#d4edda' : '#f8d7da'}; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <p style="margin: 0; color: ${claimData.status === 'resolved' ? '#155724' : '#721c24'}; font-size: 14px;">
+              ${
+                claimData.status === 'resolved'
+                  ? '✓ El servicio ha sido desbloqueado y puedes continuar con las acciones correspondientes.'
+                  : '✗ El servicio ha sido desbloqueado. Por favor, revisa la resolución y continúa con el servicio normalmente.'
+              }
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/claims/${claimData.claimId}" 
+               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Ver Detalles Completos
+            </a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+              Si tienes dudas, contacta al equipo de soporte.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateClaimCreatedAdminEmailHTML(claimData: any): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #ff6b6b; margin: 0;">🚨 Nuevo Reclamo - Acción Requerida</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Equipo de Moderación,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Se ha creado un nuevo reclamo que requiere revisión:
+          </p>
+          
+          <div style="background-color: #fff3cd; padding: 20px; border-left: 4px solid #ff6b6b; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${claimData.hiringTitle}</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>ID Reclamo:</strong> ${claimData.claimId}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Tipo:</strong> ${claimData.claimType}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Reclamante:</strong> ${claimData.claimantName} (${claimData.claimantRole})</p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">
+            <strong>Descripción:</strong><br>
+            ${claimData.description}
+          </p>
+          
+          <div style="background-color: #f8d7da; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <p style="margin: 0; color: #721c24; font-size: 14px;">
+              <strong>⚠️ Servicio Congelado:</strong> Todas las acciones están suspendidas hasta que se resuelva este reclamo.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/admin/claims/${claimData.claimId}" 
+               style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Revisar Reclamo Ahora
+            </a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+              Panel de Administración - Conexia
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ===== Plain Text Templates =====
+
+  private generateClaimCreatedEmailText(
+    recipientName: string,
+    roleLabel: string,
+    claimData: any,
+  ): string {
+    return `
+Hola ${recipientName},
+
+El ${roleLabel} ha creado un reclamo para el servicio: ${claimData.hiringTitle}
+
+Motivo: ${claimData.claimType}
+Reclamante: ${claimData.claimantName}
+
+IMPORTANTE: El servicio y los pagos están congelados hasta que un moderador resuelva el reclamo.
+
+Descripción del problema:
+${claimData.description}
+
+Ver detalles: https://conexia.com/claims/${claimData.claimId}
+
+Recibirás una notificación cuando el reclamo sea resuelto.
+    `;
+  }
+
+  private generateClaimResolvedEmailText(
+    recipientName: string,
+    statusLabel: string,
+    claimData: any,
+  ): string {
+    return `
+Hola ${recipientName},
+
+El reclamo para el servicio "${claimData.hiringTitle}" ha sido ${statusLabel.toLowerCase()} por un moderador.
+
+Resolución:
+${claimData.resolution}
+
+El servicio ha sido desbloqueado y puedes continuar con las acciones correspondientes.
+
+Ver detalles: https://conexia.com/claims/${claimData.claimId}
+    `;
+  }
+
+  private generateClaimCreatedAdminEmailText(claimData: any): string {
+    return `
+[ADMIN] Nuevo Reclamo - Acción Requerida
+
+Se ha creado un nuevo reclamo que requiere revisión:
+
+Servicio: ${claimData.hiringTitle}
+ID Reclamo: ${claimData.claimId}
+Tipo: ${claimData.claimType}
+Reclamante: ${claimData.claimantName} (${claimData.claimantRole})
+
+Descripción:
+${claimData.description}
+
+IMPORTANTE: El servicio está congelado hasta que se resuelva este reclamo.
+
+Revisar reclamo: https://conexia.com/admin/claims/${claimData.claimId}
+    `;
+  }
+}

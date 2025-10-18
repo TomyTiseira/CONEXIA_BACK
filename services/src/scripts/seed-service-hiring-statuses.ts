@@ -71,6 +71,12 @@ async function bootstrap() {
       code: ServiceHiringStatusCode.EXPIRED,
       description: 'Cotización vencida por tiempo límite',
     },
+    {
+      name: 'En Reclamo',
+      code: ServiceHiringStatusCode.IN_CLAIM,
+      description:
+        'Servicio tiene un reclamo activo. Todas las acciones están suspendidas hasta que se resuelva',
+    },
   ];
 
   for (const status of statuses) {

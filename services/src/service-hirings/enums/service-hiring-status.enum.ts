@@ -11,4 +11,5 @@ export enum ServiceHiringStatusCode {
   COMPLETED = 'completed',
   NEGOTIATING = 'negotiating',
   EXPIRED = 'expired',
+  IN_CLAIM = 'in_claim',
 }
