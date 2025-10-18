@@ -274,4 +274,20 @@ export class ServiceHiringsController {
       data.reviewDto,
     );
   }
+
+  @MessagePattern('updateDelivery')
+  async updateDelivery(
+    @Payload()
+    data: {
+      deliveryId: number;
+      serviceOwnerId: number;
+      updateDto: any;
+    },
+  ) {
+    return this.serviceHiringsService.updateDelivery(
+      data.deliveryId,
+      data.serviceOwnerId,
+      data.updateDto,
+    );
+  }
 }

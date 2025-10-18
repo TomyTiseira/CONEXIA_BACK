@@ -8,3 +8,4 @@ export * from './delivery-response.dto';
 export * from './get-service-hirings.dto';
 export * from './payment-modality-response.dto';
 export * from './review-delivery.dto';
+export * from './update-delivery.dto';

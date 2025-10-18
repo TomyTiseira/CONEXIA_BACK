@@ -104,20 +104,76 @@ export class ProcessPaymentWebhookUseCase {
       processedAt: new Date(),
     });
 
-    // Obtener el estado "approved"
-    const approvedStatus = await this.statusService.getStatusByCode(
-      ServiceHiringStatusCode.APPROVED,
-    );
+    // Determinar el nuevo estado del hiring basado en el tipo de pago
+    const hiring = await this.hiringRepository.findById(payment.hiringId, [
+      'payments',
+      'deliverables',
+    ]);
 
-    // Actualizar estado de la contratación
-    await this.hiringRepository.update(payment.hiringId, {
-      statusId: approvedStatus.id,
-      respondedAt: new Date(),
-    });
+    if (!hiring) {
+      console.error(`Hiring ${payment.hiringId} not found`);
+      return;
+    }
 
-    console.log(
-      `Payment ${payment.id} approved and hiring ${payment.hiringId} updated to approved status`,
-    );
+    // Si es pago de delivery (FULL, FINAL o DELIVERABLE), verificar si debe completarse
+    if (
+      payment.paymentType === 'full' ||
+      payment.paymentType === 'final' ||
+      payment.paymentType === 'deliverable'
+    ) {
+      // Para pagos de tipo DELIVERABLE, verificar si quedan entregables pendientes
+      if (payment.paymentType === 'deliverable') {
+        const pendingDeliverables =
+          hiring.deliverables?.filter(
+            (d) => d.status !== 'approved' && d.status !== 'rejected',
+          ).length || 0;
+
+        if (pendingDeliverables > 0) {
+          // Aún quedan entregables pendientes, volver a APPROVED
+          const approvedStatus = await this.statusService.getStatusByCode(
+            ServiceHiringStatusCode.APPROVED,
+          );
+
+          await this.hiringRepository.update(payment.hiringId, {
+            statusId: approvedStatus.id,
+            respondedAt: new Date(),
+          });
+
+          console.log(
+            `Payment ${payment.id} approved. Hiring ${payment.hiringId} updated to APPROVED status. Pending deliverables: ${pendingDeliverables}`,
+          );
+          return;
+        }
+      }
+
+      // Si es FULL, FINAL, o es el último DELIVERABLE, marcar como COMPLETED
+      const completedStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.COMPLETED,
+      );
+
+      await this.hiringRepository.update(payment.hiringId, {
+        statusId: completedStatus.id,
+        respondedAt: new Date(),
+      });
+
+      console.log(
+        `Payment ${payment.id} approved and hiring ${payment.hiringId} updated to COMPLETED status (${payment.paymentType} payment)`,
+      );
+    } else {
+      // Si es pago inicial (INITIAL), mantener en APPROVED
+      const approvedStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.APPROVED,
+      );
+
+      await this.hiringRepository.update(payment.hiringId, {
+        statusId: approvedStatus.id,
+        respondedAt: new Date(),
+      });
+
+      console.log(
+        `Payment ${payment.id} approved and hiring ${payment.hiringId} updated to APPROVED status (initial payment)`,
+      );
+    }
   }
 
   private async rejectPayment(payment, mpPayment): Promise<void> {
