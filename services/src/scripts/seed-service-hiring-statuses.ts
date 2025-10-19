@@ -77,6 +77,24 @@ async function bootstrap() {
       description:
         'Servicio tiene un reclamo activo. Todas las acciones están suspendidas hasta que se resuelva',
     },
+    // Estados finales por resolución de reclamos
+    {
+      name: 'Cancelado por reclamo',
+      code: ServiceHiringStatusCode.CANCELLED_BY_CLAIM,
+      description:
+        'Contratación cancelada por reclamo resuelto a favor del cliente',
+    },
+    {
+      name: 'Finalizado por reclamo',
+      code: ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+      description:
+        'Contratación finalizada por reclamo resuelto a favor del proveedor',
+    },
+    {
+      name: 'Finalizado con acuerdo',
+      code: ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+      description: 'Contratación finalizada con acuerdo parcial tras reclamo',
+    },
   ];
 
   for (const status of statuses) {

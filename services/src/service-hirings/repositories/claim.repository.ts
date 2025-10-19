@@ -45,13 +45,14 @@ export class ClaimRepository {
   }
 
   /**
-   * Verifica si hay cualquier reclamo activo (OPEN o IN_REVIEW)
+   * Verifica si hay cualquier reclamo activo (OPEN, IN_REVIEW o PENDING_CLARIFICATION)
    */
   async hasActiveClaim(hiringId: number): Promise<boolean> {
     const count = await this.repository.count({
       where: [
         { hiringId, status: ClaimStatus.OPEN },
         { hiringId, status: ClaimStatus.IN_REVIEW },
+        { hiringId, status: ClaimStatus.PENDING_CLARIFICATION },
       ],
     });
     return count > 0;
@@ -93,13 +94,60 @@ export class ClaimRepository {
     status: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
     resolution: string,
     resolvedBy: number,
+    resolutionType?: string,
+    partialAgreementDetails?: string,
   ): Promise<Claim | null> {
     await this.repository.update(id, {
       status,
       resolution,
+      resolutionType: resolutionType as any,
       resolvedBy,
       resolvedAt: new Date(),
+      ...(partialAgreementDetails && { partialAgreementDetails }),
     });
+    return await this.findById(id);
+  }
+
+  async addObservations(
+    id: string,
+    observations: string,
+    observationsBy: number,
+  ): Promise<Claim | null> {
+    await this.repository.update(id, {
+      status: ClaimStatus.PENDING_CLARIFICATION,
+      observations,
+      observationsBy,
+      observationsAt: new Date(),
+    });
+    return await this.findById(id);
+  }
+
+  async updateClaimEvidence(
+    id: string,
+    updateData: {
+      description?: string;
+      evidenceUrls?: string[];
+    },
+  ): Promise<Claim | null> {
+    const claim = await this.findById(id);
+    if (!claim) return null;
+
+    const updates: any = {
+      status: ClaimStatus.OPEN, // Vuelve a estado OPEN después de subsanar
+    };
+
+    // Si hay nueva descripción, actualizarla
+    if (updateData.description) {
+      updates.description = updateData.description;
+    }
+
+    // Si hay nuevas evidencias, agregarlas a las existentes
+    if (updateData.evidenceUrls && updateData.evidenceUrls.length > 0) {
+      const existingUrls = claim.evidenceUrls || [];
+      updates.evidenceUrls = [...existingUrls, ...updateData.evidenceUrls];
+    }
+
+    await this.repository.update(id, updates);
     return await this.findById(id);
   }
 }

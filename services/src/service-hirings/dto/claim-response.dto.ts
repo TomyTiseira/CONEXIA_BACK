@@ -1,4 +1,9 @@
-import { ClaimRole, ClaimStatus, ClaimType } from '../enums/claim.enum';
+import {
+  ClaimResolutionType,
+  ClaimRole,
+  ClaimStatus,
+  ClaimType,
+} from '../enums/claim.enum';
 
 export class ClaimResponseDto {
   id: string;
@@ -9,7 +14,12 @@ export class ClaimResponseDto {
   description: string;
   evidenceUrls: string[];
   status: ClaimStatus;
+  observations: string | null;
+  observationsBy: number | null;
+  observationsAt: Date | null;
   resolution: string | null;
+  resolutionType: ClaimResolutionType | null;
+  partialAgreementDetails: string | null;
   resolvedBy: number | null;
   resolvedAt: Date | null;
   createdAt: Date;
@@ -48,7 +58,12 @@ export class ClaimResponseDto {
     dto.description = claim.description;
     dto.evidenceUrls = claim.evidenceUrls || [];
     dto.status = claim.status;
+    dto.observations = claim.observations;
+    dto.observationsBy = claim.observationsBy;
+    dto.observationsAt = claim.observationsAt;
     dto.resolution = claim.resolution;
+    dto.resolutionType = claim.resolutionType;
+    dto.partialAgreementDetails = claim.partialAgreementDetails;
     dto.resolvedBy = claim.resolvedBy;
     dto.resolvedAt = claim.resolvedAt;
     dto.createdAt = claim.createdAt;

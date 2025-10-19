@@ -1,12 +1,16 @@
 import { Controller, NotFoundException } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { AddObservationsDto } from '../dto/add-observations.dto';
 import { ClaimResponseDto } from '../dto/claim-response.dto';
 import { CreateClaimDto } from '../dto/create-claim.dto';
 import { GetClaimsDto } from '../dto/get-claims.dto';
 import { ResolveClaimDto } from '../dto/resolve-claim.dto';
+import { UpdateClaimDto } from '../dto/update-claim.dto';
+import { AddObservationsUseCase } from '../services/use-cases/add-observations.use-case';
 import { CreateClaimUseCase } from '../services/use-cases/create-claim.use-case';
 import { GetClaimsUseCase } from '../services/use-cases/get-claims.use-case';
 import { ResolveClaimUseCase } from '../services/use-cases/resolve-claim.use-case';
+import { UpdateClaimUseCase } from '../services/use-cases/update-claim.use-case';
 
 /**
  * Controlador de Reclamos (Claims) - NATS Microservice
@@ -17,6 +21,8 @@ import { ResolveClaimUseCase } from '../services/use-cases/resolve-claim.use-cas
  * - getClaimsByHiring - Obtener reclamos de una contratación
  * - getClaimById - Obtener un reclamo específico
  * - resolveClaim - Resolver un reclamo
+ * - addClaimObservations - Agregar observaciones (estado PENDING_CLARIFICATION)
+ * - updateClaim - Subsanar reclamo (actualizar descripción/evidencias)
  * - markClaimAsInReview - Marcar como "en revisión"
  */
 @Controller()
@@ -25,6 +31,8 @@ export class ClaimsController {
     private readonly createClaimUseCase: CreateClaimUseCase,
     private readonly getClaimsUseCase: GetClaimsUseCase,
     private readonly resolveClaimUseCase: ResolveClaimUseCase,
+    private readonly addObservationsUseCase: AddObservationsUseCase,
+    private readonly updateClaimUseCase: UpdateClaimUseCase,
   ) {}
 
   @MessagePattern('createClaim')
@@ -81,6 +89,40 @@ export class ClaimsController {
   @MessagePattern('markClaimAsInReview')
   async markAsInReview(@Payload() data: { claimId: string }) {
     const claim = await this.resolveClaimUseCase.markAsInReview(data.claimId);
+    return ClaimResponseDto.fromEntity(claim);
+  }
+
+  @MessagePattern('addClaimObservations')
+  async addObservations(
+    @Payload()
+    data: {
+      claimId: string;
+      moderatorId: number;
+      dto: AddObservationsDto;
+    },
+  ) {
+    const claim = await this.addObservationsUseCase.execute(
+      data.claimId,
+      data.moderatorId,
+      data.dto,
+    );
+    return ClaimResponseDto.fromEntity(claim);
+  }
+
+  @MessagePattern('updateClaim')
+  async updateClaim(
+    @Payload()
+    data: {
+      claimId: string;
+      userId: number;
+      updateDto: UpdateClaimDto;
+    },
+  ) {
+    const claim = await this.updateClaimUseCase.execute(
+      data.claimId,
+      data.userId,
+      data.updateDto,
+    );
     return ClaimResponseDto.fromEntity(claim);
   }
 }
