@@ -7,7 +7,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ClaimRole, ClaimStatus, ClaimType } from '../enums/claim.enum';
+import {
+  ClaimResolutionType,
+  ClaimRole,
+  ClaimStatus,
+  ClaimType,
+} from '../enums/claim.enum';
 import { ServiceHiring } from './service-hiring.entity';
 
 @Entity('claims')
@@ -66,9 +71,34 @@ export class Claim {
   @Column({ name: 'previous_hiring_status_id', type: 'int', nullable: true })
   previousHiringStatusId: number | null;
 
+  // Observaciones del moderador (para "Pendiente subsanación")
+  @Column({ type: 'text', nullable: true })
+  observations: string | null;
+
+  @Column({ name: 'observations_by', type: 'int', nullable: true })
+  observationsBy: number | null;
+
+  @Column({ name: 'observations_at', type: 'timestamp', nullable: true })
+  observationsAt: Date | null;
+
   // Resolución (cuando se cierre el reclamo)
   @Column({ type: 'text', nullable: true })
   resolution: string | null;
+
+  @Column({
+    name: 'resolution_type',
+    type: 'enum',
+    enum: ClaimResolutionType,
+    nullable: true,
+  })
+  resolutionType: ClaimResolutionType | null;
+
+  @Column({
+    name: 'partial_agreement_details',
+    type: 'text',
+    nullable: true,
+  })
+  partialAgreementDetails: string | null;
 
   @Column({ name: 'resolved_by', type: 'int', nullable: true })
   resolvedBy: number | null;

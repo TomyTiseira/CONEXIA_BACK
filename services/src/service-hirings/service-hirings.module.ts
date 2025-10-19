@@ -27,6 +27,7 @@ import { ServiceHiringTransformService } from './services/service-hiring-transfo
 import { ServiceHiringValidationService } from './services/service-hiring-validation.service';
 import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
+import { AddObservationsUseCase } from './services/use-cases/add-observations.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
 import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
 import { CreateClaimUseCase } from './services/use-cases/create-claim.use-case';
@@ -45,6 +46,7 @@ import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payme
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
 import { ResolveClaimUseCase } from './services/use-cases/resolve-claim.use-case';
 import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
+import { UpdateClaimUseCase } from './services/use-cases/update-claim.use-case';
 import { UpdateDeliveryUseCase } from './services/use-cases/update-delivery.use-case';
 import { ServiceHiringStateFactory } from './states/service-hiring-state.factory';
 
@@ -72,6 +74,8 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     CreateClaimUseCase,
     GetClaimsUseCase,
     ResolveClaimUseCase,
+    AddObservationsUseCase,
+    UpdateClaimUseCase,
     ServiceHiringRepository,
     ClaimRepository,
     ServiceHiringStatusRepository,

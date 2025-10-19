@@ -15,8 +15,16 @@ export enum ClaimType {
 export enum ClaimStatus {
   OPEN = 'open', // Recién creado, esperando revisión
   IN_REVIEW = 'in_review', // Moderador revisando
+  PENDING_CLARIFICATION = 'pending_clarification', // Pendiente subsanación (esperando respuesta)
   RESOLVED = 'resolved', // Resuelto favorablemente
   REJECTED = 'rejected', // Rechazado (reclamo infundado)
+}
+
+// Tipo de resolución (determina el estado final del hiring)
+export enum ClaimResolutionType {
+  CLIENT_FAVOR = 'client_favor', // A favor del cliente → Cancelado por reclamo
+  PROVIDER_FAVOR = 'provider_favor', // A favor del proveedor → Finalizado por reclamo
+  PARTIAL_AGREEMENT = 'partial_agreement', // Acuerdo parcial → Finalizado con acuerdo
 }
 
 // Rol del reclamante

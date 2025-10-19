@@ -20,7 +20,12 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
-import { CreateClaimDto, GetClaimsDto, ResolveClaimDto } from './dto';
+import {
+  CreateClaimDto,
+  GetClaimsDto,
+  ResolveClaimDto,
+  UpdateClaimDto,
+} from './dto';
 
 /**
  * Claims Controller - API Gateway
@@ -192,6 +197,114 @@ export class ClaimsController {
     return this.client
       .send('markClaimAsInReview', {
         claimId: id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
+   * PATCH /claims/:id/observations
+   * Agregar observaciones a un reclamo (cambia estado a PENDING_CLARIFICATION)
+   * Solo admins/moderadores
+   */
+  @Patch(':id/observations')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  addObservations(
+    @User() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: { observations: string },
+  ) {
+    return this.client
+      .send('addClaimObservations', {
+        claimId: id,
+        moderatorId: user.id,
+        dto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
+   * PATCH /claims/:id/update
+   * Subsanar un reclamo (actualizar descripción y/o evidencias)
+   * Solo el denunciante (cliente o proveedor) puede subsanar
+   * Solo disponible para reclamos en estado PENDING_CLARIFICATION
+   *
+   * FormData fields:
+   * - description: string (opcional, 50-2000 chars)
+   * - evidence: file[] (opcional, se agregan a las existentes, máximo 10 total)
+   */
+  @Patch(':id/update')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'evidence', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads', 'claims'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + extname(file.originalname));
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo por archivo
+      fileFilter: (req, file, cb) => {
+        // Permitir imágenes, PDFs, documentos, videos y GIFs
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/jpg',
+          'image/gif',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'video/mp4',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new RpcException({
+              status: 400,
+              message:
+                'Solo se permiten imágenes (JPEG, PNG, GIF), PDFs, documentos Word y videos MP4.',
+            }),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  updateClaim(
+    @User() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() body: { description?: string },
+    @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
+  ) {
+    const updateDto: UpdateClaimDto = {};
+
+    // Agregar descripción si se proporciona
+    if (body.description) {
+      updateDto.description = body.description;
+    }
+
+    // Agregar las URLs de las nuevas evidencias si existen
+    if (files && files.evidence && files.evidence.length > 0) {
+      updateDto.evidenceUrls = files.evidence.map(
+        (file) => `/uploads/claims/${file.filename}`,
+      );
+    }
+
+    return this.client
+      .send('updateClaim', {
+        claimId: id,
+        userId: user.id,
+        updateDto,
       })
       .pipe(
         catchError((error) => {

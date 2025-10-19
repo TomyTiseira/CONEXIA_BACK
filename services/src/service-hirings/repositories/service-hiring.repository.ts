@@ -20,10 +20,34 @@ export class ServiceHiringRepository {
     id: number,
     relations?: string[],
   ): Promise<ServiceHiring | null> {
-    return this.repository.findOne({
+    const defaultRelations = ['status', 'service', 'paymentModality'];
+    const allRelations = relations || defaultRelations;
+
+    const hiring = await this.repository.findOne({
       where: { id },
-      relations: relations || ['status', 'service', 'paymentModality'],
+      relations: allRelations,
     });
+
+    // Si el hiring está en estado 'in_claim', cargar el claim activo
+    if (hiring && hiring.status?.code === 'in_claim') {
+      const qb = this.repository
+        .createQueryBuilder('hiring')
+        .leftJoinAndSelect(
+          'hiring.claims',
+          'claim',
+          "claim.status IN ('open', 'in_review', 'pending_clarification')",
+        )
+        .where('hiring.id = :id', { id })
+        .orderBy('claim.createdAt', 'DESC')
+        .limit(1);
+
+      const hiringWithClaim = await qb.getOne();
+      if (hiringWithClaim?.claims) {
+        hiring.claims = hiringWithClaim.claims;
+      }
+    }
+
+    return hiring;
   }
 
   async findByUserAndService(
@@ -53,7 +77,12 @@ export class ServiceHiringRepository {
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.status', 'status')
       .leftJoinAndSelect('hiring.service', 'service')
-      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality');
+      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality')
+      .leftJoinAndSelect(
+        'hiring.claims',
+        'claim',
+        "status.code = 'in_claim' AND claim.status IN ('open', 'in_review', 'pending_clarification')",
+      );
 
     if (status) {
       queryBuilder.andWhere('status.code = :status', { status });
@@ -74,7 +103,8 @@ export class ServiceHiringRepository {
         'priority_order',
       )
       .orderBy('priority_order', 'ASC')
-      .addOrderBy('hiring.createdAt', 'DESC');
+      .addOrderBy('hiring.createdAt', 'DESC')
+      .addOrderBy('claim.createdAt', 'DESC'); // Claim más reciente primero
 
     const offset = (page - 1) * limit;
     queryBuilder.skip(offset).take(limit);
@@ -95,6 +125,11 @@ export class ServiceHiringRepository {
       .leftJoinAndSelect('hiring.status', 'status')
       .leftJoinAndSelect('hiring.service', 'service')
       .leftJoinAndSelect('hiring.paymentModality', 'paymentModality')
+      .leftJoinAndSelect(
+        'hiring.claims',
+        'claim',
+        "status.code = 'in_claim' AND claim.status IN ('open', 'in_review', 'pending_clarification')",
+      )
       .where('service.userId = :serviceOwnerId', { serviceOwnerId });
 
     if (status) {
@@ -113,7 +148,8 @@ export class ServiceHiringRepository {
         'priority_order',
       )
       .orderBy('priority_order', 'ASC')
-      .addOrderBy('hiring.createdAt', 'DESC');
+      .addOrderBy('hiring.createdAt', 'DESC')
+      .addOrderBy('claim.createdAt', 'DESC'); // Claim más reciente primero
 
     const offset = (page - 1) * limit;
     queryBuilder.skip(offset).take(limit);

@@ -30,6 +30,7 @@ export interface ServiceHiringResponse {
   isExpired?: boolean;
   paymentModality?: PaymentModalityResponseDto;
   deliverables?: DeliverableResponseDto[];
+  claimId?: string; // ID del claim activo cuando status es 'in_claim'
   status: {
     id: number;
     name: string;
@@ -78,6 +79,12 @@ export class ServiceHiringTransformService {
       ? deliverablesMap.get(hiring.id) || []
       : await this.deliverableRepository.findByHiringId(hiring.id);
 
+    // Extraer el claim activo si existe (cuando status es 'in_claim')
+    const activeClaim =
+      hiring.claims && hiring.claims.length > 0
+        ? hiring.claims[0] // Ya viene ordenado por createdAt DESC desde el repository
+        : null;
+
     return {
       id: hiring.id,
       serviceId: hiring.serviceId,
@@ -123,6 +130,7 @@ export class ServiceHiringTransformService {
               updatedAt: d.updatedAt,
             }))
           : undefined,
+      claimId: activeClaim?.id, // Agregar el claimId si existe un claim activo
       status: {
         id: hiring.status.id,
         name: hiring.status.name,

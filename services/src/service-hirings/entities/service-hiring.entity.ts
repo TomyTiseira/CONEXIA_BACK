@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Service } from '../../services/entities/service.entity';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
+import { Claim } from './claim.entity';
 import { Deliverable } from './deliverable.entity';
 import { PaymentModality } from './payment-modality.entity';
 import { Payment } from './payment.entity';
@@ -73,6 +74,9 @@ export class ServiceHiring {
 
   @OneToMany(() => Deliverable, (deliverable) => deliverable.hiring)
   deliverables: Deliverable[];
+
+  @OneToMany(() => Claim, (claim) => claim.hiring)
+  claims: Claim[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

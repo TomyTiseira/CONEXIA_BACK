@@ -4,8 +4,11 @@ import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 import { ServiceHiringStateInterface } from '../interfaces/service-hiring-state.interface';
 import { AcceptedServiceHiringState } from './accepted-service-hiring.state';
 import { ApprovedServiceHiringState } from './approved-service-hiring.state';
+import { CancelledByClaimServiceHiringState } from './cancelled-by-claim-service-hiring.state';
 import { CancelledServiceHiringState } from './cancelled-service-hiring.state';
+import { CompletedByClaimServiceHiringState } from './completed-by-claim-service-hiring.state';
 import { CompletedServiceHiringState } from './completed-service-hiring.state';
+import { CompletedWithAgreementServiceHiringState } from './completed-with-agreement-service-hiring.state';
 import { DeliveredServiceHiringState } from './delivered-service-hiring.state';
 import { ExpiredServiceHiringState } from './expired-service-hiring.state';
 import { InClaimServiceHiringState } from './in-claim-service-hiring.state';
@@ -50,6 +53,12 @@ export class ServiceHiringStateFactory {
         return new ExpiredServiceHiringState();
       case ServiceHiringStatusCode.IN_CLAIM:
         return new InClaimServiceHiringState();
+      case ServiceHiringStatusCode.CANCELLED_BY_CLAIM:
+        return new CancelledByClaimServiceHiringState();
+      case ServiceHiringStatusCode.COMPLETED_BY_CLAIM:
+        return new CompletedByClaimServiceHiringState();
+      case ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT:
+        return new CompletedWithAgreementServiceHiringState();
       default:
         throw new Error(`Unknown service hiring status: ${hiring.status.code}`);
     }

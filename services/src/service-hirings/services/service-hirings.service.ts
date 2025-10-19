@@ -132,6 +132,7 @@ export class ServiceHiringsService {
       'status',
       'paymentModality',
       'deliverables',
+      'claims', // Incluir claims (se cargará automáticamente si está en 'in_claim')
     ]);
 
     if (!hiring) {
