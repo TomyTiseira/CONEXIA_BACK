@@ -43,6 +43,13 @@ export interface ServiceHiringResponse {
     timeUnit: TimeUnit | null;
     images?: string[];
   };
+  owner?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profileImage: string | null;
+  };
   createdAt: Date;
   updatedAt: Date;
   availableActions: string[];
@@ -62,6 +69,7 @@ export class ServiceHiringTransformService {
     availableActions: string[] = [],
     user?: any,
     deliverablesMap?: Map<number, Deliverable[]>,
+    owner?: any,
   ): Promise<ServiceHiringResponse> {
     const isExpired = this.isQuotationExpired(hiring);
 
@@ -128,6 +136,15 @@ export class ServiceHiringTransformService {
         timeUnit: hiring.service.timeUnit || TimeUnit.HOURS,
         images: hiring.service.images,
       },
+      owner: owner
+        ? {
+            id: owner.id,
+            firstName: owner.profile?.name || owner.firstName || 'Usuario',
+            lastName: owner.profile?.lastName || owner.lastName || '',
+            email: owner.email || '',
+            profileImage: owner.profile?.profilePicture || null,
+          }
+        : undefined,
       createdAt: hiring.createdAt,
       updatedAt: hiring.updatedAt,
       availableActions,
@@ -153,6 +170,7 @@ export class ServiceHiringTransformService {
     params: GetServiceHiringsDto,
     availableActionsMap: Map<number, string[]> = new Map(),
     usersMap?: Map<number, any>,
+    ownersMap?: Map<number, any>,
   ): Promise<ServiceHiringListResponse> {
     // Optimización: cargar todos los deliverables de una vez
     const hiringIds = hirings.map((h) => h.id);
@@ -169,14 +187,18 @@ export class ServiceHiringTransformService {
         });
 
         // Transformar hirings con deliverables precargados
-        const dataPromises = hirings.map((hiring) =>
-          this.transformToResponse(
+        const dataPromises = hirings.map((hiring) => {
+          const ownerId = hiring.service?.userId;
+          const owner = ownersMap?.get(ownerId);
+
+          return this.transformToResponse(
             hiring,
             availableActionsMap.get(hiring.id) || [],
             usersMap?.get(hiring.userId),
             deliverablesMap,
-          ),
-        );
+            owner,
+          );
+        });
 
         return Promise.all(dataPromises);
       })

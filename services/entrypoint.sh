@@ -20,4 +20,4 @@ npx ts-node src/scripts/seed-service-categories.ts
 npx ts-node src/scripts/seed-service-hiring-statuses.ts
 
 # Esperar a que la aplicación termine
-wait $APP_PID 
+wait $APP_PID

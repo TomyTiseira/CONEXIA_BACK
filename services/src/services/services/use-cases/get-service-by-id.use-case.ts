@@ -23,10 +23,18 @@ export class GetServiceByIdUseCase {
     }
 
     // Obtener información del dueño del servicio
-    const users = await this.usersClientService.getUsersByIds([service.userId]);
+    let users = await this.usersClientService.getUsersByIds([service.userId]);
 
+    // Si no se encuentra el usuario, usar valores por defecto
     if (!users || users.length === 0) {
-      throw new ServiceNotFoundException(data.id);
+      const defaultUser = {
+        id: service.userId,
+        firstName: '',
+        lastName: '',
+        email: '',
+        profile: null,
+      };
+      users = [defaultUser];
     }
 
     // Obtener información de cotizaciones para el servicio
@@ -34,6 +42,13 @@ export class GetServiceByIdUseCase {
       await this.serviceHiringRepository.getQuotationInfoForServices(
         [service.id],
         data.currentUserId,
+      );
+
+    // Obtener la cotización activa (service_hirings) para el usuario y el servicio
+    const serviceHiring =
+      await this.serviceHiringRepository.findAnyHiringByUserAndService(
+        data.currentUserId,
+        service.id,
       );
 
     // Transformar el servicio usando la función común
@@ -44,7 +59,10 @@ export class GetServiceByIdUseCase {
       quotationInfo,
     );
 
-    // Retornar el primer (y único) servicio transformado
-    return transformedServices[0];
+    // Retornar el primer (y único) servicio transformado junto con la cotización activa
+    return {
+      ...transformedServices[0],
+      serviceHiring,
+    };
   }
 }

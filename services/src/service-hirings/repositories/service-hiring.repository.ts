@@ -254,6 +254,22 @@ export class ServiceHiringRepository {
       .getOne();
   }
 
+  async findAnyHiringByUserAndService(
+    userId: number,
+    serviceId: number,
+  ): Promise<ServiceHiring | null> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoinAndSelect('hiring.status', 'status')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .leftJoinAndSelect('hiring.paymentModality', 'paymentModality')
+      .where('hiring.userId = :userId', { userId })
+      .andWhere('hiring.serviceId = :serviceId', { serviceId })
+      .andWhere('status.code NOT IN (:...finalStatuses)', {
+        finalStatuses: ['completed', 'cancelled', 'rejected'],
+      })
+      .orderBy('hiring.createdAt', 'DESC')
+      .getOne();
   /**
    * Recalculate the ServiceHiring status based on the statuses of its deliveries.
    * Rules (matching backend spec):

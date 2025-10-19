@@ -66,9 +66,6 @@ export class ReportRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<[any[], number]> {
-    // Calcular skip para paginación
-    const skip = (page - 1) * limit;
-
     // Obtener todos los reportes con información básica del proyecto
     // NO incluir reportes de proyectos eliminados
     const queryBuilder = this.repository
@@ -91,10 +88,7 @@ export class ReportRepository {
         orderBy === OrderByReport.LAST_REPORT_DATE ? 'DESC' : 'ASC',
       );
 
-    // Aplicar paginación
-    queryBuilder.skip(skip).take(limit);
-
-    const [reports, total] = await queryBuilder.getManyAndCount();
+    const reports = await queryBuilder.getMany();
 
     // Agrupar por proyecto y contar reportes
     const projectMap = new Map<
@@ -142,19 +136,24 @@ export class ReportRepository {
     });
 
     // Convertir a array y ordenar
-    const result = Array.from(projectMap.values());
+    const allProjects = Array.from(projectMap.values());
 
     if (orderBy === OrderByReport.LAST_REPORT_DATE) {
-      result.sort(
+      allProjects.sort(
         (a, b) =>
           new Date(b.lastReportDate).getTime() -
           new Date(a.lastReportDate).getTime(),
       );
     } else {
-      result.sort((a, b) => b.reportCount - a.reportCount);
+      allProjects.sort((a, b) => b.reportCount - a.reportCount);
     }
 
-    return [result, total];
+    // Aplicar paginación al nivel de proyectos únicos
+    const skip = (page - 1) * limit;
+    const paginatedProjects = allProjects.slice(skip, skip + limit);
+    const totalUniqueProjects = allProjects.length;
+
+    return [paginatedProjects, totalUniqueProjects];
   }
 
   async getReportCountByProject(projectId: number): Promise<number> {
