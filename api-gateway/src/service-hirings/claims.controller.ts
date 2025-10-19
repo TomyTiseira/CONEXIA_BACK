@@ -20,7 +20,12 @@ import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
-import { CreateClaimDto, GetClaimsDto, ResolveClaimDto } from './dto';
+import {
+  CreateClaimDto,
+  GetClaimsDto,
+  ResolveClaimDto,
+  UpdateClaimDto,
+} from './dto';
 
 /**
  * Claims Controller - API Gateway
@@ -281,7 +286,7 @@ export class ClaimsController {
     @Body() body: { description?: string },
     @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
   ) {
-    const updateDto: any = {};
+    const updateDto: UpdateClaimDto = {};
 
     // Agregar descripción si se proporciona
     if (body.description) {
