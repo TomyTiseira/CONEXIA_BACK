@@ -17,6 +17,7 @@ import { DeleteUserUseCase } from './service/use-cases/delate-user.use-cases';
 import {
   FindUserByIdIncludingDeletedUseCase,
   FindUserByIdUseCase,
+  FindUserByIdWithRelationsUseCase,
 } from './service/use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './service/use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './service/use-cases/get-role-by-id.use-cases';
@@ -51,6 +52,7 @@ import { UsersService } from './service/users.service';
     GetRoleByNameUseCase,
     FindUserByIdUseCase,
     FindUserByIdIncludingDeletedUseCase,
+    FindUserByIdWithRelationsUseCase,
     GetUserWithProfileUseCase,
     FindUsersByIdsUseCase,
     SearchUsersPaginatedUseCase,

@@ -40,6 +40,18 @@ async function bootstrap() {
       description: 'Servicio en progreso',
     },
     {
+      name: 'Entregado',
+      code: ServiceHiringStatusCode.DELIVERED,
+      description:
+        'Servicio o entregable entregado, esperando revisión del cliente',
+    },
+    {
+      name: 'Revisión Solicitada',
+      code: ServiceHiringStatusCode.REVISION_REQUESTED,
+      description:
+        'Cliente solicitó cambios en una o más entregas del servicio',
+    },
+    {
       name: 'Completado',
       code: ServiceHiringStatusCode.COMPLETED,
       description: 'Servicio completado',
@@ -58,6 +70,12 @@ async function bootstrap() {
       name: 'Vencida',
       code: ServiceHiringStatusCode.EXPIRED,
       description: 'Cotización vencida por tiempo límite',
+    },
+    {
+      name: 'En Reclamo',
+      code: ServiceHiringStatusCode.IN_CLAIM,
+      description:
+        'Servicio tiene un reclamo activo. Todas las acciones están suspendidas hasta que se resuelva',
     },
   ];
 

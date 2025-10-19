@@ -6,7 +6,10 @@ export enum ServiceHiringStatusCode {
   CANCELLED = 'cancelled',
   APPROVED = 'approved',
   IN_PROGRESS = 'in_progress',
+  DELIVERED = 'delivered',
+  REVISION_REQUESTED = 'revision_requested',
   COMPLETED = 'completed',
   NEGOTIATING = 'negotiating',
   EXPIRED = 'expired',
+  IN_CLAIM = 'in_claim',
 }

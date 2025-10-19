@@ -19,3 +19,12 @@ export class FindUserByIdIncludingDeletedUseCase {
     return this.usersRepository.findByIdIncludingDeleted(userId);
   }
 }
+
+@Injectable()
+export class FindUserByIdWithRelationsUseCase {
+  constructor(private readonly usersRepository: UserRepository) {}
+
+  async execute(userId: number): Promise<User | null> {
+    return this.usersRepository.findByIdWithRelations(userId);
+  }
+}
