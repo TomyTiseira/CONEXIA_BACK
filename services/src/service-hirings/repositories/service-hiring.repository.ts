@@ -306,6 +306,8 @@ export class ServiceHiringRepository {
       })
       .orderBy('hiring.createdAt', 'DESC')
       .getOne();
+  }
+
   /**
    * Recalculate the ServiceHiring status based on the statuses of its deliveries.
    * Rules (matching backend spec):
