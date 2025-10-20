@@ -64,6 +64,8 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c timezone='America/Argentina/Buenos_Aires'
+      -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${USERS_DB_USER} -d ${USERS_DB_NAME}"]
       interval: 5s
@@ -109,6 +111,8 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c timezone='America/Argentina/Buenos_Aires'
+      -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test:
         [
@@ -158,6 +162,8 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c timezone='America/Argentina/Buenos_Aires'
+      -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test:
         [
@@ -213,6 +219,8 @@ services:
       postgres
       -c listen_addresses='*'
       -c max_connections=100
+      -c timezone='America/Argentina/Buenos_Aires'
+      -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test:
         [
