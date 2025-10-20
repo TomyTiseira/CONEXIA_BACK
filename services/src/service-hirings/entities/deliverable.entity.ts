@@ -14,6 +14,7 @@ export enum DeliverableStatus {
   IN_PROGRESS = 'in_progress',
   DELIVERED = 'delivered',
   APPROVED = 'approved',
+  REVISION_REQUESTED = 'revision_requested', // Cliente solicita revisión del entregable
   REJECTED = 'rejected',
 }
 
