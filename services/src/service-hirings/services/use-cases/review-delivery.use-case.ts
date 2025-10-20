@@ -292,7 +292,7 @@ export class ReviewDeliveryUseCase {
     // 2. Actualizar estado del entregable si aplica
     if (delivery.deliverableId) {
       await this.deliverableRepository.update(delivery.deliverableId, {
-        status: DeliverableStatus.IN_PROGRESS,
+        status: DeliverableStatus.REVISION_REQUESTED, // Cambiar a REVISION_REQUESTED en lugar de IN_PROGRESS
       });
     }
 
