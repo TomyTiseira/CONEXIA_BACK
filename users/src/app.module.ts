@@ -13,8 +13,10 @@ import { Locality } from './shared/entities/locality.entity';
 import { PaymentAccount } from './shared/entities/payment-account.entity';
 import { ProfileSkill } from './shared/entities/profile-skill.entity';
 import { Role } from './shared/entities/role.entity';
+import { UserReview } from './shared/entities/user-review.entity';
 import { User } from './shared/entities/user.entity';
 import { NatsModule } from './transports/nats.module';
+import { UserReviewsModule } from './user-reviews/user-reviews.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -28,6 +30,7 @@ import { UsersModule } from './users/users.module';
       database: envs.dbDatabase,
       entities: [
         User,
+        UserReview,
         Role,
         DocumentType,
         Profile,
@@ -40,6 +43,7 @@ import { UsersModule } from './users/users.module';
       synchronize: true,
     }),
     UsersModule,
+    UserReviewsModule,
     AuthModule,
     NatsModule,
     ProfileModule,

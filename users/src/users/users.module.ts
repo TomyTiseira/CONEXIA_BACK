@@ -65,6 +65,6 @@ import { UsersService } from './service/users.service';
       useClass: NodemailerService,
     },
   ],
-  exports: [],
+  exports: [UsersService],
 })
 export class UsersModule {}
