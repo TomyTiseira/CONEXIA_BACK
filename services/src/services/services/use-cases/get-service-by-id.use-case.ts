@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ServiceNotFoundException } from '../../../common/exceptions/services.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
+import { DeliverableRepository } from '../../../service-hirings/repositories/deliverable.repository';
 import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
 import { GetServiceByIdDto } from '../../dto/get-service-by-id.dto';
 import { ServiceRepository } from '../../repositories/service.repository';
@@ -12,6 +13,7 @@ export class GetServiceByIdUseCase {
     private readonly serviceRepository: ServiceRepository,
     private readonly usersClientService: UsersClientService,
     private readonly serviceHiringRepository: ServiceHiringRepository,
+    private readonly deliverableRepository: DeliverableRepository,
   ) {}
 
   async execute(data: GetServiceByIdDto) {
@@ -51,6 +53,32 @@ export class GetServiceByIdUseCase {
         service.id,
       );
 
+    // Si existe una contratación activa, obtener los entregables y transformarlos igual que en las solicitudes
+    let deliverables: any[] | null = null;
+    if (serviceHiring) {
+      const rawDeliverables = await this.deliverableRepository.findByHiringId(
+        serviceHiring.id,
+      );
+
+      deliverables =
+        rawDeliverables.length > 0
+          ? rawDeliverables.map((d) => ({
+              id: d.id,
+              hiringId: d.hiringId,
+              title: d.title,
+              description: d.description,
+              estimatedDeliveryDate: d.estimatedDeliveryDate,
+              price: d.price,
+              orderIndex: d.orderIndex,
+              status: d.status,
+              deliveredAt: d.deliveredAt,
+              approvedAt: d.approvedAt,
+              createdAt: d.createdAt,
+              updatedAt: d.updatedAt,
+            }))
+          : null;
+    }
+
     // Transformar el servicio usando la función común
     const transformedServices = transformServicesWithOwners(
       [service],
@@ -59,10 +87,13 @@ export class GetServiceByIdUseCase {
       quotationInfo,
     );
 
-    // Retornar el primer (y único) servicio transformado junto con la cotización activa
-    return {
+    // Retornar el primer (y único) servicio transformado junto con la cotización activa y entregables
+    const result = {
       ...transformedServices[0],
       serviceHiring,
+      deliverables,
     };
+
+    return result;
   }
 }
