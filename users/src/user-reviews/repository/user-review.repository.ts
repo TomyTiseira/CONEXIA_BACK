@@ -36,4 +36,16 @@ export class UserReviewRepository {
 
     return await queryBuilder.getManyAndCount();
   }
+
+  async findByReviewerAndReviewed(
+    reviewerUserId: number,
+    reviewedUserId: number,
+  ): Promise<UserReview | null> {
+    return await this.userReviewRepository.findOne({
+      where: {
+        reviewerUserId,
+        reviewedUserId,
+      },
+    });
+  }
 }

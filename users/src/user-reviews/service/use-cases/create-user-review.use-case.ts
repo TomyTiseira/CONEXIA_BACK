@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  DuplicateUserReviewException,
   UserCannotReviewSelfException,
   UserNotFoundByIdException,
 } from 'src/common/exceptions/user.exceptions';
@@ -33,6 +34,16 @@ export class CreateUserReviewUseCase {
     const reviewerUser = await this.usersService.findUserById(reviewerUserId);
     if (!reviewerUser) {
       throw new UserNotFoundByIdException(reviewerUserId);
+    }
+
+    // Validar que no existe una reseña previa del mismo usuario
+    const existingReview =
+      await this.userReviewRepository.findByReviewerAndReviewed(
+        reviewerUserId,
+        reviewedUserId,
+      );
+    if (existingReview) {
+      throw new DuplicateUserReviewException(reviewerUserId, reviewedUserId);
     }
 
     return await this.userReviewRepository.create(createUserReviewDto);

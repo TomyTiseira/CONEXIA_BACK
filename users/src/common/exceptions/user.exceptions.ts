@@ -279,3 +279,12 @@ export class UserNotFoundForReviewException extends RpcException {
     });
   }
 }
+
+export class DuplicateUserReviewException extends RpcException {
+  constructor(reviewerUserId: number, reviewedUserId: number) {
+    super({
+      status: 409,
+      message: `A review already exists for the user ${reviewerUserId} for the user ${reviewedUserId}`,
+    });
+  }
+}
