@@ -40,6 +40,7 @@ export class GetProfileUseCase {
     // Transformar profileSkills en skills
     const transformedProfile: ProfileWithSkills = {
       ...profile,
+      verified: profile.user?.verified || false,
       skills: skills.map(
         (skill: Skill): ProfileSkillResponse => ({
           id: skill.id,
@@ -48,9 +49,12 @@ export class GetProfileUseCase {
       ),
     };
 
-    // Eliminar profileSkills de la respuesta de forma segura
+    // Eliminar profileSkills y user de la respuesta de forma segura
     if ('profileSkills' in transformedProfile) {
       (transformedProfile as any).profileSkills = undefined;
+    }
+    if ('user' in transformedProfile) {
+      (transformedProfile as any).user = undefined;
     }
 
     // Determinar si el usuario autenticado es el propietario del perfil

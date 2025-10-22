@@ -136,4 +136,29 @@ export class UsersClientService {
       return null;
     }
   }
+
+  /**
+   * Valida que el usuario esté verificado
+   * Lanza una excepción si el usuario no está verificado
+   */
+  async validateUserIsVerified(userId: number): Promise<void> {
+    await firstValueFrom(
+      this.client.send('validateUserIsVerified', { userId }),
+    );
+  }
+
+  /**
+   * Verifica si un usuario está verificado sin lanzar excepciones
+   */
+  async isUserVerified(userId: number): Promise<boolean> {
+    try {
+      const result = await firstValueFrom(
+        this.client.send('isUserVerified', { userId }),
+      );
+      return !!result;
+    } catch (error) {
+      console.error('Error checking user verification status:', error);
+      return false;
+    }
+  }
 }

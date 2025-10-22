@@ -35,6 +35,7 @@ export type ProfileWithSkills = {
   education?: any[];
   certifications?: any[];
   skills: ProfileSkillResponse[];
+  verified?: boolean;
   connectionData?: ConnectionData | null;
   conversationId?: number | null;
 };

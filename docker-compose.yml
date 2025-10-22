@@ -27,6 +27,7 @@ services:
     build: ./users
     volumes:
       - ./users/src:/src/app/src
+      - ./api-gateway/uploads:/src/app/uploads
     depends_on:
       users-db:
         condition: service_healthy
@@ -46,6 +47,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - ALGORITHM=${ALGORITHM}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
   users-db:
     build:
