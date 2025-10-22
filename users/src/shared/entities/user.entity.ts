@@ -25,6 +25,9 @@ export class User {
   @Column({ default: false })
   isValidate: boolean;
 
+  @Column({ default: false })
+  verified: boolean;
+
   @Column({ nullable: true })
   verificationCode: string;
 

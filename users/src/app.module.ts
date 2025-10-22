@@ -16,6 +16,8 @@ import { Role } from './shared/entities/role.entity';
 import { User } from './shared/entities/user.entity';
 import { NatsModule } from './transports/nats.module';
 import { UsersModule } from './users/users.module';
+import { UserVerification } from './verification/entities/user-verification.entity';
+import { VerificationModule } from './verification/verification.module';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { UsersModule } from './users/users.module';
         PaymentAccount,
         Bank,
         DigitalPlatform,
+        UserVerification,
       ],
       synchronize: true,
     }),
@@ -45,6 +48,7 @@ import { UsersModule } from './users/users.module';
     ProfileModule,
     InternalUsersModule,
     PaymentAccountsModule,
+    VerificationModule,
   ],
   controllers: [],
   providers: [],

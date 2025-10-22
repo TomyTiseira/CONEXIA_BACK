@@ -55,6 +55,9 @@ export class CreatePostulationUseCase {
     // Validar que el usuario tiene rol de user
     await this.validateUserRole(currentUserId);
 
+    // Validar que el usuario esté verificado
+    await this.usersClientService.validateUserIsVerified(currentUserId);
+
     // Crear la postulación
     return await this.postulationOperationsService.createPostulation(
       createPostulationDto,

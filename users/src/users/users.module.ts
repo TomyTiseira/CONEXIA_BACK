@@ -9,6 +9,7 @@ import { ProfileModule } from '../profile/profile.module';
 import { DocumentType } from '../shared/entities/document-type.entity';
 import { Role } from '../shared/entities/role.entity';
 import { SharedModule } from '../shared/shared.module';
+import { VerificationModule } from '../verification/verification.module';
 import { DocumentTypesController } from './controller/document-types.controller';
 import { UsersController } from './controller/users.controller';
 import { DocumentTypesService } from './service/document-types.service';
@@ -36,6 +37,7 @@ import { UsersService } from './service/users.service';
     SharedModule,
     ProfileModule,
     AuthSharedModule,
+    VerificationModule,
     TypeOrmModule.forFeature([DocumentType, Role]),
   ],
   controllers: [UsersController, DocumentTypesController],

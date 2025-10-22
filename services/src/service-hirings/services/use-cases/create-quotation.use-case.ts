@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { ServiceRepository } from '../../../services/repositories/service.repository';
 import { CreateQuotationDto } from '../../dto';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
@@ -18,6 +19,7 @@ export class CreateQuotationUseCase {
     private readonly validationService: ServiceHiringValidationService,
     private readonly operationsService: ServiceHiringOperationsService,
     private readonly transformService: ServiceHiringTransformService,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async execute(
@@ -25,6 +27,9 @@ export class CreateQuotationUseCase {
     hiringId: number,
     quotationDto: CreateQuotationDto,
   ) {
+    // Validar que el usuario solicitante esté verificado
+    await this.usersClientService.validateUserIsVerified(serviceOwnerId);
+
     // Obtener la contratación
     const hiring = await this.hiringRepository.findById(hiringId);
     if (!hiring) {

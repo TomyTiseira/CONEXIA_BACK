@@ -40,9 +40,13 @@ export class ProfileRepository {
         socialLinks: true,
         education: true,
         certifications: true,
+        user: {
+          id: true,
+          verified: true,
+        },
       },
       where: { userId, deletedAt: IsNull() },
-      relations: ['profileSkills'],
+      relations: ['profileSkills', 'user'],
     });
   }
 
