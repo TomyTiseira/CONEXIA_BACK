@@ -4,6 +4,7 @@ import { UserReview } from 'src/shared/entities/user-review.entity';
 import { Repository } from 'typeorm';
 import { CreateUserReviewDto } from '../dto/create-user-review.dto';
 import { GetUserReviewsDto } from '../dto/get-user-reviews.dto';
+import { UpdateUserReviewDto } from '../dto/update-user-review.dto';
 
 @Injectable()
 export class UserReviewRepository {
@@ -47,5 +48,23 @@ export class UserReviewRepository {
         reviewedUserId,
       },
     });
+  }
+
+  async findById(id: number): Promise<UserReview | null> {
+    return await this.userReviewRepository.findOne({
+      where: { id },
+    });
+  }
+
+  async update(
+    id: number,
+    updateUserReviewDto: UpdateUserReviewDto,
+  ): Promise<UserReview | null> {
+    await this.userReviewRepository.update(id, updateUserReviewDto);
+    return await this.findById(id);
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.userReviewRepository.delete(id);
   }
 }

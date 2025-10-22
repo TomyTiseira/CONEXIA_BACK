@@ -16,6 +16,7 @@ export interface MappedUserReview {
     name: string;
     lastName: string;
     profession: string;
+    profilePicture?: string;
   };
   relationship: string;
   description: string;
@@ -44,6 +45,7 @@ interface UserReviewWithProfiles {
       name: string;
       lastName: string;
       profession: string;
+      profilePicture?: string;
     };
   };
   relationship: string;
@@ -72,6 +74,8 @@ export class UserReviewMapper {
         name: review.reviewerUser.profile?.name || '',
         lastName: review.reviewerUser.profile?.lastName || '',
         profession: review.reviewerUser.profile?.profession || '',
+        profilePicture:
+          review.reviewerUser.profile?.profilePicture || undefined,
       },
       relationship: review.relationship,
       description: review.description,
