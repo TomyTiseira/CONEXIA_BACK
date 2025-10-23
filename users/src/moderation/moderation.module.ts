@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { NATS_SERVICE } from './config';
+import { envs, NATS_SERVICE } from '../config';
 import { ModerationController } from './controllers/moderation.controller';
 import { ModerationAnalysis } from './entities/moderation-analysis.entity';
 import { ModerationService } from './services/moderation.service';
@@ -17,7 +17,7 @@ import { OpenAIService } from './services/openai.service';
         name: NATS_SERVICE,
         transport: Transport.NATS,
         options: {
-          servers: [process.env.NATS_URL || 'nats://localhost:4222'],
+          servers: envs.natsServers,
         },
       },
     ]),
