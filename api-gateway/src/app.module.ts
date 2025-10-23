@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { MessagingModule } from './contacts/messaging.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { PaymentAccountsModule } from './payment-accounts/payment-accounts.module';
 
 import { PostulationsModule } from './postulations/postulations.module';
@@ -35,6 +36,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ServiceHiringsModule,
     VerificationModule,
     WebhooksModule,
+    ModerationModule,
   ],
   controllers: [],
   providers: [],

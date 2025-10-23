@@ -142,4 +142,38 @@ export class PublicationReportsController {
       throw error;
     }
   }
+
+  @MessagePattern('getActivePublicationReports')
+  async getActivePublicationReports() {
+    try {
+      return await this.publicationReportsService.getActiveReports();
+    } catch (error) {
+      console.error('Error getting active publication reports:', error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('softDeleteOldPublicationReports')
+  async softDeleteOldPublicationReports(@Payload() data: { oneYearAgo: Date }) {
+    try {
+      return await this.publicationReportsService.softDeleteOldReports(
+        data.oneYearAgo,
+      );
+    } catch (error) {
+      console.error('Error soft deleting old publication reports:', error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('deactivatePublicationReports')
+  async deactivatePublicationReports(@Payload() data: { reportIds: number[] }) {
+    try {
+      return await this.publicationReportsService.deactivateReports(
+        data.reportIds,
+      );
+    } catch (error) {
+      console.error('Error deactivating publication reports:', error);
+      throw error;
+    }
+  }
 }

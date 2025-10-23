@@ -201,4 +201,40 @@ export class PublicationReportRepository extends Repository<PublicationReport> {
 
     return [paginatedResult, totalUniquePublications];
   }
+
+  /**
+   * Encuentra reportes activos con su publicación asociada
+   */
+  async findActiveReportsWithPublications(): Promise<PublicationReport[]> {
+    return this.find({
+      where: { isActive: true },
+      relations: ['publication'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Marca como inactivos reportes anteriores a una fecha
+   */
+  async softDeleteOldReports(oneYearAgo: Date) {
+    const result = await this.createQueryBuilder()
+      .update(PublicationReport)
+      .set({ isActive: false })
+      .where('createdAt < :oneYearAgo', { oneYearAgo })
+      .andWhere('isActive = :isActive', { isActive: true })
+      .execute();
+    return { affected: result.affected };
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
+  async deactivateReports(reportIds: number[]) {
+    const result = await this.createQueryBuilder()
+      .update(PublicationReport)
+      .set({ isActive: false })
+      .where('id IN (:...reportIds)', { reportIds })
+      .execute();
+    return { affected: result.affected };
+  }
 }

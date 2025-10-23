@@ -179,4 +179,39 @@ export class ServiceReportRepository {
   async getTotalReportCount(): Promise<number> {
     return this.repository.count();
   }
+
+  async findActiveReportsWithServices(): Promise<ServiceReport[]> {
+    return this.repository.find({
+      where: { isActive: true },
+      relations: ['service'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Marca como inactivos reportes anteriores a una fecha
+   */
+  async softDeleteOldReports(oneYearAgo: Date) {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(ServiceReport)
+      .set({ isActive: false })
+      .where('createdAt < :oneYearAgo', { oneYearAgo })
+      .andWhere('isActive = :isActive', { isActive: true })
+      .execute();
+    return { affected: result.affected };
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
+  async deactivateReports(reportIds: number[]) {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(ServiceReport)
+      .set({ isActive: false })
+      .where('id IN (:...reportIds)', { reportIds })
+      .execute();
+    return { affected: result.affected };
+  }
 }

@@ -133,4 +133,41 @@ export class PublicationReportsService {
       limit,
     );
   }
+
+  /**
+   * Obtiene reportes activos con información de la publicación y el usuario reportado
+   * Para el sistema de moderación
+   */
+  async getActiveReports() {
+    const reports =
+      await this.publicationReportRepository.findActiveReportsWithPublications();
+    return reports.map((report) => ({
+      id: report.id,
+      reporterId: report.reporterId,
+      reason: report.reason,
+      otherReason: report.otherReason,
+      description: report.description,
+      createdAt: report.createdAt,
+      isActive: report.isActive,
+      updatedAt: report.updatedAt,
+      reportedUserId: report.publication.userId,
+      publicationId: report.publication.id,
+    }));
+  }
+
+  /**
+   * Marca como inactivos los reportes anteriores a una fecha
+   */
+  async softDeleteOldReports(oneYearAgo: Date) {
+    return await this.publicationReportRepository.softDeleteOldReports(
+      oneYearAgo,
+    );
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
+  async deactivateReports(reportIds: number[]) {
+    return await this.publicationReportRepository.deactivateReports(reportIds);
+  }
 }

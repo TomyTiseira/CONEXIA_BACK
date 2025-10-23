@@ -118,4 +118,38 @@ export class ReportsService {
   async getTotalReportCount(): Promise<number> {
     return await this.reportRepository.getTotalReportCount();
   }
+
+  /**
+   * Obtiene todos los reportes activos con información del proyecto
+   * @returns Lista de reportes activos con datos necesarios para moderación
+   */
+  async getActiveReports() {
+    const reports = await this.reportRepository.findActiveReportsWithProjects();
+    return reports.map((report) => ({
+      id: report.id,
+      reporterId: report.reporterId,
+      reason: report.reason,
+      otherReason: report.otherReason,
+      description: report.description,
+      createdAt: report.createdAt,
+      isActive: report.isActive,
+      updatedAt: report.updatedAt,
+      reportedUserId: report.project?.userId || null,
+      projectId: report.projectId,
+    }));
+  }
+
+  /**
+   * Marca como inactivos reportes anteriores a una fecha
+   */
+  async softDeleteOldReports(oneYearAgo: Date) {
+    return await this.reportRepository.softDeleteOldReports(oneYearAgo);
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
+  async deactivateReports(reportIds: number[]) {
+    return await this.reportRepository.deactivateReports(reportIds);
+  }
 }
