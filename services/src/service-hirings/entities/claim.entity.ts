@@ -50,6 +50,10 @@ export class Claim {
   @Column({ type: 'text' })
   description: string;
 
+  // Motivo especificado cuando el tipo es "*_other"
+  @Column({ name: 'other_reason', type: 'varchar', length: 30, nullable: true })
+  otherReason?: string | null;
+
   // Evidencias (URLs de archivos subidos)
   @Column({
     name: 'evidence_urls',

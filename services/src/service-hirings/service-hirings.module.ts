@@ -105,6 +105,10 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     CommonModule,
     forwardRef(() => ServicesModule),
   ],
-  exports: [ServiceHiringsService, ServiceHiringRepository],
+  exports: [
+    ServiceHiringsService,
+    ServiceHiringRepository,
+    DeliverableRepository,
+  ],
 })
 export class ServiceHiringsModule {}

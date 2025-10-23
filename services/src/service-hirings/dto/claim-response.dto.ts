@@ -1,8 +1,8 @@
 import {
-  ClaimResolutionType,
-  ClaimRole,
-  ClaimStatus,
-  ClaimType,
+    ClaimResolutionType,
+    ClaimRole,
+    ClaimStatus,
+    ClaimType,
 } from '../enums/claim.enum';
 
 export class ClaimResponseDto {
@@ -12,6 +12,7 @@ export class ClaimResponseDto {
   claimantRole: ClaimRole;
   claimType: ClaimType;
   description: string;
+  otherReason?: string | null;
   evidenceUrls: string[];
   status: ClaimStatus;
   observations: string | null;
@@ -56,6 +57,7 @@ export class ClaimResponseDto {
     dto.claimantRole = claim.claimantRole;
     dto.claimType = claim.claimType;
     dto.description = claim.description;
+  dto.otherReason = claim.otherReason ?? null;
     dto.evidenceUrls = claim.evidenceUrls || [];
     dto.status = claim.status;
     dto.observations = claim.observations;
