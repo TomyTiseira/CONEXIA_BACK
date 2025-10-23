@@ -136,6 +136,8 @@ export class ReportsService {
       updatedAt: report.updatedAt,
       reportedUserId: report.project?.userId || null,
       projectId: report.projectId,
+      resourceTitle: report.project?.title || null,
+      resourceDescription: report.project?.description || null,
     }));
   }
 

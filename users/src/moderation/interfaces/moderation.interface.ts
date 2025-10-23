@@ -12,6 +12,8 @@ export interface ReportData {
   publicationId?: number;
   serviceId?: number;
   projectId?: number;
+  resourceTitle?: string;
+  resourceDescription?: string;
 }
 
 export interface UserReportsGroup {

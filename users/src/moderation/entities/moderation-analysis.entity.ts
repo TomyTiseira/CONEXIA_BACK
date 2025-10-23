@@ -13,7 +13,12 @@ export class ModerationAnalysis {
   @Column({ name: 'user_id', type: 'integer' })
   userId: number;
 
-  @Column({ name: 'analyzed_report_ids', type: 'text', array: true })
+  @Column({
+    name: 'analyzed_report_ids',
+    type: 'text',
+    array: true,
+    nullable: true,
+  })
   analyzedReportIds: string[];
 
   @Column({ name: 'total_reports', type: 'integer', default: 0 })

@@ -152,6 +152,8 @@ export class PublicationReportsService {
       updatedAt: report.updatedAt,
       reportedUserId: report.publication.userId,
       publicationId: report.publication.id,
+      resourceTitle: null,
+      resourceDescription: report.publication.description || null,
     }));
   }
 

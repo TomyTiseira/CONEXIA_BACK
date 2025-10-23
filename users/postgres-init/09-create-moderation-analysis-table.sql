@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS reports_moderation_analysis (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL,
-  analyzed_report_ids TEXT[] NOT NULL,
+  analyzed_report_ids TEXT[],
   total_reports INTEGER NOT NULL DEFAULT 0,
   offensive_reports INTEGER NOT NULL DEFAULT 0,
   violation_reports INTEGER NOT NULL DEFAULT 0,

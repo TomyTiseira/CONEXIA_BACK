@@ -186,7 +186,16 @@ export class ModerationService {
         }
       }
 
-      return Array.from(groupedByUser.values());
+      const groupedArray = Array.from(groupedByUser.values());
+      this.logger.log(
+        'Reportes agrupados por usuario para análisis:',
+        groupedArray.map((g) => ({
+          userId: g.userId,
+          reportIds: g.reports.map((r) => r.id),
+          reports: g.reports,
+        })),
+      );
+      return groupedArray;
     } catch (error) {
       this.logger.error('Error al obtener reportes de microservicios:', error);
       return [];
@@ -206,28 +215,40 @@ export class ModerationService {
     const reportDetails: string[] = [];
     const analyzedIds: string[] = [];
 
-    // Analizar cada reporte con OpenAI Moderation
-    for (const report of allReports) {
-      const textToAnalyze = `${report.reason}. ${report.description}${
-        report.otherReason ? '. ' + report.otherReason : ''
-      }`;
-
-      try {
-        const moderation: OpenAIModerationResult =
-          await this.openAIService.moderateText(textToAnalyze);
-
-        // Clasificar según las categorías detectadas
-        if (
-          moderation.flagged &&
-          (moderation.categories.hate ||
-            moderation.categories.harassment ||
-            moderation.categories['harassment/threatening'] ||
-            moderation.categories['hate/threatening'])
-        ) {
-          offensiveCount++;
+    // Concatenar todos los reportes en un solo texto para analizar
+    const textToAnalyze = allReports
+      .map((report) => {
+        let resourceInfo = '';
+        if (report.resourceTitle) {
+          resourceInfo += `Título: ${report.resourceTitle}. `;
         }
+        if (report.resourceDescription) {
+          resourceInfo += `Descripción: ${report.resourceDescription}. `;
+        }
+        return `[${report.source}] ${resourceInfo}Reporte: Razón: ${report.reason}. Desc: ${report.description}${
+          report.otherReason ? '. ' + report.otherReason : ''
+        }`;
+      })
+      .join('\n');
 
-        // Considerar incumplimientos basados en el reason
+    try {
+      // Solo una llamada a OpenAI para todos los reportes del usuario
+      const moderation: OpenAIModerationResult =
+        await this.openAIService.moderateText(textToAnalyze);
+
+      // Clasificar según las categorías detectadas
+      if (
+        moderation.flagged &&
+        (moderation.categories.hate ||
+          moderation.categories.harassment ||
+          moderation.categories['harassment/threatening'] ||
+          moderation.categories['hate/threatening'])
+      ) {
+        offensiveCount = allReports.length;
+      }
+
+      // Considerar incumplimientos basados en el reason
+      for (const report of allReports) {
         if (
           report.reason.toLowerCase().includes('engañoso') ||
           report.reason.toLowerCase().includes('fraudulento') ||
@@ -235,12 +256,9 @@ export class ModerationService {
         ) {
           violationCount++;
         }
-
         reportDetails.push(
           `[${report.source}] Razón: ${report.reason}. Desc: ${report.description.substring(0, 100)}`,
         );
-
-        // Guardar ID con prefijo del tipo
         const prefix =
           report.source === 'publications'
             ? 'pub'
@@ -248,12 +266,12 @@ export class ModerationService {
               ? 'svc'
               : 'prj';
         analyzedIds.push(`${prefix}:${report.id}`);
-      } catch (error) {
-        this.logger.warn(
-          `No se pudo analizar el reporte ${report.id} con OpenAI:`,
-          error,
-        );
       }
+    } catch (error) {
+      this.logger.warn(
+        `No se pudo analizar los reportes del usuario ${group.userId} con OpenAI:`,
+        error,
+      );
     }
 
     // Determinar clasificación
@@ -392,8 +410,36 @@ export class ModerationService {
       .take(limit)
       .getManyAndCount();
 
+    // Obtener perfiles de los usuarios reportados
+    const userIds = results.map((r) => r.userId);
+    const profiles = await this.moderationRepository.manager
+      .createQueryBuilder('profiles', 'p')
+      .select(['p.userId', 'p.name', 'p.lastName'])
+      .where('p.userId IN (:...userIds)', { userIds })
+      .getRawMany();
+
+    // Mapear userId a nombre y apellido
+    const profileMap = new Map<number, { name: string; lastName: string }>();
+    for (const p of profiles as Array<{
+      p_userId: number;
+      p_name: string;
+      p_lastName: string;
+    }>) {
+      profileMap.set(Number(p.p_userId), {
+        name: String(p.p_name),
+        lastName: String(p.p_lastName),
+      });
+    }
+
+    // Agregar nombre y apellido a cada resultado
+    const resultsWithNames = results.map((r) => ({
+      ...r,
+      firstName: profileMap.get(r.userId)?.name || null,
+      lastName: profileMap.get(r.userId)?.lastName || null,
+    }));
+
     return {
-      data: results,
+      data: resultsWithNames,
       meta: {
         page,
         limit,

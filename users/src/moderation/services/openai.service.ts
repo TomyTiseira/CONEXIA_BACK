@@ -27,17 +27,37 @@ export class OpenAIService {
    * @returns Resultado del análisis de moderación
    */
   async moderateText(text: string): Promise<OpenAIModerationResult> {
-    try {
-      const moderation = await this.openai.moderations.create({
-        model: 'omni-moderation-latest',
-        input: text,
-      });
-
-      return moderation.results[0] as OpenAIModerationResult;
-    } catch (error) {
-      this.logger.error('Error al llamar a OpenAI Moderation API:', error);
-      throw new Error('Error al analizar el contenido con OpenAI');
+    let attempts = 0;
+    const maxAttempts = 6;
+    let delayMs = 1000;
+    while (attempts < maxAttempts) {
+      try {
+        // Usar 'omni-moderation-latest' para analizar texto e imagenes.
+        // Usar 'text-moderation-latest' para analizar solo texto.
+        const moderation = await this.openai.moderations.create({
+          model: 'omni-moderation-latest',
+          input: text,
+        });
+        return moderation.results[0] as OpenAIModerationResult;
+      } catch (error: any) {
+        if (error.status === 429) {
+          this.logger.warn(
+            `Rate limit alcanzado en OpenAI. Reintentando en ${delayMs}ms... (Intento ${attempts + 1})`,
+          );
+          await new Promise((res) => setTimeout(res, delayMs));
+          attempts++;
+          // Backoff exponencial con jitter
+          delayMs = delayMs * 2 + Math.floor(Math.random() * 1000);
+        } else {
+          this.logger.error('Error al llamar a OpenAI Moderation API:', error);
+          throw new Error('Error al analizar el contenido con OpenAI');
+        }
+      }
     }
+    this.logger.error(
+      'Se excedieron los reintentos por rate limit en OpenAI Moderation API',
+    );
+    throw new Error('Error al analizar el contenido con OpenAI (rate limit)');
   }
 
   /**

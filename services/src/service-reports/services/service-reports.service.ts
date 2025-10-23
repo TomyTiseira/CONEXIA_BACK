@@ -153,6 +153,8 @@ export class ServiceReportsService {
       updatedAt: report.updatedAt,
       reportedUserId: report.service?.userId || null,
       serviceId: report.serviceId,
+      resourceTitle: report.service?.title || null,
+      resourceDescription: report.service?.description || null,
     }));
   }
 
