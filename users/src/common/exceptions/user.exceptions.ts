@@ -251,3 +251,40 @@ export class ProfileAlreadyExistsException extends RpcException {
     });
   }
 }
+
+// User Review Exceptions
+export class UserCannotReviewSelfException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'You cannot review yourself',
+    });
+  }
+}
+
+export class UserReviewNotFoundException extends RpcException {
+  constructor(reviewId: number) {
+    super({
+      status: 404,
+      message: `User review with id ${reviewId} not found`,
+    });
+  }
+}
+
+export class UserNotFoundForReviewException extends RpcException {
+  constructor(userId: number) {
+    super({
+      status: 404,
+      message: `User with id ${userId} not found for review`,
+    });
+  }
+}
+
+export class DuplicateUserReviewException extends RpcException {
+  constructor(reviewerUserId: number, reviewedUserId: number) {
+    super({
+      status: 409,
+      message: `A review already exists for the user ${reviewerUserId} for the user ${reviewedUserId}`,
+    });
+  }
+}
