@@ -30,6 +30,9 @@ export class PublishProjectUseCase {
       throw new UserNotFoundException(projectData.userId);
     }
 
+    // Validar que el usuario esté verificado
+    await this.usersClientService.validateUserIsVerified(projectData.userId);
+
     // Validar que las skills existen (si se proporcionan)
     if (projectData.skills && projectData.skills.length > 0) {
       const skillsValidation =
