@@ -3,7 +3,7 @@ import { envs } from './envs';
 export const jwtConfig = {
   secret: envs.jwtSecret,
   signOptions: {
-    expiresIn: '15m', // Default for access tokens
+    expiresIn: 60 * 15, // 15 minutos en segundos
   },
   cookieOptions: {
     httpOnly: true,
@@ -11,9 +11,9 @@ export const jwtConfig = {
     sameSite: 'strict' as const,
   },
   accessTokenConfig: {
-    expiresIn: '15m',
+    expiresIn: 60 * 15, // 15 minutos
   },
   refreshTokenConfig: {
-    expiresIn: '7d',
+    expiresIn: 60 * 60 * 24 * 7, // 7 días
   },
 };

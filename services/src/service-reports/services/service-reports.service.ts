@@ -134,4 +134,41 @@ export class ServiceReportsService {
       );
     }
   }
+
+  /**
+   * Obtiene todos los reportes activos con información del servicio
+   * @returns Lista de reportes activos con datos necesarios para moderación
+   */
+  async getActiveReports() {
+    const reports =
+      await this.serviceReportRepository.findActiveReportsWithServices();
+    return reports.map((report) => ({
+      id: report.id,
+      reporterId: report.reporterId,
+      reason: report.reason,
+      otherReason: report.otherReason,
+      description: report.description,
+      createdAt: report.createdAt,
+      isActive: report.isActive,
+      updatedAt: report.updatedAt,
+      reportedUserId: report.service?.userId || null,
+      serviceId: report.serviceId,
+      resourceTitle: report.service?.title || null,
+      resourceDescription: report.service?.description || null,
+    }));
+  }
+
+  /**
+   * Marca como inactivos reportes anteriores a una fecha
+   */
+  async softDeleteOldReports(oneYearAgo: Date) {
+    return await this.serviceReportRepository.softDeleteOldReports(oneYearAgo);
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
+  async deactivateReports(reportIds: number[]) {
+    return await this.serviceReportRepository.deactivateReports(reportIds);
+  }
 }

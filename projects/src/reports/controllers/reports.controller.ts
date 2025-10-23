@@ -53,4 +53,19 @@ export class ReportsController {
 
     return await this.getProjectsWithReportsUseCase.execute(getReportsDto);
   }
+
+  @MessagePattern('getActiveProjectReports')
+  async getActiveProjectReports() {
+    return await this.reportsService.getActiveReports();
+  }
+
+  @MessagePattern('softDeleteOldProjectReports')
+  async softDeleteOldProjectReports(@Payload() data: { oneYearAgo: Date }) {
+    return await this.reportsService.softDeleteOldReports(data.oneYearAgo);
+  }
+
+  @MessagePattern('deactivateProjectReports')
+  async deactivateProjectReports(@Payload() data: { reportIds: number[] }) {
+    return await this.reportsService.deactivateReports(data.reportIds);
+  }
 }

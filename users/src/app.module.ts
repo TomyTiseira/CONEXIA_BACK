@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { envs } from './config';
 import { InternalUsersModule } from './internal-users/internal-users.module';
+import { ModerationAnalysis } from './moderation/entities/moderation-analysis.entity';
+import { ModerationModule } from './moderation/moderation.module';
 import { PaymentAccountsModule } from './payment-accounts/payment-accounts.module';
 import { Profile } from './profile/entities/profile.entity';
 import { ProfileModule } from './profile/profile.module';
@@ -42,6 +44,7 @@ import { VerificationModule } from './verification/verification.module';
         Bank,
         DigitalPlatform,
         UserVerification,
+        ModerationAnalysis,
       ],
       synchronize: true,
     }),
@@ -53,6 +56,7 @@ import { VerificationModule } from './verification/verification.module';
     InternalUsersModule,
     PaymentAccountsModule,
     VerificationModule,
+    ModerationModule,
   ],
   controllers: [],
   providers: [],
