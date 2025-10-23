@@ -2,10 +2,12 @@ import {
   ArrayMaxSize,
   IsArray,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export enum ClaimType {
@@ -37,6 +39,21 @@ export class CreateClaimDto {
     message: 'La descripción no puede exceder 2000 caracteres',
   })
   description: string;
+
+  // Campo opcional, requerido solo cuando claimType es *_other
+  @ValidateIf(
+    (o) =>
+      o.claimType === ClaimType.CLIENT_OTHER ||
+      o.claimType === ClaimType.PROVIDER_OTHER,
+  )
+  @IsString()
+  @IsNotEmpty({
+    message: 'El campo "otherReason" es requerido cuando el motivo es "Otro"',
+  })
+  @MaxLength(30, {
+    message: 'El motivo especificado no puede exceder 30 caracteres',
+  })
+  otherReason?: string;
 
   @IsOptional()
   @IsArray()

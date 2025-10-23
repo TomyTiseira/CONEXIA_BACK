@@ -32,7 +32,8 @@ export class CreateClaimUseCase {
     userId: number,
     createClaimDto: CreateClaimDto,
   ): Promise<Claim> {
-    const { hiringId, claimType, description, evidenceUrls } = createClaimDto;
+    const { hiringId, claimType, description, evidenceUrls, otherReason } =
+      createClaimDto;
 
     // 1. Verificar que el hiring existe (con la relación service para obtener el proveedor)
     const hiring = await this.hiringRepository.findById(parseInt(hiringId));
@@ -59,6 +60,16 @@ export class CreateClaimUseCase {
     if (!allowedTypes.includes(claimType)) {
       throw new BadRequestException(
         `El tipo de reclamo "${claimType}" no es válido para su rol`,
+      );
+    }
+
+    // Validación defensiva: si el tipo es *_other, exigir otherReason
+    const isOther =
+      claimType === ('client_other' as any) ||
+      claimType === ('provider_other' as any);
+    if (isOther && !otherReason?.trim()) {
+      throw new BadRequestException(
+        'El campo "otherReason" es requerido cuando el motivo es "Otro"',
       );
     }
 
@@ -94,6 +105,7 @@ export class CreateClaimUseCase {
       claimantRole,
       claimType,
       description,
+      ...(otherReason ? { otherReason } : {}),
       evidenceUrls: evidenceUrls || [],
       previousHiringStatusId: previousStatusId,
     });
