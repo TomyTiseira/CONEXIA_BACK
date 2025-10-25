@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
+import { ServiceReviewsModule } from '../service-reviews/service-reviews.module';
 import { ServicesModule } from '../services/services.module';
 import { ClaimsController } from './controllers/claims.controller';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
@@ -104,6 +105,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ]),
     CommonModule,
     forwardRef(() => ServicesModule),
+    forwardRef(() => ServiceReviewsModule),
   ],
   exports: [
     ServiceHiringsService,

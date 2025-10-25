@@ -3,6 +3,7 @@ import {
   PaginationInfo,
   calculatePagination,
 } from '../../common/utils/pagination.utils';
+import { ServiceReviewRepository } from '../../service-reviews/repositories/service-review.repository';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
 import {
   DeliverableResponseDto,
@@ -11,6 +12,7 @@ import {
 } from '../dto';
 import { Deliverable } from '../entities/deliverable.entity';
 import { ServiceHiring } from '../entities/service-hiring.entity';
+import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../repositories/deliverable.repository';
 
 export interface ServiceHiringResponse {
@@ -31,6 +33,7 @@ export interface ServiceHiringResponse {
   paymentModality?: PaymentModalityResponseDto;
   deliverables?: DeliverableResponseDto[];
   claimId?: string; // ID del claim activo cuando status es 'in_claim'
+  hasReview?: boolean; // Indica si ya existe una reseña para este hiring
   status: {
     id: number;
     name: string;
@@ -63,7 +66,10 @@ export interface ServiceHiringListResponse {
 
 @Injectable()
 export class ServiceHiringTransformService {
-  constructor(private readonly deliverableRepository: DeliverableRepository) {}
+  constructor(
+    private readonly deliverableRepository: DeliverableRepository,
+    private readonly serviceReviewRepository: ServiceReviewRepository,
+  ) {}
 
   async transformToResponse(
     hiring: ServiceHiring,
@@ -71,6 +77,7 @@ export class ServiceHiringTransformService {
     user?: any,
     deliverablesMap?: Map<number, Deliverable[]>,
     owner?: any,
+    reviewsMap?: Map<number, boolean>,
   ): Promise<ServiceHiringResponse> {
     const isExpired = this.isQuotationExpired(hiring);
 
@@ -84,6 +91,25 @@ export class ServiceHiringTransformService {
       hiring.claims && hiring.claims.length > 0
         ? hiring.claims[0] // Ya viene ordenado por createdAt DESC desde el repository
         : null;
+
+    // Verificar si existe una reseña para este hiring (solo para estados completables)
+    const reviewableStatuses = [
+      ServiceHiringStatusCode.COMPLETED,
+      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+    ];
+    const isReviewable = reviewableStatuses.includes(hiring.status.code as ServiceHiringStatusCode);
+    
+    let hasReview: boolean | undefined = undefined;
+    if (isReviewable) {
+      // Usar mapa precargado o consultar individualmente
+      if (reviewsMap !== undefined) {
+        hasReview = reviewsMap.get(hiring.id) || false;
+      } else {
+        const existingReview = await this.serviceReviewRepository.findByHiringId(hiring.id);
+        hasReview = existingReview !== null;
+      }
+    }
 
     return {
       id: hiring.id,
@@ -131,6 +157,7 @@ export class ServiceHiringTransformService {
             }))
           : undefined,
       claimId: activeClaim?.id, // Agregar el claimId si existe un claim activo
+      hasReview: hasReview, // Indica si ya existe una reseña para este hiring (solo en estados completables)
       status: {
         id: hiring.status.id,
         name: hiring.status.name,
@@ -172,7 +199,7 @@ export class ServiceHiringTransformService {
     return new Date() > expirationDate;
   }
 
-  transformToListResponse(
+  async transformToListResponse(
     hirings: ServiceHiring[],
     total: number,
     params: GetServiceHiringsDto,
@@ -183,40 +210,62 @@ export class ServiceHiringTransformService {
     // Optimización: cargar todos los deliverables de una vez
     const hiringIds = hirings.map((h) => h.id);
 
-    return this.deliverableRepository
-      .findByHiringIds(hiringIds)
-      .then((allDeliverables) => {
-        // Agrupar deliverables por hiringId
-        const deliverablesMap = new Map<number, Deliverable[]>();
-        allDeliverables.forEach((deliverable) => {
-          const existing = deliverablesMap.get(deliverable.hiringId) || [];
-          existing.push(deliverable);
-          deliverablesMap.set(deliverable.hiringId, existing);
-        });
+    // Cargar deliverables
+    const allDeliverables = await this.deliverableRepository.findByHiringIds(hiringIds);
 
-        // Transformar hirings con deliverables precargados
-        const dataPromises = hirings.map((hiring) => {
-          const ownerId = hiring.service?.userId;
-          const owner = ownersMap?.get(ownerId);
+    // Agrupar deliverables por hiringId
+    const deliverablesMap = new Map<number, Deliverable[]>();
+    allDeliverables.forEach((deliverable) => {
+      const existing = deliverablesMap.get(deliverable.hiringId) || [];
+      existing.push(deliverable);
+      deliverablesMap.set(deliverable.hiringId, existing);
+    });
 
-          return this.transformToResponse(
-            hiring,
-            availableActionsMap.get(hiring.id) || [],
-            usersMap?.get(hiring.userId),
-            deliverablesMap,
-            owner,
-          );
-        });
+    // Identificar hirings en estados completables para verificar reseñas
+    const reviewableStatuses = [
+      ServiceHiringStatusCode.COMPLETED,
+      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+    ];
+    const reviewableHiringIds = hirings
+      .filter((h) => reviewableStatuses.includes(h.status.code as ServiceHiringStatusCode))
+      .map((h) => h.id);
 
-        return Promise.all(dataPromises);
-      })
-      .then((data) => {
-        const pagination = calculatePagination(total, {
-          page: params.page || 1,
-          limit: params.limit || 10,
-        });
-
-        return { data, pagination };
+    // Cargar reseñas en batch para hirings completables
+    const reviewsMap = new Map<number, boolean>();
+    if (reviewableHiringIds.length > 0) {
+      const reviewsPromises = reviewableHiringIds.map(async (hiringId) => {
+        const review = await this.serviceReviewRepository.findByHiringId(hiringId);
+        return { hiringId, hasReview: review !== null };
       });
+      const reviewsResults = await Promise.all(reviewsPromises);
+      reviewsResults.forEach(({ hiringId, hasReview }) => {
+        reviewsMap.set(hiringId, hasReview);
+      });
+    }
+
+    // Transformar hirings con datos precargados
+    const dataPromises = hirings.map((hiring) => {
+      const ownerId = hiring.service?.userId;
+      const owner = ownersMap?.get(ownerId);
+
+      return this.transformToResponse(
+        hiring,
+        availableActionsMap.get(hiring.id) || [],
+        usersMap?.get(hiring.userId),
+        deliverablesMap,
+        owner,
+        reviewsMap,
+      );
+    });
+
+    const data = await Promise.all(dataPromises);
+
+    const pagination = calculatePagination(total, {
+      page: params.page || 1,
+      limit: params.limit || 10,
+    });
+
+    return { data, pagination };
   }
 }
