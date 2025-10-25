@@ -8,9 +8,9 @@ import { Service, ServiceCategory } from './entities';
 import { ServiceRepository } from './repositories';
 import { CategoryService, ServicesService } from './services';
 import {
-  CreateServiceUseCase,
-  DeleteServiceUseCase,
-  UpdateServiceUseCase,
+    CreateServiceUseCase,
+    DeleteServiceUseCase,
+    UpdateServiceUseCase,
 } from './services/use-cases';
 import { GetServiceByIdUseCase } from './services/use-cases/get-service-by-id.use-case';
 import { GetServicesByUserUseCase } from './services/use-cases/get-services-by-user.use-case';
