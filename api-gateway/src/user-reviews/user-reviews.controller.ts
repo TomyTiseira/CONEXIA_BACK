@@ -16,9 +16,7 @@ import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
 import { NATS_SERVICE } from 'src/config';
 import { AuthenticatedUser } from 'src/users/interfaces/user.interfaces';
-import { CreateUserReviewReportDto } from './dto/create-user-review-report.dto';
 import { CreateUserReviewDto } from './dto/create-user-review.dto';
-import { GetUserReviewReportsDto } from './dto/get-user-review-reports.dto';
 import { GetUserReviewsDto } from './dto/get-user-reviews.dto';
 import { UpdateUserReviewDto } from './dto/update-user-review.dto';
 
@@ -95,58 +93,5 @@ export class UserReviewsController {
         throw error;
       }),
     );
-  }
-
-  @Post('reports')
-  @AuthRoles([ROLES.USER])
-  createUserReviewReport(
-    @Body() createUserReviewReportDto: CreateUserReviewReportDto,
-    @User() user: AuthenticatedUser,
-  ) {
-    return this.client
-      .send('createUserReviewReport', {
-        createUserReviewReportDto,
-        userId: user.id,
-      })
-      .pipe(
-        catchError((error) => {
-          throw error;
-        }),
-      );
-  }
-
-  @Get('reports/:userReviewId')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
-  getUserReviewReports(
-    @Param('userReviewId') userReviewId: string,
-    @Query() query: GetUserReviewReportsDto,
-  ) {
-    return this.client
-      .send('getUserReviewReports', {
-        userReviewId: parseInt(userReviewId, 10),
-        page: query.page || 1,
-        limit: query.limit || 10,
-      })
-      .pipe(
-        catchError((error) => {
-          throw error;
-        }),
-      );
-  }
-
-  @Get('reports')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
-  getUserReviewsWithReports(@Query() query: GetUserReviewReportsDto) {
-    return this.client
-      .send('getUserReviewsWithReports', {
-        page: query.page || 1,
-        limit: query.limit || 10,
-        orderBy: 'reportCount',
-      })
-      .pipe(
-        catchError((error) => {
-          throw error;
-        }),
-      );
   }
 }

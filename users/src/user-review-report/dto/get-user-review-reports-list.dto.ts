@@ -1,7 +1,4 @@
-export enum OrderByUserReviewReport {
-  REPORT_COUNT = 'reportCount',
-  LAST_REPORT_DATE = 'lastReportDate',
-}
+import { OrderByUserReviewReport } from '../enums/orderby-user-review-report.enum';
 
 export class GetUserReviewReportsListDto {
   orderBy?: OrderByUserReviewReport = OrderByUserReviewReport.REPORT_COUNT;

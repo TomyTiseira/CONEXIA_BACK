@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrderByUserReviewReport } from '../dtos/get-user-review-reports-list.dto';
 import { UserReviewReport } from '../entities/user-review-report.entity';
+import { OrderByUserReviewReport } from '../enums/orderby-user-review-report.enum';
 
 @Injectable()
 export class UserReviewReportRepository {
@@ -11,9 +11,7 @@ export class UserReviewReportRepository {
     private readonly repository: Repository<UserReviewReport>,
   ) {}
 
-  async create(
-    report: Partial<UserReviewReport>,
-  ): Promise<UserReviewReport> {
+  async create(report: Partial<UserReviewReport>): Promise<UserReviewReport> {
     const newReport = this.repository.create(report);
     return this.repository.save(newReport);
   }
@@ -68,9 +66,6 @@ export class UserReviewReportRepository {
     page: number = 1,
     limit: number = 10,
   ): Promise<[any[], number]> {
-    // Calcular skip para paginación
-    const skip = (page - 1) * limit;
-
     // Obtener todos los reportes con información básica de la reseña
     const queryBuilder = this.repository
       .createQueryBuilder('report')
@@ -93,10 +88,7 @@ export class UserReviewReportRepository {
         orderBy === OrderByUserReviewReport.LAST_REPORT_DATE ? 'DESC' : 'ASC',
       );
 
-    // Aplicar paginación
-    queryBuilder.skip(skip).take(limit);
-
-    const [reports, total] = await queryBuilder.getManyAndCount();
+    const reports = await queryBuilder.getMany();
 
     // Agrupar por reseña y contar reportes
     const userReviewMap = new Map<
@@ -150,19 +142,24 @@ export class UserReviewReportRepository {
     });
 
     // Convertir a array y ordenar
-    const result = Array.from(userReviewMap.values());
+    const allUserReviews = Array.from(userReviewMap.values());
 
     if (orderBy === OrderByUserReviewReport.LAST_REPORT_DATE) {
-      result.sort(
+      allUserReviews.sort(
         (a, b) =>
           new Date(b.lastReportDate).getTime() -
           new Date(a.lastReportDate).getTime(),
       );
     } else {
-      result.sort((a, b) => b.reportCount - a.reportCount);
+      allUserReviews.sort((a, b) => b.reportCount - a.reportCount);
     }
 
-    return [result, total];
+    // Aplicar paginación al nivel de reseñas únicas
+    const skip = (page - 1) * limit;
+    const paginatedUserReviews = allUserReviews.slice(skip, skip + limit);
+    const totalUniqueUserReviews = allUserReviews.length;
+
+    return [paginatedUserReviews, totalUniqueUserReviews];
   }
 
   async getReportCountByUserReview(userReviewId: number): Promise<number> {
@@ -190,6 +187,22 @@ export class UserReviewReportRepository {
     return { affected: result.affected };
   }
 
+  async getUserReviewIdsWithReports(): Promise<number[]> {
+    const results = await this.repository
+      .createQueryBuilder('report')
+      .select('DISTINCT report.userReviewId', 'userReviewId')
+      .getRawMany();
+
+    return results.map((result) => result.userReviewId);
+  }
+
+  async getTotalReportCount(): Promise<number> {
+    return this.repository.count();
+  }
+
+  /**
+   * Desactiva reportes específicos por ID
+   */
   async deactivateReports(reportIds: number[]) {
     const result = await this.repository
       .createQueryBuilder()

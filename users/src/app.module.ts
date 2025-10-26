@@ -18,7 +18,8 @@ import { Role } from './shared/entities/role.entity';
 import { UserReview } from './shared/entities/user-review.entity';
 import { User } from './shared/entities/user.entity';
 import { NatsModule } from './transports/nats.module';
-import { UserReviewReportsModule } from './user-reviews/user-review-reports.module';
+import { UserReviewReport } from './user-review-report/entities/user-review-report.entity';
+import { UserReviewReportModule } from './user-review-report/user-review-report.module';
 import { UserReviewsModule } from './user-reviews/user-reviews.module';
 import { UsersModule } from './users/users.module';
 import { UserVerification } from './verification/entities/user-verification.entity';
@@ -36,6 +37,7 @@ import { VerificationModule } from './verification/verification.module';
       entities: [
         User,
         UserReview,
+        UserReviewReport,
         Role,
         DocumentType,
         Profile,
@@ -51,7 +53,7 @@ import { VerificationModule } from './verification/verification.module';
     }),
     UsersModule,
     UserReviewsModule,
-    UserReviewReportsModule,
+    UserReviewReportModule,
     AuthModule,
     NatsModule,
     ProfileModule,

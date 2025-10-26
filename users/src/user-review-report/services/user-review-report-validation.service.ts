@@ -1,8 +1,13 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserReview } from '../../shared/entities/user-review.entity';
+import { UserReviewRepository } from '../../user-reviews/repository/user-review.repository';
 import { UserReviewReportReason } from '../enums/user-review-report-reason.enum';
+import {
+  InvalidReportReasonException,
+  UserAlreadyReportedException,
+  UserReviewNotFoundException,
+} from '../exceptions/user-review-report.exceptions';
 import { UserReviewReportRepository } from '../repositories/user-review-report.repository';
-import { UserReviewRepository } from '../repository/user-review.repository';
 
 @Injectable()
 export class UserReviewReportValidationService {
@@ -20,9 +25,7 @@ export class UserReviewReportValidationService {
     const userReview = await this.userReviewRepository.findById(userReviewId);
 
     if (!userReview) {
-      throw new NotFoundException(
-        `La reseña con ID ${userReviewId} no existe`,
-      );
+      throw new UserReviewNotFoundException(userReviewId);
     }
 
     return userReview;
@@ -44,25 +47,7 @@ export class UserReviewReportValidationService {
       );
 
     if (existingReport) {
-      throw new BadRequestException(
-        'Ya has reportado esta reseña anteriormente',
-      );
-    }
-  }
-
-  /**
-   * Valida que el usuario sea el dueño del perfil (reviewedUserId)
-   * @param userReview - Reseña a validar
-   * @param reporterId - ID del usuario que reporta
-   */
-  validateUserIsProfileOwner(
-    userReview: UserReview,
-    reporterId: number,
-  ): void {
-    if (userReview.reviewedUserId !== reporterId) {
-      throw new ForbiddenException(
-        'Solo el dueño del perfil puede reportar reseñas en su perfil',
-      );
+      throw new UserAlreadyReportedException();
     }
   }
 
@@ -76,9 +61,7 @@ export class UserReviewReportValidationService {
     otherReason?: string,
   ): void {
     if (reason === UserReviewReportReason.OTHER && !otherReason) {
-      throw new BadRequestException(
-        'Debes proporcionar una descripción cuando seleccionas "Otro"',
-      );
+      throw new InvalidReportReasonException();
     }
   }
 }

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserReviewReportDto } from '../dtos/create-user-review-report.dto';
+import { CreateUserReviewReportDto } from '../dto/create-user-review-report.dto';
+import { GetUserReviewReportsListDto } from '../dto/get-user-review-reports-list.dto';
 import { UserReviewReport } from '../entities/user-review-report.entity';
+import { OrderByUserReviewReport } from '../enums/orderby-user-review-report.enum';
 import { UserReviewReportRepository } from '../repositories/user-review-report.repository';
 import { UserReviewReportValidationService } from './user-review-report-validation.service';
 
@@ -14,7 +16,7 @@ export class UserReviewReportsService {
   /**
    * Crea un nuevo reporte de reseña de usuario
    * @param createUserReviewReportDto - Datos del reporte
-   * @param userId - ID del usuario que reporta (debe ser el dueño del perfil)
+   * @param userId - ID del usuario que reporta
    * @returns El reporte creado
    */
   async createReport(
@@ -22,15 +24,8 @@ export class UserReviewReportsService {
     userId: number,
   ): Promise<UserReviewReport> {
     // Validar que la reseña existe
-    const userReview =
-      await this.userReviewReportValidationService.validateUserReviewExists(
-        createUserReviewReportDto.userReviewId,
-      );
-
-    // Validar que el usuario sea el dueño del perfil (reviewedUserId)
-    this.userReviewReportValidationService.validateUserIsProfileOwner(
-      userReview,
-      userId,
+    await this.userReviewReportValidationService.validateUserReviewExists(
+      createUserReviewReportDto.userReviewId,
     );
 
     // Validar que el usuario no haya reportado ya la reseña
@@ -75,18 +70,15 @@ export class UserReviewReportsService {
 
   /**
    * Obtiene reseñas con conteo de reportes
-   * @param orderBy - Criterio de ordenamiento
-   * @param page - Página actual
-   * @param limit - Límite de elementos por página
+   * @param getUserReviewReportsListDto - Filtros y ordenamiento
    * @returns Lista de reseñas con conteo de reportes
    */
   async getUserReviewsWithReportCounts(
-    orderBy: string,
-    page: number = 1,
-    limit: number = 10,
+    getUserReviewReportsListDto: GetUserReviewReportsListDto,
   ): Promise<[any[], number]> {
+    const { orderBy, page = 1, limit = 10 } = getUserReviewReportsListDto;
     return this.userReviewReportRepository.getUserReviewsWithReportCounts(
-      orderBy as any,
+      orderBy as OrderByUserReviewReport,
       page,
       limit,
     );
@@ -101,6 +93,24 @@ export class UserReviewReportsService {
     return this.userReviewReportRepository.getReportCountByUserReview(
       userReviewId,
     );
+  }
+
+  /**
+   * Verifica si una reseña tiene reportes
+   * @param userReviewId - ID de la reseña
+   * @returns true si tiene reportes, false en caso contrario
+   */
+  async userReviewHasReports(userReviewId: number): Promise<boolean> {
+    const count = await this.getReportCountByUserReview(userReviewId);
+    return count > 0;
+  }
+
+  async getUserReviewIdsWithReports(): Promise<number[]> {
+    return await this.userReviewReportRepository.getUserReviewIdsWithReports();
+  }
+
+  async getTotalReportCount(): Promise<number> {
+    return await this.userReviewReportRepository.getTotalReportCount();
   }
 
   /**
@@ -122,7 +132,7 @@ export class UserReviewReportsService {
       userReviewId: report.userReviewId,
       reviewedUserId: report.userReview?.reviewedUserId || null,
       reviewerUserId: report.userReview?.reviewerUserId || null,
-      reviewDescription: report.userReview?.description || null,
+      resourceDescription: report.userReview?.description || null,
     }));
   }
 

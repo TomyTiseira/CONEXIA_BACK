@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../users/service/users.service';
-import { GetUserReviewReportsDto } from '../../dtos/get-user-review-reports.dto';
+import { GetUserReviewReportsDto } from '../../dto/get-user-review-reports.dto';
 import { UserReviewReportsService } from '../user-review-reports.service';
 
 export interface UserReviewReportResponseDto {
@@ -61,14 +62,14 @@ function transformUserReviewReportsWithUsers(
         ? {
             id: user.id,
             email: user.email,
-            name: user.profile?.name || 'N/A',
-            lastName: user.profile?.lastName || 'N/A',
+            name: user.profile?.name || '',
+            lastName: user.profile?.lastName || '',
           }
         : {
             id: report.reporterId,
-            email: 'Usuario no encontrado',
-            name: 'N/A',
-            lastName: 'N/A',
+            email: '',
+            name: '',
+            lastName: '',
           },
     };
   });

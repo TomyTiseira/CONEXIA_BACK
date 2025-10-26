@@ -1,9 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
+import { OrderByUserReviewReport } from 'src/user-review-report/enums/orderby-user-review-report.enum';
 import { UsersService } from '../../../users/service/users.service';
-import {
-    GetUserReviewReportsListDto,
-    OrderByUserReviewReport,
-} from '../../dtos/get-user-review-reports-list.dto';
+import { GetUserReviewReportsListDto } from '../../dto/get-user-review-reports-list.dto';
 import { UserReviewReportsService } from '../user-review-reports.service';
 
 export interface UserReviewWithReportsResponseDto {
@@ -76,18 +75,21 @@ export class GetUserReviewsWithReportsUseCase {
 
     // Obtener reseñas con conteo de reportes
     const [userReviews, total] =
-      await this.userReviewReportsService.getUserReviewsWithReportCounts(
+      await this.userReviewReportsService.getUserReviewsWithReportCounts({
         orderBy,
         page,
         limit,
-      );
+      });
 
     // Obtener IDs únicos de usuarios
     const reviewedUserIds = userReviews.map((review) => review.reviewedUserId);
     const reviewerUserIds = userReviews.map((review) => review.reviewerUserId);
     const allUserIds = [
-      ...new Set([...reviewedUserIds, ...reviewerUserIds]),
-    ];
+      ...new Set([
+        ...(reviewedUserIds as number[]),
+        ...(reviewerUserIds as number[]),
+      ]),
+    ] as number[];
 
     // Obtener información de usuarios
     const users = await this.usersService.findUsersByIds(allUserIds);
@@ -112,27 +114,27 @@ export class GetUserReviewsWithReportsUseCase {
             ? {
                 id: reviewedUser.id,
                 email: reviewedUser.email,
-                name: reviewedUser.profile?.name || 'N/A',
-                lastName: reviewedUser.profile?.lastName || 'N/A',
+                name: reviewedUser.profile?.name || '',
+                lastName: reviewedUser.profile?.lastName || '',
               }
             : {
                 id: review.reviewedUserId,
-                email: 'Usuario no encontrado',
-                name: 'N/A',
-                lastName: 'N/A',
+                email: '',
+                name: '',
+                lastName: '',
               },
           reviewerUser: reviewerUser
             ? {
                 id: reviewerUser.id,
                 email: reviewerUser.email,
-                name: reviewerUser.profile?.name || 'N/A',
-                lastName: reviewerUser.profile?.lastName || 'N/A',
+                name: reviewerUser.profile?.name || '',
+                lastName: reviewerUser.profile?.lastName || '',
               }
             : {
                 id: review.reviewerUserId,
-                email: 'Usuario no encontrado',
-                name: 'N/A',
-                lastName: 'N/A',
+                email: '',
+                name: '',
+                lastName: '',
               },
         };
       });

@@ -1,11 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateUserReviewReportDto } from '../dtos/create-user-review-report.dto';
-import {
-    GetUserReviewReportsListDto,
-    OrderByUserReviewReport,
-} from '../dtos/get-user-review-reports-list.dto';
-import { GetUserReviewReportsDto } from '../dtos/get-user-review-reports.dto';
+import { CreateUserReviewReportDto } from '../dto/create-user-review-report.dto';
+import { GetUserReviewReportsListDto } from '../dto/get-user-review-reports-list.dto';
+import { GetUserReviewReportsDto } from '../dto/get-user-review-reports.dto';
+import { OrderByUserReviewReport } from '../enums/orderby-user-review-report.enum';
 import { GetUserReviewReportsUseCase } from '../services/use-cases/get-user-review-reports.use-case';
 import { GetUserReviewsWithReportsUseCase } from '../services/use-cases/get-user-reviews-with-reports.use-case';
 import { UserReviewReportsService } from '../services/user-review-reports.service';
@@ -37,7 +35,8 @@ export class UserReviewReportsController {
 
   @MessagePattern('getUserReviewReports')
   async getUserReviewReports(
-    @Payload() getUserReviewReportsDto: GetUserReviewReportsDto,
+    @Payload()
+    getUserReviewReportsDto: GetUserReviewReportsDto,
   ) {
     return await this.getUserReviewReportsUseCase.execute(
       getUserReviewReportsDto,

@@ -1,9 +1,9 @@
 import {
-    IsEnum,
-    IsNotEmpty,
-    IsNumber,
-    IsString,
-    ValidateIf,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export enum UserReviewReportReason {
