@@ -61,16 +61,32 @@ export class ModerationService {
 
       const results: ModerationAnalysis[] = [];
 
-      // 3. Analizar cada grupo de reportes
-      for (const group of userReportsGroups) {
-        try {
-          const analysis = await this.analyzeUserReports(group);
-          results.push(analysis);
-        } catch (error) {
-          this.logger.error(
-            `Error al analizar reportes del usuario ${group.userId}:`,
-            error,
+      // 3. Analizar cada grupo de reportes con batch/throttling
+      const batchSize = 10; // usuarios por batch
+      const batchDelayMs = 15000; // 15 segundos entre batches (ajustable)
+      let batchCount = 0;
+      for (let i = 0; i < userReportsGroups.length; i += batchSize) {
+        const batch = userReportsGroups.slice(i, i + batchSize);
+        this.logger.log(
+          `Procesando batch ${++batchCount}: usuarios ${i + 1} a ${i + batch.length}`,
+        );
+        const batchPromises = batch.map(async (group) => {
+          try {
+            const analysis = await this.analyzeUserReports(group);
+            results.push(analysis);
+          } catch (error) {
+            this.logger.error(
+              `Error al analizar reportes del usuario ${group.userId}:`,
+              error,
+            );
+          }
+        });
+        await Promise.all(batchPromises);
+        if (i + batchSize < userReportsGroups.length) {
+          this.logger.log(
+            `Esperando ${batchDelayMs / 1000}s antes del siguiente batch para evitar rate limit...`,
           );
+          await new Promise((res) => setTimeout(res, batchDelayMs));
         }
       }
 
