@@ -28,7 +28,7 @@ export class OpenAIService {
    */
   async moderateText(text: string): Promise<OpenAIModerationResult> {
     let attempts = 0;
-    const maxAttempts = 6;
+    const maxAttempts = 3;
     let delayMs = 1000;
     while (attempts < maxAttempts) {
       try {
