@@ -33,9 +33,13 @@ export class ServiceReviewsController {
 
   @MessagePattern('get_service_reviews')
   async getServiceReviews(
-    @Payload() payload: { serviceId: number; dto: GetServiceReviewsDto },
+    @Payload() payload: { serviceId: number; dto: GetServiceReviewsDto; userId?: number },
   ) {
-    return await this.getReviewsUseCase.execute(payload.serviceId, payload.dto);
+    return await this.getReviewsUseCase.execute(
+      payload.serviceId,
+      payload.dto,
+      payload.userId,
+    );
   }
 
   @MessagePattern('get_service_review_by_hiring')

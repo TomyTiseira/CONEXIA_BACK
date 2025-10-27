@@ -27,9 +27,19 @@ export class UpdateServiceReviewUseCase {
       throw new ForbiddenException('You can only update your own reviews');
     }
 
-    const updatedReview = await this.reviewRepository.update(reviewId, {
-      comment: dto.comment,
-    });
+    // Construir objeto de actualización solo con campos proporcionados
+    const updateData: Partial<ServiceReview> = {};
+    if (dto.rating !== undefined) {
+      updateData.rating = dto.rating;
+    }
+    if (dto.comment !== undefined) {
+      updateData.comment = dto.comment;
+    }
+
+    const updatedReview = await this.reviewRepository.update(
+      reviewId,
+      updateData,
+    );
 
     return updatedReview!;
   }

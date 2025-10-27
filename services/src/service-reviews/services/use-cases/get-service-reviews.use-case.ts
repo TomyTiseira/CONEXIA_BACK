@@ -10,7 +10,7 @@ export class GetServiceReviewsUseCase {
     private readonly usersClient: UsersClientService,
   ) {}
 
-  async execute(serviceId: number, dto: GetServiceReviewsDto) {
+  async execute(serviceId: number, dto: GetServiceReviewsDto, currentUserId?: number) {
     const { page = 1, limit = 10, rating } = dto;
 
     const { reviews, total } = await this.reviewRepository.findByServiceId(
@@ -35,6 +35,7 @@ export class GetServiceReviewsUseCase {
     const enrichedReviews = reviews.map((review) => {
       const user = usersMap.get(review.reviewerUserId);
       const profile = user?.profile;
+      const isOwner = currentUserId === review.reviewerUserId;
 
       return {
         id: review.id,
@@ -44,6 +45,7 @@ export class GetServiceReviewsUseCase {
         ownerResponseDate: review.ownerResponseDate,
         createdAt: review.createdAt,
         updatedAt: review.updatedAt,
+        isOwner, // Indica si el usuario actual es el dueño de esta reseña
         // Reviewer info in nested object
         reviewUser: profile
           ? {

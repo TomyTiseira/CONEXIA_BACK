@@ -1,8 +1,14 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class UpdateServiceReviewDto {
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  @IsOptional()
+  rating?: number;
+
   @IsString()
-  @MaxLength(500)
+  @MaxLength(1000)
   @IsOptional()
   comment?: string;
 }

@@ -58,15 +58,19 @@ export class ServiceReviewsController {
    * GET /service-reviews/service/:serviceId
    * Obtener todas las reseñas de un servicio con paginación
    * Incluye promedio de calificación y total
+   * Requiere autenticación para mostrar isOwner correctamente
    */
   @Get('service/:serviceId')
+  @AuthRoles([ROLES.USER])
   getServiceReviews(
     @Param('serviceId') serviceId: string,
     @Query() getServiceReviewsDto: GetServiceReviewsDto,
+    @User() user: AuthenticatedUser,
   ) {
     const payload = {
       serviceId: parseInt(serviceId),
       dto: getServiceReviewsDto,
+      userId: user.id, // Ahora siempre estará presente por el guard
     };
 
     return this.client.send('get_service_reviews', payload).pipe(
