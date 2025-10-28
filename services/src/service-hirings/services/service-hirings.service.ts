@@ -18,6 +18,7 @@ import {
   ReviewDeliveryDto,
   UpdateDeliveryDto,
 } from '../dto';
+import { NegotiateServiceHiringDto } from '../dto/negotiate-service-hiring.dto';
 import { DeliveryStatus } from '../entities/delivery-submission.entity';
 import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
@@ -207,8 +208,16 @@ export class ServiceHiringsService {
     return this.cancelServiceHiringUseCase.execute(userId, hiringId);
   }
 
-  async negotiateServiceHiring(userId: number, hiringId: number) {
-    return this.negotiateServiceHiringUseCase.execute(userId, hiringId);
+  async negotiateServiceHiring(
+    userId: number,
+    hiringId: number,
+    negotiateDto?: NegotiateServiceHiringDto,
+  ) {
+    return this.negotiateServiceHiringUseCase.execute(
+      userId,
+      hiringId,
+      negotiateDto,
+    );
   }
 
   async contractService(

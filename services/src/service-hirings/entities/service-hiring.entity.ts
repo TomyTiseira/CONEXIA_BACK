@@ -54,6 +54,12 @@ export class ServiceHiring {
   @Column({ type: 'int', nullable: true })
   quotationValidityDays: number;
 
+  @Column({ type: 'boolean', nullable: true, default: false })
+  isBusinessDays: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  negotiationDescription: string;
+
   @Column({ name: 'payment_modality_id', nullable: true })
   paymentModalityId: number;
 

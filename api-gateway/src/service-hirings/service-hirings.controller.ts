@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   Body,
@@ -29,6 +28,7 @@ import {
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  NegotiateServiceHiringDto,
   ReviewDeliveryDto,
   UpdatePaymentStatusDto,
 } from './dto';
@@ -268,11 +268,13 @@ export class ServiceHiringsController {
   negotiateServiceHiring(
     @User() user: AuthenticatedUser,
     @Param('hiringId') hiringId: number,
+    @Body() negotiateDto: NegotiateServiceHiringDto,
   ) {
     return this.client
       .send('negotiateServiceHiring', {
         userId: user.id,
         hiringId: +hiringId,
+        negotiateDto,
       })
       .pipe(
         catchError((error) => {

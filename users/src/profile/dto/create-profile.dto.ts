@@ -4,14 +4,66 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
+  Matches,
   MaxLength,
+  registerDecorator,
   ValidateNested,
+  ValidationArguments,
+  ValidationOptions,
 } from 'class-validator';
+
+// Validador personalizado para documento según tipo
+function IsValidDocumentNumber(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isValidDocumentNumber',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const obj = args.object as any;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const documentTypeId = obj.documentTypeId;
+
+          if (!value) return false;
+
+          // DNI: 7-8 dígitos
+          if (documentTypeId === 1) {
+            return /^\d{7,8}$/.test(value);
+          }
+
+          // Pasaporte: 6-9 alfanuméricos
+          if (documentTypeId === 3) {
+            return /^[A-Z0-9]{6,9}$/i.test(value);
+          }
+
+          return false;
+        },
+        defaultMessage(args: ValidationArguments) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const obj = args.object as any;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const documentTypeId = obj.documentTypeId;
+
+          if (documentTypeId === 1) {
+            return 'DNI must be 7 or 8 digits';
+          }
+          if (documentTypeId === 3) {
+            return 'Passport must be 6 to 9 alphanumeric characters';
+          }
+          return 'Invalid document number format';
+        },
+      },
+    });
+  };
+}
 
 export class ExperienceItem {
   @IsString({ message: 'title must be a string' })
@@ -113,10 +165,14 @@ export class CreateProfileDto {
 
   @IsString({ message: 'documentNumber must be a string' })
   @IsNotEmpty({ message: 'documentNumber is required' })
+  @IsValidDocumentNumber()
   documentNumber: string;
 
   @IsNumber({}, { message: 'documentTypeId must be a number' })
   @IsNotEmpty({ message: 'documentTypeId is required' })
+  @IsIn([1, 3], {
+    message: 'documentTypeId must be 1 (DNI) or 3 (Pasaporte)',
+  })
   @Type(() => Number)
   documentTypeId: number;
 
@@ -124,9 +180,19 @@ export class CreateProfileDto {
   @IsNotEmpty({ message: 'profession is required' })
   profession: string;
 
-  @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
+  @IsString({ message: 'areaCode must be a string' })
   @IsOptional()
-  phoneNumber: string;
+  @Matches(/^\+\d{1,4}$/, {
+    message: 'areaCode must be in format +XX (e.g., +54, +1)',
+  })
+  areaCode?: string;
+
+  @IsString({ message: 'phoneNumber must be a string' })
+  @IsOptional()
+  @Matches(/^[0-9]{6,15}$/, {
+    message: 'phoneNumber must be 6 to 15 digits without area code',
+  })
+  phoneNumber?: string;
 
   @IsString({ message: 'country must be a string' })
   @IsOptional()

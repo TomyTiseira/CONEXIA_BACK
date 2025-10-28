@@ -7,11 +7,60 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
+  Matches,
   MaxLength,
+  registerDecorator,
   ValidateNested,
+  ValidationArguments,
+  ValidationOptions,
 } from 'class-validator';
+
+// Validador personalizado para documento según tipo (igual que en CreateProfileDto)
+function IsValidDocumentNumber(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isValidDocumentNumber',
+      target: object.constructor,
+      propertyName: propertyName,
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const obj = args.object as any;
+          const documentTypeId = obj.documentTypeId;
+
+          // Si no hay documentTypeId, no validamos (será validado por otros decoradores)
+          if (documentTypeId === undefined || documentTypeId === null) {
+            return true;
+          }
+
+          // Validar según el tipo de documento
+          if (documentTypeId === 1) {
+            // DNI: 7 u 8 dígitos numéricos
+            return /^\d{7,8}$/.test(value);
+          } else if (documentTypeId === 3) {
+            // Pasaporte: 6-9 caracteres alfanuméricos
+            return /^[A-Z0-9]{6,9}$/i.test(value);
+          }
+
+          return false;
+        },
+        defaultMessage(args: ValidationArguments) {
+          const obj = args.object as any;
+          const documentTypeId = obj.documentTypeId;
+
+          if (documentTypeId === 1) {
+            return 'DNI must be 7 or 8 digits';
+          } else if (documentTypeId === 3) {
+            return 'Pasaporte must be 6 to 9 alphanumeric characters';
+          }
+
+          return 'Invalid document number';
+        },
+      },
+    });
+  };
+}
 
 export class ExperienceItem {
   @IsString({ message: 'title must be a string' })
@@ -114,8 +163,24 @@ export class UpdateProfileDto {
   @IsOptional()
   profession?: string;
 
-  @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
+  @IsString({ message: 'areaCode must be a string' })
   @IsOptional()
+  @Matches(/^\+\d{1,4}$/, {
+    message: 'areaCode must be in format +XX (e.g., +54, +1)',
+  })
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return value;
+  })
+  areaCode?: string;
+
+  @IsString({ message: 'phoneNumber must be a string' })
+  @IsOptional()
+  @Matches(/^[0-9]{6,15}$/, {
+    message: 'phoneNumber must be 6 to 15 digits without area code',
+  })
   @Transform(({ value }) => {
     if (value === '' || value === null || value === undefined) {
       return null;

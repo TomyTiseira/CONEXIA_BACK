@@ -161,11 +161,17 @@ export class ServiceHiringsController {
 
   @MessagePattern('negotiateServiceHiring')
   async negotiateServiceHiring(
-    @Payload() data: { userId: number; hiringId: number },
+    @Payload()
+    data: {
+      userId: number;
+      hiringId: number;
+      negotiateDto?: any;
+    },
   ) {
     return this.serviceHiringsService.negotiateServiceHiring(
       data.userId,
       data.hiringId,
+      data.negotiateDto,
     );
   }
 

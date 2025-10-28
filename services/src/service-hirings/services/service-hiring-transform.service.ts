@@ -27,6 +27,8 @@ export interface ServiceHiringResponse {
   quotedAt?: Date;
   respondedAt?: Date;
   quotationValidityDays?: number;
+  isBusinessDays?: boolean;
+  negotiationDescription?: string;
   isExpired?: boolean;
   paymentModality?: PaymentModalityResponseDto;
   deliverables?: DeliverableResponseDto[];
@@ -99,6 +101,8 @@ export class ServiceHiringTransformService {
       quotedAt: hiring.quotedAt,
       respondedAt: hiring.respondedAt,
       quotationValidityDays: hiring.quotationValidityDays,
+      isBusinessDays: hiring.isBusinessDays,
+      negotiationDescription: hiring.negotiationDescription,
       isExpired,
       paymentModality: hiring.paymentModality
         ? {

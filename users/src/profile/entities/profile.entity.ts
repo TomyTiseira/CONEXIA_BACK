@@ -36,6 +36,9 @@ export class Profile {
   documentType: DocumentType;
 
   @Column({ nullable: true })
+  areaCode: string;
+
+  @Column({ nullable: true })
   phoneNumber: string;
 
   @Column({ nullable: true })

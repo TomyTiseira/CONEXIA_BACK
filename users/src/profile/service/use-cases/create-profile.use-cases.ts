@@ -21,6 +21,14 @@ export class CreateProfileUseCase {
   ) {}
 
   async execute(dto: CreateProfileDto) {
+    // Log para debug
+    console.log('CreateProfileDto received:', {
+      documentNumber: dto.documentNumber,
+      documentTypeId: dto.documentTypeId,
+      name: dto.name,
+      lastName: dto.lastName,
+    });
+
     await this.userBaseService.existsProfileByDocumentNumber(
       dto.documentTypeId,
       dto.documentNumber,
@@ -75,15 +83,78 @@ export class CreateProfileUseCase {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new UserNotFoundByIdException(userId);
 
-    const profile = await this.profileRepo.findByUserId(userId);
-    if (profile) {
-      throw new UserBadRequestException('Profile already exists for this user');
+    const existingProfile = await this.profileRepo.findByUserId(userId);
+
+    // Si el perfil existe, verificar si está vacío (creado durante la verificación)
+    if (existingProfile) {
+      const isEmpty =
+        (!existingProfile.name || existingProfile.name.trim() === '') &&
+        (!existingProfile.lastName || existingProfile.lastName.trim() === '') &&
+        (!existingProfile.documentNumber ||
+          existingProfile.documentNumber.trim() === '');
+
+      // Si el perfil tiene datos, no permitir crear otro
+      if (!isEmpty) {
+        throw new UserBadRequestException(
+          'Profile already exists for this user',
+        );
+      }
+
+      // Si el perfil está vacío, actualizarlo
+      console.log('Updating empty profile with data:', {
+        profileId: existingProfile.id,
+        documentNumber: dto.documentNumber,
+        documentTypeId: dto.documentTypeId,
+        name: dto.name,
+        lastName: dto.lastName,
+      });
+
+      // Preparar datos para actualizar (excluir userId y skills que no son columnas de Profile)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { userId, skills, ...updateData } = dto;
+      const updatedProfile = await this.profileRepo.update(existingProfile.id, {
+        ...updateData,
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+      });
+
+      console.log('Empty profile updated:', {
+        id: updatedProfile?.id,
+        documentNumber: updatedProfile?.documentNumber,
+        documentTypeId: updatedProfile?.documentTypeId,
+      });
+
+      // Actualizar las relaciones profile-skill si se proporcionan habilidades
+      if (dto.skills && dto.skills.length > 0) {
+        // Primero eliminar las habilidades existentes
+        await this.profileSkillRepo.deleteByProfileId(existingProfile.id);
+        // Crear las nuevas habilidades
+        await this.profileSkillRepo.createProfileSkills(
+          existingProfile.id,
+          dto.skills,
+        );
+      }
+
+      return updatedProfile;
     }
 
-    // Crear el perfil
+    // Si no existe perfil, crear uno nuevo
+    console.log('Creating new profile with data:', {
+      documentNumber: dto.documentNumber,
+      documentTypeId: dto.documentTypeId,
+      name: dto.name,
+      lastName: dto.lastName,
+      profession: dto.profession,
+    });
+
     const newProfile = await this.profileRepo.create({
       ...dto,
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+    });
+
+    console.log('Profile created:', {
+      id: newProfile.id,
+      documentNumber: newProfile.documentNumber,
+      documentTypeId: newProfile.documentTypeId,
     });
 
     // Crear las relaciones profile-skill si se proporcionan habilidades
