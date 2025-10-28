@@ -15,6 +15,8 @@ import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.in
 import { NATS_SERVICE } from 'src/config';
 import { User } from '../auth/decorators/user.decorator';
 import {
+  CreateCommentReportDto,
+  GetCommentReportsDto,
   GetProjectReportsDto,
   GetReportsDto,
   GetServiceReportsDto,
@@ -185,6 +187,59 @@ export class ReportsController {
         page: query.page || 1,
         limit: query.limit || 10,
         orderBy: query.orderBy || OrderByUserReviewReport.REPORT_COUNT,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post('comment')
+  @AuthRoles([ROLES.USER])
+  createCommentReport(
+    @Body() createCommentReportDto: CreateCommentReportDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('createCommentReport', {
+        createReportDto: createCommentReportDto,
+        userId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('comment/:commentId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getCommentReports(
+    @Param('commentId') commentId: string,
+    @Query() query: GetCommentReportsDto,
+  ) {
+    return this.client
+      .send('getCommentReports', {
+        commentId: parseInt(commentId, 10),
+        page: query.page || 1,
+        limit: query.limit || 10,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('comment')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getCommentsWithReports(@Query() getCommentReportsDto: GetCommentReportsDto) {
+    return this.client
+      .send('getCommentsWithReports', {
+        page: getCommentReportsDto.page || 1,
+        limit: getCommentReportsDto.limit || 10,
+        orderBy: getCommentReportsDto.orderBy || 'reportCount',
       })
       .pipe(
         catchError((error) => {
