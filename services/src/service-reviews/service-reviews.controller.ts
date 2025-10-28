@@ -9,6 +9,7 @@ import {
 import { ServiceReviewRepository } from './repositories/service-review.repository';
 import { CreateServiceReviewUseCase } from './services/use-cases/create-service-review.use-case';
 import { DeleteServiceReviewUseCase } from './services/use-cases/delete-service-review.use-case';
+import { DeleteServiceReviewResponseUseCase } from './services/use-cases/delete-service-review-response.use-case';
 import { GetServiceReviewsUseCase } from './services/use-cases/get-service-reviews.use-case';
 import { RespondToServiceReviewUseCase } from './services/use-cases/respond-to-service-review.use-case';
 import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-review.use-case';
@@ -20,6 +21,7 @@ export class ServiceReviewsController {
     private readonly getReviewsUseCase: GetServiceReviewsUseCase,
     private readonly updateReviewUseCase: UpdateServiceReviewUseCase,
     private readonly deleteReviewUseCase: DeleteServiceReviewUseCase,
+    private readonly deleteReviewResponseUseCase: DeleteServiceReviewResponseUseCase,
     private readonly respondToReviewUseCase: RespondToServiceReviewUseCase,
     private readonly reviewRepository: ServiceReviewRepository,
   ) {}
@@ -85,5 +87,15 @@ export class ServiceReviewsController {
   ) {
     await this.deleteReviewUseCase.execute(payload.userId, payload.reviewId);
     return { success: true };
+  }
+
+  @MessagePattern('delete_service_review_response')
+  async deleteReviewResponse(
+    @Payload() payload: { userId: number; reviewId: number },
+  ) {
+    return await this.deleteReviewResponseUseCase.execute(
+      payload.userId,
+      payload.reviewId,
+    );
   }
 }

@@ -7,6 +7,7 @@ import { ServiceReviewRepository } from './repositories/service-review.repositor
 import { ServiceReviewsController } from './service-reviews.controller';
 import { CreateServiceReviewUseCase } from './services/use-cases/create-service-review.use-case';
 import { DeleteServiceReviewUseCase } from './services/use-cases/delete-service-review.use-case';
+import { DeleteServiceReviewResponseUseCase } from './services/use-cases/delete-service-review-response.use-case';
 import { GetServiceReviewsUseCase } from './services/use-cases/get-service-reviews.use-case';
 import { RespondToServiceReviewUseCase } from './services/use-cases/respond-to-service-review.use-case';
 import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-review.use-case';
@@ -24,6 +25,7 @@ import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-
     GetServiceReviewsUseCase,
     UpdateServiceReviewUseCase,
     DeleteServiceReviewUseCase,
+    DeleteServiceReviewResponseUseCase,
     RespondToServiceReviewUseCase,
   ],
   exports: [ServiceReviewRepository],

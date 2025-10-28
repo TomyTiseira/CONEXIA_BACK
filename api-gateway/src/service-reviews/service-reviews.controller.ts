@@ -168,4 +168,27 @@ export class ServiceReviewsController {
       }),
     );
   }
+
+  /**
+   * DELETE /service-reviews/:id/response
+   * Eliminar la respuesta del dueño del servicio a una reseña
+   * Solo el dueño del servicio puede eliminar su respuesta
+   */
+  @Delete(':id/response')
+  @AuthRoles([ROLES.USER])
+  deleteServiceReviewResponse(
+    @Param('id') id: string,
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      reviewId: parseInt(id),
+      userId: user.id,
+    };
+
+    return this.client.send('delete_service_review_response', payload).pipe(
+      catchError((error) => {
+        throw error;
+      }),
+    );
+  }
 }
