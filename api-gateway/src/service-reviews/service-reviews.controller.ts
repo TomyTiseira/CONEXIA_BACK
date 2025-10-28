@@ -100,6 +100,29 @@ export class ServiceReviewsController {
   }
 
   /**
+   * GET /service-reviews/:id
+   * Obtener una reseña específica por ID
+   * Útil para mostrar una reseña resaltada desde reportes o notificaciones
+   */
+  @Get(':id')
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
+  getServiceReviewById(
+    @Param('id') id: string,
+    @User() user?: AuthenticatedUser,
+  ) {
+    const payload = {
+      reviewId: parseInt(id),
+      userId: user?.id,
+    };
+
+    return this.client.send('get_service_review_by_id', payload).pipe(
+      catchError((error) => {
+        throw error;
+      }),
+    );
+  }
+
+  /**
    * PATCH /service-reviews/:id
    * Editar el comentario de una reseña (solo el cliente autor)
    */

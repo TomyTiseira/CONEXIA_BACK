@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
-import { GetServiceReviewsWithReportsDto } from '../../dto/get-service-reviews-with-reports.dto';
 import { OrderByServiceReviewReport } from '../../enums/orderby-service-review-report.enum';
 import { ServiceReviewReportRepository } from '../../repositories/service-review-report.repository';
+
+export interface GetServiceReviewsWithReportsParams {
+  page: number;
+  limit: number;
+  orderBy?: OrderByServiceReviewReport;
+}
 
 export interface ServiceReviewWithReportsResponseDto {
   serviceReviewId: number;
@@ -36,7 +41,7 @@ export class GetServiceReviewsWithReportsUseCase {
     private readonly usersClient: UsersClientService,
   ) {}
 
-  async execute(dto: GetServiceReviewsWithReportsDto) {
+  async execute(dto: GetServiceReviewsWithReportsParams) {
     const params = {
       orderBy: dto.orderBy || OrderByServiceReviewReport.REPORT_COUNT,
       page: dto.page || 1,

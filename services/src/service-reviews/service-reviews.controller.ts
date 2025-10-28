@@ -10,6 +10,7 @@ import { ServiceReviewRepository } from './repositories/service-review.repositor
 import { CreateServiceReviewUseCase } from './services/use-cases/create-service-review.use-case';
 import { DeleteServiceReviewResponseUseCase } from './services/use-cases/delete-service-review-response.use-case';
 import { DeleteServiceReviewUseCase } from './services/use-cases/delete-service-review.use-case';
+import { GetServiceReviewByIdUseCase } from './services/use-cases/get-service-review-by-id.use-case';
 import { GetServiceReviewsUseCase } from './services/use-cases/get-service-reviews.use-case';
 import { RespondToServiceReviewUseCase } from './services/use-cases/respond-to-service-review.use-case';
 import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-review.use-case';
@@ -19,6 +20,7 @@ export class ServiceReviewsController {
   constructor(
     private readonly createReviewUseCase: CreateServiceReviewUseCase,
     private readonly getReviewsUseCase: GetServiceReviewsUseCase,
+    private readonly getReviewByIdUseCase: GetServiceReviewByIdUseCase,
     private readonly updateReviewUseCase: UpdateServiceReviewUseCase,
     private readonly deleteReviewUseCase: DeleteServiceReviewUseCase,
     private readonly deleteReviewResponseUseCase: DeleteServiceReviewResponseUseCase,
@@ -47,6 +49,16 @@ export class ServiceReviewsController {
   @MessagePattern('get_service_review_by_hiring')
   async getByHiring(@Payload() payload: { hiringId: number }) {
     return await this.reviewRepository.findByHiringId(payload.hiringId);
+  }
+
+  @MessagePattern('get_service_review_by_id')
+  async getReviewById(
+    @Payload() payload: { reviewId: number; userId?: number },
+  ) {
+    return await this.getReviewByIdUseCase.execute(
+      payload.reviewId,
+      payload.userId,
+    );
   }
 
   @MessagePattern('update_service_review')

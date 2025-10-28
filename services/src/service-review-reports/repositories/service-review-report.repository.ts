@@ -87,23 +87,23 @@ export class ServiceReviewReportRepository {
 
   /**
    * Obtener reportes de una reseña con paginación (para moderadores)
+   * Incluye información de la reseña (serviceId, rating, comment, etc.)
    */
   async findReportsByServiceReview(
     serviceReviewId: number,
     page: number,
     limit: number,
   ): Promise<[ServiceReviewReport[], number]> {
-    return await this.repository.findAndCount({
-      where: {
-        serviceReviewId,
-        isActive: true,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const query = this.repository
+      .createQueryBuilder('report')
+      .leftJoinAndSelect('report.serviceReview', 'serviceReview')
+      .where('report.serviceReviewId = :serviceReviewId', { serviceReviewId })
+      .andWhere('report.isActive = :isActive', { isActive: true })
+      .orderBy('report.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    return await query.getManyAndCount();
   }
 
   /**

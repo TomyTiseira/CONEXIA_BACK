@@ -11,6 +11,7 @@ export interface ServiceReviewReportResponseDto {
   description: string;
   createdAt: Date;
   serviceReviewId: number;
+  serviceId: number; // ID del servicio al que pertenece la reseña
   reporterId: number;
   reporter: {
     id: number;
@@ -28,6 +29,11 @@ export class GetServiceReviewReportsUseCase {
   ) {}
 
   async execute(dto: GetServiceReviewReportsDto) {
+    // Validar que serviceReviewId esté presente
+    if (!dto.serviceReviewId) {
+      throw new Error('serviceReviewId is required');
+    }
+
     const params = {
       ...dto,
       page: dto.page || 1,
@@ -37,7 +43,7 @@ export class GetServiceReviewReportsUseCase {
     // Obtener reportes de la reseña con paginación
     const [reports, total] =
       await this.serviceReviewReportRepository.findReportsByServiceReview(
-        params.serviceReviewId,
+        dto.serviceReviewId, // Ahora TypeScript sabe que no es undefined
         params.page,
         params.limit,
       );
@@ -60,6 +66,7 @@ export class GetServiceReviewReportsUseCase {
           description: report.description,
           createdAt: report.createdAt,
           serviceReviewId: report.serviceReviewId,
+          serviceId: report.serviceReview?.serviceId || 0, // ID del servicio
           reporterId: report.reporterId,
           reporter: user
             ? {

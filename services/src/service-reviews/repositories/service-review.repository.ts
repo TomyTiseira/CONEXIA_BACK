@@ -21,6 +21,16 @@ export class ServiceReviewRepository {
     });
   }
 
+  /**
+   * Encontrar una reseña por ID con toda la información necesaria
+   * Útil para obtener una reseña específica desde el frontend
+   */
+  async findOneById(id: number): Promise<ServiceReview | null> {
+    return await this.repository.findOne({
+      where: { id },
+    });
+  }
+
   async findByHiringId(hiringId: number): Promise<ServiceReview | null> {
     return await this.repository.findOne({
       where: { hiringId },
