@@ -61,16 +61,32 @@ export class ModerationService {
 
       const results: ModerationAnalysis[] = [];
 
-      // 3. Analizar cada grupo de reportes
-      for (const group of userReportsGroups) {
-        try {
-          const analysis = await this.analyzeUserReports(group);
-          results.push(analysis);
-        } catch (error) {
-          this.logger.error(
-            `Error al analizar reportes del usuario ${group.userId}:`,
-            error,
+      // 3. Analizar cada grupo de reportes con batch/throttling
+      const batchSize = 10; // usuarios por batch
+      const batchDelayMs = 15000; // 15 segundos entre batches (ajustable)
+      let batchCount = 0;
+      for (let i = 0; i < userReportsGroups.length; i += batchSize) {
+        const batch = userReportsGroups.slice(i, i + batchSize);
+        this.logger.log(
+          `Procesando batch ${++batchCount}: usuarios ${i + 1} a ${i + batch.length}`,
+        );
+        const batchPromises = batch.map(async (group) => {
+          try {
+            const analysis = await this.analyzeUserReports(group);
+            results.push(analysis);
+          } catch (error) {
+            this.logger.error(
+              `Error al analizar reportes del usuario ${group.userId}:`,
+              error,
+            );
+          }
+        });
+        await Promise.all(batchPromises);
+        if (i + batchSize < userReportsGroups.length) {
+          this.logger.log(
+            `Esperando ${batchDelayMs / 1000}s antes del siguiente batch para evitar rate limit...`,
           );
+          await new Promise((res) => setTimeout(res, batchDelayMs));
         }
       }
 
@@ -187,14 +203,7 @@ export class ModerationService {
       }
 
       const groupedArray = Array.from(groupedByUser.values());
-      this.logger.log(
-        'Reportes agrupados por usuario para análisis:',
-        groupedArray.map((g) => ({
-          userId: g.userId,
-          reportIds: g.reports.map((r) => r.id),
-          reports: g.reports,
-        })),
-      );
+
       return groupedArray;
     } catch (error) {
       this.logger.error('Error al obtener reportes de microservicios:', error);
@@ -301,6 +310,26 @@ export class ModerationService {
       classification,
       aiSummary,
     });
+
+    // Validar si ya existe un análisis pendiente con los mismos reportes
+    const pendingAnalyses = await this.moderationRepository.find({
+      where: {
+        userId: group.userId,
+        resolved: false,
+      },
+    });
+    const analyzedSet = new Set(analyzedIds);
+    const existing = pendingAnalyses.find(
+      (a) =>
+        a.analyzedReportIds.length === analyzedIds.length &&
+        a.analyzedReportIds.every((id) => analyzedSet.has(id)),
+    );
+    if (existing) {
+      this.logger.log(
+        `Ya existe un análisis pendiente para el usuario ${group.userId} con los mismos reportes. Se omite la creación.`,
+      );
+      return existing;
+    }
 
     return await this.moderationRepository.save(analysis);
   }
@@ -432,10 +461,31 @@ export class ModerationService {
     }
 
     // Agregar nombre y apellido a cada resultado
+    // Obtener los emails de los moderadores que resolvieron los análisis
+    const resolvedModeratorIds = results
+      .filter((r) => r.resolved && r.resolvedBy)
+      .map((r) => r.resolvedBy);
+    const moderatorEmailMap = new Map<number, string>();
+    if (resolvedModeratorIds.length > 0) {
+      const moderators = await this.moderationRepository.manager
+        .createQueryBuilder('users', 'u')
+        .select(['u.id', 'u.email'])
+        .where('u.id IN (:...ids)', { ids: resolvedModeratorIds })
+        .getRawMany();
+      for (const m of moderators as Array<{ u_id: number; u_email: string }>) {
+        moderatorEmailMap.set(Number(m.u_id), String(m.u_email));
+      }
+    }
     const resultsWithNames = results.map((r) => ({
       ...r,
       firstName: profileMap.get(r.userId)?.name || null,
       lastName: profileMap.get(r.userId)?.lastName || null,
+      resolvedByEmail:
+        r.resolved && r.resolvedBy
+          ? moderatorEmailMap.get(r.resolvedBy) || null
+          : null,
+      resolutionAction: r.resolutionAction || null,
+      resolutionNotes: r.resolutionNotes || null,
     }));
 
     return {

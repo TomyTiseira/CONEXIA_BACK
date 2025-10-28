@@ -47,6 +47,25 @@ export class MockEmailService extends EmailService {
     });
   }
 
+  async sendModerationAnalysisEmail(
+    to: string,
+    notification: {
+      userId: number;
+      classification: string;
+      totalReports: number;
+      aiSummary: string;
+    },
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `Nuevo análisis de reportes pendiente (usuario ${notification.userId})`,
+      html: `<p>Hay un nuevo análisis pendiente para el usuario <b>${notification.userId}</b>.<br>
+        Clasificación: <b>${notification.classification}</b><br>
+        Total de reportes: <b>${notification.totalReports}</b><br>
+        Resumen IA: <pre>${notification.aiSummary}</pre></p>`,
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     this.logger.log(`[MOCK EMAIL] Email would be sent to ${options.to}`);
     this.logger.log(`[MOCK EMAIL] Subject: ${options.subject}`);

@@ -19,10 +19,13 @@ import {
   GetReportsDto,
   GetServiceReportsDto,
   GetServiceReportsListDto,
+  GetUserReviewReportsDto,
   OrderByServiceReport,
+  OrderByUserReviewReport,
 } from './dto';
 import { CreateReportDto } from './dto/create-report.dto';
 import { CreateServiceReportDto } from './dto/create-service-report.dto';
+import { CreateUserReviewReportDto } from './dto/create-user-review-report.dto';
 
 @Controller('reports')
 export class ReportsController {
@@ -129,6 +132,59 @@ export class ReportsController {
         limit: getServiceReportsListDto.limit ?? 10,
         orderBy:
           getServiceReportsListDto.orderBy ?? OrderByServiceReport.REPORT_COUNT,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post('user-review')
+  @AuthRoles([ROLES.USER])
+  createUserReviewReport(
+    @Body() createUserReviewReportDto: CreateUserReviewReportDto,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('createUserReviewReport', {
+        createUserReviewReportDto,
+        userId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('user-review/:userReviewId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getUserReviewReports(
+    @Param('userReviewId') userReviewId: string,
+    @Query() query: GetUserReviewReportsDto,
+  ) {
+    return this.client
+      .send('getUserReviewReports', {
+        userReviewId: parseInt(userReviewId, 10),
+        page: query.page || 1,
+        limit: query.limit || 10,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get('user-review')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getUserReviewsWithReports(@Query() query: GetUserReviewReportsDto) {
+    return this.client
+      .send('getUserReviewsWithReports', {
+        page: query.page || 1,
+        limit: query.limit || 10,
+        orderBy: query.orderBy || OrderByUserReviewReport.REPORT_COUNT,
       })
       .pipe(
         catchError((error) => {

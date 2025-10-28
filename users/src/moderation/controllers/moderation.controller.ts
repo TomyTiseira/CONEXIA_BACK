@@ -48,19 +48,21 @@ export class ModerationController {
     @Payload()
     data: {
       analysisId: number;
-      action: 'ban_user' | 'release_user' | 'keep_monitoring';
+      resolveDto: {
+        action: 'ban_user' | 'release_user' | 'keep_monitoring';
+        notes?: string;
+      };
       moderatorId: number;
-      notes?: string;
     },
   ) {
     this.logger.log(
-      `Resolviendo análisis ${data.analysisId} con acción: ${data.action}`,
+      `Resolviendo análisis ${data.analysisId} con acción: ${data.resolveDto?.action}`,
     );
     return await this.moderationService.resolveAnalysis(
       data.analysisId,
-      data.action,
+      data.resolveDto?.action,
       data.moderatorId,
-      data.notes,
+      data.resolveDto?.notes,
     );
   }
 }
