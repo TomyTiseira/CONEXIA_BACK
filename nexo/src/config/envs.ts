@@ -1,0 +1,49 @@
+import 'dotenv/config';
+import * as joi from 'joi';
+
+interface EnvVars {
+  NATS_SERVERS: string[];
+  DB_HOST: string;
+  DB_PORT: string;
+  DB_USERNAME: string;
+  DB_PASSWORD: string;
+  DB_DATABASE: string;
+  OPENAI_API_KEY: string;
+}
+
+const envSchema = joi
+  .object({
+    NATS_SERVERS: joi.array().items(joi.string()).required(),
+    DB_HOST: joi.string().default('localhost'),
+    DB_PORT: joi.string().default('5432'),
+    DB_USERNAME: joi.string().default('postgres'),
+    DB_PASSWORD: joi.string().default('postgres'),
+    DB_DATABASE: joi.string().default('nexo_db'),
+    OPENAI_API_KEY: joi.string().required(),
+  })
+  .unknown(true);
+
+const result = envSchema.validate({
+  NATS_SERVERS: process.env.NATS_SERVERS?.split(',') || [],
+  DB_HOST: process.env.DB_HOST,
+  DB_PORT: process.env.DB_PORT,
+  DB_USERNAME: process.env.DB_USERNAME,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_DATABASE: process.env.DB_DATABASE,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+});
+if (result.error) {
+  throw new Error(`Config validation error: ${result.error.message}`);
+}
+
+const envVars = result.value as EnvVars;
+
+export const envs = {
+  natsServers: envVars.NATS_SERVERS,
+  dbHost: envVars.DB_HOST,
+  dbPort: envVars.DB_PORT,
+  dbUsername: envVars.DB_USERNAME,
+  dbPassword: envVars.DB_PASSWORD,
+  dbDatabase: envVars.DB_DATABASE,
+  openAIApiKey: envVars.OPENAI_API_KEY,
+};

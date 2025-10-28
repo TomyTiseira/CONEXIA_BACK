@@ -239,8 +239,6 @@ services:
 
   nexo:
     build: ./nexo
-    ports:
-      - "${NEXO_PORT}:${NEXO_PORT}"
     volumes:
       - ./nexo/src:/src/app/src
     depends_on:
@@ -248,13 +246,12 @@ services:
         condition: service_healthy
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - PORT=${NEXO_PORT}
       - DB_HOST=nexo-db
       - DB_PORT=5432
       - DB_USERNAME=${NEXO_DB_USER}
       - DB_PASSWORD=${NEXO_DB_PASSWORD}
       - DB_DATABASE=${NEXO_DB_NAME}
-      - CORS_ORIGINS=${CORS_ORIGINS}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   nexo-db:
     build:
