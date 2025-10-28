@@ -203,14 +203,7 @@ export class ModerationService {
       }
 
       const groupedArray = Array.from(groupedByUser.values());
-      this.logger.log(
-        'Reportes agrupados por usuario para análisis:',
-        groupedArray.map((g) => ({
-          userId: g.userId,
-          reportIds: g.reports.map((r) => r.id),
-          reports: g.reports,
-        })),
-      );
+
       return groupedArray;
     } catch (error) {
       this.logger.error('Error al obtener reportes de microservicios:', error);
@@ -317,6 +310,26 @@ export class ModerationService {
       classification,
       aiSummary,
     });
+
+    // Validar si ya existe un análisis pendiente con los mismos reportes
+    const pendingAnalyses = await this.moderationRepository.find({
+      where: {
+        userId: group.userId,
+        resolved: false,
+      },
+    });
+    const analyzedSet = new Set(analyzedIds);
+    const existing = pendingAnalyses.find(
+      (a) =>
+        a.analyzedReportIds.length === analyzedIds.length &&
+        a.analyzedReportIds.every((id) => analyzedSet.has(id)),
+    );
+    if (existing) {
+      this.logger.log(
+        `Ya existe un análisis pendiente para el usuario ${group.userId} con los mismos reportes. Se omite la creación.`,
+      );
+      return existing;
+    }
 
     return await this.moderationRepository.save(analysis);
   }
@@ -448,10 +461,31 @@ export class ModerationService {
     }
 
     // Agregar nombre y apellido a cada resultado
+    // Obtener los emails de los moderadores que resolvieron los análisis
+    const resolvedModeratorIds = results
+      .filter((r) => r.resolved && r.resolvedBy)
+      .map((r) => r.resolvedBy);
+    const moderatorEmailMap = new Map<number, string>();
+    if (resolvedModeratorIds.length > 0) {
+      const moderators = await this.moderationRepository.manager
+        .createQueryBuilder('users', 'u')
+        .select(['u.id', 'u.email'])
+        .where('u.id IN (:...ids)', { ids: resolvedModeratorIds })
+        .getRawMany();
+      for (const m of moderators as Array<{ u_id: number; u_email: string }>) {
+        moderatorEmailMap.set(Number(m.u_id), String(m.u_email));
+      }
+    }
     const resultsWithNames = results.map((r) => ({
       ...r,
       firstName: profileMap.get(r.userId)?.name || null,
       lastName: profileMap.get(r.userId)?.lastName || null,
+      resolvedByEmail:
+        r.resolved && r.resolvedBy
+          ? moderatorEmailMap.get(r.resolvedBy) || null
+          : null,
+      resolutionAction: r.resolutionAction || null,
+      resolutionNotes: r.resolutionNotes || null,
     }));
 
     return {

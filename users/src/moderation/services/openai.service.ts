@@ -81,7 +81,6 @@ export class OpenAIService {
     try {
       const prompt = `Eres un asistente de moderación para la plataforma Conexia. Analiza la siguiente información sobre reportes de un usuario y genera un resumen claro y profesional en español.
 
-Usuario ID: ${userId}
 Total de reportes: ${totalReports}
 Reportes ofensivos/racistas: ${offensiveReports}
 Reportes por incumplimiento: ${violationReports}

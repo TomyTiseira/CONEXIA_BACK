@@ -36,6 +36,19 @@ export abstract class EmailService {
   abstract sendPasswordChangedEmail(email: string): Promise<void>;
 
   /**
+   * Envía un email de análisis de reportes a moderadores
+   */
+  abstract sendModerationAnalysisEmail(
+    to: string,
+    notification: {
+      userId: number;
+      classification: string;
+      totalReports: number;
+      aiSummary: string;
+    },
+  ): Promise<void>;
+
+  /**
    * Método genérico para enviar emails
    */
   protected abstract sendEmail(options: EmailOptions): Promise<void>;

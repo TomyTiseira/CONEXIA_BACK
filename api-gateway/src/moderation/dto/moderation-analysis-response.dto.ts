@@ -11,4 +11,6 @@ export class ModerationAnalysisResponseDto {
   resolved: boolean;
   resolvedBy?: number;
   resolvedAt?: Date;
+  resolutionAction?: 'ban_user' | 'release_user' | 'keep_monitoring' | null;
+  resolutionNotes?: string | null;
 }
