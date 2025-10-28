@@ -20,7 +20,6 @@ export class ModerationNotificationController {
     this.logger.log(
       `Recibida solicitud de notificación a moderadores (${data.count} análisis)`,
     );
-    // Aquí deberías obtener los emails de los moderadores desde la base de datos o config
     const moderatorEmails = await this.getModeratorEmails();
     for (const notification of data.notifications) {
       for (const email of moderatorEmails) {
@@ -34,9 +33,11 @@ export class ModerationNotificationController {
     return { success: true };
   }
 
-  // Simulación: deberías implementar la consulta real
+  // Simulación: deberías implementar la consulta real.
+  // Cuando tengamos la casilla de correos implementada hay que terminar esta funcionalidad para enviar a los usuarios moderadores/admins
   private async getModeratorEmails(): Promise<string[]> {
-    // TODO: Reemplazar por consulta real a la base de usuarios con rol moderador
-    return ['moderador1@dominio.com', 'moderador2@dominio.com'];
+    // En desarrollo, enviar los correos de análisis a la casilla configurada en .env (Ethereal)
+    const { envs } = await import('../../config/envs');
+    return [envs.emailFrom];
   }
 }
