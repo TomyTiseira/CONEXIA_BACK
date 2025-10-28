@@ -1,8 +1,7 @@
 import {
-    BadRequestException,
     ForbiddenException,
     Injectable,
-    NotFoundException,
+    NotFoundException
 } from '@nestjs/common';
 import { RespondServiceReviewDto } from '../../dto/respond-service-review.dto';
 import { ServiceReview } from '../../entities/service-review.entity';
@@ -30,14 +29,10 @@ export class RespondToServiceReviewUseCase {
       );
     }
 
-    // Verify no existing response
-    if (review.ownerResponse) {
-      throw new BadRequestException('A response already exists for this review');
-    }
-
+    // Allow creating or updating the response
     const updatedReview = await this.reviewRepository.update(reviewId, {
       ownerResponse: dto.ownerResponse,
-      ownerResponseDate: new Date(),
+      ownerResponseDate: new Date(), // Actualiza la fecha cada vez que se edita
     });
 
     return updatedReview!;

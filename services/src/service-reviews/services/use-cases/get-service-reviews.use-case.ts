@@ -31,11 +31,27 @@ export class GetServiceReviewsUseCase {
     // Create a map for quick lookup
     const usersMap = new Map(users.map((user) => [user.id, user]));
 
-    // Enrich reviews with only necessary reviewer data
+    // Get unique service owner IDs from reviews
+    const serviceOwnerIds = Array.from(
+      new Set(reviews.map((review) => review.serviceOwnerUserId)),
+    );
+
+    // Fetch service owner data from users microservice
+    const serviceOwners = await this.usersClient.getUsersByIds(serviceOwnerIds);
+
+    // Create a map for quick lookup of service owners
+    const serviceOwnersMap = new Map(serviceOwners.map((owner) => [owner.id, owner]));
+
+    // Enrich reviews with reviewer and service owner data
     const enrichedReviews = reviews.map((review) => {
-      const user = usersMap.get(review.reviewerUserId);
-      const profile = user?.profile;
+      const reviewer = usersMap.get(review.reviewerUserId);
+      const reviewerProfile = reviewer?.profile;
+      
+      const serviceOwner = serviceOwnersMap.get(review.serviceOwnerUserId);
+      const serviceOwnerProfile = serviceOwner?.profile;
+      
       const isOwner = currentUserId === review.reviewerUserId;
+      const isServiceOwner = currentUserId === review.serviceOwnerUserId;
 
       return {
         id: review.id,
@@ -46,14 +62,25 @@ export class GetServiceReviewsUseCase {
         createdAt: review.createdAt,
         updatedAt: review.updatedAt,
         isOwner, // Indica si el usuario actual es el dueño de esta reseña
+        isServiceOwner, // Indica si el usuario actual es el dueño del servicio (puede responder)
         // Reviewer info in nested object
-        reviewUser: profile
+        reviewUser: reviewerProfile
           ? {
-              id: user.id,
-              name: profile.name,
-              lastName: profile.lastName,
-              profilePicture: profile.profilePicture,
-              profession: profile.profession,
+              id: reviewer.id,
+              name: reviewerProfile.name,
+              lastName: reviewerProfile.lastName,
+              profilePicture: reviewerProfile.profilePicture,
+              profession: reviewerProfile.profession,
+            }
+          : null,
+        // Service owner info in nested object
+        serviceOwner: serviceOwnerProfile
+          ? {
+              id: serviceOwner.id,
+              name: serviceOwnerProfile.name,
+              lastName: serviceOwnerProfile.lastName,
+              profilePicture: serviceOwnerProfile.profilePicture,
+              profession: serviceOwnerProfile.profession,
             }
           : null,
       };
