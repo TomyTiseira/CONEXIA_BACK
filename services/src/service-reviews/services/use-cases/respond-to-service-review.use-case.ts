@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-    ForbiddenException,
-    Injectable,
-    NotFoundException
-} from '@nestjs/common';
+  OnlyServiceOwnerCanRespondException,
+  ServiceReviewNotFoundException,
+} from '../../../common/exceptions/service-review.exceptions';
 import { RespondServiceReviewDto } from '../../dto/respond-service-review.dto';
 import { ServiceReview } from '../../entities/service-review.entity';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
@@ -19,14 +19,12 @@ export class RespondToServiceReviewUseCase {
     const review = await this.reviewRepository.findById(reviewId);
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Verify user is the service owner
     if (review.serviceOwnerUserId !== userId) {
-      throw new ForbiddenException(
-        'Only the service owner can respond to this review',
-      );
+      throw new OnlyServiceOwnerCanRespondException();
     }
 
     // Allow creating or updating the response

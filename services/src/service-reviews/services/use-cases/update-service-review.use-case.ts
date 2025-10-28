@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+  ReviewUpdateForbiddenException,
+  ServiceReviewNotFoundException,
+} from '../../../common/exceptions/service-review.exceptions';
 import { UpdateServiceReviewDto } from '../../dto/update-service-review.dto';
 import { ServiceReview } from '../../entities/service-review.entity';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
@@ -19,12 +19,12 @@ export class UpdateServiceReviewUseCase {
     const review = await this.reviewRepository.findById(reviewId);
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Verify user is the reviewer
     if (review.reviewerUserId !== userId) {
-      throw new ForbiddenException('You can only update your own reviews');
+      throw new ReviewUpdateForbiddenException();
     }
 
     // Construir objeto de actualización solo con campos proporcionados

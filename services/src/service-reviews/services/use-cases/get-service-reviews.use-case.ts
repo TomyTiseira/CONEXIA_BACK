@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersClientService } from '../../../common/services/users-client.service';
+import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { GetServiceReviewsDto } from '../../dto/get-service-reviews.dto';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
 
@@ -11,13 +12,17 @@ export class GetServiceReviewsUseCase {
   ) {}
 
   async execute(serviceId: number, dto: GetServiceReviewsDto, currentUserId?: number) {
-    const { page = 1, limit = 10, rating } = dto;
+    const params = {
+      ...dto,
+      page: dto.page || 1,
+      limit: dto.limit || 10,
+    };
 
     const { reviews, total } = await this.reviewRepository.findByServiceId(
       serviceId,
-      page,
-      limit,
-      rating,
+      params.page,
+      params.limit,
+      params.rating,
     );
 
     // Get unique user IDs from reviews
@@ -92,14 +97,13 @@ export class GetServiceReviewsUseCase {
     const ratingDistribution =
       await this.reviewRepository.getRatingDistribution(serviceId);
 
+    const pagination = calculatePagination(total, params);
+
     return {
       reviews: enrichedReviews,
-      total,
       averageRating: average,
       ratingDistribution,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      pagination,
     };
   }
 }

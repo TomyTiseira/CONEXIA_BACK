@@ -1,9 +1,11 @@
+import { Injectable } from '@nestjs/common';
 import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+  ReviewAlreadyExistsException,
+  ServiceHiringNotCompletedException,
+  ServiceHiringNotFoundException,
+  UserNotClientOfHiringException,
+} from '../../../common/exceptions/service-review.exceptions';
+import { ServiceNotFoundException } from '../../../common/exceptions/services.exceptions';
 import { ServiceHiringStatusCode } from '../../../service-hirings/enums/service-hiring-status.enum';
 import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
 import { CreateServiceReviewDto } from '../../dto/create-service-review.dto';
@@ -26,12 +28,12 @@ export class CreateServiceReviewUseCase {
     // Verify hiring exists with service relation
     const hiring = await this.hiringRepository.findById(hiringId);
     if (!hiring) {
-      throw new NotFoundException('Hiring not found');
+      throw new ServiceHiringNotFoundException(hiringId);
     }
 
     // Verify user is the client
     if (hiring.userId !== userId) {
-      throw new ForbiddenException('Only the client can review this service');
+      throw new UserNotClientOfHiringException(hiringId);
     }
 
     // Verify hiring is in a completable state
@@ -42,21 +44,19 @@ export class CreateServiceReviewUseCase {
     ];
 
     if (!completableStates.includes(hiring.status.code as ServiceHiringStatusCode)) {
-      throw new BadRequestException(
-        'Can only review completed service hirings',
-      );
+      throw new ServiceHiringNotCompletedException(hiringId);
     }
 
     // Verify no existing review
     const existingReview =
       await this.reviewRepository.findByHiringId(hiringId);
     if (existingReview) {
-      throw new BadRequestException('A review already exists for this hiring');
+      throw new ReviewAlreadyExistsException(hiringId);
     }
 
     // Get service owner id
     if (!hiring.service) {
-      throw new NotFoundException('Service not found');
+      throw new ServiceNotFoundException(hiring.serviceId);
     }
 
     // Create review

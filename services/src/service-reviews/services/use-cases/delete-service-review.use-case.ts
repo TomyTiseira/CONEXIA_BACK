@@ -1,8 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import {
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+  ReviewDeleteForbiddenException,
+  ServiceReviewNotFoundException,
+} from '../../../common/exceptions/service-review.exceptions';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
 
 @Injectable()
@@ -13,12 +13,12 @@ export class DeleteServiceReviewUseCase {
     const review = await this.reviewRepository.findById(reviewId);
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Verify user is the reviewer
     if (review.reviewerUserId !== userId) {
-      throw new ForbiddenException('You can only delete your own reviews');
+      throw new ReviewDeleteForbiddenException();
     }
 
     await this.reviewRepository.delete(reviewId);

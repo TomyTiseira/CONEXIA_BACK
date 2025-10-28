@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  OnlyServiceOwnerCanDeleteResponseException,
+  ReviewResponseNotFoundException,
+  ServiceReviewNotFoundException,
+} from '../../../common/exceptions/service-review.exceptions';
 import { ServiceReview } from '../../entities/service-review.entity';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
 
@@ -18,19 +19,17 @@ export class DeleteServiceReviewResponseUseCase {
     const review = await this.reviewRepository.findById(reviewId);
 
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Verificar que el usuario es el dueño del servicio
     if (review.serviceOwnerUserId !== userId) {
-      throw new ForbiddenException(
-        'Only the service owner can delete their response',
-      );
+      throw new OnlyServiceOwnerCanDeleteResponseException();
     }
 
     // Verificar que existe una respuesta para eliminar
     if (!review.ownerResponse) {
-      throw new NotFoundException('There is no response to delete');
+      throw new ReviewResponseNotFoundException();
     }
 
     // Eliminar la respuesta estableciendo los campos en null
