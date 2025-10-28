@@ -19,6 +19,8 @@ import { ServiceHiringStatusRepository } from './service-hirings/repositories/se
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { ServiceReport } from './service-reports/entities/service-report.entity';
 import { ServiceReportsModule } from './service-reports/service-reports.module';
+import { ServiceReviewReport } from './service-review-reports/entities/service-review-report.entity';
+import { ServiceReviewReportsModule } from './service-review-reports/service-review-reports.module';
 import { ServiceReview } from './service-reviews/entities/service-review.entity';
 import { ServiceReviewsModule } from './service-reviews/service-reviews.module';
 import { Service, ServiceCategory } from './services/entities';
@@ -41,6 +43,7 @@ import { ServicesModule } from './services/services.module';
         Payment,
         ServiceReport,
         ServiceReview,
+        ServiceReviewReport,
         PaymentModality,
         Deliverable,
         DeliverySubmission,
@@ -54,6 +57,7 @@ import { ServicesModule } from './services/services.module';
     ServiceHiringsModule,
     ServiceReportsModule,
     ServiceReviewsModule,
+    ServiceReviewReportsModule,
   ],
   controllers: [],
   providers: [

@@ -58,10 +58,10 @@ export class ServiceReviewsController {
    * GET /service-reviews/service/:serviceId
    * Obtener todas las reseñas de un servicio con paginación
    * Incluye promedio de calificación y total
-   * Requiere autenticación para mostrar isOwner correctamente
+   * Accesible para usuarios, administradores y moderadores
    */
   @Get('service/:serviceId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getServiceReviews(
     @Param('serviceId') serviceId: string,
     @Query() getServiceReviewsDto: GetServiceReviewsDto,
@@ -83,10 +83,10 @@ export class ServiceReviewsController {
   /**
    * GET /service-reviews/hiring/:hiringId
    * Obtener la reseña de una contratación específica
-   * Para que el cliente vea si ya reseñó
+   * Para que el cliente vea si ya reseñó o para moderación
    */
   @Get('hiring/:hiringId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getServiceReviewByHiring(@Param('hiringId') hiringId: string) {
     const payload = {
       hiringId: parseInt(hiringId),
