@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommentReportsModule } from './comment-reports/comment-reports.module';
+import { CommentReport } from './comment-reports/entities/comment-report.entity';
 import { CommonModule } from './common/common.module';
 import { envs } from './config';
 import { ContactsModule } from './contacts/contacts.module';
@@ -32,6 +34,7 @@ import { PublicationsModule } from './publications/publications.module';
         PublicationComment,
         PublicationReaction,
         PublicationReport,
+        CommentReport,
       ],
       synchronize: true,
     }),
@@ -39,6 +42,7 @@ import { PublicationsModule } from './publications/publications.module';
     PublicationsModule,
     ContactsModule,
     PublicationReportsModule,
+    CommentReportsModule,
   ],
   controllers: [],
   providers: [],

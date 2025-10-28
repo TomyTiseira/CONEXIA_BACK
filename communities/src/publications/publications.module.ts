@@ -84,6 +84,6 @@ import { UserInfoService } from './services/user-info.service';
     DeleteReactionUseCase,
     GetPublicationReactionsUseCase,
   ],
-  exports: [PublicationRepository],
+  exports: [PublicationRepository, CommentRepository],
 })
 export class PublicationsModule {}
