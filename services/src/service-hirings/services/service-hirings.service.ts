@@ -385,4 +385,29 @@ export class ServiceHiringsService {
       updateDto,
     );
   }
+
+  async checkUserActiveHirings(userId: number): Promise<{
+    hasActiveHirings: boolean;
+    count: number;
+  }> {
+    const activeStatuses = [
+      'accepted',
+      'approved',
+      'in_progress',
+      'delivered',
+      'revision_requested',
+      'in_claim',
+    ];
+
+    const activeHiringsCount =
+      await this.serviceHiringRepository.countActiveHiringsByUserId(
+        userId,
+        activeStatuses,
+      );
+
+    return {
+      hasActiveHirings: activeHiringsCount > 0,
+      count: activeHiringsCount,
+    };
+  }
 }

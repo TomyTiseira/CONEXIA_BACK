@@ -296,4 +296,9 @@ export class ServiceHiringsController {
       data.updateDto,
     );
   }
+
+  @MessagePattern('checkUserActiveHirings')
+  async checkUserActiveHirings(@Payload() data: { userId: number }) {
+    return this.serviceHiringsService.checkUserActiveHirings(data.userId);
+  }
 }
