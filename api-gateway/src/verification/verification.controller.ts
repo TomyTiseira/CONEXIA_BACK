@@ -128,7 +128,7 @@ export class VerificationController {
   }
 
   @Get('status')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getVerificationStatus(@Req() req: AuthenticatedRequest) {
     return this.client
       .send('getVerificationStatus', { userId: req.user?.id })
