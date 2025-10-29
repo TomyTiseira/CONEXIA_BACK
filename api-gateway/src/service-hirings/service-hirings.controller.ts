@@ -405,6 +405,24 @@ export class ServiceHiringsController {
       );
   }
 
+  @Get(':hiringId/deliverables')
+  @AuthRoles([ROLES.USER])
+  getDeliverablesWithStatus(
+    @Param('hiringId') hiringId: number,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getDeliverablesWithStatus', {
+        hiringId: +hiringId,
+        userId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Post('deliveries/:deliveryId/review')
   @AuthRoles([ROLES.USER])
   reviewDelivery(

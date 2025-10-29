@@ -21,14 +21,6 @@ export class CreateProfileUseCase {
   ) {}
 
   async execute(dto: CreateProfileDto) {
-    // Log para debug
-    console.log('CreateProfileDto received:', {
-      documentNumber: dto.documentNumber,
-      documentTypeId: dto.documentTypeId,
-      name: dto.name,
-      lastName: dto.lastName,
-    });
-
     await this.userBaseService.existsProfileByDocumentNumber(
       dto.documentTypeId,
       dto.documentNumber,
@@ -100,27 +92,12 @@ export class CreateProfileUseCase {
         );
       }
 
-      // Si el perfil está vacío, actualizarlo
-      console.log('Updating empty profile with data:', {
-        profileId: existingProfile.id,
-        documentNumber: dto.documentNumber,
-        documentTypeId: dto.documentTypeId,
-        name: dto.name,
-        lastName: dto.lastName,
-      });
-
       // Preparar datos para actualizar (excluir userId y skills que no son columnas de Profile)
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { userId, skills, ...updateData } = dto;
       const updatedProfile = await this.profileRepo.update(existingProfile.id, {
         ...updateData,
         birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
-      });
-
-      console.log('Empty profile updated:', {
-        id: updatedProfile?.id,
-        documentNumber: updatedProfile?.documentNumber,
-        documentTypeId: updatedProfile?.documentTypeId,
       });
 
       // Actualizar las relaciones profile-skill si se proporcionan habilidades
@@ -137,24 +114,9 @@ export class CreateProfileUseCase {
       return updatedProfile;
     }
 
-    // Si no existe perfil, crear uno nuevo
-    console.log('Creating new profile with data:', {
-      documentNumber: dto.documentNumber,
-      documentTypeId: dto.documentTypeId,
-      name: dto.name,
-      lastName: dto.lastName,
-      profession: dto.profession,
-    });
-
     const newProfile = await this.profileRepo.create({
       ...dto,
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
-    });
-
-    console.log('Profile created:', {
-      id: newProfile.id,
-      documentNumber: newProfile.documentNumber,
-      documentTypeId: newProfile.documentTypeId,
     });
 
     // Crear las relaciones profile-skill si se proporcionan habilidades

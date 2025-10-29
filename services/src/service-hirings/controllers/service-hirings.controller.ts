@@ -301,4 +301,14 @@ export class ServiceHiringsController {
   async checkUserActiveHirings(@Payload() data: { userId: number }) {
     return this.serviceHiringsService.checkUserActiveHirings(data.userId);
   }
+
+  @MessagePattern('getDeliverablesWithStatus')
+  async getDeliverablesWithStatus(
+    @Payload() data: { hiringId: number; userId: number },
+  ) {
+    return this.serviceHiringsService.getDeliverablesWithStatus(
+      data.hiringId,
+      data.userId,
+    );
+  }
 }

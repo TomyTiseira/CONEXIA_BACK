@@ -32,6 +32,7 @@ import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
 import { EditQuotationWithDeliverablesUseCase } from './use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './use-cases/edit-quotation.use-case';
+import { GetDeliverablesWithStatusUseCase } from './use-cases/get-deliverables-with-status.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-case';
@@ -62,6 +63,7 @@ export class ServiceHiringsService {
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
+    private readonly getDeliverablesWithStatusUseCase: GetDeliverablesWithStatusUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
     private readonly usersClientService: UsersClientService,
@@ -409,5 +411,9 @@ export class ServiceHiringsService {
       hasActiveHirings: activeHiringsCount > 0,
       count: activeHiringsCount,
     };
+  }
+
+  async getDeliverablesWithStatus(hiringId: number, userId: number) {
+    return this.getDeliverablesWithStatusUseCase.execute(hiringId, userId);
   }
 }

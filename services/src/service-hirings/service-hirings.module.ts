@@ -38,6 +38,7 @@ import { CreateServiceHiringUseCase } from './services/use-cases/create-service-
 import { EditQuotationWithDeliverablesUseCase } from './services/use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './services/use-cases/edit-quotation.use-case';
 import { GetClaimsUseCase } from './services/use-cases/get-claims.use-case';
+import { GetDeliverablesWithStatusUseCase } from './services/use-cases/get-deliverables-with-status.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './services/use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './services/use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirings.use-case';
@@ -71,6 +72,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     CreateDeliveryUseCase,
     ReviewDeliveryUseCase,
     UpdateDeliveryUseCase,
+    GetDeliverablesWithStatusUseCase,
     CreateClaimUseCase,
     GetClaimsUseCase,
     ResolveClaimUseCase,

@@ -54,10 +54,6 @@ export class AddObservationsUseCase {
       throw new Error('Error al agregar observaciones al reclamo');
     }
 
-    console.log(
-      `[AddObservationsUseCase] Observaciones agregadas al reclamo ${claimId} por moderador ${moderatorId}`,
-    );
-
     // 4. Enviar notificaciones por email al reclamante
     await this.sendObservationNotifications(updatedClaim);
 
@@ -88,9 +84,6 @@ export class AddObservationsUseCase {
 
       if (claimant?.email) {
         // TODO: Implementar sendClaimObservationsEmail en EmailService
-        console.log(
-          `[AddObservationsUseCase] Email notification would be sent to ${claimant.email}`,
-        );
         // await this.emailService.sendClaimObservationsEmail(
         //   claimant.email,
         //   claimantName,
@@ -101,10 +94,6 @@ export class AddObservationsUseCase {
         //   },
         // );
       }
-
-      console.log(
-        '[AddObservationsUseCase] Notificación de observaciones enviada',
-      );
     } catch (error) {
       console.error(
         '[AddObservationsUseCase] Error al enviar notificaciones:',
