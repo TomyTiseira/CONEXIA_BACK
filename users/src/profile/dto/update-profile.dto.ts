@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -7,11 +7,13 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
+  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+
+// Note: document validator is implemented in create-profile.dto and reused there.
 
 export class ExperienceItem {
   @IsString({ message: 'title must be a string' })
@@ -32,11 +34,11 @@ export class ExperienceItem {
     message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams) => {
     if (value === '' || value === null || value === undefined) {
       return undefined;
     }
-    return value;
+    return value as string | undefined;
   })
   endDate?: string;
 
@@ -74,11 +76,11 @@ export class EducationItem {
     message: 'endDate must be a valid ISO date (YYYY-MM-DD)',
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams) => {
     if (value === '' || value === null || value === undefined) {
       return undefined;
     }
-    return value;
+    return value as string | undefined;
   })
   endDate?: string;
 
@@ -114,13 +116,29 @@ export class UpdateProfileDto {
   @IsOptional()
   profession?: string;
 
-  @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
+  @IsString({ message: 'areaCode must be a string' })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Matches(/^\+\d{1,4}$/, {
+    message: 'areaCode must be in format +XX (e.g., +54, +1)',
+  })
+  @Transform(({ value }: TransformFnParams) => {
     if (value === '' || value === null || value === undefined) {
       return null;
     }
-    return value;
+    return value as string | null;
+  })
+  areaCode?: string;
+
+  @IsString({ message: 'phoneNumber must be a string' })
+  @IsOptional()
+  @Matches(/^[0-9]{6,15}$/, {
+    message: 'phoneNumber must be 6 to 15 digits without area code',
+  })
+  @Transform(({ value }: TransformFnParams) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return value as string | null;
   })
   phoneNumber?: string;
 

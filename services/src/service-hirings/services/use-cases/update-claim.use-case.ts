@@ -77,10 +77,6 @@ export class UpdateClaimUseCase {
       throw new Error('Error al actualizar el reclamo');
     }
 
-    console.log(
-      `[UpdateClaimUseCase] Reclamo ${claimId} subsanado por usuario ${userId}. Estado cambiado a OPEN`,
-    );
-
     // 7. Notificar a los moderadores que el reclamo fue subsanado
     await this.sendUpdateNotifications(updatedClaim);
 
@@ -102,9 +98,6 @@ export class UpdateClaimUseCase {
       }
 
       // TODO: Implementar envío de email a moderadores/admins
-      console.log(
-        `[UpdateClaimUseCase] Reclamo ${claim.id} subsanado. Se debe notificar a moderadores.`,
-      );
 
       // Ejemplo: await this.emailService.sendClaimUpdatedEmail(adminEmail, claimData);
     } catch (error) {

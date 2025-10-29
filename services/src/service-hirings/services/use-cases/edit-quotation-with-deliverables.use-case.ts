@@ -3,10 +3,12 @@ import { RpcException } from '@nestjs/microservices';
 import { ServiceRepository } from '../../../services/repositories/service.repository';
 import { CreateQuotationWithDeliverablesDto } from '../../dto';
 import { PaymentModalityCode } from '../../enums/payment-modality.enum';
+import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../../repositories/deliverable.repository';
 import { PaymentModalityRepository } from '../../repositories/payment-modality.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 import { ServiceHiringOperationsService } from '../service-hiring-operations.service';
+import { ServiceHiringStatusService } from '../service-hiring-status.service';
 import { ServiceHiringTransformService } from '../service-hiring-transform.service';
 import { ServiceHiringValidationService } from '../service-hiring-validation.service';
 
@@ -20,6 +22,7 @@ export class EditQuotationWithDeliverablesUseCase {
     private readonly transformService: ServiceHiringTransformService,
     private readonly paymentModalityRepository: PaymentModalityRepository,
     private readonly deliverableRepository: DeliverableRepository,
+    private readonly statusService: ServiceHiringStatusService,
   ) {}
 
   async execute(
@@ -99,16 +102,41 @@ export class EditQuotationWithDeliverablesUseCase {
       quotationDto.quotedPrice = totalPrice;
     }
 
-    // Actualizar la cotización sin cambiar el estado
-    const updatedHiring = await this.hiringRepository.update(hiring.id, {
+    // Si la cotización está en estado NEGOTIATING o REQUOTING, cambiar a QUOTED
+    let newStatusId = hiring.statusId;
+    if (
+      hiring.status?.code === ServiceHiringStatusCode.NEGOTIATING ||
+      hiring.status?.code === ServiceHiringStatusCode.REQUOTING
+    ) {
+      const quotedStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.QUOTED,
+      );
+      newStatusId = quotedStatus.id;
+    }
+
+    // Preparar datos de actualización
+    const updateData: any = {
       quotedPrice: quotationDto.quotedPrice,
       estimatedHours: quotationDto.estimatedHours,
       estimatedTimeUnit: quotationDto.estimatedTimeUnit as any,
       quotationNotes: quotationDto.quotationNotes,
       quotationValidityDays: quotationDto.quotationValidityDays,
+      isBusinessDays: quotationDto.isBusinessDays || false,
       paymentModalityId: quotationDto.paymentModalityId,
       quotedAt: new Date(),
-    });
+      statusId: newStatusId,
+    };
+
+    // Si estaba en REQUOTING, limpiar el timestamp de solicitud
+    if (hiring.status?.code === ServiceHiringStatusCode.REQUOTING) {
+      updateData.requoteRequestedAt = null;
+    }
+
+    // Actualizar la cotización
+    const updatedHiring = await this.hiringRepository.update(
+      hiring.id,
+      updateData,
+    );
 
     if (!updatedHiring) {
       throw new RpcException('Error al editar la cotización');

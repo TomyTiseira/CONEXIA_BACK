@@ -81,6 +81,15 @@ export class UserAlreadyDeletedException extends RpcException {
   }
 }
 
+export class UserHasActiveHiringsException extends RpcException {
+  constructor(userId: number, activeHiringsCount: number) {
+    super({
+      status: 400,
+      message: `User with id ${userId} cannot be deleted because they have ${activeHiringsCount} active service hiring(s) in progress`,
+    });
+  }
+}
+
 export class InvalidVerificationCodeException extends RpcException {
   constructor() {
     super({

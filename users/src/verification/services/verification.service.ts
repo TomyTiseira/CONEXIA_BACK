@@ -200,7 +200,6 @@ export class VerificationService {
    * Obtiene el historial de verificaciones de un usuario
    */
   async getVerificationHistory(userId: number): Promise<UserVerification[]> {
-    this.logger.log(`Getting verification history for user ${userId}`);
     return await this.verificationRepository.findByUserId(userId);
   }
 
@@ -211,8 +210,6 @@ export class VerificationService {
     isVerified: boolean;
     latestVerification: UserVerification | null;
   }> {
-    this.logger.log(`Getting verification status for user ${userId}`);
-
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });

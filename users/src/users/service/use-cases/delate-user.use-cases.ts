@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import {
   ProfileNotFoundException,
   UserAlreadyDeletedException,
+  UserHasActiveHiringsException,
   UserNotAllowedToDeleteException,
   UserNotFoundByIdException,
 } from 'src/common/exceptions/user.exceptions';
@@ -11,7 +14,10 @@ import { UserRepository } from 'src/users/repository/users.repository';
 
 @Injectable()
 export class DeleteUserUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    @Inject('NATS_SERVICE') private readonly natsClient: ClientProxy,
+  ) {}
 
   async execute(userId: number, reason: string): Promise<User> {
     const user = await this.userRepository.findById(userId);
@@ -37,6 +43,33 @@ export class DeleteUserUseCase {
     const userProfile = await this.userRepository.findProfileByUserId(userId);
     if (!userProfile) {
       throw new ProfileNotFoundException();
+    }
+
+    // Validar que el usuario no tenga contrataciones en curso
+    try {
+      const activeHiringsResponse: {
+        hasActiveHirings: boolean;
+        count: number;
+      } = await firstValueFrom(
+        this.natsClient.send('checkUserActiveHirings', { userId }),
+      );
+
+      if (activeHiringsResponse?.hasActiveHirings) {
+        throw new UserHasActiveHiringsException(
+          userId,
+          activeHiringsResponse.count,
+        );
+      }
+    } catch (error) {
+      // Si es nuestra excepción personalizada, re-lanzarla
+      if (error instanceof UserHasActiveHiringsException) {
+        throw error;
+      }
+      // Si hay un error de comunicación con el microservicio, NO permitir la eliminación
+      console.error('Error checking active hirings:', error);
+      throw new Error(
+        'Unable to verify active service hirings. User deletion cancelled for safety.',
+      );
     }
 
     // Eliminar el usuario y el perfil, asegurando que ambos se eliminen

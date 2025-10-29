@@ -120,6 +120,7 @@ export class CreateQuotationWithDeliverablesUseCase {
       estimatedTimeUnit: quotationDto.estimatedTimeUnit as any,
       quotationNotes: quotationDto.quotationNotes,
       quotationValidityDays: quotationDto.quotationValidityDays,
+      isBusinessDays: quotationDto.isBusinessDays || false,
       paymentModalityId: quotationDto.paymentModalityId,
       quotedAt: new Date(),
       statusId: quotedStatus.id,

@@ -161,11 +161,31 @@ export class ServiceHiringsController {
 
   @MessagePattern('negotiateServiceHiring')
   async negotiateServiceHiring(
-    @Payload() data: { userId: number; hiringId: number },
+    @Payload()
+    data: {
+      userId: number;
+      hiringId: number;
+      negotiateDto?: any;
+    },
   ) {
     return this.serviceHiringsService.negotiateServiceHiring(
       data.userId,
       data.hiringId,
+      data.negotiateDto,
+    );
+  }
+
+  @MessagePattern('requestRequote')
+  async requestRequote(
+    @Payload()
+    data: {
+      userId: number;
+      hiringId: number;
+    },
+  ) {
+    return this.serviceHiringsService.requestRequote(
+      data.hiringId,
+      data.userId,
     );
   }
 
@@ -288,6 +308,21 @@ export class ServiceHiringsController {
       data.deliveryId,
       data.serviceOwnerId,
       data.updateDto,
+    );
+  }
+
+  @MessagePattern('checkUserActiveHirings')
+  async checkUserActiveHirings(@Payload() data: { userId: number }) {
+    return this.serviceHiringsService.checkUserActiveHirings(data.userId);
+  }
+
+  @MessagePattern('getDeliverablesWithStatus')
+  async getDeliverablesWithStatus(
+    @Payload() data: { hiringId: number; userId: number },
+  ) {
+    return this.serviceHiringsService.getDeliverablesWithStatus(
+      data.hiringId,
+      data.userId,
     );
   }
 }

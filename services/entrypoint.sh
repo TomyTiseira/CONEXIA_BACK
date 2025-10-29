@@ -13,6 +13,7 @@ sleep 15
 # Ejecutar migraciones
 echo "Ejecutando migraciones de base de datos..."
 npx ts-node src/scripts/migrate-delivery-payment-fields.ts
+npx ts-node src/scripts/migrate-requoting-fields.ts
 
 # Ejecutar seeds
 echo "Ejecutando seeds..."

@@ -370,4 +370,16 @@ export class ServiceHiringRepository {
       [targetCode, hiringId],
     );
   }
+
+  async countActiveHiringsByUserId(
+    userId: number,
+    activeStatuses: string[],
+  ): Promise<number> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .where('hiring.userId = :userId', { userId })
+      .andWhere('status.code IN (:...activeStatuses)', { activeStatuses })
+      .getCount();
+  }
 }

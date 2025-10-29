@@ -73,11 +73,12 @@ export class UpdateProfileUseCase {
       }
     }
 
-    // Solo actualizar campos permitidos
+    // Solo actualizar campos permitidos (documentNumber, documentTypeId, birthDate NO se pueden actualizar)
     const updateData: any = {};
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.profession !== undefined) updateData.profession = dto.profession;
+    if (dto.areaCode !== undefined) updateData.areaCode = dto.areaCode;
     if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
     if (dto.country !== undefined) updateData.country = dto.country;
     if (dto.state !== undefined) updateData.state = dto.state;

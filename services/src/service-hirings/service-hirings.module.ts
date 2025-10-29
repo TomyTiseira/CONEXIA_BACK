@@ -39,12 +39,14 @@ import { CreateServiceHiringUseCase } from './services/use-cases/create-service-
 import { EditQuotationWithDeliverablesUseCase } from './services/use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './services/use-cases/edit-quotation.use-case';
 import { GetClaimsUseCase } from './services/use-cases/get-claims.use-case';
+import { GetDeliverablesWithStatusUseCase } from './services/use-cases/get-deliverables-with-status.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './services/use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './services/use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirings.use-case';
 import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
+import { RequestRequoteUseCase } from './services/use-cases/request-requote.use-case';
 import { ResolveClaimUseCase } from './services/use-cases/resolve-claim.use-case';
 import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
 import { UpdateClaimUseCase } from './services/use-cases/update-claim.use-case';
@@ -67,11 +69,13 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     RejectServiceHiringUseCase,
     CancelServiceHiringUseCase,
     NegotiateServiceHiringUseCase,
+    RequestRequoteUseCase,
     ContractServiceUseCase,
     ProcessPaymentWebhookUseCase,
     CreateDeliveryUseCase,
     ReviewDeliveryUseCase,
     UpdateDeliveryUseCase,
+    GetDeliverablesWithStatusUseCase,
     CreateClaimUseCase,
     GetClaimsUseCase,
     ResolveClaimUseCase,

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { NegotiateServiceHiringDto } from '../../dto/negotiate-service-hiring.dto';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 import { ServiceHiringOperationsService } from '../service-hiring-operations.service';
@@ -15,7 +16,11 @@ export class NegotiateServiceHiringUseCase {
     private readonly transformService: ServiceHiringTransformService,
   ) {}
 
-  async execute(userId: number, hiringId: number) {
+  async execute(
+    userId: number,
+    hiringId: number,
+    negotiateDto?: NegotiateServiceHiringDto,
+  ) {
     // Obtener la contratación
     const hiring = await this.hiringRepository.findById(hiringId);
     if (!hiring) {
@@ -45,6 +50,7 @@ export class NegotiateServiceHiringUseCase {
     const updatedHiring = await this.hiringRepository.update(hiring.id, {
       statusId: negotiatingStatus.id,
       respondedAt: new Date(),
+      negotiationDescription: negotiateDto?.negotiationDescription,
     });
 
     if (!updatedHiring) {

@@ -69,10 +69,6 @@ export class ResolveClaimUseCase {
       resolutionType,
     );
 
-    console.log(
-      `[ResolveClaimUseCase] Reclamo ${claimId} resuelto como ${status} (${resolutionType}) por usuario ${resolvedBy}`,
-    );
-
     // 5. Enviar notificaciones por email
     await this.sendResolutionNotifications(updatedClaim);
 
@@ -96,9 +92,6 @@ export class ResolveClaimUseCase {
         await this.hiringRepository.update(hiringId, {
           statusId: previousStatusId,
         });
-        console.log(
-          `[ResolveClaimUseCase] Hiring ${hiringId} restaurado al estado anterior (statusId: ${previousStatusId})`,
-        );
       }
       return;
     }
@@ -134,10 +127,6 @@ export class ResolveClaimUseCase {
     await this.hiringRepository.update(hiringId, {
       statusId: targetStatus.id,
     });
-
-    console.log(
-      `[ResolveClaimUseCase] Hiring ${hiringId} actualizado a estado: ${targetStatus.name} (${targetStatusCode})`,
-    );
   }
 
   /**
@@ -192,10 +181,6 @@ export class ResolveClaimUseCase {
           claimData,
         );
       }
-
-      console.log(
-        '[ResolveClaimUseCase] Notificaciones de resolución enviadas',
-      );
     } catch (error) {
       console.error(
         '[ResolveClaimUseCase] Error al enviar notificaciones:',

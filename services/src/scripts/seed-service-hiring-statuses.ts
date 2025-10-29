@@ -77,6 +77,12 @@ async function bootstrap() {
       description:
         'Servicio tiene un reclamo activo. Todas las acciones están suspendidas hasta que se resuelva',
     },
+    {
+      name: 'Re-cotizando',
+      code: ServiceHiringStatusCode.REQUOTING,
+      description:
+        'El cliente ha solicitado una actualización de la cotización vencida',
+    },
     // Estados finales por resolución de reclamos
     {
       name: 'Cancelado por reclamo',

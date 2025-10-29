@@ -6,6 +6,7 @@ export * from './create-quotation.dto';
 export * from './create-service-hiring.dto';
 export * from './get-claims.dto';
 export * from './get-service-hirings.dto';
+export * from './negotiate-service-hiring.dto';
 export * from './resolve-claim.dto';
 export * from './review-delivery.dto';
 export * from './update-claim.dto';

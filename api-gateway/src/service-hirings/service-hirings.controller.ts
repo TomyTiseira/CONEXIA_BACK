@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   Body,
@@ -29,6 +28,7 @@ import {
   CreateQuotationWithDeliverablesDto,
   CreateServiceHiringDto,
   GetServiceHiringsDto,
+  NegotiateServiceHiringDto,
   ReviewDeliveryDto,
   UpdatePaymentStatusDto,
 } from './dto';
@@ -268,9 +268,29 @@ export class ServiceHiringsController {
   negotiateServiceHiring(
     @User() user: AuthenticatedUser,
     @Param('hiringId') hiringId: number,
+    @Body() negotiateDto: NegotiateServiceHiringDto,
   ) {
     return this.client
       .send('negotiateServiceHiring', {
+        userId: user.id,
+        hiringId: +hiringId,
+        negotiateDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Post(':hiringId/request-requote')
+  @AuthRoles([ROLES.USER])
+  requestRequote(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+  ) {
+    return this.client
+      .send('requestRequote', {
         userId: user.id,
         hiringId: +hiringId,
       })
@@ -395,6 +415,24 @@ export class ServiceHiringsController {
     return this.client
       .send('getDeliveriesByHiring', {
         hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':hiringId/deliverables')
+  @AuthRoles([ROLES.USER])
+  getDeliverablesWithStatus(
+    @Param('hiringId') hiringId: number,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getDeliverablesWithStatus', {
+        hiringId: +hiringId,
+        userId: user.id,
       })
       .pipe(
         catchError((error) => {

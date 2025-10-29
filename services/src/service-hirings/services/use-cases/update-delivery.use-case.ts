@@ -88,14 +88,6 @@ export class UpdateDeliveryUseCase {
       hiring.id,
     );
 
-    console.log('🔄 Delivery updated after revision:', {
-      deliveryId,
-      hiringId: delivery.hiringId,
-      contentUpdated: !!updateDto.content,
-      attachmentUpdated: !!updateDto.attachmentPath,
-      newStatus: DeliveryStatus.DELIVERED,
-    });
-
     return this.transformToDto(updatedDelivery);
   }
 
