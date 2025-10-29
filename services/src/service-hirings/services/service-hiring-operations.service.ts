@@ -54,17 +54,32 @@ export class ServiceHiringOperationsService {
   }
 
   async getAvailableActions(hiring: ServiceHiring): Promise<string[]> {
-    // Verificar si la cotización está vencida
+    const context = this.getHiringContext(hiring);
+    const stateActions = context.getAvailableActions();
+
+    // Estados finales no tienen acciones, incluso si están vencidos
+    const finalStatuses = [
+      'rejected',
+      'completed',
+      'cancelled',
+      'completed_by_claim',
+      'cancelled_by_claim',
+      'completed_with_agreement',
+    ];
+    if (finalStatuses.includes(hiring.status.code)) {
+      return []; // Sin acciones para estados finales
+    }
+
+    // Verificar si la cotización está vencida (solo para estados no finales)
     const isExpired = await this.quotationExpirationService.isQuotationExpired(
       hiring.id,
     );
 
-    // Si está vencida, solo se puede ver
+    // Si está vencida y no es un estado final, solo se puede ver
     if (isExpired) {
       return ['view'];
     }
 
-    const context = this.getHiringContext(hiring);
-    return context.getAvailableActions();
+    return stateActions;
   }
 }
