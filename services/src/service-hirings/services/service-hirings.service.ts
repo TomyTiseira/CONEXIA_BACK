@@ -39,6 +39,7 @@ import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-ca
 import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
+import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
 
@@ -58,6 +59,7 @@ export class ServiceHiringsService {
     private readonly rejectServiceHiringUseCase: RejectServiceHiringUseCase,
     private readonly cancelServiceHiringUseCase: CancelServiceHiringUseCase,
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
+    private readonly requestRequoteUseCase: RequestRequoteUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
@@ -220,6 +222,10 @@ export class ServiceHiringsService {
       hiringId,
       negotiateDto,
     );
+  }
+
+  async requestRequote(hiringId: number, userId: number) {
+    return this.requestRequoteUseCase.execute(hiringId, userId);
   }
 
   async contractService(

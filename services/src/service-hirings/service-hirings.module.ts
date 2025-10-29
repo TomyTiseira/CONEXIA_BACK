@@ -45,6 +45,7 @@ import { GetServiceHiringsUseCase } from './services/use-cases/get-service-hirin
 import { NegotiateServiceHiringUseCase } from './services/use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './services/use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './services/use-cases/reject-service-hiring.use-case';
+import { RequestRequoteUseCase } from './services/use-cases/request-requote.use-case';
 import { ResolveClaimUseCase } from './services/use-cases/resolve-claim.use-case';
 import { ReviewDeliveryUseCase } from './services/use-cases/review-delivery.use-case';
 import { UpdateClaimUseCase } from './services/use-cases/update-claim.use-case';
@@ -67,6 +68,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     RejectServiceHiringUseCase,
     CancelServiceHiringUseCase,
     NegotiateServiceHiringUseCase,
+    RequestRequoteUseCase,
     ContractServiceUseCase,
     ProcessPaymentWebhookUseCase,
     CreateDeliveryUseCase,

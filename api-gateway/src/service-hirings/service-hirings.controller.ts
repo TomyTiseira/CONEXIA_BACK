@@ -283,6 +283,24 @@ export class ServiceHiringsController {
       );
   }
 
+  @Post(':hiringId/request-requote')
+  @AuthRoles([ROLES.USER])
+  requestRequote(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+  ) {
+    return this.client
+      .send('requestRequote', {
+        userId: user.id,
+        hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Post(':hiringId/contract')
   @AuthRoles([ROLES.USER])
   contractService(

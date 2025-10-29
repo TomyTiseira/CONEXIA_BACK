@@ -51,17 +51,20 @@ export class EditQuotationUseCase {
       hiringId,
     );
 
-    // Si la cotización está en estado NEGOTIATING, cambiar a QUOTED
+    // Si la cotización está en estado NEGOTIATING o REQUOTING, cambiar a QUOTED
     let newStatusId = hiring.statusId;
-    if (hiring.status?.code === ServiceHiringStatusCode.NEGOTIATING) {
+    if (
+      hiring.status?.code === ServiceHiringStatusCode.NEGOTIATING ||
+      hiring.status?.code === ServiceHiringStatusCode.REQUOTING
+    ) {
       const quotedStatus = await this.statusService.getStatusByCode(
         ServiceHiringStatusCode.QUOTED,
       );
       newStatusId = quotedStatus.id;
     }
 
-    // Actualizar la cotización
-    const updatedHiring = await this.hiringRepository.update(hiring.id, {
+    // Preparar datos de actualización
+    const updateData: any = {
       quotedPrice: quotationDto.quotedPrice,
       estimatedHours: quotationDto.estimatedHours,
       estimatedTimeUnit: quotationDto.estimatedTimeUnit,
@@ -69,8 +72,19 @@ export class EditQuotationUseCase {
       quotationValidityDays: quotationDto.quotationValidityDays,
       isBusinessDays: quotationDto.isBusinessDays || false,
       quotedAt: new Date(),
-      statusId: newStatusId, // Cambiar estado si estaba en NEGOTIATING
-    });
+      statusId: newStatusId,
+    };
+
+    // Si estaba en REQUOTING, limpiar el timestamp de solicitud
+    if (hiring.status?.code === ServiceHiringStatusCode.REQUOTING) {
+      updateData.requoteRequestedAt = null;
+    }
+
+    // Actualizar la cotización
+    const updatedHiring = await this.hiringRepository.update(
+      hiring.id,
+      updateData,
+    );
 
     if (!updatedHiring) {
       throw new RpcException('Error al editar la cotización');

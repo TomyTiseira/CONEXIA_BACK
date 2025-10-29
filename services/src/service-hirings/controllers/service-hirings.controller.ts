@@ -175,6 +175,20 @@ export class ServiceHiringsController {
     );
   }
 
+  @MessagePattern('requestRequote')
+  async requestRequote(
+    @Payload()
+    data: {
+      userId: number;
+      hiringId: number;
+    },
+  ) {
+    return this.serviceHiringsService.requestRequote(
+      data.hiringId,
+      data.userId,
+    );
+  }
+
   @MessagePattern('contractService')
   async contractService(
     @Payload()

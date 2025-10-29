@@ -20,17 +20,19 @@ export class ServiceHiringOperationsService {
     hiring: ServiceHiring,
     action: string,
   ): Promise<boolean> {
-    // Verificar si la cotización está vencida
-    const isExpired = await this.quotationExpirationService.isQuotationExpired(
-      hiring.id,
-    );
+    // Solo verificar expiración para estados donde la cotización puede vencer
+    const quotationStatuses = ['pending', 'quoted', 'negotiating'];
+    if (quotationStatuses.includes(hiring.status.code)) {
+      const isExpired =
+        await this.quotationExpirationService.isQuotationExpired(hiring.id);
 
-    // Si está vencida, solo se puede ver (no permitir acciones)
-    if (
-      isExpired &&
-      ['accept', 'reject', 'edit', 'negotiate'].includes(action)
-    ) {
-      return false;
+      // Si está vencida, solo se puede ver (no permitir acciones)
+      if (
+        isExpired &&
+        ['accept', 'reject', 'edit', 'negotiate'].includes(action)
+      ) {
+        return false;
+      }
     }
 
     const context = this.getHiringContext(hiring);
@@ -70,14 +72,16 @@ export class ServiceHiringOperationsService {
       return []; // Sin acciones para estados finales
     }
 
-    // Verificar si la cotización está vencida (solo para estados no finales)
-    const isExpired = await this.quotationExpirationService.isQuotationExpired(
-      hiring.id,
-    );
+    // Solo verificar expiración para estados donde la cotización puede vencer
+    const quotationStatuses = ['pending', 'quoted', 'negotiating'];
+    if (quotationStatuses.includes(hiring.status.code)) {
+      const isExpired =
+        await this.quotationExpirationService.isQuotationExpired(hiring.id);
 
-    // Si está vencida y no es un estado final, solo se puede ver
-    if (isExpired) {
-      return ['view'];
+      // Si está vencida, solo se puede ver
+      if (isExpired) {
+        return ['view'];
+      }
     }
 
     return stateActions;

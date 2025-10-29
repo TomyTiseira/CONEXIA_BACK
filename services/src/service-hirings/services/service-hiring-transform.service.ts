@@ -33,6 +33,12 @@ export interface ServiceHiringResponse {
   paymentModality?: PaymentModalityResponseDto;
   deliverables?: DeliverableResponseDto[];
   claimId?: string; // ID del claim activo cuando status es 'in_claim'
+  // Campos de re-cotización
+  requoteRequestedAt?: Date;
+  requoteCount?: number;
+  previousQuotedPrice?: number;
+  previousQuotedAt?: Date;
+  previousQuotationValidityDays?: number;
   status: {
     id: number;
     name: string;
@@ -104,6 +110,12 @@ export class ServiceHiringTransformService {
       isBusinessDays: hiring.isBusinessDays,
       negotiationDescription: hiring.negotiationDescription,
       isExpired,
+      // Campos de re-cotización
+      requoteRequestedAt: hiring.requoteRequestedAt,
+      requoteCount: hiring.requoteCount,
+      previousQuotedPrice: hiring.previousQuotedPrice,
+      previousQuotedAt: hiring.previousQuotedAt,
+      previousQuotationValidityDays: hiring.previousQuotationValidityDays,
       paymentModality: hiring.paymentModality
         ? {
             id: hiring.paymentModality.id,
@@ -164,6 +176,18 @@ export class ServiceHiringTransformService {
   }
 
   private isQuotationExpired(hiring: ServiceHiring): boolean {
+    // Estados donde la expiración no aplica
+    const nonExpirableStatuses = [
+      'requoting',
+      'approved',
+      'in_progress',
+      'delivered',
+      'revision_requested',
+    ];
+    if (nonExpirableStatuses.includes(hiring.status?.code)) {
+      return false;
+    }
+
     if (!hiring.quotedAt || !hiring.quotationValidityDays) {
       return false;
     }

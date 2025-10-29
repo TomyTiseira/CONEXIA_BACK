@@ -63,6 +63,21 @@ export class ServiceHiring {
   @Column({ name: 'payment_modality_id', nullable: true })
   paymentModalityId: number;
 
+  @Column({ type: 'timestamp', nullable: true })
+  requoteRequestedAt: Date;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  previousQuotedPrice: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  previousQuotedAt: Date;
+
+  @Column({ type: 'int', nullable: true })
+  previousQuotationValidityDays: number;
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  requoteCount: number;
+
   @ManyToOne(() => ServiceHiringStatus)
   @JoinColumn({ name: 'status_id' })
   status: ServiceHiringStatus;
