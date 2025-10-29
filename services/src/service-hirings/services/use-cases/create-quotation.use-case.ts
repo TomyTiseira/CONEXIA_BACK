@@ -70,6 +70,7 @@ export class CreateQuotationUseCase {
       estimatedTimeUnit: quotationDto.estimatedTimeUnit,
       quotationNotes: quotationDto.quotationNotes,
       quotationValidityDays: quotationDto.quotationValidityDays,
+      isBusinessDays: quotationDto.isBusinessDays || false,
       quotedAt: new Date(),
       statusId: quotedStatus.id,
     });

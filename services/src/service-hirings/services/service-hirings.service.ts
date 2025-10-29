@@ -18,6 +18,7 @@ import {
   ReviewDeliveryDto,
   UpdateDeliveryDto,
 } from '../dto';
+import { NegotiateServiceHiringDto } from '../dto/negotiate-service-hiring.dto';
 import { DeliveryStatus } from '../entities/delivery-submission.entity';
 import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
@@ -31,12 +32,14 @@ import { CreateQuotationUseCase } from './use-cases/create-quotation.use-case';
 import { CreateServiceHiringUseCase } from './use-cases/create-service-hiring.use-case';
 import { EditQuotationWithDeliverablesUseCase } from './use-cases/edit-quotation-with-deliverables.use-case';
 import { EditQuotationUseCase } from './use-cases/edit-quotation.use-case';
+import { GetDeliverablesWithStatusUseCase } from './use-cases/get-deliverables-with-status.use-case';
 import { GetServiceHiringsByServiceOwnerUseCase } from './use-cases/get-service-hirings-by-service-owner.use-case';
 import { GetServiceHiringsByUserUseCase } from './use-cases/get-service-hirings-by-user.use-case';
 import { GetServiceHiringsUseCase } from './use-cases/get-service-hirings.use-case';
 import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hiring.use-case';
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
+import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
 
@@ -56,11 +59,13 @@ export class ServiceHiringsService {
     private readonly rejectServiceHiringUseCase: RejectServiceHiringUseCase,
     private readonly cancelServiceHiringUseCase: CancelServiceHiringUseCase,
     private readonly negotiateServiceHiringUseCase: NegotiateServiceHiringUseCase,
+    private readonly requestRequoteUseCase: RequestRequoteUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
+    private readonly getDeliverablesWithStatusUseCase: GetDeliverablesWithStatusUseCase,
     private readonly paymentModalityService: PaymentModalityService,
     private readonly mercadoPagoService: MercadoPagoService,
     private readonly usersClientService: UsersClientService,
@@ -207,8 +212,20 @@ export class ServiceHiringsService {
     return this.cancelServiceHiringUseCase.execute(userId, hiringId);
   }
 
-  async negotiateServiceHiring(userId: number, hiringId: number) {
-    return this.negotiateServiceHiringUseCase.execute(userId, hiringId);
+  async negotiateServiceHiring(
+    userId: number,
+    hiringId: number,
+    negotiateDto?: NegotiateServiceHiringDto,
+  ) {
+    return this.negotiateServiceHiringUseCase.execute(
+      userId,
+      hiringId,
+      negotiateDto,
+    );
+  }
+
+  async requestRequote(hiringId: number, userId: number) {
+    return this.requestRequoteUseCase.execute(hiringId, userId);
   }
 
   async contractService(
@@ -375,5 +392,34 @@ export class ServiceHiringsService {
       serviceOwnerId,
       updateDto,
     );
+  }
+
+  async checkUserActiveHirings(userId: number): Promise<{
+    hasActiveHirings: boolean;
+    count: number;
+  }> {
+    const activeStatuses = [
+      'accepted',
+      'approved',
+      'in_progress',
+      'delivered',
+      'revision_requested',
+      'in_claim',
+    ];
+
+    const activeHiringsCount =
+      await this.serviceHiringRepository.countActiveHiringsByUserId(
+        userId,
+        activeStatuses,
+      );
+
+    return {
+      hasActiveHirings: activeHiringsCount > 0,
+      count: activeHiringsCount,
+    };
+  }
+
+  async getDeliverablesWithStatus(hiringId: number, userId: number) {
+    return this.getDeliverablesWithStatusUseCase.execute(hiringId, userId);
   }
 }

@@ -12,6 +12,7 @@ export enum ServiceHiringStatusCode {
   NEGOTIATING = 'negotiating',
   EXPIRED = 'expired',
   IN_CLAIM = 'in_claim',
+  REQUOTING = 'requoting', // Re-cotización solicitada por cliente
   // Estados finales por resolución de reclamos
   CANCELLED_BY_CLAIM = 'cancelled_by_claim', // A favor del cliente
   COMPLETED_BY_CLAIM = 'completed_by_claim', // A favor del proveedor

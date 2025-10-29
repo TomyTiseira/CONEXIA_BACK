@@ -43,7 +43,7 @@ export class UserReviewsController {
   }
 
   @Get(':userId')
-  @AuthRoles([ROLES.USER])
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getUserReviews(
     @Param('userId') userId: string,
     @Query() getUserReviewsDto: GetUserReviewsDto,

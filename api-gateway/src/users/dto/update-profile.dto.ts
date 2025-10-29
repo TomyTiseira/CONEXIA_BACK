@@ -7,9 +7,9 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   IsUrl,
+  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -111,8 +111,24 @@ export class UpdateProfileHttpDto {
   @IsOptional()
   profession?: string;
 
-  @IsPhoneNumber('AR', { message: 'phoneNumber must be a valid phone number' })
+  @IsString({ message: 'areaCode must be a string' })
   @IsOptional()
+  @Matches(/^\+\d{1,4}$/, {
+    message: 'areaCode must be in format +XX (e.g., +54, +1)',
+  })
+  @Transform(({ value }) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    return String(value);
+  })
+  areaCode?: string;
+
+  @IsString({ message: 'phoneNumber must be a string' })
+  @IsOptional()
+  @Matches(/^[0-9]{6,15}$/, {
+    message: 'phoneNumber must be 6 to 15 digits without area code',
+  })
   @Transform(({ value }) => {
     if (value === '' || value === null || value === undefined) {
       return null;

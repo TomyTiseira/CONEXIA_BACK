@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsNumber,
@@ -57,6 +58,10 @@ export class CreateQuotationWithDeliverablesDto {
   @IsNumber()
   @Min(1, { message: 'quotationValidityDays must be at least 1 day' })
   quotationValidityDays: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isBusinessDays?: boolean;
 
   // Para modalidad "Pago total al finalizar"
   @IsOptional()

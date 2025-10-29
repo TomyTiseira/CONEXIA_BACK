@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -36,4 +37,8 @@ export class CreateQuotationDto {
   @IsNumber()
   @Min(1, { message: 'quotationValidityDays must be at least 1 day' })
   quotationValidityDays: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isBusinessDays?: boolean;
 }

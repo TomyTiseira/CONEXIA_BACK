@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
+import { PreviousDeliverableNotDeliveredYetException } from '../../../common/exceptions/delivery.exceptions';
 import { CreateDeliveryDto } from '../../dto/create-delivery.dto';
 import { DeliverySubmissionResponseDto } from '../../dto/delivery-response.dto';
 import { DeliverableStatus } from '../../entities/deliverable.entity';
@@ -50,16 +51,18 @@ export class CreateDeliveryUseCase {
     }
 
     // 3. Validar que el estado permite entregar
-    // Estados permitidos: APPROVED (inicial), IN_PROGRESS (trabajando), REVISION_REQUESTED (re-entrega)
+    // Estados permitidos: APPROVED (inicial), IN_PROGRESS (trabajando),
+    // REVISION_REQUESTED (re-entrega), DELIVERED (para múltiples entregables)
     const allowedStatuses = [
       ServiceHiringStatusCode.APPROVED,
       ServiceHiringStatusCode.IN_PROGRESS,
       ServiceHiringStatusCode.REVISION_REQUESTED,
+      ServiceHiringStatusCode.DELIVERED, // ✅ Permitir cuando ya hay entregas anteriores
     ];
 
     if (!allowedStatuses.includes(hiring.status.code)) {
       throw new RpcException(
-        `No puedes entregar un servicio en estado ${hiring.status.name}. Estados permitidos: Aprobado, En Progreso, Revisión Solicitada.`,
+        `No puedes entregar un servicio en estado ${hiring.status.name}. Estados permitidos: Aprobado, En Progreso, Revisión Solicitada, Entregado.`,
       );
     }
 
@@ -86,7 +89,44 @@ export class CreateDeliveryUseCase {
         );
       }
 
-      // Validar estado de entregas existentes
+      // 🆕 VALIDACIÓN: Verificar que los entregables anteriores hayan sido ENTREGADOS
+      // (No es necesario que estén pagados, solo que hayan sido subidos)
+      // Obtener todos los entregables de esta contratación ordenados por orderIndex
+      const allDeliverables = hiring.deliverables || [];
+      const sortedDeliverables = allDeliverables.sort(
+        (a, b) => a.orderIndex - b.orderIndex,
+      );
+
+      // Encontrar el índice del entregable actual
+      const currentIndex = sortedDeliverables.findIndex(
+        (d) => d.id === deliverable.id,
+      );
+
+      // Si no es el primer entregable, validar que los anteriores fueron entregados
+      if (currentIndex > 0) {
+        for (let i = 0; i < currentIndex; i++) {
+          const previousDeliverable = sortedDeliverables[i];
+
+          // Verificar si el entregable anterior tiene al menos una entrega
+          const previousDeliveries =
+            await this.deliveryRepository.findByDeliverableId(
+              previousDeliverable.id,
+            );
+
+          if (previousDeliveries.length === 0) {
+            // No hay entregas para el entregable anterior
+            throw new PreviousDeliverableNotDeliveredYetException(
+              previousDeliverable.title,
+              previousDeliverable.orderIndex,
+            );
+          }
+
+          // ✅ CAMBIO: Solo verificar que exista una entrega, NO que esté pagada
+          // El cliente es quien tiene la restricción de pago para ver/pagar el siguiente
+        }
+      }
+
+      // Validar estado de entregas existentes para este entregable
       const existingDelivery =
         await this.deliveryRepository.findLatestByDeliverableId(
           createDto.deliverableId,
@@ -169,15 +209,6 @@ export class CreateDeliveryUseCase {
       price,
       status: DeliveryStatus.DELIVERED,
       deliveredAt: new Date(),
-    });
-
-    console.log('✅ Delivery created:', {
-      id: delivery.id,
-      hiringId,
-      deliverableId,
-      deliveryType,
-      price,
-      hasAttachment: !!attachmentPath,
     });
 
     // 6. Actualizar estado del entregable si aplica
