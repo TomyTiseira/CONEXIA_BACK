@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  UseFilters,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
+import { RpcCustomExceptionFilter } from 'src/common/exceptions/rpc-custom-exception.filter';
 import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import {
@@ -28,6 +30,7 @@ import {
  * Maneja las reseñas de servicios finalizados
  */
 @Controller('service-reviews')
+@UseFilters(RpcCustomExceptionFilter)
 export class ServiceReviewsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 

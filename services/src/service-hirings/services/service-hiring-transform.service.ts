@@ -35,6 +35,7 @@ export interface ServiceHiringResponse {
   paymentModality?: PaymentModalityResponseDto;
   deliverables?: DeliverableResponseDto[];
   claimId?: string; // ID del claim activo cuando status es 'in_claim'
+  hasReview?: boolean; // Indica si ya existe una reseña para este servicio contratado
   // Campos de re-cotización
   requoteRequestedAt?: Date;
   requoteCount?: number;

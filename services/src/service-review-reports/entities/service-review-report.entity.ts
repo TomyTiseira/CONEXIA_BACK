@@ -1,11 +1,11 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ServiceReview } from '../../service-reviews/entities/service-review.entity';
 import { ServiceReviewReportReason } from '../enums/service-review-report-reason.enum';
@@ -18,7 +18,7 @@ export class ServiceReviewReport {
   @Column({ name: 'service_review_id' })
   serviceReviewId: number;
 
-  @ManyToOne(() => ServiceReview, { eager: false, nullable: false })
+  @ManyToOne(() => ServiceReview, { eager: false, nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_review_id' })
   serviceReview: ServiceReview;
 
