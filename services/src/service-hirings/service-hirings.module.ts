@@ -7,6 +7,7 @@ import { ClaimsController } from './controllers/claims.controller';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
 import { Claim } from './entities/claim.entity';
 import { Deliverable } from './entities/deliverable.entity';
+import { DeliveryAttachment } from './entities/delivery-attachment.entity';
 import { DeliverySubmission } from './entities/delivery-submission.entity';
 import { PaymentModality } from './entities/payment-modality.entity';
 import { Payment } from './entities/payment.entity';
@@ -14,6 +15,7 @@ import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
 import { ClaimRepository } from './repositories/claim.repository';
 import { DeliverableRepository } from './repositories/deliverable.repository';
+import { DeliveryAttachmentRepository } from './repositories/delivery-attachment.repository';
 import { DeliverySubmissionRepository } from './repositories/delivery-submission.repository';
 import { PaymentModalityRepository } from './repositories/payment-modality.repository';
 import { PaymentRepository } from './repositories/payment.repository';
@@ -88,6 +90,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     PaymentModalityRepository,
     DeliverableRepository,
     DeliverySubmissionRepository,
+    DeliveryAttachmentRepository,
     ServiceHiringStatusService,
     ServiceHiringValidationService,
     ServiceHiringOperationsService,
@@ -105,6 +108,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
       PaymentModality,
       Deliverable,
       DeliverySubmission,
+      DeliveryAttachment,
       Claim,
     ]),
     CommonModule,

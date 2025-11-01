@@ -310,15 +310,13 @@ export class ServiceHiringsService {
     hiringId: number,
     serviceOwnerId: number,
     deliveryDto: CreateDeliveryDto,
-    attachmentPath?: string,
-    attachmentSize?: number,
+    files?: any[], // Array de archivos
   ): Promise<DeliverySubmissionResponseDto> {
     return this.createDeliveryUseCase.execute(
       hiringId,
       serviceOwnerId,
       deliveryDto,
-      attachmentPath,
-      attachmentSize,
+      files,
     );
   }
 
@@ -345,30 +343,50 @@ export class ServiceHiringsService {
     // Si el hiring está completado, quitar watermark de todas las entregas (ya pagó el 100%)
     const hiringIsCompleted = hiring.status.code === 'completed';
 
+    // ⚠️ CRÍTICO: Usar BASE_URL del entorno para URLs completas
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
     return {
-      deliveries: deliveries.map((d) => ({
-        id: d.id,
-        hiringId: d.hiringId,
-        deliverableId: d.deliverableId,
-        deliveryType: d.deliveryType,
-        content: d.content,
-        attachmentPath: d.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
-        attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
-        attachmentSize: d.attachmentSize,
-        price: Number(d.price),
-        status: d.status,
-        // Si el hiring está completado, no mostrar watermark (ya pagó)
-        // Si no está completado, mostrar watermark si la entrega no está aprobada
-        needsWatermark: hiringIsCompleted
-          ? false
-          : d.status !== DeliveryStatus.APPROVED,
-        deliveredAt: d.deliveredAt,
-        reviewedAt: d.reviewedAt,
-        approvedAt: d.approvedAt,
-        revisionNotes: d.revisionNotes,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt,
-      })),
+      deliveries: deliveries.map((d) => {
+        // Mapear attachments con URLs completas
+        const attachments =
+          d.attachments?.map((att) => ({
+            id: att.id,
+            filePath: att.filePath,
+            fileUrl: att.fileUrl || `${baseUrl}${att.filePath}`, // URL completa
+            fileName: att.fileName,
+            fileSize: att.fileSize,
+            mimeType: att.mimeType,
+            orderIndex: att.orderIndex,
+          })) || [];
+
+        return {
+          id: d.id,
+          hiringId: d.hiringId,
+          deliverableId: d.deliverableId,
+          deliveryType: d.deliveryType,
+          content: d.content,
+          attachmentPath: d.attachmentPath, // DEPRECATED: usar attachments[]
+          attachmentUrl: d.attachmentPath
+            ? `${baseUrl}${d.attachmentPath}`
+            : undefined, // DEPRECATED: URL completa
+          attachmentSize: d.attachmentSize, // DEPRECATED: usar attachments[]
+          attachments, // ✅ Array de archivos con URLs completas
+          price: Number(d.price),
+          status: d.status,
+          // Si el hiring está completado, no mostrar watermark (ya pagó)
+          // Si no está completado, mostrar watermark si la entrega no está aprobada
+          needsWatermark: hiringIsCompleted
+            ? false
+            : d.status !== DeliveryStatus.APPROVED,
+          deliveredAt: d.deliveredAt,
+          reviewedAt: d.reviewedAt,
+          approvedAt: d.approvedAt,
+          revisionNotes: d.revisionNotes,
+          createdAt: d.createdAt,
+          updatedAt: d.updatedAt,
+        };
+      }),
       total: deliveries.length,
     };
   }

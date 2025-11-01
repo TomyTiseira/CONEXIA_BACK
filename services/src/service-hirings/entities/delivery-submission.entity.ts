@@ -4,10 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Deliverable } from './deliverable.entity';
+import { DeliveryAttachment } from './delivery-attachment.entity';
 import { ServiceHiring } from './service-hiring.entity';
 
 export enum DeliveryType {
@@ -82,6 +84,11 @@ export class DeliverySubmission {
   @ManyToOne(() => Deliverable, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'deliverable_id' })
   deliverable: Deliverable;
+
+  @OneToMany(() => DeliveryAttachment, (attachment) => attachment.delivery, {
+    cascade: true,
+  })
+  attachments: DeliveryAttachment[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

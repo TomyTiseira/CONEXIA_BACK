@@ -8,11 +8,11 @@ import {
   Post,
   Put,
   Query,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { catchError } from 'rxjs';
@@ -354,7 +354,7 @@ export class ServiceHiringsController {
   @Post(':hiringId/delivery')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileInterceptor('attachment', {
+    FilesInterceptor('attachments', 10, {
       storage: diskStorage({
         destination: './uploads/deliveries',
         filename: (req, file, cb) => {
@@ -366,7 +366,48 @@ export class ServiceHiringsController {
         },
       }),
       limits: {
-        fileSize: 20 * 1024 * 1024, // 20MB
+        fileSize: 20 * 1024 * 1024, // 20MB por archivo
+      },
+      fileFilter: (req, file, cb) => {
+        // ⚠️ CRÍTICO: Validar los mismos tipos MIME que acepta el frontend
+        const allowedMimes = [
+          // Imágenes
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'image/svg+xml',
+          // Videos
+          'video/mp4',
+          'video/webm',
+          'video/quicktime',
+          'video/x-msvideo', // .avi
+          // Documentos
+          'application/pdf',
+          'application/msword', // .doc
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+          'application/vnd.ms-excel', // .xls
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+          // Comprimidos
+          'application/zip',
+          'application/x-rar-compressed',
+          'application/x-tar',
+          'application/gzip',
+          'application/x-7z-compressed',
+          // Texto
+          'text/plain',
+        ];
+
+        if (allowedMimes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              `Tipo de archivo no permitido: ${file.mimetype}. Formatos aceptados: imágenes, videos, PDF, documentos de Office, archivos comprimidos y texto plano.`,
+            ),
+            false,
+          );
+        }
       },
     }),
   )
@@ -374,13 +415,18 @@ export class ServiceHiringsController {
     @User() user: AuthenticatedUser,
     @Param('hiringId') hiringId: number,
     @Body() body: any,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
+    // ⚠️ CRÍTICO: El frontend envía FormData con estos campos:
+    // - content: string (descripción/URL)
+    // - deliverableId: string (opcional, debe parsearse a number)
+    // - attachments: File[] (array de archivos con nombre 'attachments')
+
     // Transformar y validar manualmente debido a multipart/form-data
     const deliveryDto: CreateDeliveryDto = {
       content: body.content as string,
       deliverableId: body.deliverableId
-        ? Number(body.deliverableId)
+        ? parseInt(body.deliverableId)
         : undefined,
     };
 
@@ -391,8 +437,22 @@ export class ServiceHiringsController {
       );
     }
 
-    if (deliveryDto.deliverableId && isNaN(deliveryDto.deliverableId)) {
+    if (
+      deliveryDto.deliverableId &&
+      (isNaN(deliveryDto.deliverableId) || deliveryDto.deliverableId <= 0)
+    ) {
       throw new BadRequestException('deliverableId debe ser un número válido');
+    }
+
+    // Validar tamaño total de archivos (opcional, ya se valida por archivo)
+    if (files && files.length > 0) {
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+      const maxTotalSize = 100 * 1024 * 1024; // 100MB total
+      if (totalSize > maxTotalSize) {
+        throw new BadRequestException(
+          `El tamaño total de los archivos (${(totalSize / 1024 / 1024).toFixed(2)}MB) excede el límite de 100MB`,
+        );
+      }
     }
 
     return this.client
@@ -400,8 +460,7 @@ export class ServiceHiringsController {
         hiringId: +hiringId,
         serviceOwnerId: user.id,
         deliveryDto,
-        attachmentPath: file ? `/uploads/deliveries/${file.filename}` : null,
-        attachmentSize: file ? file.size : null,
+        files: files || [], // Enviar array de archivos
       })
       .pipe(
         catchError((error) => {
@@ -465,7 +524,7 @@ export class ServiceHiringsController {
   @Put('deliveries/:deliveryId')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileInterceptor('attachment', {
+    FilesInterceptor('attachments', 10, {
       storage: diskStorage({
         destination: './uploads/deliveries',
         filename: (req, file, cb) => {
@@ -477,7 +536,42 @@ export class ServiceHiringsController {
         },
       }),
       limits: {
-        fileSize: 20 * 1024 * 1024, // 20MB
+        fileSize: 20 * 1024 * 1024, // 20MB por archivo
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimes = [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+          'image/svg+xml',
+          'video/mp4',
+          'video/webm',
+          'video/quicktime',
+          'video/x-msvideo',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/zip',
+          'application/x-rar-compressed',
+          'application/x-tar',
+          'application/gzip',
+          'application/x-7z-compressed',
+          'text/plain',
+        ];
+
+        if (allowedMimes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              `Tipo de archivo no permitido: ${file.mimetype}`,
+            ),
+            false,
+          );
+        }
       },
     }),
   )
@@ -485,11 +579,10 @@ export class ServiceHiringsController {
     @User() user: AuthenticatedUser,
     @Param('deliveryId') deliveryId: number,
     @Body() body: any,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const updateDto = {
       content: body.content as string,
-      attachmentPath: file ? `/uploads/deliveries/${file.filename}` : undefined,
     };
 
     return this.client
@@ -497,7 +590,7 @@ export class ServiceHiringsController {
         deliveryId: +deliveryId,
         serviceOwnerId: user.id,
         updateDto,
-        attachmentSize: file ? file.size : undefined,
+        files: files || [],
       })
       .pipe(
         catchError((error) => {

@@ -92,18 +92,22 @@ export class ServiceHiringRepository {
       queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
     }
 
-    if (userId) {
-      queryBuilder.andWhere('hiring.userId = :userId', { userId });
+    if (serviceId) {
+      queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
     }
 
-    // Ordenamiento: pendientes primero, luego por fecha
+    // Ordenamiento: pendientes primero, estados activos en medio, finales al final
     queryBuilder
       .addSelect(
-        "CASE WHEN status.code = 'pending' THEN 0 ELSE 1 END",
+        `CASE 
+          WHEN status.code IN ('completed', 'rejected', 'cancelled', 'cancelled_by_claim', 'completed_by_claim', 'completed_with_agreement') THEN 2
+          WHEN status.code = 'pending' THEN 0
+          ELSE 1
+        END`,
         'priority_order',
       )
       .orderBy('priority_order', 'ASC')
-      .addOrderBy('hiring.createdAt', 'DESC')
+      .addOrderBy('hiring.updatedAt', 'DESC')
       .addOrderBy('claim.createdAt', 'DESC'); // Claim más reciente primero
 
     const offset = (page - 1) * limit;
@@ -141,14 +145,18 @@ export class ServiceHiringRepository {
       queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
     }
 
-    // Ordenamiento: pendientes primero, luego por fecha
+    // Ordenamiento: pendientes primero, estados activos en medio, finales al final
     queryBuilder
       .addSelect(
-        "CASE WHEN status.code = 'pending' THEN 0 ELSE 1 END",
+        `CASE 
+          WHEN status.code IN ('completed', 'rejected', 'cancelled', 'cancelled_by_claim', 'completed_by_claim', 'completed_with_agreement') THEN 2
+          WHEN status.code = 'pending' THEN 0
+          ELSE 1
+        END`,
         'priority_order',
       )
       .orderBy('priority_order', 'ASC')
-      .addOrderBy('hiring.createdAt', 'DESC')
+      .addOrderBy('hiring.updatedAt', 'DESC')
       .addOrderBy('claim.createdAt', 'DESC'); // Claim más reciente primero
 
     const offset = (page - 1) * limit;

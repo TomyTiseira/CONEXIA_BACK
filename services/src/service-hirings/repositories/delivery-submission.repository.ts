@@ -18,15 +18,16 @@ export class DeliverySubmissionRepository {
   async findById(id: number): Promise<DeliverySubmission | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['hiring', 'hiring.service', 'deliverable'],
+      relations: ['hiring', 'hiring.service', 'deliverable', 'attachments'],
+      order: { attachments: { orderIndex: 'ASC' } },
     });
   }
 
   async findByHiringId(hiringId: number): Promise<DeliverySubmission[]> {
     return this.repository.find({
       where: { hiringId },
-      relations: ['deliverable'],
-      order: { createdAt: 'DESC' },
+      relations: ['deliverable', 'attachments'],
+      order: { createdAt: 'DESC', attachments: { orderIndex: 'ASC' } },
     });
   }
 

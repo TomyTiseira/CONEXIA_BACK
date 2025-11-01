@@ -12,6 +12,7 @@ import {
 import { PaymentModalityCode } from '../../enums/payment-modality.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../../repositories/deliverable.repository';
+import { DeliveryAttachmentRepository } from '../../repositories/delivery-attachment.repository';
 import { DeliverySubmissionRepository } from '../../repositories/delivery-submission.repository';
 import { ServiceHiringStatusRepository } from '../../repositories/service-hiring-status.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
@@ -23,14 +24,14 @@ export class CreateDeliveryUseCase {
     private readonly deliverableRepository: DeliverableRepository,
     private readonly deliveryRepository: DeliverySubmissionRepository,
     private readonly statusRepository: ServiceHiringStatusRepository,
+    private readonly deliveryAttachmentRepository: DeliveryAttachmentRepository,
   ) {}
 
   async execute(
     hiringId: number,
     serviceOwnerId: number,
     createDto: CreateDeliveryDto,
-    attachmentPath?: string,
-    attachmentSize?: number,
+    files?: any[], // Array de archivos Multer
   ): Promise<DeliverySubmissionResponseDto> {
     // 1. Obtener la contratación con sus relaciones
     const hiring = await this.serviceHiringRepository.findById(hiringId, [
@@ -201,19 +202,43 @@ export class CreateDeliveryUseCase {
     }
 
     // 5. Crear la entrega
+    // ⚠️ IMPORTANTE: Mantener attachmentPath y attachmentSize por retrocompatibilidad
+    // Si solo hay 1 archivo, guardarlo también en los campos antiguos
+    const firstFile = files && files.length > 0 ? files[0] : null;
+
     const delivery = await this.deliveryRepository.create({
       hiringId,
       deliverableId: deliverableId || undefined,
       deliveryType,
       content: createDto.content,
-      attachmentPath,
-      attachmentSize,
+      attachmentPath: firstFile
+        ? `/uploads/deliveries/${firstFile.filename}`
+        : undefined,
+      attachmentSize: firstFile ? firstFile.size : undefined,
       price,
       status: DeliveryStatus.DELIVERED,
       deliveredAt: new Date(),
     });
 
-    // 6. Actualizar estado del entregable si aplica
+    // 6. Crear registros de attachments si hay archivos
+    if (files && files.length > 0) {
+      // ⚠️ CRÍTICO: Usar la URL base del entorno para URLs completas
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+      const attachmentsData = files.map((file, index) => ({
+        deliveryId: delivery.id,
+        filePath: `/uploads/deliveries/${file.filename}`,
+        fileUrl: `${baseUrl}/uploads/deliveries/${file.filename}`, // URL completa
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        orderIndex: index,
+      }));
+
+      await this.deliveryAttachmentRepository.createMany(attachmentsData);
+    }
+
+    // 7. Actualizar estado del entregable si aplica
     if (deliverableId) {
       await this.deliverableRepository.update(deliverableId, {
         status: DeliverableStatus.DELIVERED,
@@ -221,7 +246,7 @@ export class CreateDeliveryUseCase {
       });
     }
 
-    // 7. Actualizar el estado del hiring
+    // 8. Actualizar el estado del hiring
     // Si venía de REVISION_REQUESTED, cambiar a DELIVERED
     // Para múltiples deliverables, recalcular el estado basándose en todos
     await this.serviceHiringRepository.recalculateStatusFromDeliveries(
@@ -234,22 +259,44 @@ export class CreateDeliveryUseCase {
       previousStatus: hiring.status.code,
     });
 
-    // 8. Retornar respuesta
-    return this.transformToResponse(delivery);
+    // 9. Cargar el delivery con sus attachments para retornar
+    const deliveryWithAttachments = await this.deliveryRepository.findById(
+      delivery.id,
+    );
+
+    // 10. Retornar respuesta
+    return this.transformToResponse(deliveryWithAttachments || delivery);
   }
 
   private transformToResponse(
     delivery: DeliverySubmission,
   ): DeliverySubmissionResponseDto {
+    // ⚠️ CRÍTICO: Mapear attachments con URLs completas
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+    const attachments =
+      delivery.attachments?.map((att) => ({
+        id: att.id,
+        filePath: att.filePath,
+        fileUrl: att.fileUrl || `${baseUrl}${att.filePath}`, // URL completa
+        fileName: att.fileName,
+        fileSize: att.fileSize,
+        mimeType: att.mimeType,
+        orderIndex: att.orderIndex,
+      })) || [];
+
     return {
       id: delivery.id,
       hiringId: delivery.hiringId,
       deliverableId: delivery.deliverableId,
       deliveryType: delivery.deliveryType,
       content: delivery.content,
-      attachmentPath: delivery.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
-      attachmentUrl: delivery.attachmentPath, // Enviar el mismo path, el frontend construye la URL
-      attachmentSize: delivery.attachmentSize,
+      attachmentPath: delivery.attachmentPath, // DEPRECATED: usar attachments[]
+      attachmentUrl: delivery.attachmentPath
+        ? `${baseUrl}${delivery.attachmentPath}`
+        : undefined, // DEPRECATED: URL completa
+      attachmentSize: delivery.attachmentSize, // DEPRECATED: usar attachments[]
+      attachments, // ✅ Array de archivos con URLs completas
       price: Number(delivery.price),
       status: delivery.status,
       needsWatermark: delivery.status !== DeliveryStatus.APPROVED, // Mostrar marca de agua hasta que se apruebe y pague
