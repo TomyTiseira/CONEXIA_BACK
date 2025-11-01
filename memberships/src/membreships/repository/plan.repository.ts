@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Plan } from '../entities/plan.entity';
 
 @Injectable()
@@ -22,12 +22,22 @@ export class PlanRepository {
     return this.repo.save(merged);
   }
 
-  findAll() {
-    return this.repo.find({ where: { deletedAt: null } });
+  findAll(includeInactive = false) {
+    const where: { deletedAt: any; active?: boolean } = {
+      deletedAt: IsNull(),
+    };
+    if (!includeInactive) {
+      where.active = true;
+    }
+    return this.repo.find({ where });
   }
 
-  findById(id: number) {
-    return this.repo.findOne({ where: { id } });
+  findById(id: number, includeInactive = false) {
+    const where: { id: number; active?: boolean } = { id };
+    if (!includeInactive) {
+      where.active = true;
+    }
+    return this.repo.findOne({ where });
   }
 
   async softDelete(id: number) {

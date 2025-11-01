@@ -18,7 +18,7 @@ export class Benefit {
   type: 'boolean' | 'number' | 'enum';
 
   @Column({ type: 'json', nullable: true })
-  options: unknown; // enum values or extra metadata
+  options: any; // enum values or extra metadata
 
   @Column({ default: true })
   active: boolean;

@@ -12,6 +12,7 @@ sleep 15
 
 # Ejecutar seeds
 echo "Ejecutando seeds..."
+npm run seed:benefits
 
 # Esperar a que la aplicación termine
 wait $APP_PID

@@ -22,13 +22,13 @@ export class MembreshipsController {
   }
 
   @MessagePattern('getPlans')
-  getPlans() {
-    return this.membreshipsService.getPlans();
+  getPlans(@Payload() dto: { includeInactive?: boolean }) {
+    return this.membreshipsService.getPlans(dto);
   }
 
   @MessagePattern('getPlanById')
-  getPlanById(@Payload() id: number) {
-    return this.membreshipsService.getPlanById(id);
+  getPlanById(@Payload() dto: { id: number; includeInactive?: boolean }) {
+    return this.membreshipsService.getPlanById(dto);
   }
 
   @MessagePattern('updatePlan')

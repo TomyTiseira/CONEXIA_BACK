@@ -24,9 +24,9 @@ export class Plan {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   annualPrice: number;
 
-  // JSON structure like [{ name: string, value: boolean|number|string }]
+  // JSON structure like [{ key: string, value: boolean|number|string }]
   @Column({ type: 'json', nullable: true })
-  benefits?: Array<{ name: string; value: unknown }>;
+  benefits?: Array<{ key: string; value: unknown }>;
 
   // Shows if plan is available for new users
   @Column({ default: true })
