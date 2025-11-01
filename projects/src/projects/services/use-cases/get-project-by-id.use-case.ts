@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
-  ProjectAlreadyDeletedException,
-  ProjectNotFoundException,
-  UserNotFoundException,
+    ProjectAlreadyDeletedException,
+    ProjectNotFoundException,
+    UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import {
-  createSkillsMap,
-  getProjectSkillNames,
-  transformProjectToDetailResponse,
+    createSkillsMap,
+    getProjectSkillNames,
+    transformProjectToDetailResponse,
 } from '../../../common/utils/project-detail-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { ReportRepository } from '../../../reports/repositories/report.repository';
