@@ -3,8 +3,8 @@ import { RpcException } from '@nestjs/microservices';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { GetServiceReviewReportsDto } from '../../dto/get-service-review-reports.dto';
+import { MissingServiceReviewIdException, ServiceReviewReportInternalServerErrorException } from '../../exceptions/service-review-report.exceptions';
 import { ServiceReviewReportRepository } from '../../repositories/service-review-report.repository';
-import { MissingServiceReviewIdException, ServiceReviewReportInternalServerErrorException } from 'src/service-review-reports/exceptions/service-review-report.exceptions';
 
 export interface ServiceReviewReportResponseDto {
   id: number;

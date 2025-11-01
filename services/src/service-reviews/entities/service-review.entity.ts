@@ -1,11 +1,11 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ServiceHiring } from '../../service-hirings/entities/service-hiring.entity';
 import { Service } from '../../services/entities/service.entity';
@@ -59,7 +59,7 @@ export class ServiceReview {
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;´
+  updatedAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date | null;

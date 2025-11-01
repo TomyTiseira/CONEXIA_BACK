@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { ServiceReviewNotFoundException } from '../../../common/exceptions/service-review.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
-import { ServiceReviewNotFoundException } from 'src/common/exceptions/service-review.exceptions';
 
 @Injectable()
 export class GetServiceReviewByIdUseCase {
