@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { MessagingModule } from './contacts/messaging.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
@@ -23,6 +24,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     UsersModule,
     UserReviewsModule,
     AuthModule,
+    ChatbotModule,
     InternalUsersModule,
     PaymentAccountsModule,
     ProjectsModule,

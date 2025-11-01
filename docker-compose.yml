@@ -237,6 +237,47 @@ services:
       timeout: 5s
       retries: 5
 
+  nexo:
+    build: ./nexo
+    volumes:
+      - ./nexo/src:/src/app/src
+    depends_on:
+      nexo-db:
+        condition: service_healthy
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DB_HOST=nexo-db
+      - DB_PORT=5432
+      - DB_USERNAME=${NEXO_DB_USER}
+      - DB_PASSWORD=${NEXO_DB_PASSWORD}
+      - DB_DATABASE=${NEXO_DB_NAME}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  nexo-db:
+    build:
+      context: ./nexo
+      dockerfile: Dockerfile.postgres
+    ports:
+      - "${NEXO_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${NEXO_DB_USER}
+      - POSTGRES_PASSWORD=${NEXO_DB_PASSWORD}
+      - POSTGRES_DB=${NEXO_DB_NAME}
+    volumes:
+      - ./nexo/postgres-data:/var/lib/postgresql/data
+      - ./nexo/postgres-init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=100
+      -c timezone='America/Argentina/Buenos_Aires'
+      -c log_timezone='America/Argentina/Buenos_Aires'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NEXO_DB_USER} -d ${NEXO_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
   # Configurado para fallar silenciosamente si el endpoint ya existe
   ngrok:
