@@ -401,6 +401,7 @@ export class ServiceHiringsController {
         serviceOwnerId: user.id,
         deliveryDto,
         attachmentPath: file ? `/uploads/deliveries/${file.filename}` : null,
+        attachmentSize: file ? file.size : null,
       })
       .pipe(
         catchError((error) => {
@@ -496,6 +497,7 @@ export class ServiceHiringsController {
         deliveryId: +deliveryId,
         serviceOwnerId: user.id,
         updateDto,
+        attachmentSize: file ? file.size : undefined,
       })
       .pipe(
         catchError((error) => {

@@ -325,6 +325,7 @@ export class ReviewDeliveryUseCase {
       content: delivery.content,
       attachmentPath: delivery.attachmentPath,
       attachmentUrl: delivery.attachmentPath,
+      attachmentSize: delivery.attachmentSize,
       price: Number(delivery.price),
       status: delivery.status,
       needsWatermark: delivery.status !== DeliveryStatus.APPROVED,

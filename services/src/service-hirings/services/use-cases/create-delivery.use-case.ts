@@ -30,6 +30,7 @@ export class CreateDeliveryUseCase {
     serviceOwnerId: number,
     createDto: CreateDeliveryDto,
     attachmentPath?: string,
+    attachmentSize?: number,
   ): Promise<DeliverySubmissionResponseDto> {
     // 1. Obtener la contratación con sus relaciones
     const hiring = await this.serviceHiringRepository.findById(hiringId, [
@@ -206,6 +207,7 @@ export class CreateDeliveryUseCase {
       deliveryType,
       content: createDto.content,
       attachmentPath,
+      attachmentSize,
       price,
       status: DeliveryStatus.DELIVERED,
       deliveredAt: new Date(),
@@ -247,6 +249,7 @@ export class CreateDeliveryUseCase {
       content: delivery.content,
       attachmentPath: delivery.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
       attachmentUrl: delivery.attachmentPath, // Enviar el mismo path, el frontend construye la URL
+      attachmentSize: delivery.attachmentSize,
       price: Number(delivery.price),
       status: delivery.status,
       needsWatermark: delivery.status !== DeliveryStatus.APPROVED, // Mostrar marca de agua hasta que se apruebe y pague

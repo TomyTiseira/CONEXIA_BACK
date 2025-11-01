@@ -47,6 +47,9 @@ export class DeliverySubmission {
   @Column({ type: 'varchar', length: 500, nullable: true })
   attachmentPath: string; // Ruta del archivo adjunto
 
+  @Column({ type: 'bigint', nullable: true })
+  attachmentSize: number; // Tamaño del archivo adjunto en bytes
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number; // Precio correspondiente a esta entrega
 

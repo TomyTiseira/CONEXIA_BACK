@@ -264,6 +264,7 @@ export class ServiceHiringsController {
       serviceOwnerId: number;
       deliveryDto: CreateDeliveryDto;
       attachmentPath?: string;
+      attachmentSize?: number;
     },
   ) {
     return this.serviceHiringsService.createDelivery(
@@ -271,6 +272,7 @@ export class ServiceHiringsController {
       data.serviceOwnerId,
       data.deliveryDto,
       data.attachmentPath,
+      data.attachmentSize,
     );
   }
 
@@ -302,12 +304,14 @@ export class ServiceHiringsController {
       deliveryId: number;
       serviceOwnerId: number;
       updateDto: any;
+      attachmentSize?: number;
     },
   ) {
     return this.serviceHiringsService.updateDelivery(
       data.deliveryId,
       data.serviceOwnerId,
       data.updateDto,
+      data.attachmentSize,
     );
   }
 

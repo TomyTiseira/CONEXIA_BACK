@@ -311,12 +311,14 @@ export class ServiceHiringsService {
     serviceOwnerId: number,
     deliveryDto: CreateDeliveryDto,
     attachmentPath?: string,
+    attachmentSize?: number,
   ): Promise<DeliverySubmissionResponseDto> {
     return this.createDeliveryUseCase.execute(
       hiringId,
       serviceOwnerId,
       deliveryDto,
       attachmentPath,
+      attachmentSize,
     );
   }
 
@@ -352,6 +354,7 @@ export class ServiceHiringsService {
         content: d.content,
         attachmentPath: d.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
         attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
+        attachmentSize: d.attachmentSize,
         price: Number(d.price),
         status: d.status,
         // Si el hiring está completado, no mostrar watermark (ya pagó)
@@ -386,11 +389,13 @@ export class ServiceHiringsService {
     deliveryId: number,
     serviceOwnerId: number,
     updateDto: UpdateDeliveryDto,
+    attachmentSize?: number,
   ): Promise<DeliverySubmissionResponseDto> {
     return this.updateDeliveryUseCase.execute(
       deliveryId,
       serviceOwnerId,
       updateDto,
+      attachmentSize,
     );
   }
 
