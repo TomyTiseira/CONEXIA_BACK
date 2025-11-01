@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { CreateMembreshipDto } from './dto/create-membreship.dto';
-import { UpdateMembreshipDto } from './dto/update-membreship.dto';
+import { CreateMembreshipDto } from '../dto/create-membreship.dto';
+import { UpdateMembreshipDto } from '../dto/update-membreship.dto';
+import { MembreshipRepository } from '../repository/membreship.repository';
+import { PingUseCase } from './use-cases/ping.use-case';
 
 @Injectable()
 export class MembreshipsService {
+  constructor(
+    private readonly membreshipRepository: MembreshipRepository,
+    private readonly pingUseCase: PingUseCase,
+  ) {}
+
   create(createMembreshipDto: CreateMembreshipDto) {
     return 'This action adds a new membreship';
   }
@@ -25,6 +32,7 @@ export class MembreshipsService {
   }
 
   ping() {
-    return 'pong from memberships service';
+    return this.pingUseCase.execute();
   }
 }
+

@@ -1,8 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateMembreshipDto } from './dto/create-membreship.dto';
-import { UpdateMembreshipDto } from './dto/update-membreship.dto';
-import { MembreshipsService } from './membreships.service';
+import { CreateMembreshipDto } from '../dto/create-membreship.dto';
+import { UpdateMembreshipDto } from '../dto/update-membreship.dto';
+import { MembreshipsService } from '../service/membreships.service';
 
 @Controller()
 export class MembreshipsController {
@@ -41,3 +41,4 @@ export class MembreshipsController {
     return this.membreshipsService.ping();
   }
 }
+
