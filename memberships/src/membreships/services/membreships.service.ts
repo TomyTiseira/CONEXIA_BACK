@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
-  BenefitNotFoundException,
   PlanBadRequestException,
   PlanNotFoundException,
 } from 'src/common/exceptions';
-import { CreatePlanDto } from './dto/create-plan.dto';
-import { TogglePlanDto } from './dto/toggle-plan.dto';
-import { UpdatePlanDto } from './dto/update-plan.dto';
-import { BenefitRepository } from './repository/benefit.repository';
-import { PlanLogRepository } from './repository/plan-log.repository';
-import { PlanRepository } from './repository/plan.repository';
+import { CreatePlanDto } from '../dto/create-plan.dto';
+import { TogglePlanDto } from '../dto/toggle-plan.dto';
+import { UpdatePlanDto } from '../dto/update-plan.dto';
+import { BenefitRepository } from '../repository/benefit.repository';
+import { PlanLogRepository } from '../repository/plan-log.repository';
+import { PlanRepository } from '../repository/plan.repository';
 
 @Injectable()
 export class MembreshipsService {
@@ -29,14 +28,6 @@ export class MembreshipsService {
     // basic validation
     if (dto.monthlyPrice < 0 || dto.annualPrice < 0) {
       throw new PlanBadRequestException('Prices must be positive numbers');
-    }
-
-    // ensure benefits keys are valid
-    for (const b of dto.benefits ?? []) {
-      const exists = await this.benefits.findByKey(b.key);
-      if (!exists) {
-        throw new BenefitNotFoundException(b.key);
-      }
     }
 
     const created = await this.plans.create({
@@ -70,16 +61,6 @@ export class MembreshipsService {
   async updatePlan(dto: UpdatePlanDto) {
     const existing = await this.plans.findById(dto.id);
     if (!existing) throw new PlanNotFoundException(dto.id);
-
-    // validate benefits if provided
-    if (dto.benefits) {
-      for (const b of dto.benefits) {
-        const exists = await this.benefits.findByKey(b.key);
-        if (!exists) {
-          throw new BenefitNotFoundException(b.key);
-        }
-      }
-    }
 
     const updated = await this.plans.update(dto.id, {
       name: dto.name ?? existing.name,

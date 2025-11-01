@@ -1,9 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreatePlanDto } from './dto/create-plan.dto';
-import { TogglePlanDto } from './dto/toggle-plan.dto';
-import { UpdatePlanDto } from './dto/update-plan.dto';
-import { MembreshipsService } from './membreships.service';
+import { CreatePlanDto } from '../dto/create-plan.dto';
+import { TogglePlanDto } from '../dto/toggle-plan.dto';
+import { UpdatePlanDto } from '../dto/update-plan.dto';
+import { MembreshipsService } from '../services/membreships.service';
 
 @Controller()
 export class MembreshipsController {
