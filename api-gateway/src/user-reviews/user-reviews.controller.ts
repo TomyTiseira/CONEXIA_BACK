@@ -47,10 +47,12 @@ export class UserReviewsController {
   getUserReviews(
     @Param('userId') userId: string,
     @Query() getUserReviewsDto: GetUserReviewsDto,
+    @User() user: AuthenticatedUser,
   ) {
     const payload = {
       userId: parseInt(userId),
       ...getUserReviewsDto,
+      currentUserId: user.id,
     };
 
     return this.client.send('get_user_reviews', payload).pipe(

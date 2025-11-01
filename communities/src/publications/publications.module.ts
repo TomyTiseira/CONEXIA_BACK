@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CommentReportsModule } from '../comment-reports/comment-reports.module';
 import { CommonModule } from '../common/common.module';
 import { NatsModule } from '../common/nats/nats.module';
 import { ContactsModule } from '../contacts/contacts.module';
+import { PublicationReportsModule } from '../publication-reports/publication-reports.module';
 import { MigrationController } from './controllers/migration.controller';
 import { PublicationsController } from './controllers/publications.controller';
 import { PublicationComment } from './entities/publication-comment.entity';
@@ -47,6 +49,8 @@ import { UserInfoService } from './services/user-info.service';
     ]),
     CommonModule,
     ContactsModule,
+    forwardRef(() => PublicationReportsModule),
+    forwardRef(() => CommentReportsModule),
     // Importar el módulo NatsModule para usar USERS_SERVICE
     NatsModule,
   ],

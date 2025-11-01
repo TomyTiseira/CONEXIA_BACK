@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
+import { PublicationReportRepository } from '../../../publication-reports/repositories/publication-report.repository';
 import { GetUserPublicationsDto } from '../../dto/get-user-publications.dto';
 import { CommentRepository } from '../../repositories/comment.repository';
 import { PublicationRepository } from '../../repositories/publication.repository';
@@ -15,6 +16,7 @@ export class GetUserPublicationsUseCase {
     private readonly commentRepository: CommentRepository,
     private readonly reactionRepository: ReactionRepository,
     private readonly ownerHelperService: OwnerHelperService,
+    private readonly publicationReportRepository: PublicationReportRepository,
   ) {}
 
   async execute(
@@ -34,6 +36,26 @@ export class GetUserPublicationsUseCase {
         params.limit,
         data.currentUserId,
       );
+
+    // Verificar si el usuario reportó cada publicación (batch query)
+    const hasReportedMap = new Map<number, boolean>();
+    if (data.currentUserId) {
+      const reportPromises = publications.map(async (pub) => {
+        // Si es el dueño, no puede reportar su propia publicación
+        if (data.currentUserId === pub.userId) {
+          return { publicationId: pub.id, hasReported: false };
+        }
+        const report = await this.publicationReportRepository.findByPublicationAndReporter(
+          pub.id,
+          data.currentUserId!,
+        );
+        return { publicationId: pub.id, hasReported: report !== null };
+      });
+      const results = await Promise.all(reportPromises);
+      results.forEach(({ publicationId, hasReported }) => {
+        hasReportedMap.set(publicationId, hasReported);
+      });
+    }
 
     // Obtener información de comentarios y reacciones para cada publicación
     const enrichedPublications = await Promise.all(
@@ -86,6 +108,8 @@ export class GetUserPublicationsUseCase {
           }
         }
 
+        const hasReported = hasReportedMap.get(publication.id) || false;
+
         return {
           ...publication,
           commentsCount: commentsTotal,
@@ -93,6 +117,7 @@ export class GetUserPublicationsUseCase {
           reactionsCount: reactionsTotal,
           reactionsSummary,
           userReaction: currentUserReaction,
+          hasReported,
         };
       }),
     );

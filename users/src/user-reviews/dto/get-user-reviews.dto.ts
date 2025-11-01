@@ -17,4 +17,9 @@ export class GetUserReviewsDto {
   @Min(1, { message: 'limit must be greater than 0' })
   @Transform(({ value }) => Number(value))
   limit?: number = 10;
+
+  @IsInt()
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  currentUserId?: number;
 }

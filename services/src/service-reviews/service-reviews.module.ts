@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
+import { ServiceReviewReportsModule } from '../service-review-reports/service-review-reports.module';
 import { ServiceReview } from './entities/service-review.entity';
 import { ServiceReviewRepository } from './repositories/service-review.repository';
 import { ServiceReviewsController } from './service-reviews.controller';
@@ -18,6 +19,7 @@ import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-
   imports: [
     TypeOrmModule.forFeature([ServiceReview]),
     forwardRef(() => ServiceHiringsModule),
+    forwardRef(() => ServiceReviewReportsModule),
     CommonModule,
   ],
   controllers: [ServiceReviewsController],

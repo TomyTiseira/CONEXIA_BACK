@@ -25,6 +25,6 @@ import { UserReviewReportsService } from './services/user-review-reports.service
     TypeOrmModule.forFeature([UserReviewReport, UserReview]),
     forwardRef(() => UsersModule),
   ],
-  exports: [UserReviewReportsService],
+  exports: [UserReviewReportsService, UserReviewReportRepository],
 })
 export class UserReviewReportModule {}

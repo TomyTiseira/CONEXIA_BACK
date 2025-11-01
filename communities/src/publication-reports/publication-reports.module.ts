@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PublicationsModule } from '../publications/publications.module';
 import { PublicationReportsController } from './controllers/publication-reports.controller';
@@ -10,7 +10,7 @@ import { GetPublicationReportsUseCase } from './services/use-cases/get-publicati
 import { GetPublicationsWithReportsUseCase } from './services/use-cases/get-publications-with-reports.use-case';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PublicationReport]), PublicationsModule],
+  imports: [TypeOrmModule.forFeature([PublicationReport]), forwardRef(() => PublicationsModule)],
   controllers: [PublicationReportsController],
   providers: [
     PublicationReportsService,
@@ -19,6 +19,6 @@ import { GetPublicationsWithReportsUseCase } from './services/use-cases/get-publ
     GetPublicationsWithReportsUseCase,
     GetPublicationReportsUseCase,
   ],
-  exports: [PublicationReportsService],
+  exports: [PublicationReportsService, PublicationReportRepository],
 })
 export class PublicationReportsModule {}

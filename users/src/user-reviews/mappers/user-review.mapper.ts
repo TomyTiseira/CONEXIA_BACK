@@ -22,6 +22,7 @@ export interface MappedUserReview {
   description: string;
   createdAt: Date;
   updatedAt: Date;
+  hasReported: boolean; // Indica si el usuario actual ya reportó esta reseña
 }
 
 interface UserReviewWithProfiles {
@@ -81,6 +82,7 @@ export class UserReviewMapper {
       description: review.description,
       createdAt: review.createdAt,
       updatedAt: review.updatedAt,
+      hasReported: false, // El use case lo sobrescribirá con el valor correcto
     };
   }
 

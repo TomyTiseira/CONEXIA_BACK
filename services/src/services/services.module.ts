@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
+import { ServiceReportsModule } from '../service-reports/service-reports.module';
 import { ServiceReviewsModule } from '../service-reviews/service-reviews.module';
 import { ServicesController } from './controllers';
 import { Service, ServiceCategory } from './entities';
@@ -22,6 +23,7 @@ import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
     CommonModule,
     forwardRef(() => ServiceHiringsModule),
     forwardRef(() => ServiceReviewsModule),
+    forwardRef(() => ServiceReportsModule),
   ],
   controllers: [ServicesController],
   providers: [

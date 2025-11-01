@@ -20,6 +20,6 @@ import { GetProjectsWithReportsUseCase } from './services/use-cases/get-projects
     GetProjectReportsUseCase,
   ],
   imports: [TypeOrmModule.forFeature([Report, Project]), SharedModule],
-  exports: [ReportsService],
+  exports: [ReportsService, ReportRepository],
 })
 export class ReportsModule {}

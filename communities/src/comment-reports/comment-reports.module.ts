@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { PublicationComment } from '../publications/entities/publication-comment.entity';
@@ -14,7 +14,7 @@ import { GetCommentsWithReportsUseCase } from './services/use-cases/get-comments
 @Module({
   imports: [
     TypeOrmModule.forFeature([CommentReport, PublicationComment]),
-    PublicationsModule,
+    forwardRef(() => PublicationsModule),
     CommonModule,
   ],
   controllers: [CommentReportsController],
@@ -25,6 +25,6 @@ import { GetCommentsWithReportsUseCase } from './services/use-cases/get-comments
     GetCommentsWithReportsUseCase,
     GetCommentReportsUseCase,
   ],
-  exports: [CommentReportsService],
+  exports: [CommentReportsService, CommentReportRepository],
 })
 export class CommentReportsModule {}

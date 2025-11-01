@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServiceReviewsModule } from '../service-reviews/service-reviews.module';
@@ -13,7 +13,7 @@ import { GetServiceReviewsWithReportsUseCase } from './services/use-cases/get-se
 @Module({
   imports: [
     TypeOrmModule.forFeature([ServiceReviewReport]),
-    ServiceReviewsModule,
+    forwardRef(() => ServiceReviewsModule),
     CommonModule,
   ],
   controllers: [ServiceReviewReportsController],

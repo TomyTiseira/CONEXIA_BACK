@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
+import { ReportRepository } from '../../../reports/repositories/report.repository';
 import { GetProjectsDto } from '../../dtos/get-projects.dto';
 import { Project } from '../../entities/project.entity';
 import { ProjectRepository } from '../../repositories/project.repository';
@@ -13,6 +14,8 @@ export class GetProjectsUseCase {
     private readonly projectRepository: ProjectRepository,
     private readonly usersClientService: UsersClientService,
     private readonly postulationRepository: PostulationRepository,
+    @Inject(forwardRef(() => ReportRepository))
+    private readonly reportRepository: ReportRepository,
   ) {}
 
   async execute(getProjectsDto: GetProjectsDto, currentUserId: number) {
@@ -119,6 +122,26 @@ export class GetProjectsUseCase {
       }
     }
 
+    // Verificar si el usuario reportó cada proyecto (batch query)
+    const hasReportedMap = new Map<number, boolean>();
+    if (currentUserId && projects.length > 0) {
+      const reportPromises = projects.map(async (project) => {
+        // Si es el dueño, no puede reportar su propio proyecto
+        if (currentUserId === project.userId) {
+          return { projectId: project.id, hasReported: false };
+        }
+        const report = await this.reportRepository.findByProjectAndReporter(
+          project.id,
+          currentUserId,
+        );
+        return { projectId: project.id, hasReported: report !== null };
+      });
+      const results = await Promise.all(reportPromises);
+      results.forEach(({ projectId, hasReported }) => {
+        hasReportedMap.set(projectId, hasReported);
+      });
+    }
+
     // Transformar los proyectos usando la función común
     const transformedProjects = transformProjectsWithOwners(
       projects,
@@ -130,11 +153,17 @@ export class GetProjectsUseCase {
       postulationStatusMap,
     );
 
+    // Agregar el campo hasReported a cada proyecto
+    const projectsWithReportStatus = transformedProjects.map((project) => ({
+      ...project,
+      hasReported: hasReportedMap.get(project.id) ?? false,
+    }));
+
     // Calcular información de paginación usando solo los proyectos donde no es dueño
     const pagination = calculatePagination(notOwnerIds.length, params);
 
     return {
-      projects: transformedProjects,
+      projects: projectsWithReportStatus,
       pagination,
     };
   }

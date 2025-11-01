@@ -19,4 +19,5 @@ export interface ProjectDetailResponse {
   isOwner: boolean;
   isApplied: boolean; // Indica si el usuario actual está postulado al proyecto
   approvedApplications: number; // Cantidad de postulaciones aprobadas para el proyecto
+  hasReported: boolean; // Indica si el usuario actual ya reportó este proyecto
 }
