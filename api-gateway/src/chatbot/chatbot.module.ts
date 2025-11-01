@@ -19,6 +19,9 @@ import { ChatbotGateway } from './websockets/chatbot.gateway';
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
+      verifyOptions: {
+        ignoreExpiration: false, // Verificar expiración por defecto
+      },
     }),
   ],
   controllers: [ChatbotController],
