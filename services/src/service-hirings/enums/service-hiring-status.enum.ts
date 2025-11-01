@@ -2,6 +2,8 @@ export enum ServiceHiringStatusCode {
   PENDING = 'pending',
   QUOTED = 'quoted',
   ACCEPTED = 'accepted',
+  PAYMENT_PENDING = 'payment_pending', // ✅ NUEVO: Cliente redirigido a MercadoPago, esperando confirmación
+  PAYMENT_REJECTED = 'payment_rejected', // ✅ NUEVO: Pago rechazado/cancelado
   REJECTED = 'rejected',
   CANCELLED = 'cancelled',
   APPROVED = 'approved',

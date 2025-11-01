@@ -92,8 +92,8 @@ export class ServiceHiringRepository {
       queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
     }
 
-    if (serviceId) {
-      queryBuilder.andWhere('hiring.serviceId = :serviceId', { serviceId });
+    if (userId) {
+      queryBuilder.andWhere('hiring.userId = :userId', { userId });
     }
 
     // Ordenamiento: pendientes primero, estados activos en medio, finales al final

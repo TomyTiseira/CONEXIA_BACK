@@ -206,6 +206,16 @@ export class ServiceHiringsController {
     );
   }
 
+  @MessagePattern('retryPayment')
+  async retryPayment(
+    @Payload()
+    data: {
+      hiringId: number;
+    },
+  ) {
+    return this.serviceHiringsService.retryPayment(data.hiringId);
+  }
+
   @MessagePattern('process_payment_webhook')
   async processPaymentWebhook(
     @Payload()

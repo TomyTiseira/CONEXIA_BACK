@@ -65,6 +65,18 @@ export class SeedService implements OnModuleInit {
         description: 'Contratación aprobada y pago confirmado',
       },
       {
+        name: 'Pago en Proceso',
+        code: ServiceHiringStatusCode.PAYMENT_PENDING,
+        description:
+          'El cliente fue redirigido a MercadoPago y el pago está siendo procesado. Esperando confirmación del webhook.',
+      },
+      {
+        name: 'Pago Rechazado',
+        code: ServiceHiringStatusCode.PAYMENT_REJECTED,
+        description:
+          'El pago fue rechazado o cancelado por MercadoPago. El cliente puede reintentar.',
+      },
+      {
         name: 'Vencida',
         code: ServiceHiringStatusCode.EXPIRED,
         description: 'Cotización vencida por tiempo límite',

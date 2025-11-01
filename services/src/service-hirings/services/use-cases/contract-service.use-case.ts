@@ -3,6 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 import { ContractServiceDto, ContractServiceResponseDto } from '../../dto';
 import { PaymentStatus, PaymentType } from '../../entities/payment.entity';
 import { PaymentModalityCode } from '../../enums/payment-modality.enum';
+import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
 import { MercadoPagoService } from '../mercado-pago.service';
@@ -120,9 +121,30 @@ export class ContractServiceUseCase {
         mercadoPagoPreferenceId: preferenceResponse.id,
       });
 
+      // ✅ NUEVO: Cambiar estado del hiring a PAYMENT_PENDING (esperando confirmación del pago)
+      const paymentPendingStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.PAYMENT_PENDING,
+      );
+
+      await this.hiringRepository.update(hiring.id, {
+        statusId: paymentPendingStatus.id,
+        preferenceId: preferenceResponse.id,
+        paymentStatus: 'pending',
+      });
+
+      console.log('⏳ Hiring status changed to PAYMENT_PENDING:', {
+        hiringId: hiring.id,
+        preferenceId: preferenceResponse.id,
+        paymentId: payment.id,
+        status: 'PAYMENT_PENDING',
+        message:
+          'Esperando confirmación de pago desde el webhook de MercadoPago',
+      });
+
       return {
         success: true,
-        message: 'Preferencia de pago creada exitosamente',
+        message:
+          'Preferencia de pago creada exitosamente. Redirigiendo a MercadoPago...',
         data: {
           paymentId: payment.id,
           mercadoPagoUrl:

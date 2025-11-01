@@ -40,6 +40,7 @@ import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hir
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
 import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
+import { RetryPaymentUseCase } from './use-cases/retry-payment.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
 
@@ -62,6 +63,7 @@ export class ServiceHiringsService {
     private readonly requestRequoteUseCase: RequestRequoteUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly retryPaymentUseCase: RetryPaymentUseCase,
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
@@ -234,6 +236,12 @@ export class ServiceHiringsService {
     contractDto: ContractServiceDto,
   ): Promise<ContractServiceResponseDto> {
     return this.contractServiceUseCase.execute(userId, hiringId, contractDto);
+  }
+
+  async retryPayment(
+    hiringId: number,
+  ): Promise<{ initPoint: string; preferenceId: string }> {
+    return this.retryPaymentUseCase.execute(hiringId);
   }
 
   async processPaymentWebhook(paymentId: string): Promise<void> {

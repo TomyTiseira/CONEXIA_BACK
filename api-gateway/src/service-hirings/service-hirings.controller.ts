@@ -321,6 +321,23 @@ export class ServiceHiringsController {
       );
   }
 
+  @Post(':hiringId/retry-payment')
+  @AuthRoles([ROLES.USER])
+  retryPayment(
+    @User() user: AuthenticatedUser,
+    @Param('hiringId') hiringId: number,
+  ) {
+    return this.client
+      .send('retryPayment', {
+        hiringId: +hiringId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
   @Post(':id/payment-status')
   @AuthRoles([ROLES.USER])
   updatePaymentStatus(
