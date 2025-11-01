@@ -1,5 +1,5 @@
--- Conectar a la base de datos memberships_db
-\c memberships_db;
+-- Conectar a la base de datos membership_db
+\c membership_db;
 
 -- Crear extensiones necesarias si no existen
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -8,7 +8,4 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
-SET xmloption = content; 
-
--- Índices para performance de recomendaciones
-CREATE INDEX IF NOT EXISTS idx_memberships_role_id ON memberships(role_id);
+SET xmloption = content;

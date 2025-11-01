@@ -20,11 +20,11 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
     }),
   );
 
   await app.listen();
   logger.log('Memberships microservice is running');
 }
-bootstrap();
+void bootstrap();

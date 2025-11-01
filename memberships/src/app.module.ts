@@ -12,7 +12,7 @@ import { NatsModule } from './transports/nats.module';
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: envs.dbHost,
-      port: parseInt(envs.dbPort ?? '5432'),
+      port: parseInt(envs.dbPort),
       username: envs.dbUsername,
       password: envs.dbPassword,
       database: envs.dbDatabase,

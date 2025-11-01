@@ -9,6 +9,9 @@ until pg_isready -U postgres; do
   sleep 2
 done
 
+# Esperar un poco más para asegurar que la base de datos esté creada
+sleep 3
+
 echo "Verificando que la base de datos membership_db existe..."
 psql -U postgres -d membership_db -c "SELECT 1;" > /dev/null 2>&1 || {
   echo "ERROR: La base de datos membership_db no existe"

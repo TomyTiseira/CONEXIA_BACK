@@ -288,7 +288,7 @@ services:
     environment:
       - NATS_SERVERS=nats://nats-server:4222
       - DB_HOST=memberships-db
-      - DB_PORT=${MEMBERSHIPS_DB_PORT}
+      - DB_PORT=5432
       - DB_USERNAME=${MEMBERSHIPS_DB_USER}
       - DB_PASSWORD=${MEMBERSHIPS_DB_PASSWORD}
       - DB_DATABASE=${MEMBERSHIPS_DB_NAME}
@@ -305,7 +305,7 @@ services:
       context: ./memberships
       dockerfile: Dockerfile.postgres
     ports:
-      - "5437:5432"
+      - "${MEMBERSHIPS_DB_PORT}:5432"
     environment:
       - POSTGRES_USER=${MEMBERSHIPS_DB_USER}
       - POSTGRES_PASSWORD=${MEMBERSHIPS_DB_PASSWORD}
