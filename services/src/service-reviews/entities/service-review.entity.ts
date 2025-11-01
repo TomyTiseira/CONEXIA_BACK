@@ -59,5 +59,8 @@ export class ServiceReview {
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt: Date;´
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date | null;
 }

@@ -1,45 +1,31 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
-    CreateServiceReviewDto,
-    GetServiceReviewsDto,
-    RespondServiceReviewDto,
-    UpdateServiceReviewDto,
+  CreateServiceReviewDto,
+  GetServiceReviewsDto,
+  RespondServiceReviewDto,
+  UpdateServiceReviewDto,
 } from './dto';
-import { ServiceReviewRepository } from './repositories/service-review.repository';
-import { CreateServiceReviewUseCase } from './services/use-cases/create-service-review.use-case';
-import { DeleteServiceReviewResponseUseCase } from './services/use-cases/delete-service-review-response.use-case';
-import { DeleteServiceReviewUseCase } from './services/use-cases/delete-service-review.use-case';
-import { GetServiceReviewByIdUseCase } from './services/use-cases/get-service-review-by-id.use-case';
-import { GetServiceReviewsUseCase } from './services/use-cases/get-service-reviews.use-case';
-import { RespondToServiceReviewUseCase } from './services/use-cases/respond-to-service-review.use-case';
-import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-review.use-case';
+import { ServiceReviewsService } from './services/service-reviews.service';
 
 @Controller()
 export class ServiceReviewsController {
   constructor(
-    private readonly createReviewUseCase: CreateServiceReviewUseCase,
-    private readonly getReviewsUseCase: GetServiceReviewsUseCase,
-    private readonly getReviewByIdUseCase: GetServiceReviewByIdUseCase,
-    private readonly updateReviewUseCase: UpdateServiceReviewUseCase,
-    private readonly deleteReviewUseCase: DeleteServiceReviewUseCase,
-    private readonly deleteReviewResponseUseCase: DeleteServiceReviewResponseUseCase,
-    private readonly respondToReviewUseCase: RespondToServiceReviewUseCase,
-    private readonly reviewRepository: ServiceReviewRepository,
+    private readonly serviceReviewsService: ServiceReviewsService,
   ) {}
 
   @MessagePattern('create_service_review')
   async createReview(
     @Payload() payload: { userId: number; dto: CreateServiceReviewDto },
   ) {
-    return await this.createReviewUseCase.execute(payload.userId, payload.dto);
+    return await this.serviceReviewsService.createReview(payload.userId, payload.dto);
   }
 
   @MessagePattern('get_service_reviews')
   async getServiceReviews(
     @Payload() payload: { serviceId: number; dto: GetServiceReviewsDto; userId?: number },
   ) {
-    return await this.getReviewsUseCase.execute(
+    return await this.serviceReviewsService.getReviews(
       payload.serviceId,
       payload.dto,
       payload.userId,
@@ -48,14 +34,14 @@ export class ServiceReviewsController {
 
   @MessagePattern('get_service_review_by_hiring')
   async getByHiring(@Payload() payload: { hiringId: number }) {
-    return await this.reviewRepository.findByHiringId(payload.hiringId);
+    return await this.serviceReviewsService.getReviews(payload.hiringId, {});
   }
 
   @MessagePattern('get_service_review_by_id')
   async getReviewById(
     @Payload() payload: { reviewId: number; userId?: number },
   ) {
-    return await this.getReviewByIdUseCase.execute(
+    return await this.serviceReviewsService.getReviewById(
       payload.reviewId,
       payload.userId,
     );
@@ -70,7 +56,7 @@ export class ServiceReviewsController {
       dto: UpdateServiceReviewDto;
     },
   ) {
-    return await this.updateReviewUseCase.execute(
+    return await this.serviceReviewsService.updateReview(
       payload.userId,
       payload.reviewId,
       payload.dto,
@@ -86,7 +72,7 @@ export class ServiceReviewsController {
       dto: RespondServiceReviewDto;
     },
   ) {
-    return await this.respondToReviewUseCase.execute(
+    return await this.serviceReviewsService.respondToReview(
       payload.userId,
       payload.reviewId,
       payload.dto,
@@ -97,7 +83,7 @@ export class ServiceReviewsController {
   async deleteReview(
     @Payload() payload: { userId: number; reviewId: number },
   ) {
-    await this.deleteReviewUseCase.execute(payload.userId, payload.reviewId);
+    await this.serviceReviewsService.deleteReview(payload.userId, payload.reviewId);
     return { success: true };
   }
 
@@ -105,7 +91,7 @@ export class ServiceReviewsController {
   async deleteReviewResponse(
     @Payload() payload: { userId: number; reviewId: number },
   ) {
-    return await this.deleteReviewResponseUseCase.execute(
+    return await this.serviceReviewsService.deleteReviewResponse(
       payload.userId,
       payload.reviewId,
     );

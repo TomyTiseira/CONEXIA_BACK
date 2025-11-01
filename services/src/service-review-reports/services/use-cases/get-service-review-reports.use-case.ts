@@ -4,6 +4,7 @@ import { UsersClientService } from '../../../common/services/users-client.servic
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { GetServiceReviewReportsDto } from '../../dto/get-service-review-reports.dto';
 import { ServiceReviewReportRepository } from '../../repositories/service-review-report.repository';
+import { MissingServiceReviewIdException, ServiceReviewReportInternalServerErrorException } from 'src/service-review-reports/exceptions/service-review-report.exceptions';
 
 export interface ServiceReviewReportResponseDto {
   id: number;
@@ -33,11 +34,7 @@ export class GetServiceReviewReportsUseCase {
     try {
       // Validar que serviceReviewId esté presente
       if (!dto.serviceReviewId) {
-        throw new RpcException({
-          status: 400,
-          message: 'serviceReviewId is required',
-          error: 'Bad Request',
-        });
+        throw new MissingServiceReviewIdException();
       }
 
       const params = {
@@ -115,11 +112,9 @@ export class GetServiceReviewReportsUseCase {
       }
 
       // Error genérico
-      throw new RpcException({
-        status: 500,
-        message: 'An error occurred while fetching service review reports',
-        error: 'Internal Server Error',
-      });
+      throw new ServiceReviewReportInternalServerErrorException(
+        (error && error.message) || 'Internal server error occurred while processing service review report',
+      );
     }
   }
 }

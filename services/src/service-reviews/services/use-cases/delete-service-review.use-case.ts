@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import {
   ReviewDeleteForbiddenException,
+  ReviewHasAssociatedReportsException,
+  ServiceReviewInternalServerErrorException,
   ServiceReviewNotFoundException,
 } from '../../../common/exceptions/service-review.exceptions';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
@@ -32,19 +34,11 @@ export class DeleteServiceReviewUseCase {
 
       // Manejar error de FK constraint específicamente
       if (error.message && error.message.includes('foreign key constraint')) {
-        throw new RpcException({
-          status: 409,
-          message: 'Cannot delete review because it has associated reports. Please contact support.',
-          error: 'Foreign Key Constraint Violation',
-        });
+       throw new ReviewHasAssociatedReportsException();
       }
 
       // Error genérico
-      throw new RpcException({
-        status: 500,
-        message: 'An error occurred while deleting the review',
-        error: 'Internal Server Error',
-      });
+      throw new ServiceReviewInternalServerErrorException(error.message);
     }
   }
 }

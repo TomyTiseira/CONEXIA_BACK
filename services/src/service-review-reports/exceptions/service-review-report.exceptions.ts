@@ -39,3 +39,23 @@ export class CannotReportOwnReviewException extends RpcException {
     });
   }
 }
+
+export class MissingServiceReviewIdException extends RpcException {
+  constructor() {
+    super({
+      statusCode: 400,
+      message: 'serviceReviewId is required',
+      error: 'Bad Request',
+    });
+  }
+}
+
+export class ServiceReviewReportInternalServerErrorException extends RpcException {
+  constructor(message: string) {
+    super({
+      statusCode: 500,
+      message: message || 'Internal server error occurred while processing service review report',
+      error: 'Internal Server Error',
+    });
+  }
+}

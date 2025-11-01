@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ServiceReviewRepository } from '../../repositories/service-review.repository';
+import { ServiceReviewNotFoundException } from 'src/common/exceptions/service-review.exceptions';
 
 @Injectable()
 export class GetServiceReviewByIdUseCase {
@@ -15,11 +16,7 @@ export class GetServiceReviewByIdUseCase {
     const review = await this.reviewRepository.findOneById(reviewId);
 
     if (!review) {
-      throw new RpcException({
-        status: 404,
-        message: 'Service review not found',
-        error: 'Not Found',
-      });
+     throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Obtener información del reviewer

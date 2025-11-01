@@ -5,6 +5,7 @@ import { ServiceHiringsModule } from '../service-hirings/service-hirings.module'
 import { ServiceReview } from './entities/service-review.entity';
 import { ServiceReviewRepository } from './repositories/service-review.repository';
 import { ServiceReviewsController } from './service-reviews.controller';
+import { ServiceReviewsService } from './services/service-reviews.service';
 import { CreateServiceReviewUseCase } from './services/use-cases/create-service-review.use-case';
 import { DeleteServiceReviewResponseUseCase } from './services/use-cases/delete-service-review-response.use-case';
 import { DeleteServiceReviewUseCase } from './services/use-cases/delete-service-review.use-case';
@@ -29,7 +30,8 @@ import { UpdateServiceReviewUseCase } from './services/use-cases/update-service-
     DeleteServiceReviewUseCase,
     DeleteServiceReviewResponseUseCase,
     RespondToServiceReviewUseCase,
+    ServiceReviewsService,
   ],
-  exports: [ServiceReviewRepository],
+  exports: [ServiceReviewRepository, ServiceReviewsService],
 })
 export class ServiceReviewsModule {}
