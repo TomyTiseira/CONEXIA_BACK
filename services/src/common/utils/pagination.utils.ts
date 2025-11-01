@@ -1,25 +1,41 @@
-export interface PaginationInfo {
+export interface PaginationParams {
   page: number;
   limit: number;
-  total: number;
+}
+
+export interface PaginationInfo {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
   totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
 }
 
 export function calculatePagination(
   total: number,
-  params: { page: number; limit: number },
+  params: PaginationParams,
 ): PaginationInfo {
-  const { page, limit } = params;
-  const totalPages = Math.ceil(total / limit);
+  const totalNumber = typeof total === 'number' ? total : Number(total);
+  const limitNumber =
+    typeof params.limit === 'number' ? params.limit : Number(params.limit);
+  const pageNumber =
+    typeof params.page === 'number' ? params.page : Number(params.page);
+
+  const totalPages = Math.ceil(totalNumber / limitNumber);
+  const hasNextPage = pageNumber < totalPages;
+  const hasPreviousPage = pageNumber > 1;
 
   return {
-    page,
-    limit,
-    total,
+    currentPage: pageNumber,
+    itemsPerPage: limitNumber,
+    totalItems: total,
     totalPages,
-    hasNext: page < totalPages,
-    hasPrev: page > 1,
+    hasNextPage,
+    hasPreviousPage,
+    nextPage: hasNextPage ? pageNumber + 1 : null,
+    previousPage: hasPreviousPage ? pageNumber - 1 : null,
   };
 }

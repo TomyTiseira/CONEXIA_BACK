@@ -4,6 +4,7 @@ import { UsersClientService } from '../../../common/services/users-client.servic
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
 import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
+import { ServiceReviewRepository } from '../../../service-reviews/repositories/service-review.repository';
 import { GetServicesByUserDto } from '../../dto/get-services-by-user.dto';
 import { ServiceRepository } from '../../repositories/service.repository';
 
@@ -13,6 +14,7 @@ export class GetServicesByUserUseCase {
     private readonly serviceRepository: ServiceRepository,
     private readonly usersClientService: UsersClientService,
     private readonly serviceHiringRepository: ServiceHiringRepository,
+    private readonly serviceReviewRepository: ServiceReviewRepository,
   ) {}
 
   async execute(data: GetServicesByUserDto) {
@@ -44,12 +46,36 @@ export class GetServicesByUserUseCase {
         data.currentUserId,
       );
 
+    // Obtener estadísticas de reseñas para los servicios en batch
+    const reviewsInfo = new Map<
+      number,
+      { averageRating: number; totalReviews: number }
+    >();
+    if (serviceIds.length > 0) {
+      const reviewsPromises = serviceIds.map(async (serviceId) => {
+        const stats =
+          await this.serviceReviewRepository.getServiceAverageRating(
+            serviceId,
+          );
+        return {
+          serviceId,
+          averageRating: stats.average,
+          totalReviews: stats.count,
+        };
+      });
+      const reviewsResults = await Promise.all(reviewsPromises);
+      reviewsResults.forEach(({ serviceId, averageRating, totalReviews }) => {
+        reviewsInfo.set(serviceId, { averageRating, totalReviews });
+      });
+    }
+
     // Transformar los servicios usando la función común
     const transformedServices = transformServicesWithOwners(
       services,
       users,
       data.currentUserId,
       quotationInfo,
+      reviewsInfo,
     );
 
     // Calcular información de paginación usando la función común

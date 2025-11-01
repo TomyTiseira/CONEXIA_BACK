@@ -13,6 +13,8 @@ import { PublicationReportsModule } from './publication-reports/publication-repo
 import { PublicationsModule } from './publications/publications.module';
 import { ReportsModule } from './reports/reports.module';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
+import { ServiceReviewReportsModule } from './service-review-reports/service-review-reports.module';
+import { ServiceReviewsModule } from './service-reviews/service-reviews.module';
 import { ServicesModule } from './services/services.module';
 import { UserReviewsModule } from './user-reviews/user-reviews.module';
 import { UsersModule } from './users/users.module';
@@ -36,6 +38,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     PublicationReportsModule,
     ServicesModule,
     ServiceHiringsModule,
+    ServiceReviewsModule,
+    ServiceReviewReportsModule,
     VerificationModule,
     WebhooksModule,
     ModerationModule,

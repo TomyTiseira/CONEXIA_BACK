@@ -2,14 +2,15 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
+import { ServiceReviewsModule } from '../service-reviews/service-reviews.module';
 import { ServicesController } from './controllers';
 import { Service, ServiceCategory } from './entities';
 import { ServiceRepository } from './repositories';
 import { CategoryService, ServicesService } from './services';
 import {
-  CreateServiceUseCase,
-  DeleteServiceUseCase,
-  UpdateServiceUseCase,
+    CreateServiceUseCase,
+    DeleteServiceUseCase,
+    UpdateServiceUseCase,
 } from './services/use-cases';
 import { GetServiceByIdUseCase } from './services/use-cases/get-service-by-id.use-case';
 import { GetServicesByUserUseCase } from './services/use-cases/get-services-by-user.use-case';
@@ -20,6 +21,7 @@ import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
     TypeOrmModule.forFeature([Service, ServiceCategory]),
     CommonModule,
     forwardRef(() => ServiceHiringsModule),
+    forwardRef(() => ServiceReviewsModule),
   ],
   controllers: [ServicesController],
   providers: [
