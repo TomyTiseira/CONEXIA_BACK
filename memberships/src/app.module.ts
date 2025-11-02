@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { envs } from './config';
+import { Benefit } from './membreships/entities/benefit.entity';
+import { PlanLog } from './membreships/entities/plan-log.entity';
+import { Plan } from './membreships/entities/plan.entity';
+import { MembreshipsModule } from './membreships/membreships.module';
+import { NatsModule } from './transports/nats.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: envs.dbHost,
+      port: parseInt(envs.dbPort),
+      username: envs.dbUsername,
+      password: envs.dbPassword,
+      database: envs.dbDatabase,
+      entities: [Plan, Benefit, PlanLog],
+      synchronize: true,
+    }),
+    MembreshipsModule,
+    NatsModule,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
