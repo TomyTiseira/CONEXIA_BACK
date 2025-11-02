@@ -24,6 +24,6 @@ import { GetServicesWithReportsUseCase } from './services/use-cases/get-services
     CommonModule,
     forwardRef(() => ServicesModule),
   ],
-  exports: [ServiceReportsService],
+  exports: [ServiceReportsService, ServiceReportRepository],
 })
 export class ServiceReportsModule {}

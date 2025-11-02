@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
-  ProjectAlreadyDeletedException,
-  ProjectNotFoundException,
-  UserNotFoundException,
+    ProjectAlreadyDeletedException,
+    ProjectNotFoundException,
+    UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import {
-  createSkillsMap,
-  getProjectSkillNames,
-  transformProjectToDetailResponse,
+    createSkillsMap,
+    getProjectSkillNames,
+    transformProjectToDetailResponse,
 } from '../../../common/utils/project-detail-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
+import { ReportRepository } from '../../../reports/repositories/report.repository';
 import { GetProjectByIdDto } from '../../dtos/get-project-by-id.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
 import { ProjectDetailResponse } from '../../response/project-detail-response';
@@ -23,6 +24,8 @@ export class GetProjectByIdUseCase {
     private readonly usersClientService: UsersClientService,
     @Inject(forwardRef(() => PostulationRepository))
     private readonly postulationRepository: PostulationRepository,
+    @Inject(forwardRef(() => ReportRepository))
+    private readonly reportRepository: ReportRepository,
   ) {}
 
   async execute(data: GetProjectByIdDto): Promise<ProjectDetailResponse> {
@@ -77,6 +80,21 @@ export class GetProjectByIdUseCase {
       );
     }
 
+    // Verificar si el usuario actual ya reportó este proyecto
+    let hasReported = false;
+    if (data.currentUserId) {
+      // Si es el dueño del proyecto, no puede reportarlo
+      if (project.userId === data.currentUserId) {
+        hasReported = false;
+      } else {
+        const report = await this.reportRepository.findByProjectAndReporter(
+          project.id,
+          data.currentUserId,
+        );
+        hasReported = report !== null;
+      }
+    }
+
     // Calcular cantidad de postulaciones aprobadas para este proyecto
     const statusAccepted = 2; // Ajusta este valor si el ID de estado "aprobada" es diferente
     const [, approvedCount] =
@@ -96,6 +114,9 @@ export class GetProjectByIdUseCase {
       isApplied,
       approvedCount,
     );
+
+    // Agregar el campo hasReported a la respuesta
+    response.hasReported = hasReported;
 
     return response;
   }

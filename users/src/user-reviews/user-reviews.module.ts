@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserReview } from 'src/shared/entities/user-review.entity';
 import { User } from 'src/shared/entities/user.entity';
+import { UserReviewReport } from 'src/user-review-report/entities/user-review-report.entity';
+import { UserReviewReportRepository } from 'src/user-review-report/repositories/user-review-report.repository';
 import { UsersModule } from 'src/users/users.module';
 import { UserReviewsController } from './controller/user-reviews.controller';
 import { UserReviewRepository } from './repository/user-review.repository';
@@ -12,16 +14,20 @@ import { UpdateUserReviewUseCase } from './service/use-cases/update-user-review.
 import { UserReviewsService } from './service/user-reviews.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserReview, User]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([UserReview, User, UserReviewReport]),
+    UsersModule,
+  ],
   controllers: [UserReviewsController],
   providers: [
     UserReviewsService,
     UserReviewRepository,
+    UserReviewReportRepository,
     CreateUserReviewUseCase,
     GetUserReviewsUseCase,
     UpdateUserReviewUseCase,
     DeleteUserReviewUseCase,
   ],
-  exports: [UserReviewsService],
+  exports: [UserReviewsService, UserReviewRepository],
 })
 export class UserReviewsModule {}

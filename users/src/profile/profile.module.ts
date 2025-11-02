@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { jwtConfig } from '../config/jwt.config';
+import { UserReview } from '../shared/entities/user-review.entity';
 import { SharedModule } from '../shared/shared.module';
+import { UserReviewRepository } from '../user-reviews/repository/user-review.repository';
 import { ProfileController } from './controller/profile.controller';
 import { Profile } from './entities/profile.entity';
 import { ProfileRepository } from './repository/profile.repository';
@@ -14,13 +16,14 @@ import { UpdateProfileUseCase } from './service/use-cases/update-profile.use-cas
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([Profile]),
+    TypeOrmModule.forFeature([Profile, UserReview]),
     JwtModule.register(jwtConfig),
   ],
   controllers: [ProfileController],
   providers: [
     ProfileService,
     ProfileRepository,
+    UserReviewRepository,
     CreateProfileUseCase,
     GetProfileUseCase,
     UpdateProfileUseCase,

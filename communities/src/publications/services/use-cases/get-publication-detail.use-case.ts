@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PublicationNotFoundException } from 'src/common/exceptions/publications.exceptions';
+import { PublicationReportRepository } from '../../../publication-reports/repositories/publication-report.repository';
 import { PublicationRepository } from '../../repositories/publication.repository';
 import { ConnectionStatusService } from '../helpers/connection-status.service';
 import { ContactHelperService } from '../helpers/contact-helper.service';
@@ -32,6 +33,7 @@ export interface PublicationDetailResponse {
   };
   commentsCount: number;
   userReaction?: string;
+  hasReported: boolean;
 }
 
 @Injectable()
@@ -41,6 +43,7 @@ export class GetPublicationDetailUseCase {
     private readonly ownerHelperService: OwnerHelperService,
     private readonly contactHelperService: ContactHelperService,
     private readonly connectionStatusService: ConnectionStatusService,
+    private readonly publicationReportRepository: PublicationReportRepository,
   ) {}
 
   async execute(
@@ -72,6 +75,16 @@ export class GetPublicationDetailUseCase {
       profession: 'Sin profesión',
     };
 
+    // Verificar si el usuario actual ya reportó esta publicación
+    let hasReported = false;
+    if (currentUserId && currentUserId !== publicationWithDetails.userId) {
+      const report = await this.publicationReportRepository.findByPublicationAndReporter(
+        publicationWithDetails.id,
+        currentUserId,
+      );
+      hasReported = report !== null;
+    }
+
     return {
       id: publicationWithDetails.id,
       description: publicationWithDetails.description,
@@ -93,6 +106,7 @@ export class GetPublicationDetailUseCase {
       reactionsCount: publicationWithDetails.reactionsCount,
       commentsCount: publicationWithDetails.commentsCount,
       userReaction: publicationWithDetails.userReaction,
+      hasReported,
     };
   }
 }

@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
@@ -37,7 +37,7 @@ export class UserReviewsController {
 
     return this.client.send('create_user_review', payload).pipe(
       catchError((error) => {
-        throw error;
+        throw new RpcException(error);
       }),
     );
   }
@@ -47,15 +47,17 @@ export class UserReviewsController {
   getUserReviews(
     @Param('userId') userId: string,
     @Query() getUserReviewsDto: GetUserReviewsDto,
+    @User() user: AuthenticatedUser,
   ) {
     const payload = {
-      userId: parseInt(userId),
       ...getUserReviewsDto,
+      userId: Number(userId),
+      currentUserId: user.id,
     };
 
     return this.client.send('get_user_reviews', payload).pipe(
       catchError((error) => {
-        throw error;
+        throw new RpcException(error);
       }),
     );
   }
@@ -75,7 +77,7 @@ export class UserReviewsController {
 
     return this.client.send('update_user_review', payload).pipe(
       catchError((error) => {
-        throw error;
+        throw new RpcException(error);
       }),
     );
   }
@@ -90,7 +92,7 @@ export class UserReviewsController {
 
     return this.client.send('delete_user_review', payload).pipe(
       catchError((error) => {
-        throw error;
+        throw new RpcException(error);
       }),
     );
   }

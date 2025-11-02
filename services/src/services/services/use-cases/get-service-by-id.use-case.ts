@@ -4,6 +4,7 @@ import { UsersClientService } from '../../../common/services/users-client.servic
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
 import { DeliverableRepository } from '../../../service-hirings/repositories/deliverable.repository';
 import { ServiceHiringRepository } from '../../../service-hirings/repositories/service-hiring.repository';
+import { ServiceReportRepository } from '../../../service-reports/repositories/service-report.repository';
 import { GetServiceByIdDto } from '../../dto/get-service-by-id.dto';
 import { ServiceRepository } from '../../repositories/service.repository';
 
@@ -14,6 +15,7 @@ export class GetServiceByIdUseCase {
     private readonly usersClientService: UsersClientService,
     private readonly serviceHiringRepository: ServiceHiringRepository,
     private readonly deliverableRepository: DeliverableRepository,
+    private readonly serviceReportRepository: ServiceReportRepository,
   ) {}
 
   async execute(data: GetServiceByIdDto) {
@@ -87,11 +89,22 @@ export class GetServiceByIdUseCase {
       quotationInfo,
     );
 
-    // Retornar el primer (y único) servicio transformado junto con la cotización activa y entregables
+    // Verificar si el usuario actual ya reportó este servicio
+    let hasReported = false;
+    if (data.currentUserId && data.currentUserId !== service.userId) {
+      const existingReport = await this.serviceReportRepository.findByServiceAndReporter(
+        service.id,
+        data.currentUserId,
+      );
+      hasReported = existingReport !== null;
+    }
+
+    // Retornar el primer (y único) servicio transformado junto con la cotización activa, entregables y estado de reporte
     const result = {
       ...transformedServices[0],
       serviceHiring,
       deliverables,
+      hasReported,
     };
 
     return result;

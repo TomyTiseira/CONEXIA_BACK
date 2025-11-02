@@ -5,9 +5,10 @@ import { ConnectionInfoService } from '../../../shared/services/connection-info.
 import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
-  ProfileSkillResponse,
-  ProfileWithSkills,
+    ProfileSkillResponse,
+    ProfileWithSkills,
 } from '../../../shared/types/skill.types';
+import { UserReviewRepository } from '../../../user-reviews/repository/user-review.repository';
 import { GetProfileDto } from '../../dto/get-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
 
@@ -18,6 +19,7 @@ export class GetProfileUseCase {
     private readonly skillsValidationService: SkillsValidationService,
     private readonly connectionInfoService: ConnectionInfoService,
     private readonly conversationInfoService: ConversationInfoService,
+    private readonly userReviewRepository: UserReviewRepository,
   ) {}
 
   async execute(getProfileDto: GetProfileDto) {
@@ -88,9 +90,21 @@ export class GetProfileUseCase {
     // Agregar el ID de conversación al perfil
     transformedProfile.conversationId = conversationInfo?.id || null;
 
+    // Verificar si el usuario autenticado ya hizo una reseña al usuario del perfil
+    let hasReviewed = false;
+    if (!isOwner) {
+      const existingReview =
+        await this.userReviewRepository.findByReviewerAndReviewed(
+          getProfileDto.authenticatedUser.id,
+          getProfileDto.targetUserId,
+        );
+      hasReviewed = existingReview !== null;
+    }
+
     return {
       profile: transformedProfile,
       isOwner,
+      hasReviewed,
     };
   }
 }

@@ -280,7 +280,10 @@ export class ProjectRepository {
 
   // get skills by rubro
   async getSkillsByRubro(rubroId: number): Promise<Skill[]> {
-    return this.ormRepository.manager.find(Skill, { where: { rubroId } });
+    return this.ormRepository.manager.find(Skill, {
+      where: { rubroId },
+      order: { name: 'ASC' },
+    });
   }
 
   async findRubroById(id: number): Promise<Rubro | null> {

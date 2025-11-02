@@ -31,7 +31,7 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
   imports: [
     TypeOrmModule.forFeature([Category, CollaborationType, ContractType]),
     forwardRef(() => PostulationsModule),
-    ReportsModule,
+    forwardRef(() => ReportsModule),
     SharedModule,
   ],
   exports: [ProjectsService, SkillsService],

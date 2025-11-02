@@ -53,6 +53,7 @@ export function transformProjectToDetailResponse(
     isOwner: project.userId === currentUserId,
     isApplied,
     approvedApplications,
+    hasReported: false, // El use case lo sobrescribirá con el valor correcto
   };
 }
 
