@@ -14,6 +14,8 @@ import { ExpiredServiceHiringState } from './expired-service-hiring.state';
 import { InClaimServiceHiringState } from './in-claim-service-hiring.state';
 import { InProgressServiceHiringState } from './in-progress-service-hiring.state';
 import { NegotiatingServiceHiringState } from './negotiating-service-hiring.state';
+import { PaymentPendingServiceHiringState } from './payment-pending-service-hiring.state';
+import { PaymentRejectedServiceHiringState } from './payment-rejected-service-hiring.state';
 import { PendingServiceHiringState } from './pending-service-hiring.state';
 import { QuotedServiceHiringState } from './quoted-service-hiring.state';
 import { RejectedServiceHiringState } from './rejected-service-hiring.state';
@@ -40,6 +42,10 @@ export class ServiceHiringStateFactory {
         return new CancelledServiceHiringState();
       case ServiceHiringStatusCode.APPROVED:
         return new ApprovedServiceHiringState();
+      case ServiceHiringStatusCode.PAYMENT_PENDING:
+        return new PaymentPendingServiceHiringState();
+      case ServiceHiringStatusCode.PAYMENT_REJECTED:
+        return new PaymentRejectedServiceHiringState();
       case ServiceHiringStatusCode.IN_PROGRESS:
         return new InProgressServiceHiringState();
       case ServiceHiringStatusCode.DELIVERED:

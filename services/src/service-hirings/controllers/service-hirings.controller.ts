@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Multer } from 'multer';
 import {
   ContractServiceDto,
   CreateDeliveryDto,
@@ -205,6 +206,16 @@ export class ServiceHiringsController {
     );
   }
 
+  @MessagePattern('retryPayment')
+  async retryPayment(
+    @Payload()
+    data: {
+      hiringId: number;
+    },
+  ) {
+    return this.serviceHiringsService.retryPayment(data.hiringId);
+  }
+
   @MessagePattern('process_payment_webhook')
   async processPaymentWebhook(
     @Payload()
@@ -263,14 +274,14 @@ export class ServiceHiringsController {
       hiringId: number;
       serviceOwnerId: number;
       deliveryDto: CreateDeliveryDto;
-      attachmentPath?: string;
+      files?: Multer.File[]; // Array de archivos
     },
   ) {
     return this.serviceHiringsService.createDelivery(
       data.hiringId,
       data.serviceOwnerId,
       data.deliveryDto,
-      data.attachmentPath,
+      data.files,
     );
   }
 
@@ -302,12 +313,14 @@ export class ServiceHiringsController {
       deliveryId: number;
       serviceOwnerId: number;
       updateDto: any;
+      attachmentSize?: number;
     },
   ) {
     return this.serviceHiringsService.updateDelivery(
       data.deliveryId,
       data.serviceOwnerId,
       data.updateDto,
+      data.attachmentSize,
     );
   }
 

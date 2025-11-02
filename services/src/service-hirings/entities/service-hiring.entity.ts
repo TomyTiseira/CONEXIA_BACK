@@ -78,6 +78,25 @@ export class ServiceHiring {
   @Column({ type: 'int', nullable: true, default: 0 })
   requoteCount: number;
 
+  // ✅ NUEVOS CAMPOS: Tracking de pagos
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  preferenceId: string; // ID de preferencia de MercadoPago
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentId: string; // ID de pago de MercadoPago
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  paymentStatus: string; // Estado del pago: approved, rejected, pending, etc.
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  paymentStatusDetail: string; // Detalle del estado del pago
+
+  @Column({ type: 'timestamp', nullable: true })
+  paidAt: Date; // Fecha de confirmación del pago
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  retryCount: number; // Número de reintentos de pago
+
   @ManyToOne(() => ServiceHiringStatus)
   @JoinColumn({ name: 'status_id' })
   status: ServiceHiringStatus;

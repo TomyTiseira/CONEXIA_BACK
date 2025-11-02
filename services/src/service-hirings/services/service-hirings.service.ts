@@ -40,6 +40,7 @@ import { NegotiateServiceHiringUseCase } from './use-cases/negotiate-service-hir
 import { ProcessPaymentWebhookUseCase } from './use-cases/process-payment-webhook.use-case';
 import { RejectServiceHiringUseCase } from './use-cases/reject-service-hiring.use-case';
 import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
+import { RetryPaymentUseCase } from './use-cases/retry-payment.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
 
@@ -62,6 +63,7 @@ export class ServiceHiringsService {
     private readonly requestRequoteUseCase: RequestRequoteUseCase,
     private readonly contractServiceUseCase: ContractServiceUseCase,
     private readonly processPaymentWebhookUseCase: ProcessPaymentWebhookUseCase,
+    private readonly retryPaymentUseCase: RetryPaymentUseCase,
     private readonly createDeliveryUseCase: CreateDeliveryUseCase,
     private readonly reviewDeliveryUseCase: ReviewDeliveryUseCase,
     private readonly updateDeliveryUseCase: UpdateDeliveryUseCase,
@@ -236,6 +238,12 @@ export class ServiceHiringsService {
     return this.contractServiceUseCase.execute(userId, hiringId, contractDto);
   }
 
+  async retryPayment(
+    hiringId: number,
+  ): Promise<{ initPoint: string; preferenceId: string }> {
+    return this.retryPaymentUseCase.execute(hiringId);
+  }
+
   async processPaymentWebhook(paymentId: string): Promise<void> {
     return this.processPaymentWebhookUseCase.execute(paymentId);
   }
@@ -310,13 +318,13 @@ export class ServiceHiringsService {
     hiringId: number,
     serviceOwnerId: number,
     deliveryDto: CreateDeliveryDto,
-    attachmentPath?: string,
+    files?: any[], // Array de archivos
   ): Promise<DeliverySubmissionResponseDto> {
     return this.createDeliveryUseCase.execute(
       hiringId,
       serviceOwnerId,
       deliveryDto,
-      attachmentPath,
+      files,
     );
   }
 
@@ -343,29 +351,50 @@ export class ServiceHiringsService {
     // Si el hiring está completado, quitar watermark de todas las entregas (ya pagó el 100%)
     const hiringIsCompleted = hiring.status.code === 'completed';
 
+    // ⚠️ CRÍTICO: Usar BASE_URL del entorno para URLs completas
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
     return {
-      deliveries: deliveries.map((d) => ({
-        id: d.id,
-        hiringId: d.hiringId,
-        deliverableId: d.deliverableId,
-        deliveryType: d.deliveryType,
-        content: d.content,
-        attachmentPath: d.attachmentPath, // Ya viene como /uploads/deliveries/archivo.ext
-        attachmentUrl: d.attachmentPath, // Enviar el mismo path, el frontend construye la URL
-        price: Number(d.price),
-        status: d.status,
-        // Si el hiring está completado, no mostrar watermark (ya pagó)
-        // Si no está completado, mostrar watermark si la entrega no está aprobada
-        needsWatermark: hiringIsCompleted
-          ? false
-          : d.status !== DeliveryStatus.APPROVED,
-        deliveredAt: d.deliveredAt,
-        reviewedAt: d.reviewedAt,
-        approvedAt: d.approvedAt,
-        revisionNotes: d.revisionNotes,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt,
-      })),
+      deliveries: deliveries.map((d) => {
+        // Mapear attachments con URLs completas
+        const attachments =
+          d.attachments?.map((att) => ({
+            id: att.id,
+            filePath: att.filePath,
+            fileUrl: att.fileUrl || `${baseUrl}${att.filePath}`, // URL completa
+            fileName: att.fileName,
+            fileSize: att.fileSize,
+            mimeType: att.mimeType,
+            orderIndex: att.orderIndex,
+          })) || [];
+
+        return {
+          id: d.id,
+          hiringId: d.hiringId,
+          deliverableId: d.deliverableId,
+          deliveryType: d.deliveryType,
+          content: d.content,
+          attachmentPath: d.attachmentPath, // DEPRECATED: usar attachments[]
+          attachmentUrl: d.attachmentPath
+            ? `${baseUrl}${d.attachmentPath}`
+            : undefined, // DEPRECATED: URL completa
+          attachmentSize: d.attachmentSize, // DEPRECATED: usar attachments[]
+          attachments, // ✅ Array de archivos con URLs completas
+          price: Number(d.price),
+          status: d.status,
+          // Si el hiring está completado, no mostrar watermark (ya pagó)
+          // Si no está completado, mostrar watermark si la entrega no está aprobada
+          needsWatermark: hiringIsCompleted
+            ? false
+            : d.status !== DeliveryStatus.APPROVED,
+          deliveredAt: d.deliveredAt,
+          reviewedAt: d.reviewedAt,
+          approvedAt: d.approvedAt,
+          revisionNotes: d.revisionNotes,
+          createdAt: d.createdAt,
+          updatedAt: d.updatedAt,
+        };
+      }),
       total: deliveries.length,
     };
   }
@@ -386,11 +415,13 @@ export class ServiceHiringsService {
     deliveryId: number,
     serviceOwnerId: number,
     updateDto: UpdateDeliveryDto,
+    attachmentSize?: number,
   ): Promise<DeliverySubmissionResponseDto> {
     return this.updateDeliveryUseCase.execute(
       deliveryId,
       serviceOwnerId,
       updateDto,
+      attachmentSize,
     );
   }
 

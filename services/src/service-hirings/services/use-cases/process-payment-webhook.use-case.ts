@@ -119,11 +119,26 @@ export class ProcessPaymentWebhookUseCase {
     const hiring = await this.hiringRepository.findById(payment.hiringId, [
       'payments',
       'deliverables',
+      'status',
     ]);
 
     if (!hiring) {
       console.error(`Hiring ${payment.hiringId} not found`);
       return;
+    }
+
+    // 🔥 CRÍTICO: Si el hiring está en PAYMENT_PENDING, actualizarlo con los datos del pago
+    if (hiring.status?.code === ServiceHiringStatusCode.PAYMENT_PENDING) {
+      console.log(
+        `✅ Payment confirmed for hiring ${hiring.id} - transitioning from PAYMENT_PENDING to APPROVED`,
+      );
+
+      await this.hiringRepository.update(hiring.id, {
+        paymentId: mpPayment.id.toString(),
+        paymentStatus: mpPayment.status,
+        paymentStatusDetail: mpPayment.status_detail,
+        paidAt: new Date(),
+      });
     }
 
     // Si es pago de delivery (FULL, FINAL o DELIVERABLE), verificar si debe completarse
@@ -199,6 +214,33 @@ export class ProcessPaymentWebhookUseCase {
     console.log(
       `Payment ${payment.id} rejected with reason: ${mpPayment.status_detail}`,
     );
+
+    // 🔥 CRÍTICO: Si el hiring está en PAYMENT_PENDING, transicionar a PAYMENT_REJECTED
+    const hiring = await this.hiringRepository.findById(payment.hiringId, [
+      'status',
+    ]);
+
+    if (!hiring) {
+      console.error(`Hiring ${payment.hiringId} not found`);
+      return;
+    }
+
+    if (hiring.status?.code === ServiceHiringStatusCode.PAYMENT_PENDING) {
+      console.log(
+        `❌ Payment rejected for hiring ${hiring.id} - transitioning from PAYMENT_PENDING to PAYMENT_REJECTED`,
+      );
+
+      const rejectedStatus = await this.statusService.getStatusByCode(
+        ServiceHiringStatusCode.PAYMENT_REJECTED,
+      );
+
+      await this.hiringRepository.update(hiring.id, {
+        statusId: rejectedStatus.id,
+        paymentId: mpPayment.id.toString(),
+        paymentStatus: mpPayment.status,
+        paymentStatusDetail: mpPayment.status_detail,
+      });
+    }
   }
 
   private async updatePaymentAsPending(payment, mpPayment): Promise<void> {
@@ -208,6 +250,26 @@ export class ProcessPaymentWebhookUseCase {
     });
 
     console.log(`Payment ${payment.id} still pending`);
+
+    // 🔥 Si el hiring está en PAYMENT_PENDING, actualizar los datos del pago
+    const hiring = await this.hiringRepository.findById(payment.hiringId, [
+      'status',
+    ]);
+
+    if (
+      hiring &&
+      hiring.status?.code === ServiceHiringStatusCode.PAYMENT_PENDING
+    ) {
+      await this.hiringRepository.update(hiring.id, {
+        paymentId: mpPayment.id.toString(),
+        paymentStatus: mpPayment.status,
+        paymentStatusDetail: mpPayment.status_detail,
+      });
+
+      console.log(
+        `Updated hiring ${hiring.id} with pending payment details (status: ${mpPayment.status})`,
+      );
+    }
   }
 
   private async findPaymentForWebhook(paymentId: string, mpPayment: any) {

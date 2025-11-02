@@ -317,14 +317,32 @@ export class ReviewDeliveryUseCase {
   private transformToDto(
     delivery: DeliverySubmission,
   ): DeliverySubmissionResponseDto {
+    // ⚠️ CRÍTICO: Mapear attachments con URLs completas
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
+    const attachments =
+      delivery.attachments?.map((att) => ({
+        id: att.id,
+        filePath: att.filePath,
+        fileUrl: att.fileUrl || `${baseUrl}${att.filePath}`, // URL completa
+        fileName: att.fileName,
+        fileSize: att.fileSize,
+        mimeType: att.mimeType,
+        orderIndex: att.orderIndex,
+      })) || [];
+
     return {
       id: delivery.id,
       hiringId: delivery.hiringId,
       deliverableId: delivery.deliverableId,
       deliveryType: delivery.deliveryType,
       content: delivery.content,
-      attachmentPath: delivery.attachmentPath,
-      attachmentUrl: delivery.attachmentPath,
+      attachmentPath: delivery.attachmentPath, // DEPRECATED: usar attachments[]
+      attachmentUrl: delivery.attachmentPath
+        ? `${baseUrl}${delivery.attachmentPath}`
+        : undefined, // DEPRECATED: URL completa
+      attachmentSize: delivery.attachmentSize, // DEPRECATED: usar attachments[]
+      attachments, // ✅ Array de archivos con URLs completas
       price: Number(delivery.price),
       status: delivery.status,
       needsWatermark: delivery.status !== DeliveryStatus.APPROVED,

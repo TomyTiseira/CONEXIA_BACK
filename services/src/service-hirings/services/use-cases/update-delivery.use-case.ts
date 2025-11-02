@@ -23,6 +23,7 @@ export class UpdateDeliveryUseCase {
     deliveryId: number,
     serviceOwnerId: number,
     updateDto: UpdateDeliveryDto,
+    attachmentSize?: number,
   ): Promise<DeliverySubmissionResponseDto> {
     // 1. Obtener la entrega con sus relaciones
     const delivery = await this.deliveryRepository.findById(deliveryId);
@@ -62,6 +63,7 @@ export class UpdateDeliveryUseCase {
       ...(updateDto.attachmentPath && {
         attachmentPath: updateDto.attachmentPath,
       }),
+      ...(attachmentSize !== undefined && { attachmentSize }),
       status: DeliveryStatus.DELIVERED, // Volver a estado DELIVERED para que el cliente revise
       deliveredAt: now,
       reviewedAt: undefined, // Limpiar fecha de revisión anterior
@@ -102,6 +104,7 @@ export class UpdateDeliveryUseCase {
       content: delivery.content,
       attachmentPath: delivery.attachmentPath,
       attachmentUrl: delivery.attachmentPath,
+      attachmentSize: delivery.attachmentSize,
       price: Number(delivery.price),
       status: delivery.status,
       needsWatermark: delivery.status !== DeliveryStatus.APPROVED,

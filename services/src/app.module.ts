@@ -3,16 +3,18 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
+import { DeliveryAttachmentMigrationService } from './common/services/delivery-attachment-migration.service';
 import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
-    Claim,
-    Deliverable,
-    DeliverySubmission,
-    Payment,
-    PaymentModality,
-    ServiceHiring,
-    ServiceHiringStatus,
+  Claim,
+  Deliverable,
+  DeliveryAttachment,
+  DeliverySubmission,
+  Payment,
+  PaymentModality,
+  ServiceHiring,
+  ServiceHiringStatus,
 } from './service-hirings/entities';
 import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
@@ -47,11 +49,17 @@ import { ServicesModule } from './services/services.module';
         PaymentModality,
         Deliverable,
         DeliverySubmission,
+        DeliveryAttachment,
         Claim,
       ],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([ServiceHiringStatus, PaymentModality]),
+    TypeOrmModule.forFeature([
+      ServiceHiringStatus,
+      PaymentModality,
+      DeliverySubmission,
+      DeliveryAttachment,
+    ]),
     CommonModule,
     ServicesModule,
     ServiceHiringsModule,
@@ -68,6 +76,7 @@ import { ServicesModule } from './services/services.module';
     ServiceHiringStatusRepository,
     PaymentModalityRepository,
     SeedService,
+    DeliveryAttachmentMigrationService,
   ],
 })
 export class AppModule {}
