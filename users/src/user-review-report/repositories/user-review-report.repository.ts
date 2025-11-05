@@ -20,11 +20,9 @@ export class UserReviewReportRepository {
     userReviewId: number,
     reporterId: number,
   ): Promise<UserReviewReport | null> {
-    console.log('[DEBUG REPO] Buscando reporte - userReviewId:', userReviewId, 'reporterId:', reporterId);
     const result = await this.repository.findOne({
       where: { userReviewId, reporterId },
     });
-    console.log('[DEBUG REPO] Resultado de búsqueda:', result ? `Encontrado (id: ${result.id})` : 'No encontrado');
     return result;
   }
 

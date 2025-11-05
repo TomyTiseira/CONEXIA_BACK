@@ -83,10 +83,6 @@ export class RejectPostulationUseCase {
               error,
             );
           });
-      } else {
-        console.log(
-          'No se pudo obtener información del usuario para enviar email',
-        );
       }
     } catch (error) {
       console.error(

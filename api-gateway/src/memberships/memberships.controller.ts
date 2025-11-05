@@ -48,7 +48,6 @@ export class MembershipsController {
   @AuthRoles([ROLES.ADMIN])
   createPlan(@Body() body: CreatePlanDto, @User() user: AuthenticatedUser) {
     const payload = { ...body, adminUserId: user.id };
-    console.log(user);
     return this.client.send('createPlan', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
