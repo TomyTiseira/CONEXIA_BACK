@@ -32,6 +32,24 @@ export class Plan {
   @Column({ default: true })
   active: boolean;
 
+  // MercadoPago Plan ID for monthly subscriptions
+  @Column({
+    name: 'mercado_pago_plan_id_monthly',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  mercadoPagoPlanIdMonthly: string | null;
+
+  // MercadoPago Plan ID for annual subscriptions
+  @Column({
+    name: 'mercado_pago_plan_id_annual',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
+  mercadoPagoPlanIdAnnual: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

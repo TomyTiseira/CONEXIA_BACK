@@ -300,6 +300,9 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+      - MERCADOPAGO_BACK_URL=${FRONTEND_URL}
+      - MERCADOPAGO_NOTIFICATION_URL=${API_BASE_URL}/api/webhooks/mercadopago
 
   memberships-db:
     build:

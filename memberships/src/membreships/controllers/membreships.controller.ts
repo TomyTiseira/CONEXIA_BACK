@@ -1,53 +1,89 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ContractPlanDto } from '../dto/contract-plan.dto';
 import { CreatePlanDto } from '../dto/create-plan.dto';
 import { TogglePlanDto } from '../dto/toggle-plan.dto';
 import { UpdatePlanDto } from '../dto/update-plan.dto';
-import { MembreshipsService } from '../services/membreships.service';
+import { MembershipsService } from '../services/membreships.service';
 
 @Controller()
-export class MembreshipsController {
-  constructor(private readonly membreshipsService: MembreshipsService) {}
+export class MembershipsController {
+  constructor(private readonly membershipsService: MembershipsService) {}
 
   // Benefits catalog
   @MessagePattern('getBenefits')
   getBenefits() {
-    return this.membreshipsService.getBenefits();
+    return this.membershipsService.getBenefits();
   }
 
   // Plans CRUD
   @MessagePattern('createPlan')
   createPlan(@Payload() dto: CreatePlanDto) {
-    return this.membreshipsService.createPlan(dto);
+    return this.membershipsService.createPlan(dto);
   }
 
   @MessagePattern('getPlans')
   getPlans(@Payload() dto: { includeInactive?: boolean }) {
-    return this.membreshipsService.getPlans(dto);
+    return this.membershipsService.getPlans(dto);
   }
 
   @MessagePattern('getPlanById')
   getPlanById(@Payload() dto: { id: number; includeInactive?: boolean }) {
-    return this.membreshipsService.getPlanById(dto);
+    return this.membershipsService.getPlanById(dto);
   }
 
   @MessagePattern('updatePlan')
   updatePlan(@Payload() dto: UpdatePlanDto) {
-    return this.membreshipsService.updatePlan(dto);
+    return this.membershipsService.updatePlan(dto);
   }
 
   @MessagePattern('togglePlan')
   togglePlan(@Payload() dto: TogglePlanDto) {
-    return this.membreshipsService.togglePlan(dto);
+    return this.membershipsService.togglePlan(dto);
   }
 
   @MessagePattern('deletePlan')
   deletePlan(@Payload() data: { id: number; adminUserId: number }) {
-    return this.membreshipsService.deletePlan(data.id, data.adminUserId);
+    return this.membershipsService.deletePlan(data.id, data.adminUserId);
   }
 
   @MessagePattern('memberships_ping')
   ping() {
-    return this.membreshipsService.ping();
+    return this.membershipsService.ping();
+  }
+
+  // Subscriptions
+  @MessagePattern('contractPlan')
+  contractPlan(
+    @Payload()
+    data: {
+      userId: number;
+      userEmail: string;
+      userRole: string;
+      dto: ContractPlanDto;
+    },
+  ) {
+    return this.membershipsService.contractPlan(
+      data.userId,
+      data.userEmail,
+      data.userRole,
+      data.dto,
+    );
+  }
+
+  @MessagePattern('processSubscriptionPaymentWebhook')
+  processSubscriptionPaymentWebhook(@Payload() data: { paymentId: number }) {
+    return this.membershipsService.processSubscriptionPaymentWebhook(
+      data.paymentId,
+    );
+  }
+
+  @MessagePattern('processSubscriptionInvoiceWebhook')
+  processSubscriptionInvoiceWebhook(
+    @Payload() data: { authorizedPaymentId: string },
+  ) {
+    return this.membershipsService.processSubscriptionInvoiceWebhook(
+      data.authorizedPaymentId,
+    );
   }
 }

@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { envs } from './config';
 import { Benefit } from './membreships/entities/benefit.entity';
+import { Subscription } from './membreships/entities/membreship.entity';
 import { PlanLog } from './membreships/entities/plan-log.entity';
 import { Plan } from './membreships/entities/plan.entity';
-import { MembreshipsModule } from './membreships/membreships.module';
+import { MembershipsModule } from './membreships/membreships.module';
 import { NatsModule } from './transports/nats.module';
 
 @Module({
@@ -16,10 +17,10 @@ import { NatsModule } from './transports/nats.module';
       username: envs.dbUsername,
       password: envs.dbPassword,
       database: envs.dbDatabase,
-      entities: [Plan, Benefit, PlanLog],
+      entities: [Plan, Benefit, PlanLog, Subscription],
       synchronize: true,
     }),
-    MembreshipsModule,
+    MembershipsModule,
     NatsModule,
   ],
   controllers: [],

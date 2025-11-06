@@ -17,6 +17,7 @@ import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
+import { ContractPlanDto } from './dto/contract-plan.dto';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { TogglePlanDto } from './dto/toggle-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
@@ -128,6 +129,30 @@ export class MembershipsController {
   deletePlan(@Param('id') id: string, @User() user: AuthenticatedUser) {
     const payload = { id: +id, adminUserId: user.id };
     return this.client.send('deletePlan', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  // Subscriptions
+  @Post('contract-plan')
+  @AuthRoles([ROLES.USER])
+  contractPlan(@Body() body: ContractPlanDto, @User() user: AuthenticatedUser) {
+    // Mapear roleId a nombre de rol
+    const roleMap: Record<number, string> = {
+      1: 'admin',
+      2: 'user',
+      3: 'moderator',
+    };
+
+    const payload = {
+      userId: user.id,
+      userEmail: user.email,
+      userRole: roleMap[user.roleId] || 'user',
+      dto: body,
+    };
+    return this.client.send('contractPlan', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

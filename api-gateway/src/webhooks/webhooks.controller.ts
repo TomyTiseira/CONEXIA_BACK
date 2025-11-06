@@ -104,7 +104,10 @@ export class WebhooksController {
           live_mode: body.live_mode,
         });
 
-        // Enviar a microservicio para procesar
+        // Verificar si es un pago de suscripción (verificando external_reference)
+        // Por ahora, enviamos a ambos microservicios para que procesen si aplica
+
+        // Enviar a microservicio de servicios
         this.client
           .send('process_payment_webhook', {
             paymentId: webhookId,
@@ -113,12 +116,67 @@ export class WebhooksController {
           })
           .subscribe({
             next: (result) =>
-              console.log('✅ Payment webhook processed successfully:', result),
+              console.log(
+                '✅ Payment webhook processed by services microservice:',
+                result,
+              ),
             error: (error) =>
-              console.error('❌ Error processing payment webhook:', error),
+              console.error(
+                '❌ Error processing payment webhook in services:',
+                error,
+              ),
           });
 
-        console.log('📤 Payment webhook sent to services microservice');
+        // Enviar a microservicio de memberships (procesará si es suscripción)
+        this.client
+          .send('processSubscriptionPaymentWebhook', {
+            paymentId: parseInt(webhookId, 10),
+          })
+          .subscribe({
+            next: (result) =>
+              console.log(
+                '✅ Payment webhook processed by memberships microservice:',
+                result,
+              ),
+            error: (error) =>
+              console.error(
+                '❌ Error processing payment webhook in memberships (might not be a subscription):',
+                error,
+              ),
+          });
+
+        console.log(
+          '📤 Payment webhook sent to both services and memberships microservices',
+        );
+      } else if (webhookType === 'subscription_authorized_payment') {
+        // Procesar webhooks de FACTURAS DE SUSCRIPCIÓN (authorized_payments)
+        console.log('📅 Processing SUBSCRIPTION INVOICE webhook:', {
+          authorizedPaymentId: webhookId,
+          action: body.action,
+          live_mode: body.live_mode,
+        });
+
+        // Enviar a microservicio de memberships
+        this.client
+          .send('processSubscriptionInvoiceWebhook', {
+            authorizedPaymentId: webhookId,
+          })
+          .subscribe({
+            next: (result) =>
+              console.log(
+                '✅ Subscription invoice webhook processed by memberships:',
+                result,
+              ),
+            error: (error) =>
+              console.error(
+                '❌ Error processing subscription invoice webhook:',
+                error,
+              ),
+          });
+
+        console.log(
+          '📤 Subscription invoice webhook sent to memberships microservice',
+        );
       } else if (
         webhookType === 'payment' &&
         webhookId &&

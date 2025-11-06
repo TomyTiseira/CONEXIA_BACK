@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   BenefitNotFoundException,
   PlanNotFoundException,
-} from 'src/common/exceptions';
+} from '../../../common/exceptions';
 import { UpdatePlanDto } from '../../dto/update-plan.dto';
 import { BenefitRepository } from '../../repository/benefit.repository';
 import { PlanLogRepository } from '../../repository/plan-log.repository';
