@@ -98,4 +98,37 @@ export class PlanRepository {
   async hardDelete(id: number) {
     await this.repo.delete(id);
   }
+
+  async findFreePlan(): Promise<Plan | null> {
+    const plan = await this.repo.findOne({
+      where: {
+        name: 'Free',
+        deletedAt: IsNull(),
+      },
+    });
+
+    if (!plan) return null;
+
+    // Obtener todos los benefits para hacer el mapeo
+    const allBenefits = await this.benefitRepo.find();
+    const benefitsMap = new Map<string, Benefit>(
+      allBenefits.map((b) => [b.key, b]),
+    );
+
+    // Enriquecer el plan con el name de los benefits
+    return {
+      ...plan,
+      benefits:
+        (plan.benefits as Array<{ key: string; value: unknown }>)?.map(
+          (benefit) => {
+            const benefitEntity = benefitsMap.get(benefit.key);
+            return {
+              key: benefit.key,
+              value: benefit.value,
+              name: benefitEntity?.name || benefit.key,
+            };
+          },
+        ) || [],
+    } as Plan;
+  }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import {
   Subscription,
   SubscriptionStatus,
@@ -72,8 +72,12 @@ export class SubscriptionRepository {
       where: {
         userId,
         status: SubscriptionStatus.ACTIVE,
+        deletedAt: IsNull(),
       },
       relations: ['plan'],
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 

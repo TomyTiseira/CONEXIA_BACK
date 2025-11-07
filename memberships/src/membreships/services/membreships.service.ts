@@ -9,6 +9,7 @@ import { DeletePlanUseCase } from './use-cases/delete-plan.use-case';
 import { GetBenefitsUseCase } from './use-cases/get-benefits.use-case';
 import { GetPlanByIdUseCase } from './use-cases/get-plan-by-id.use-case';
 import { GetPlansUseCase } from './use-cases/get-plans.use-case';
+import { GetUserPlanUseCase } from './use-cases/get-user-plan.use-case';
 import { HealthUseCase } from './use-cases/health.use-case';
 import { ProcessSubscriptionInvoiceWebhookUseCase } from './use-cases/process-subscription-invoice-webhook.use-case';
 import { ProcessSubscriptionPaymentWebhookUseCase } from './use-cases/process-subscription-payment-webhook.use-case';
@@ -29,6 +30,7 @@ export class MembershipsService {
     private readonly contractPlanUC: ContractPlanUseCase,
     private readonly processSubscriptionPaymentWebhookUC: ProcessSubscriptionPaymentWebhookUseCase,
     private readonly processSubscriptionInvoiceWebhookUC: ProcessSubscriptionInvoiceWebhookUseCase,
+    private readonly getUserPlanUC: GetUserPlanUseCase,
   ) {}
 
   // Benefits catalog
@@ -83,5 +85,10 @@ export class MembershipsService {
     return this.processSubscriptionInvoiceWebhookUC.execute(
       authorizedPaymentId,
     );
+  }
+
+  // User Plan
+  async getUserPlan(userId: number) {
+    return this.getUserPlanUC.execute(userId);
   }
 }

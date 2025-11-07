@@ -86,4 +86,10 @@ export class MembershipsController {
       data.authorizedPaymentId,
     );
   }
+
+  // User Plan
+  @MessagePattern('getUserPlan')
+  getUserPlan(@Payload() userId: number) {
+    return this.membershipsService.getUserPlan(userId);
+  }
 }
