@@ -3,6 +3,7 @@ import { QueryFailedError } from 'typeorm';
 import {
   BenefitNotFoundException,
   PlanBadRequestException,
+  PlanMercadoPagoSyncException,
 } from '../../../common/exceptions';
 import { CreatePlanDto } from '../../dto/create-plan.dto';
 import { BenefitRepository } from '../../repository/benefit.repository';
@@ -48,21 +49,43 @@ export class CreatePlanUseCase {
         changes: { id: created.id, ...dto },
       });
 
-      // Sincronizar con MercadoPago de forma asíncrona (no bloqueante)
-      this.syncPlanWithMercadoPago
-        .execute(created.id)
-        .then(() => {
-          this.logger.log(
-            `Plan ${created.id} sincronizado con MercadoPago exitosamente`,
-          );
-        })
-        .catch((error) => {
-          this.logger.error(
-            `Error al sincronizar plan ${created.id} con MercadoPago: ${error.message}`,
-            error.stack,
-          );
-          // No lanzamos el error para no fallar la creación del plan
-        });
+      // Sincronizar con MercadoPago de forma SÍNCRONA
+      // Si falla, hacer rollback del plan creado
+      try {
+        await this.syncPlanWithMercadoPago.execute(created.id);
+        this.logger.log(
+          `Plan ${created.id} sincronizado con MercadoPago exitosamente`,
+        );
+      } catch (syncError) {
+        this.logger.error(
+          `Error al sincronizar plan ${created.id} con MercadoPago: ${syncError.message}`,
+          syncError.stack,
+        );
+
+        // Rollback: eliminar permanentemente el plan creado
+        await this.plans.hardDelete(created.id);
+        this.logger.warn(
+          `Plan ${created.id} eliminado permanentemente debido a fallo en sincronización con MercadoPago`,
+        );
+
+        // Determinar el mensaje de error específico
+        let errorDetails = '';
+        if (syncError.message.includes('Cannot pay an amount lower than')) {
+          errorDetails =
+            'Los precios deben ser mayores o iguales a $15 ARS para planes mensuales y anuales.';
+        } else if (syncError.message.includes('Invalid value for back url')) {
+          errorDetails =
+            'La URL de retorno no está configurada correctamente. Contacta al administrador.';
+        } else if (
+          syncError.message.includes('access_token') ||
+          syncError.message.includes('credentials')
+        ) {
+          errorDetails =
+            'Credenciales de MercadoPago inválidas. Contacta al administrador.';
+        }
+
+        throw new PlanMercadoPagoSyncException(syncError.message, errorDetails);
+      }
 
       return created;
     } catch (error) {

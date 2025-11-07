@@ -19,6 +19,9 @@ export class ContractPlanDto {
   @IsEnum(BillingCycle)
   billingCycle: BillingCycle;
 
+  @IsString()
+  cardTokenId: string; // Token de tarjeta de MercadoPago para suscripciones recurrentes
+
   @IsOptional()
   @IsString()
   paymentMethodId?: string;

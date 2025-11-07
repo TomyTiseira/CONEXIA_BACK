@@ -36,7 +36,7 @@ export class SubscriptionRepository {
   async findById(id: number): Promise<Subscription | null> {
     return this.subscriptionRepository.findOne({
       where: { id },
-      relations: ['plan', 'plan.benefits'],
+      relations: ['plan'],
     });
   }
 
@@ -51,7 +51,6 @@ export class SubscriptionRepository {
     const queryBuilder = this.subscriptionRepository
       .createQueryBuilder('subscription')
       .leftJoinAndSelect('subscription.plan', 'plan')
-      .leftJoinAndSelect('plan.benefits', 'benefits')
       .where('subscription.userId = :userId', { userId });
 
     if (status) {
@@ -74,7 +73,7 @@ export class SubscriptionRepository {
         userId,
         status: SubscriptionStatus.ACTIVE,
       },
-      relations: ['plan', 'plan.benefits'],
+      relations: ['plan'],
     });
   }
 
