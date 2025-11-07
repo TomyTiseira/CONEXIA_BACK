@@ -51,6 +51,24 @@ export class UsersController {
     );
   }
 
+  @Get('me/plan')
+  @AutoRefreshAuth()
+  getMyPlan(@User() user: AuthenticatedUser) {
+    const userId = Number(user.id);
+
+    if (!userId || isNaN(userId)) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Invalid user ID',
+      });
+    }
+
+    return this.client.send('getUserPlan', userId).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
   @Get()
   getUsers(@Query() getUsersDto: GetUsersDto) {
     return this.client.send('getUsers', getUsersDto).pipe(

@@ -1,18 +1,23 @@
 import { Injectable } from '@nestjs/common';
+import { ContractPlanDto } from '../dto/contract-plan.dto';
 import { CreatePlanDto } from '../dto/create-plan.dto';
 import { TogglePlanDto } from '../dto/toggle-plan.dto';
 import { UpdatePlanDto } from '../dto/update-plan.dto';
+import { ContractPlanUseCase } from './use-cases/contract-plan.use-case';
 import { CreatePlanUseCase } from './use-cases/create-plan.use-case';
 import { DeletePlanUseCase } from './use-cases/delete-plan.use-case';
 import { GetBenefitsUseCase } from './use-cases/get-benefits.use-case';
 import { GetPlanByIdUseCase } from './use-cases/get-plan-by-id.use-case';
 import { GetPlansUseCase } from './use-cases/get-plans.use-case';
+import { GetUserPlanUseCase } from './use-cases/get-user-plan.use-case';
 import { HealthUseCase } from './use-cases/health.use-case';
+import { ProcessSubscriptionInvoiceWebhookUseCase } from './use-cases/process-subscription-invoice-webhook.use-case';
+import { ProcessSubscriptionPaymentWebhookUseCase } from './use-cases/process-subscription-payment-webhook.use-case';
 import { TogglePlanUseCase } from './use-cases/toggle-plan.use-case';
 import { UpdatePlanUseCase } from './use-cases/update-plan.use-case';
 
 @Injectable()
-export class MembreshipsService {
+export class MembershipsService {
   constructor(
     private readonly getBenefitsUC: GetBenefitsUseCase,
     private readonly createPlanUC: CreatePlanUseCase,
@@ -22,6 +27,10 @@ export class MembreshipsService {
     private readonly togglePlanUC: TogglePlanUseCase,
     private readonly deletePlanUC: DeletePlanUseCase,
     private readonly healthUC: HealthUseCase,
+    private readonly contractPlanUC: ContractPlanUseCase,
+    private readonly processSubscriptionPaymentWebhookUC: ProcessSubscriptionPaymentWebhookUseCase,
+    private readonly processSubscriptionInvoiceWebhookUC: ProcessSubscriptionInvoiceWebhookUseCase,
+    private readonly getUserPlanUC: GetUserPlanUseCase,
   ) {}
 
   // Benefits catalog
@@ -56,5 +65,30 @@ export class MembreshipsService {
 
   ping() {
     return this.healthUC.execute();
+  }
+
+  // Subscriptions
+  async contractPlan(
+    userId: number,
+    userEmail: string,
+    userRole: string,
+    dto: ContractPlanDto,
+  ) {
+    return this.contractPlanUC.execute(userId, userEmail, userRole, dto);
+  }
+
+  async processSubscriptionPaymentWebhook(paymentId: number) {
+    return this.processSubscriptionPaymentWebhookUC.execute(paymentId);
+  }
+
+  async processSubscriptionInvoiceWebhook(authorizedPaymentId: string) {
+    return this.processSubscriptionInvoiceWebhookUC.execute(
+      authorizedPaymentId,
+    );
+  }
+
+  // User Plan
+  async getUserPlan(userId: number) {
+    return this.getUserPlanUC.execute(userId);
   }
 }

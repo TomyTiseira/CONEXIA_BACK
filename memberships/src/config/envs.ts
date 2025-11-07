@@ -9,6 +9,9 @@ interface EnvVars {
   DB_USERNAME: string;
   DB_PASSWORD: string;
   DB_DATABASE: string;
+  MERCADOPAGO_ACCESS_TOKEN?: string;
+  MERCADOPAGO_BACK_URL?: string;
+  MERCADOPAGO_NOTIFICATION_URL?: string;
 }
 
 const envSchema = joi
@@ -19,6 +22,9 @@ const envSchema = joi
     DB_USERNAME: joi.string().default('postgres'),
     DB_PASSWORD: joi.string().default('postgres'),
     DB_DATABASE: joi.string().default('membership_db'),
+    MERCADOPAGO_ACCESS_TOKEN: joi.string().optional(),
+    MERCADOPAGO_BACK_URL: joi.string().default('http://localhost:3000'),
+    MERCADOPAGO_NOTIFICATION_URL: joi.string().optional(),
   })
   .unknown(true);
 
@@ -29,6 +35,9 @@ const result = envSchema.validate({
   DB_USERNAME: process.env.DB_USERNAME,
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_DATABASE: process.env.DB_DATABASE,
+  MERCADOPAGO_ACCESS_TOKEN: process.env.MERCADOPAGO_ACCESS_TOKEN,
+  MERCADOPAGO_BACK_URL: process.env.MERCADOPAGO_BACK_URL,
+  MERCADOPAGO_NOTIFICATION_URL: process.env.MERCADOPAGO_NOTIFICATION_URL,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -43,4 +52,7 @@ export const envs = {
   dbUsername: envVars.DB_USERNAME,
   dbPassword: envVars.DB_PASSWORD,
   dbDatabase: envVars.DB_DATABASE,
+  mercadoPagoAccessToken: envVars.MERCADOPAGO_ACCESS_TOKEN || '',
+  mercadoPagoBackUrl: envVars.MERCADOPAGO_BACK_URL || 'http://localhost:3000',
+  mercadoPagoNotificationUrl: envVars.MERCADOPAGO_NOTIFICATION_URL || '',
 };

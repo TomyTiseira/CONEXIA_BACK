@@ -29,3 +29,16 @@ export class PlanBadRequestException extends RpcException {
     });
   }
 }
+
+export class PlanMercadoPagoSyncException extends RpcException {
+  constructor(message: string, details?: string) {
+    super({
+      message: details
+        ? `Error al sincronizar con MercadoPago: ${message}. ${details}`
+        : `Error al sincronizar con MercadoPago: ${message}`,
+      status: 400,
+      error: 'MercadoPago Sync Failed',
+      code: 'MERCADOPAGO_SYNC_ERROR',
+    });
+  }
+}

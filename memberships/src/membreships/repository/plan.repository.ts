@@ -32,27 +32,30 @@ export class PlanRepository {
     if (!includeInactive) {
       where.active = true;
     }
-    
+
     // Obtener los planes
     const plans = await this.repo.find({ where });
-    
+
     // Obtener todos los benefits para hacer el mapeo
     const allBenefits = await this.benefitRepo.find();
     const benefitsMap = new Map<string, Benefit>(
-      allBenefits.map(b => [b.key, b])
+      allBenefits.map((b) => [b.key, b]),
     );
-    
+
     // Enriquecer cada plan con el name de los benefits
-    return plans.map(plan => ({
+    return plans.map((plan) => ({
       ...plan,
-      benefits: (plan.benefits as Array<{ key: string; value: unknown }>)?.map(benefit => {
-        const benefitEntity = benefitsMap.get(benefit.key);
-        return {
-          key: benefit.key,
-          value: benefit.value,
-          name: benefitEntity?.name || benefit.key,
-        };
-      }) || [],
+      benefits:
+        (plan.benefits as Array<{ key: string; value: unknown }>)?.map(
+          (benefit) => {
+            const benefitEntity = benefitsMap.get(benefit.key);
+            return {
+              key: benefit.key,
+              value: benefit.value,
+              name: benefitEntity?.name || benefit.key,
+            };
+          },
+        ) || [],
     }));
   }
 
@@ -61,31 +64,71 @@ export class PlanRepository {
     if (!includeInactive) {
       where.active = true;
     }
-    
+
     const plan = await this.repo.findOne({ where });
     if (!plan) return null;
-    
+
     // Obtener todos los benefits para hacer el mapeo
     const allBenefits = await this.benefitRepo.find();
     const benefitsMap = new Map<string, Benefit>(
-      allBenefits.map(b => [b.key, b])
+      allBenefits.map((b) => [b.key, b]),
     );
-    
+
     // Enriquecer el plan con el name de los benefits
     return {
       ...plan,
-      benefits: (plan.benefits as Array<{ key: string; value: unknown }>)?.map(benefit => {
-        const benefitEntity = benefitsMap.get(benefit.key);
-        return {
-          key: benefit.key,
-          value: benefit.value,
-          name: benefitEntity?.name || benefit.key,
-        };
-      }) || [],
+      benefits:
+        (plan.benefits as Array<{ key: string; value: unknown }>)?.map(
+          (benefit) => {
+            const benefitEntity = benefitsMap.get(benefit.key);
+            return {
+              key: benefit.key,
+              value: benefit.value,
+              name: benefitEntity?.name || benefit.key,
+            };
+          },
+        ) || [],
     };
   }
 
   async softDelete(id: number) {
     await this.repo.softDelete(id);
+  }
+
+  async hardDelete(id: number) {
+    await this.repo.delete(id);
+  }
+
+  async findFreePlan(): Promise<Plan | null> {
+    const plan = await this.repo.findOne({
+      where: {
+        name: 'Free',
+        deletedAt: IsNull(),
+      },
+    });
+
+    if (!plan) return null;
+
+    // Obtener todos los benefits para hacer el mapeo
+    const allBenefits = await this.benefitRepo.find();
+    const benefitsMap = new Map<string, Benefit>(
+      allBenefits.map((b) => [b.key, b]),
+    );
+
+    // Enriquecer el plan con el name de los benefits
+    return {
+      ...plan,
+      benefits:
+        (plan.benefits as Array<{ key: string; value: unknown }>)?.map(
+          (benefit) => {
+            const benefitEntity = benefitsMap.get(benefit.key);
+            return {
+              key: benefit.key,
+              value: benefit.value,
+              name: benefitEntity?.name || benefit.key,
+            };
+          },
+        ) || [],
+    } as Plan;
   }
 }

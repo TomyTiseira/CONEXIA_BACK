@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PlanNotFoundException } from 'src/common/exceptions';
+import { PlanNotFoundException } from '../../../common/exceptions';
 import { PlanLogRepository } from '../../repository/plan-log.repository';
 import { PlanRepository } from '../../repository/plan.repository';
 
