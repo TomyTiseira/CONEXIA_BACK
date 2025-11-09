@@ -1,4 +1,7 @@
 import { envs } from './envs';
+import { CookieOptions } from 'express';
+
+console.log(process.env.NODE_ENV);
 
 export const jwtConfig = {
   secret: envs.jwtSecret,
@@ -8,8 +11,8 @@ export const jwtConfig = {
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-  },
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+  } as CookieOptions,
   accessTokenConfig: {
     expiresIn: '15m',
   },
