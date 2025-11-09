@@ -8,6 +8,10 @@ import { CollaborationType } from '../entities/collaboration-type.entity';
 import { ContractType } from '../entities/contract-type.entity';
 import { ProjectSkill } from '../entities/project-skill.entity';
 import { Project } from '../entities/project.entity';
+import { ProjectRole } from '../entities/project-role.entity';
+import { RoleQuestion } from '../entities/role-question.entity';
+import { RoleQuestionOption } from '../entities/role-question-option.entity';
+import { RoleEvaluation } from '../entities/role-evaluation.entity';
 
 @Injectable()
 export class ProjectRepository {
@@ -16,6 +20,14 @@ export class ProjectRepository {
     private readonly ormRepository: Repository<Project>,
     @InjectRepository(ProjectSkill)
     private readonly projectSkillRepository: Repository<ProjectSkill>,
+    @InjectRepository(ProjectRole)
+    private readonly projectRoleRepository: Repository<ProjectRole>,
+    @InjectRepository(RoleQuestion)
+    private readonly roleQuestionRepository: Repository<RoleQuestion>,
+    @InjectRepository(RoleQuestionOption)
+    private readonly roleQuestionOptionRepository: Repository<RoleQuestionOption>,
+    @InjectRepository(RoleEvaluation)
+    private readonly roleEvaluationRepository: Repository<RoleEvaluation>,
   ) {}
 
   async create(project: Partial<Project>): Promise<Project> {
@@ -189,6 +201,57 @@ export class ProjectRepository {
     await this.projectSkillRepository.save(projectSkills);
   }
 
+  /**
+   * Crea roles del proyecto y sus preguntas/evaluaciones si vienen en el payload
+   */
+  async createProjectRoles(projectId: number, roles: any[]): Promise<void> {
+    if (!roles || roles.length === 0) return;
+
+    for (const r of roles) {
+      const roleToSave: Partial<ProjectRole> = {
+        projectId,
+        title: r.title,
+        description: r.description,
+        vacancies: r.vacancies || 1,
+        applicationType: r.applicationType,
+      };
+
+      const savedRole = await this.projectRoleRepository.save(roleToSave as any);
+
+      // Questions
+      if (r.questions && r.questions.length > 0) {
+        for (const q of r.questions) {
+          const question = await this.roleQuestionRepository.save({
+            roleId: savedRole.id,
+            questionText: q.questionText,
+            questionType: q.questionType,
+            required: q.required !== undefined ? q.required : true,
+          } as any);
+
+          if (q.options && q.options.length > 0) {
+            const options = q.options.map((opt: string) => ({
+              questionId: question.id,
+              optionText: opt,
+            }));
+            await this.roleQuestionOptionRepository.save(options as any);
+          }
+        }
+      }
+
+      // Evaluation
+      if (r.evaluation) {
+        await this.roleEvaluationRepository.save({
+          roleId: savedRole.id,
+          description: r.evaluation.description,
+          link: r.evaluation.link,
+          fileUrl: r.evaluation.fileUrl,
+          fileName: r.evaluation.fileName,
+          fileSize: r.evaluation.fileSize,
+        } as any);
+      }
+    }
+  }
+
   async getProjectSkills(projectId: number): Promise<number[]> {
     const projectSkills = await this.projectSkillRepository.find({
       where: { projectId },
@@ -292,6 +355,10 @@ export class ProjectRepository {
 
   async getRubros(): Promise<Rubro[]> {
     return this.ormRepository.manager.find(Rubro);
+  }
+
+  async findRoleById(roleId: number) {
+    return this.ormRepository.manager.findOne(ProjectRole, { where: { id: roleId } });
   }
 
   ping(): string {

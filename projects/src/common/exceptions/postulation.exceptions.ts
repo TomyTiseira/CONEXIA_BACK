@@ -215,3 +215,12 @@ export class UserNotProjectOwnerException extends RpcException {
     });
   }
 }
+
+export class RoleNotBelongToProjectException extends RpcException {
+  constructor(roleId: number, projectId: number) {
+    super({
+      status: 400,
+      message: `Role ${roleId} does not belong to project ${projectId}`,
+    });
+  }
+}

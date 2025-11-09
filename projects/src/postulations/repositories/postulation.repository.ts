@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostulationStatus } from '../entities/postulation-status.entity';
 import { Postulation } from '../entities/postulation.entity';
+import { PostulationAnswer } from '../entities/postulation-answer.entity';
 
 @Injectable()
 export class PostulationRepository {
   constructor(
     @InjectRepository(Postulation)
     private readonly postulationRepository: Repository<Postulation>,
+    @InjectRepository(PostulationAnswer)
+    private readonly postulationAnswerRepository: Repository<PostulationAnswer>,
   ) {}
 
   async create(postulationData: Partial<Postulation>): Promise<Postulation> {
@@ -36,6 +39,15 @@ export class PostulationRepository {
   ): Promise<Postulation | null> {
     return await this.postulationRepository.findOne({
       where: { projectId, userId },
+    });
+  }
+
+  async findByRoleAndUser(
+    roleId: number,
+    userId: number,
+  ): Promise<Postulation | null> {
+    return await this.postulationRepository.findOne({
+      where: { roleId, userId },
     });
   }
 
@@ -113,6 +125,29 @@ export class PostulationRepository {
     return await this.findById(id);
   }
 
+  async createWithAnswers(
+    postulationData: Partial<Postulation>,
+    answers?: { questionId: number; optionId?: number; answerText?: string }[],
+  ): Promise<Postulation> {
+    // Use a transaction to create postulation and answers atomically
+    return await this.postulationRepository.manager.transaction(async (manager) => {
+      const postulation = manager.create(Postulation, postulationData);
+      const saved = await manager.save(postulation);
+
+      if (answers && answers.length > 0) {
+        const answerEntities = answers.map((a) => ({
+          postulationId: saved.id,
+          questionId: a.questionId,
+          optionId: a.optionId,
+          answerText: a.answerText,
+        }));
+        await manager.save(PostulationAnswer, answerEntities as any);
+      }
+
+      return saved;
+    });
+  }
+
   async delete(id: number): Promise<void> {
     await this.postulationRepository.delete(id);
   }
@@ -120,6 +155,12 @@ export class PostulationRepository {
   async countByProject(projectId: number): Promise<number> {
     return await this.postulationRepository.count({
       where: { projectId, statusId: 1 },
+    });
+  }
+
+  async countAcceptedByRole(roleId: number): Promise<number> {
+    return await this.postulationRepository.count({
+      where: { roleId, statusId: 1 },
     });
   }
 

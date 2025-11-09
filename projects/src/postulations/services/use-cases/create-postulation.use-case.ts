@@ -24,6 +24,12 @@ export class CreatePostulationUseCase {
         createPostulationDto.projectId,
       );
 
+    // Validar que el role existe y pertenece al proyecto
+    await this.postulationValidationService.validateRoleExists(
+      createPostulationDto.roleId,
+      createPostulationDto.projectId,
+    );
+
     // Validar que el usuario no es el dueño del proyecto
     this.postulationValidationService.validateUserNotProjectOwner(
       project,
@@ -34,23 +40,23 @@ export class CreatePostulationUseCase {
     this.postulationValidationService.validateProjectNotEnded(project);
 
     // Validar que el usuario no esté ya postulado
+    // ahora validamos por role (no por proyecto)
     await this.postulationValidationService.validateUserNotAlreadyApplied(
-      createPostulationDto.projectId,
+      createPostulationDto.roleId,
       currentUserId,
     );
 
-    // Validar que no se haya alcanzado el máximo de colaboradores aprobados
-    if (project.maxCollaborators && project.maxCollaborators > 0) {
-      await this.postulationValidationService.validateProjectHasAvailableSlots(
-        createPostulationDto.projectId,
-        project.maxCollaborators,
-      );
-    }
+    // Validar que no se haya alcanzado el máximo de colaboradores aprobados POR ROLE
+    await this.postulationValidationService.validateRoleHasAvailableSlots(
+      createPostulationDto.roleId,
+    );
 
     // Validar tamaño del CV
-    this.postulationValidationService.validateCvFileSize(
-      createPostulationDto.cvSize,
-    );
+    if (createPostulationDto.cvSize) {
+      this.postulationValidationService.validateCvFileSize(
+        createPostulationDto.cvSize,
+      );
+    }
 
     // Validar que el usuario tiene rol de user
     await this.validateUserRole(currentUserId);

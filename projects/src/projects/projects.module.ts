@@ -7,6 +7,10 @@ import { ProjectsController } from './controllers/projects.controller';
 import { Category } from './entities/category.entity';
 import { CollaborationType } from './entities/collaboration-type.entity';
 import { ContractType } from './entities/contract-type.entity';
+import { ProjectRole } from './entities/project-role.entity';
+import { RoleQuestion } from './entities/role-question.entity';
+import { RoleQuestionOption } from './entities/role-question-option.entity';
+import { RoleEvaluation } from './entities/role-evaluation.entity';
 import { ProjectsService } from './services/projects.service';
 import { SkillsService } from './services/skills.service';
 import { DeleteProjectUseCase } from './services/use-cases/delete-project.use-case';
@@ -29,7 +33,16 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
     SkillsService,
   ],
   imports: [
-    TypeOrmModule.forFeature([Category, CollaborationType, ContractType]),
+    TypeOrmModule.forFeature([
+      Category,
+      CollaborationType,
+      ContractType,
+      // project role entities
+      ProjectRole,
+      RoleQuestion,
+      RoleQuestionOption,
+      RoleEvaluation,
+    ]),
     forwardRef(() => PostulationsModule),
     forwardRef(() => ReportsModule),
     SharedModule,

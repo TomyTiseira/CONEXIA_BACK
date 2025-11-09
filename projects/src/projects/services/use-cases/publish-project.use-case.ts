@@ -8,6 +8,7 @@ import {
   LocalityNotFoundException,
   PastStartDateException,
   ProjectNotFoundException,
+  ProjectBadRequestException,
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
@@ -119,6 +120,16 @@ export class PublishProjectUseCase {
         projectData.skills,
       );
     }
+
+    // Validar y crear roles si se proporcionan
+    if (!projectData.roles || projectData.roles.length === 0) {
+      // Según la nueva regla de negocio, no se puede publicar sin al menos un rol
+      throw new ProjectBadRequestException(
+        'Project must have at least one role defined',
+      );
+    }
+
+    await this.projectRepository.createProjectRoles(project.id, projectData.roles as any);
 
     // Obtener el proyecto con todas las relaciones
     const projectWithRelations =

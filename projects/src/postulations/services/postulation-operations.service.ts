@@ -37,11 +37,25 @@ export class PostulationOperationsService {
     const postulationData: Partial<Postulation> = {
       userId: currentUserId,
       projectId: createPostulationDto.projectId,
+      roleId: createPostulationDto.roleId,
       statusId: activeStatus.id,
       cvUrl: createPostulationDto.cvUrl,
       cvFilename: createPostulationDto.cvFilename,
       cvSize: createPostulationDto.cvSize,
+      evaluationSubmissionUrl: createPostulationDto.evaluationLink || createPostulationDto.evaluationFileUrl,
+      evaluationSubmissionFilename: createPostulationDto.evaluationFileUrl ? undefined : undefined,
+      investorAmount: createPostulationDto.investorAmount,
+      investorMessage: createPostulationDto.investorMessage,
+      partnerDescription: createPostulationDto.partnerDescription,
     };
+
+    // Si vienen respuestas, usar createWithAnswers para guardar todo en una transacción
+    if (createPostulationDto.answers && createPostulationDto.answers.length > 0) {
+      return await this.postulationRepository.createWithAnswers(
+        postulationData,
+        createPostulationDto.answers,
+      );
+    }
 
     return await this.postulationRepository.create(postulationData);
   }

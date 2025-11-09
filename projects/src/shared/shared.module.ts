@@ -7,6 +7,11 @@ import { PostulationStatus } from '../postulations/entities/postulation-status.e
 import { Postulation } from '../postulations/entities/postulation.entity';
 import { ProjectSkill } from '../projects/entities/project-skill.entity';
 import { Project } from '../projects/entities/project.entity';
+import { ProjectRole } from '../projects/entities/project-role.entity';
+import { RoleQuestion } from '../projects/entities/role-question.entity';
+import { RoleQuestionOption } from '../projects/entities/role-question-option.entity';
+import { RoleEvaluation } from '../projects/entities/role-evaluation.entity';
+import { PostulationAnswer } from '../postulations/entities/postulation-answer.entity';
 import { ProjectRepository } from '../projects/repositories/project.repository';
 import { SkillController } from './controller/skill.controller';
 import { Rubro } from './entities/rubro.entity';
@@ -24,6 +29,13 @@ import { SkillService } from './services/skill.service';
       PostulationStatus,
       Skill,
       Rubro,
+      // role entities
+      ProjectRole,
+      RoleQuestion,
+      RoleQuestionOption,
+      RoleEvaluation,
+  // postulation answers
+  PostulationAnswer,
     ]),
     ClientsModule.register([
       {

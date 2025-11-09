@@ -6,12 +6,17 @@ import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.int
 import { envs } from './config';
 import { PostulationStatus } from './postulations/entities/postulation-status.entity';
 import { Postulation } from './postulations/entities/postulation.entity';
+import { PostulationAnswer } from './postulations/entities/postulation-answer.entity';
 import { PostulationsModule } from './postulations/postulations.module';
 import { Category } from './projects/entities/category.entity';
 import { CollaborationType } from './projects/entities/collaboration-type.entity';
 import { ContractType } from './projects/entities/contract-type.entity';
 import { ProjectSkill } from './projects/entities/project-skill.entity';
 import { Project } from './projects/entities/project.entity';
+import { ProjectRole } from './projects/entities/project-role.entity';
+import { RoleQuestion } from './projects/entities/role-question.entity';
+import { RoleQuestionOption } from './projects/entities/role-question-option.entity';
+import { RoleEvaluation } from './projects/entities/role-evaluation.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
@@ -35,6 +40,12 @@ import { Skill } from './shared/entities/skill.entity';
         CollaborationType,
         ContractType,
         Postulation,
+        PostulationAnswer,
+        // role entities
+        ProjectRole,
+        RoleQuestion,
+        RoleQuestionOption,
+        RoleEvaluation,
         PostulationStatus,
         Report,
         Rubro,
