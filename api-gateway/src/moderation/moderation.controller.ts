@@ -92,4 +92,24 @@ export class ModerationController {
         }),
       );
   }
+
+  /**
+   * Obtiene los detalles completos de todos los reportes analizados por la IA
+   * Devuelve reportes clasificados por tipo (servicios, proyectos, publicaciones)
+   */
+  @Get('analyzed-reports/:analysisId')
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
+  getAnalyzedReportsDetails(
+    @Param('analysisId', ParseIntPipe) analysisId: number,
+  ) {
+    return this.client
+      .send('getAnalyzedReportsDetails', {
+        analysisId,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
 }

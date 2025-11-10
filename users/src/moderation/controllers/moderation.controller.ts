@@ -65,4 +65,16 @@ export class ModerationController {
       data.resolveDto?.notes,
     );
   }
+
+  /**
+   * Obtiene los detalles completos de todos los reportes analizados
+   */
+  @MessagePattern('getAnalyzedReportsDetails')
+  async handleGetAnalyzedReportsDetails(
+    @Payload() data: { analysisId: number },
+  ) {
+    return await this.moderationService.getAnalyzedReportsDetails(
+      data.analysisId,
+    );
+  }
 }

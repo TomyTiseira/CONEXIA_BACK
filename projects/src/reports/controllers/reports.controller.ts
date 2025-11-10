@@ -68,4 +68,9 @@ export class ReportsController {
   async deactivateProjectReports(@Payload() data: { reportIds: number[] }) {
     return await this.reportsService.deactivateReports(data.reportIds);
   }
+
+  @MessagePattern('getProjectReportsByIds')
+  async getProjectReportsByIds(@Payload() data: { reportIds: number[] }) {
+    return await this.reportsService.getReportsByIds(data.reportIds);
+  }
 }

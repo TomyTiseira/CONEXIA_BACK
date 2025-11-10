@@ -171,4 +171,29 @@ export class ServiceReportsService {
   async deactivateReports(reportIds: number[]) {
     return await this.serviceReportRepository.deactivateReports(reportIds);
   }
+
+  /**
+   * Obtiene reportes por sus IDs con información del servicio
+   * Para el sistema de moderación
+   */
+  async getReportsByIds(reportIds: number[]) {
+    if (!reportIds || reportIds.length === 0) return [];
+
+    const reports =
+      await this.serviceReportRepository.findReportsByIds(reportIds);
+    return reports.map((report) => ({
+      id: report.id,
+      reporterId: report.reporterId,
+      reason: report.reason,
+      otherReason: report.otherReason,
+      description: report.description,
+      createdAt: report.createdAt,
+      isActive: report.isActive,
+      updatedAt: report.updatedAt,
+      reportedUserId: report.service?.userId || null,
+      serviceId: report.serviceId,
+      resourceTitle: report.service?.title || null,
+      resourceDescription: report.service?.description || null,
+    }));
+  }
 }
