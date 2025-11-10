@@ -1,5 +1,6 @@
 ﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { NatsModule } from '../transports/nats.module';
 import { MembershipsController } from './controllers/membreships.controller';
 import { Benefit } from './entities/benefit.entity';
 import { Subscription } from './entities/membreship.entity';
@@ -26,7 +27,10 @@ import { TogglePlanUseCase } from './services/use-cases/toggle-plan.use-case';
 import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Plan, Benefit, PlanLog, Subscription])],
+  imports: [
+    TypeOrmModule.forFeature([Plan, Benefit, PlanLog, Subscription]),
+    NatsModule,
+  ],
   controllers: [MembershipsController],
   providers: [
     MembershipsService,

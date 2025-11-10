@@ -118,6 +118,31 @@ export class Subscription {
   @Column({ name: 'retry_count', type: 'int', default: 0 })
   retryCount: number;
 
+  // Información del método de pago
+  @Column({
+    name: 'payment_method_type',
+    type: 'varchar',
+    nullable: true,
+    length: 50,
+  })
+  paymentMethodType: string | null; // credit_card, debit_card, etc.
+
+  @Column({
+    name: 'card_last_four_digits',
+    type: 'varchar',
+    nullable: true,
+    length: 4,
+  })
+  cardLastFourDigits: string | null; // Últimos 4 dígitos de la tarjeta
+
+  @Column({
+    name: 'card_brand',
+    type: 'varchar',
+    nullable: true,
+    length: 50,
+  })
+  cardBrand: string | null; // visa, mastercard, etc.
+
   // Suscripción que esta reemplaza (si es un upgrade/downgrade)
   @Column({ name: 'replaces_subscription_id', type: 'int', nullable: true })
   replacesSubscriptionId: number | null;
