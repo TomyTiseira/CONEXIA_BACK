@@ -214,4 +214,17 @@ export class ServiceReportRepository {
       .execute();
     return { affected: result.affected };
   }
+
+  /**
+   * Obtiene reportes por sus IDs con información del servicio
+   */
+  async findReportsByIds(reportIds: number[]): Promise<ServiceReport[]> {
+    if (!reportIds || reportIds.length === 0) return [];
+
+    return this.repository.find({
+      where: reportIds.map((id) => ({ id })),
+      relations: ['service'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

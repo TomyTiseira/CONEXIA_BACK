@@ -7,6 +7,10 @@ import { Repository } from 'typeorm';
 import { NATS_SERVICE } from '../config';
 import { ModerationAnalysis } from '../entities/moderation-analysis.entity';
 import {
+  AnalyzedReportsResponse,
+  ReportDetail,
+} from '../interfaces/analyzed-reports-response.interface';
+import {
   NotificationPayload,
   OpenAIModerationResult,
   ReportData,
@@ -594,6 +598,153 @@ export class ModerationService {
       );
     } catch (error) {
       this.logger.error('Error al desactivar reportes:', error);
+    }
+  }
+
+  /**
+   * Obtiene los detalles completos de todos los reportes analizados por la IA
+   * Consulta a los microservicios de services, projects y publications
+   */
+  async getAnalyzedReportsDetails(
+    analysisId: number,
+  ): Promise<AnalyzedReportsResponse> {
+    // Buscar el análisis
+    const analysis = await this.moderationRepository.findOne({
+      where: { id: analysisId },
+    });
+
+    if (!analysis) {
+      throw new NotFoundException(
+        `Análisis con ID ${analysisId} no encontrado`,
+      );
+    }
+
+    // Obtener el perfil del usuario reportado
+    const profile = await this.moderationRepository.manager
+      .createQueryBuilder('profiles', 'p')
+      .select(['p.userId', 'p.name', 'p.lastName'])
+      .where('p.userId = :userId', { userId: analysis.userId })
+      .getRawOne<{ p_userId: number; p_name: string; p_lastName: string }>();
+
+    const userProfile = profile
+      ? {
+          name: String(profile.p_name),
+          lastName: String(profile.p_lastName),
+        }
+      : { name: null, lastName: null };
+
+    // Separar los IDs por tipo de reporte
+    const serviceIds: number[] = [];
+    const projectIds: number[] = [];
+    const publicationIds: number[] = [];
+
+    for (const id of analysis.analyzedReportIds || []) {
+      const [prefix, numId] = id.split(':');
+      const reportId = parseInt(numId);
+
+      if (prefix === 'svc') {
+        serviceIds.push(reportId);
+      } else if (prefix === 'prj') {
+        projectIds.push(reportId);
+      } else if (prefix === 'pub') {
+        publicationIds.push(reportId);
+      }
+    }
+
+    // Consultar detalles a cada microservicio en paralelo
+    const [serviceReports, projectReports, publicationReports] =
+      await Promise.all([
+        this.fetchServiceReportsDetails(serviceIds),
+        this.fetchProjectReportsDetails(projectIds),
+        this.fetchPublicationReportsDetails(publicationIds),
+      ]);
+
+    return {
+      analysisId: analysis.id,
+      userId: analysis.userId,
+      firstName: userProfile.name,
+      lastName: userProfile.lastName,
+      totalReports: analysis.totalReports,
+      classification: analysis.classification,
+      aiSummary: analysis.aiSummary,
+      createdAt: analysis.createdAt,
+      reports: {
+        services: serviceReports,
+        projects: projectReports,
+        publications: publicationReports,
+      },
+    };
+  }
+
+  /**
+   * Obtiene detalles de reportes de servicios
+   */
+  private async fetchServiceReportsDetails(
+    reportIds: number[],
+  ): Promise<ReportDetail[]> {
+    if (reportIds.length === 0) return [];
+
+    try {
+      const reports = await firstValueFrom(
+        this.natsClient.send<ReportDetail[]>('getServiceReportsByIds', {
+          reportIds,
+        }),
+      );
+      return reports || [];
+    } catch (error) {
+      this.logger.error(
+        `Error al obtener detalles de reportes de servicios:`,
+        error,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene detalles de reportes de proyectos
+   */
+  private async fetchProjectReportsDetails(
+    reportIds: number[],
+  ): Promise<ReportDetail[]> {
+    if (reportIds.length === 0) return [];
+
+    try {
+      const reports = await firstValueFrom(
+        this.natsClient.send<ReportDetail[]>('getProjectReportsByIds', {
+          reportIds,
+        }),
+      );
+      return reports || [];
+    } catch (error) {
+      this.logger.error(
+        `Error al obtener detalles de reportes de proyectos:`,
+        error,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene detalles de reportes de publicaciones
+   */
+  private async fetchPublicationReportsDetails(
+    reportIds: number[],
+  ): Promise<ReportDetail[]> {
+    if (reportIds.length === 0) return [];
+
+    try {
+      const reports = await firstValueFrom(
+        this.natsClient.send<ReportDetail[]>('getPublicationReportsByIds', {
+          reportIds,
+        }),
+      );
+      return reports || [];
+    } catch (error) {
+      this.logger.error(
+        `Error al obtener detalles de reportes de publicaciones:`,
+        error,
+      );
+      return [];
     }
   }
 }

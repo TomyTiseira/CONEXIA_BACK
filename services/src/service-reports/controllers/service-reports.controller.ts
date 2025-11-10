@@ -78,4 +78,9 @@ export class ServiceReportsController {
   async deactivateServiceReports(@Payload() data: { reportIds: number[] }) {
     return await this.serviceReportsService.deactivateReports(data.reportIds);
   }
+
+  @MessagePattern('getServiceReportsByIds')
+  async getServiceReportsByIds(@Payload() data: { reportIds: number[] }) {
+    return await this.serviceReportsService.getReportsByIds(data.reportIds);
+  }
 }

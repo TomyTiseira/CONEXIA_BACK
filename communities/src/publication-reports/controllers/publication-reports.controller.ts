@@ -176,4 +176,16 @@ export class PublicationReportsController {
       throw error;
     }
   }
+
+  @MessagePattern('getPublicationReportsByIds')
+  async getPublicationReportsByIds(@Payload() data: { reportIds: number[] }) {
+    try {
+      return await this.publicationReportsService.getReportsByIds(
+        data.reportIds,
+      );
+    } catch (error) {
+      console.error('Error getting publication reports by IDs:', error);
+      throw error;
+    }
+  }
 }

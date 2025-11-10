@@ -213,4 +213,17 @@ export class ReportRepository {
       .execute();
     return { affected: result.affected };
   }
+
+  /**
+   * Obtiene reportes por sus IDs con información del proyecto
+   */
+  async findReportsByIds(reportIds: number[]): Promise<Report[]> {
+    if (!reportIds || reportIds.length === 0) return [];
+
+    return this.repository.find({
+      where: reportIds.map((id) => ({ id })),
+      relations: ['project'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
