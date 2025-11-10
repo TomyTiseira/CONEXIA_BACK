@@ -1,11 +1,19 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BillingCycle, SubscriptionStatus } from '../../entities/membreship.entity';
+import {
+  BillingCycle,
+  SubscriptionStatus,
+} from '../../entities/membreship.entity';
 import { SubscriptionRepository } from '../../repository/subscription.repository';
-import { MercadoPagoService } from '../mercado-pago.service';
+import {
+  MercadoPagoPaymentResponse,
+  MercadoPagoService,
+} from '../mercado-pago.service';
 
 @Injectable()
 export class ProcessSubscriptionPaymentWebhookUseCase {
-  private readonly logger = new Logger(ProcessSubscriptionPaymentWebhookUseCase.name);
+  private readonly logger = new Logger(
+    ProcessSubscriptionPaymentWebhookUseCase.name,
+  );
 
   constructor(
     private readonly subscriptionRepository: SubscriptionRepository,
@@ -27,13 +35,18 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       const subscriptionId = parseInt(paymentData.external_reference, 10);
 
       // Obtener la suscripción
-      const subscription = await this.subscriptionRepository.findById(subscriptionId);
+      const subscription =
+        await this.subscriptionRepository.findById(subscriptionId);
 
       if (!subscription) {
-        throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+        throw new NotFoundException(
+          `Suscripción ${subscriptionId} no encontrada`,
+        );
       }
 
-      this.logger.log(`Procesando pago para suscripción ${subscriptionId}, estado: ${paymentData.status}`);
+      this.logger.log(
+        `Procesando pago para suscripción ${subscriptionId}, estado: ${paymentData.status}`,
+      );
 
       // Si el pago fue aprobado
       if (this.mercadoPagoService.isPaymentApproved(paymentData.status)) {
@@ -48,18 +61,29 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
         await this.handlePendingPayment(subscription.id, paymentData);
       }
 
-      this.logger.log(`Webhook procesado exitosamente para suscripción ${subscriptionId}`);
+      this.logger.log(
+        `Webhook procesado exitosamente para suscripción ${subscriptionId}`,
+      );
     } catch (error) {
-      this.logger.error(`Error al procesar webhook de pago ${paymentId}:`, error.stack);
+      this.logger.error(
+        `Error al procesar webhook de pago ${paymentId}:`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  private async handleApprovedPayment(subscriptionId: number, paymentData: any): Promise<void> {
-    const subscription = await this.subscriptionRepository.findById(subscriptionId);
+  private async handleApprovedPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
 
     if (!subscription) {
-      throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+      throw new NotFoundException(
+        `Suscripción ${subscriptionId} no encontrada`,
+      );
     }
 
     // Si ya está activa, no hacer nada
@@ -85,29 +109,48 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       paymentId: paymentData.id.toString(),
       paymentStatus: paymentData.status,
       paymentStatusDetail: paymentData.status_detail,
-      paidAt: paymentData.date_approved ? new Date(paymentData.date_approved) : now,
+      paidAt: paymentData.date_approved
+        ? new Date(paymentData.date_approved)
+        : now,
       startDate,
       endDate,
+      // Guardar información del método de pago
+      paymentMethodType: paymentData.payment_method?.type || null,
+      cardLastFourDigits: paymentData.card?.last_four_digits || null,
+      cardBrand: paymentData.payment_method?.id || null,
     });
 
-    this.logger.log(`Suscripción ${subscriptionId} activada. Válida desde ${startDate} hasta ${endDate}`);
+    this.logger.log(
+      `Suscripción ${subscriptionId} activada. Válida desde ${startDate.toISOString()} hasta ${endDate.toISOString()}`,
+    );
 
     // Si esta suscripción reemplaza a otra, marcar la anterior como reemplazada
     if (subscription.replacesSubscriptionId) {
-      await this.subscriptionRepository.update(subscription.replacesSubscriptionId, {
-        status: SubscriptionStatus.REPLACED,
-        endDate: now, // Finalizar inmediatamente
-      });
+      await this.subscriptionRepository.update(
+        subscription.replacesSubscriptionId,
+        {
+          status: SubscriptionStatus.REPLACED,
+          endDate: now, // Finalizar inmediatamente
+        },
+      );
 
-      this.logger.log(`Suscripción ${subscription.replacesSubscriptionId} marcada como REPLACED`);
+      this.logger.log(
+        `Suscripción ${subscription.replacesSubscriptionId} marcada como REPLACED`,
+      );
     }
   }
 
-  private async handleRejectedPayment(subscriptionId: number, paymentData: any): Promise<void> {
-    const subscription = await this.subscriptionRepository.findById(subscriptionId);
+  private async handleRejectedPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
 
     if (!subscription) {
-      throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+      throw new NotFoundException(
+        `Suscripción ${subscriptionId} no encontrada`,
+      );
     }
 
     // Incrementar contador de reintentos
@@ -121,10 +164,15 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       retryCount,
     });
 
-    this.logger.log(`Suscripción ${subscriptionId} marcada como PAYMENT_FAILED. Intento ${retryCount}`);
+    this.logger.log(
+      `Suscripción ${subscriptionId} marcada como PAYMENT_FAILED. Intento ${retryCount}`,
+    );
   }
 
-  private async handlePendingPayment(subscriptionId: number, paymentData: any): Promise<void> {
+  private async handlePendingPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
     await this.subscriptionRepository.update(subscriptionId, {
       paymentId: paymentData.id.toString(),
       paymentStatus: paymentData.status,

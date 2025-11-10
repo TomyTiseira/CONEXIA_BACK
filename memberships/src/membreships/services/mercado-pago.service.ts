@@ -30,6 +30,14 @@ export interface MercadoPagoPaymentResponse {
       number?: string;
     };
   };
+  payment_method?: {
+    id?: string;
+    type?: string;
+  };
+  card?: {
+    last_four_digits?: string;
+    first_six_digits?: string;
+  };
 }
 
 @Injectable()
@@ -154,6 +162,18 @@ export class MercadoPagoService {
                     number: response.payer.identification.number,
                   }
                 : undefined,
+            }
+          : undefined,
+        payment_method: response.payment_method_id
+          ? {
+              id: response.payment_method_id,
+              type: response.payment_type_id,
+            }
+          : undefined,
+        card: response.card
+          ? {
+              last_four_digits: response.card.last_four_digits,
+              first_six_digits: response.card.first_six_digits,
             }
           : undefined,
       };
