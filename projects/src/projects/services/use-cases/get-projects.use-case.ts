@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { MembershipsClientService } from '../../../common/services/memberships-client.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
@@ -16,6 +17,7 @@ export class GetProjectsUseCase {
     private readonly postulationRepository: PostulationRepository,
     @Inject(forwardRef(() => ReportRepository))
     private readonly reportRepository: ReportRepository,
+    private readonly membershipsClientService: MembershipsClientService,
   ) {}
 
   async execute(getProjectsDto: GetProjectsDto, currentUserId: number) {
@@ -37,16 +39,32 @@ export class GetProjectsUseCase {
       .filter((p) => !p.endDate || new Date(p.endDate) >= now)
       .map((p) => p.id);
 
-    // 2. Paginar sobre esos IDs
+    // 2. Obtener proyectos completos (sin paginar aún) para ordenarlos por search_visibility
+    let allProjectsToSort: Project[] = [];
+    if (notOwnerIds.length > 0) {
+      allProjectsToSort =
+        await this.projectRepository.findProjectsByIds(notOwnerIds);
+    }
+
+    // 3. Obtener search_visibility de los dueños de los proyectos
+    const projectOwnerIds = [
+      ...new Set(allProjectsToSort.map((p) => p.userId)),
+    ];
+    const visibilityMap =
+      await this.membershipsClientService.getUsersSearchVisibility(
+        projectOwnerIds,
+      );
+
+    // 4. Ordenar proyectos por search_visibility del dueño
+    const sortedProjects = this.sortProjectsBySearchVisibility(
+      allProjectsToSort,
+      visibilityMap,
+    );
+
+    // 5. Aplicar paginación sobre los proyectos ya ordenados
     const start = (params.page - 1) * params.limit;
     const end = start + params.limit;
-    const paginatedIds = notOwnerIds.slice(start, end);
-
-    // 3. Traer los proyectos completos con relaciones usando los IDs paginados
-    let projects: Project[] = [];
-    if (paginatedIds.length > 0) {
-      projects = await this.projectRepository.findProjectsByIds(paginatedIds);
-    }
+    const projects = sortedProjects.slice(start, end);
 
     // Obtener información de los dueños de los proyectos
     const userIds = [...new Set(projects.map((project) => project.userId))];
@@ -166,5 +184,36 @@ export class GetProjectsUseCase {
       projects: projectsWithReportStatus,
       pagination,
     };
+  }
+
+  /**
+   * Ordena proyectos por search_visibility del dueño del proyecto
+   * Orden: prioridad_maxima > alta > estandar > sin valor
+   */
+  private sortProjectsBySearchVisibility(
+    projects: Project[],
+    visibilityMap: Map<number, string>,
+  ): Project[] {
+    const visibilityPriority: Record<string, number> = {
+      prioridad_maxima: 3,
+      alta: 2,
+      estandar: 1,
+    };
+
+    return projects.sort((a, b) => {
+      const visibilityA = visibilityMap.get(a.userId);
+      const visibilityB = visibilityMap.get(b.userId);
+
+      const priorityA = visibilityA ? visibilityPriority[visibilityA] || 0 : 0;
+      const priorityB = visibilityB ? visibilityPriority[visibilityB] || 0 : 0;
+
+      // Ordenar de mayor a menor prioridad
+      if (priorityB !== priorityA) {
+        return priorityB - priorityA;
+      }
+
+      // Si tienen la misma prioridad, ordenar por fecha de creación (más reciente primero)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 }

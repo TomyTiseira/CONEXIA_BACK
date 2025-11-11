@@ -79,3 +79,13 @@ export class ServiceHasActiveContractsException extends RpcException {
     });
   }
 }
+
+export class ServiceLimitExceededException extends RpcException {
+  constructor(limit: number, current: number) {
+    super({
+      message: `Has alcanzado el límite de servicios publicados (${current}/${limit}). Actualiza tu plan de suscripción para publicar más servicios.`,
+      status: 403,
+      error: 'Service Limit Exceeded',
+    });
+  }
+}

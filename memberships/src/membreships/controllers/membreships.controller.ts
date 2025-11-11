@@ -89,7 +89,7 @@ export class MembershipsController {
 
   // User Plan
   @MessagePattern('getUserPlan')
-  getUserPlan(@Payload() userId: number) {
-    return this.membershipsService.getUserPlan(userId);
+  getUserPlan(@Payload() data: { userId: number }) {
+    return this.membershipsService.getUserPlan(data.userId);
   }
 }
