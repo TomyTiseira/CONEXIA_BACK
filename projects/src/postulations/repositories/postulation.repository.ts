@@ -132,4 +132,15 @@ export class PostulationRepository {
     });
     return count > 0;
   }
+
+  /**
+   * Obtiene todas las postulaciones de un usuario (sin paginación)
+   */
+  async findByUserId(userId: number): Promise<Postulation[]> {
+    return await this.postulationRepository.find({
+      where: { userId },
+      relations: ['status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { MessagingModule } from './contacts/messaging.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { MembershipsModule } from './memberships/memberships.module';
 import { ModerationModule } from './moderation/moderation.module';
@@ -45,6 +46,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     WebhooksModule,
     ModerationModule,
     MembershipsModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],

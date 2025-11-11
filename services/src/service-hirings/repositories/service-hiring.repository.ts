@@ -390,4 +390,68 @@ export class ServiceHiringRepository {
       .andWhere('status.code IN (:...activeStatuses)', { activeStatuses })
       .getCount();
   }
+
+  /**
+   * Obtiene todas las contrataciones completadas donde el usuario es el proveedor del servicio
+   */
+  async findCompletedByProviderId(
+    providerId: number,
+  ): Promise<ServiceHiring[]> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoinAndSelect('hiring.status', 'status')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .where('service.userId = :providerId', { providerId })
+      .andWhere('status.code = :statusCode', { statusCode: 'completed' })
+      .getMany();
+  }
+
+  /**
+   * Obtiene el total de contrataciones de servicios por tipo para métricas admin
+   */
+  async getServiceHiringsByType(): Promise<
+    Array<{ type: string; count: number; revenue: number }>
+  > {
+    const result = await this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .leftJoin('hiring.service', 'service')
+      .select('service.deliveryType', 'type')
+      .addSelect('COUNT(hiring.id)', 'count')
+      .addSelect('SUM(hiring.quotedPrice)', 'revenue')
+      .where('status.code = :statusCode', { statusCode: 'completed' })
+      .groupBy('service.deliveryType')
+      .getRawMany();
+
+    return result.map((item) => ({
+      type: item.type || 'Sin especificar',
+      count: parseInt(item.count, 10),
+      revenue: parseFloat(item.revenue) || 0,
+    }));
+  }
+
+  /**
+   * Obtiene el total de contrataciones completadas
+   */
+  async getTotalCompletedHirings(): Promise<number> {
+    return this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .where('status.code = :statusCode', { statusCode: 'completed' })
+      .getCount();
+  }
+
+  /**
+   * Obtiene el revenue total de todas las contrataciones completadas
+   */
+  async getTotalRevenue(): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder('hiring')
+      .leftJoin('hiring.status', 'status')
+      .select('SUM(hiring.quotedPrice)', 'total')
+      .where('status.code = :statusCode', { statusCode: 'completed' })
+      .getRawOne();
+
+    return parseFloat(result?.total) || 0;
+  }
 }

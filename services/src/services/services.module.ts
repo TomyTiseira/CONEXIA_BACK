@@ -9,13 +9,15 @@ import { Service, ServiceCategory } from './entities';
 import { ServiceRepository } from './repositories';
 import { CategoryService, ServicesService } from './services';
 import {
-    CreateServiceUseCase,
-    DeleteServiceUseCase,
-    UpdateServiceUseCase,
+  CreateServiceUseCase,
+  DeleteServiceUseCase,
+  UpdateServiceUseCase,
 } from './services/use-cases';
 import { GetServiceByIdUseCase } from './services/use-cases/get-service-by-id.use-case';
 import { GetServicesByUserUseCase } from './services/use-cases/get-services-by-user.use-case';
 import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
+import { GetAdminServiceMetricsUseCase } from './services/use-cases/metrics/get-admin-service-metrics.use-case';
+import { GetUserServiceMetricsUseCase } from './services/use-cases/metrics/get-user-service-metrics.use-case';
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { GetServicesUseCase } from './services/use-cases/get-services.use-case';
     GetServicesByUserUseCase,
     GetServiceByIdUseCase,
     UpdateServiceUseCase,
+    GetUserServiceMetricsUseCase,
+    GetAdminServiceMetricsUseCase,
   ],
   exports: [ServicesService, ServiceRepository],
 })
