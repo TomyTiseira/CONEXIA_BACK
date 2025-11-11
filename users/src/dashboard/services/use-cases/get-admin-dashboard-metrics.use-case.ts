@@ -5,7 +5,13 @@ import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { User } from 'src/shared/entities/user.entity';
 import { MoreThanOrEqual, Repository } from 'typeorm';
-import { AdminDashboardMetricsDto } from '../../dto/admin-dashboard-metrics.dto';
+import {
+  ActiveUsersMetricsDto,
+  AdminDashboardMetricsDto,
+  NewUsersMetricsDto,
+  ProjectsStatusMetricsDto,
+  ServicesMetricsDto,
+} from '../../dto/admin-dashboard-metrics.dto';
 
 @Injectable()
 export class GetAdminDashboardMetricsUseCase {
@@ -18,14 +24,17 @@ export class GetAdminDashboardMetricsUseCase {
   async execute(): Promise<AdminDashboardMetricsDto> {
     try {
       // Obtener métricas de usuarios
-      const newUsers = await this.getNewUsersMetrics();
-      const activeUsers = await this.getActiveUsersMetrics();
+      const newUsers: NewUsersMetricsDto = await this.getNewUsersMetrics();
+      const activeUsers: ActiveUsersMetricsDto =
+        await this.getActiveUsersMetrics();
 
       // Obtener métricas de proyectos desde el microservicio de projects
-      const projectsMetrics = await this.getProjectsMetrics();
+      const projectsMetrics: ProjectsStatusMetricsDto =
+        await this.getProjectsMetrics();
 
       // Obtener métricas de servicios desde el microservicio de services
-      const servicesMetrics = await this.getServicesMetrics();
+      const servicesMetrics: ServicesMetricsDto =
+        await this.getServicesMetrics();
 
       return {
         newUsers,
@@ -111,11 +120,13 @@ export class GetAdminDashboardMetricsUseCase {
     };
   }
 
-  private async getProjectsMetrics() {
+  private async getProjectsMetrics(): Promise<ProjectsStatusMetricsDto> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = await firstValueFrom(
-        this.client.send('getAdminProjectMetrics', {}),
+        this.client.send<ProjectsStatusMetricsDto>(
+          'getAdminProjectMetrics',
+          {},
+        ),
       );
       return response;
     } catch (error) {
@@ -129,11 +140,10 @@ export class GetAdminDashboardMetricsUseCase {
     }
   }
 
-  private async getServicesMetrics() {
+  private async getServicesMetrics(): Promise<ServicesMetricsDto> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const response = await firstValueFrom(
-        this.client.send('getAdminServiceMetrics', {}),
+        this.client.send<ServicesMetricsDto>('getAdminServiceMetrics', {}),
       );
       return response;
     } catch (error) {

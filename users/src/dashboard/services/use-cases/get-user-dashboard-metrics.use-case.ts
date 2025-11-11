@@ -2,7 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
-import { UserDashboardMetricsDto } from '../../dto/user-dashboard-metrics.dto';
+import {
+  PostulationMetricsDto,
+  ProjectMetricsDto,
+  ServiceMetricsDto,
+  UserDashboardMetricsDto,
+} from '../../dto/user-dashboard-metrics.dto';
 
 @Injectable()
 export class GetUserDashboardMetricsUseCase {
@@ -11,13 +16,16 @@ export class GetUserDashboardMetricsUseCase {
   async execute(userId: number): Promise<UserDashboardMetricsDto> {
     try {
       // Obtener métricas de servicios desde el microservicio de services
-      const serviceMetrics = await this.getServiceMetrics(userId);
+      const serviceMetrics: ServiceMetricsDto =
+        await this.getServiceMetrics(userId);
 
       // Obtener métricas de proyectos desde el microservicio de projects
-      const projectMetrics = await this.getProjectMetrics(userId);
+      const projectMetrics: ProjectMetricsDto =
+        await this.getProjectMetrics(userId);
 
       // Obtener métricas de postulaciones desde el microservicio de projects
-      const postulationMetrics = await this.getPostulationMetrics(userId);
+      const postulationMetrics: PostulationMetricsDto =
+        await this.getPostulationMetrics(userId);
 
       return {
         services: serviceMetrics,
@@ -30,10 +38,12 @@ export class GetUserDashboardMetricsUseCase {
     }
   }
 
-  private async getServiceMetrics(userId: number) {
+  private async getServiceMetrics(userId: number): Promise<ServiceMetricsDto> {
     try {
       const response = await firstValueFrom(
-        this.client.send('getUserServiceMetrics', { userId }),
+        this.client.send<ServiceMetricsDto>('getUserServiceMetrics', {
+          userId,
+        }),
       );
       return response;
     } catch (error) {
@@ -45,10 +55,12 @@ export class GetUserDashboardMetricsUseCase {
     }
   }
 
-  private async getProjectMetrics(userId: number) {
+  private async getProjectMetrics(userId: number): Promise<ProjectMetricsDto> {
     try {
       const response = await firstValueFrom(
-        this.client.send('getUserProjectMetrics', { userId }),
+        this.client.send<ProjectMetricsDto>('getUserProjectMetrics', {
+          userId,
+        }),
       );
       return response;
     } catch (error) {
@@ -59,10 +71,14 @@ export class GetUserDashboardMetricsUseCase {
     }
   }
 
-  private async getPostulationMetrics(userId: number) {
+  private async getPostulationMetrics(
+    userId: number,
+  ): Promise<PostulationMetricsDto> {
     try {
       const response = await firstValueFrom(
-        this.client.send('getUserPostulationMetrics', { userId }),
+        this.client.send<PostulationMetricsDto>('getUserPostulationMetrics', {
+          userId,
+        }),
       );
       return response;
     } catch (error) {
