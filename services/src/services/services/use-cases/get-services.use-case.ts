@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MembershipsClientService } from '../../../common/services/memberships-client.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformServicesWithOwners } from '../../../common/utils/service-transform.utils';
@@ -15,6 +16,7 @@ export class GetServicesUseCase {
     private readonly usersClientService: UsersClientService,
     private readonly serviceHiringRepository: ServiceHiringRepository,
     private readonly serviceReviewRepository: ServiceReviewRepository,
+    private readonly membershipsClientService: MembershipsClientService,
   ) {}
 
   async execute(getServicesDto: GetServicesDto, currentUserId: number) {
@@ -31,20 +33,27 @@ export class GetServicesUseCase {
       limit: 10000,
     });
 
-    const notOwnerIds = allServices
-      .filter((s) => s.userId !== currentUserId)
-      .map((s) => s.id);
+    const notOwnerServices = allServices.filter(
+      (s) => s.userId !== currentUserId,
+    );
 
-    // 2. Paginar sobre esos IDs
+    // 2. Obtener search_visibility de los dueños de los servicios
+    const serviceOwnerIds = [...new Set(notOwnerServices.map((s) => s.userId))];
+    const visibilityMap =
+      await this.membershipsClientService.getUsersSearchVisibility(
+        serviceOwnerIds,
+      );
+
+    // 3. Ordenar servicios por search_visibility del dueño
+    const sortedServices = this.sortServicesBySearchVisibility(
+      notOwnerServices,
+      visibilityMap,
+    );
+
+    // 4. Aplicar paginación sobre los servicios ya ordenados
     const start = (params.page - 1) * params.limit;
     const end = start + params.limit;
-    const paginatedIds = notOwnerIds.slice(start, end);
-
-    // 3. Traer los servicios completos con relaciones usando los IDs paginados
-    let services: Service[] = [];
-    if (paginatedIds.length > 0) {
-      services = await this.serviceRepository.findServicesByIds(paginatedIds);
-    }
+    const services = sortedServices.slice(start, end);
 
     // Obtener información de los dueños de los servicios
     const userIds = [...new Set(services.map((service) => service.userId))];
@@ -66,9 +75,7 @@ export class GetServicesUseCase {
     if (serviceIds.length > 0) {
       const reviewsPromises = serviceIds.map(async (serviceId) => {
         const stats =
-          await this.serviceReviewRepository.getServiceAverageRating(
-            serviceId,
-          );
+          await this.serviceReviewRepository.getServiceAverageRating(serviceId);
         return {
           serviceId,
           averageRating: stats.average,
@@ -91,11 +98,42 @@ export class GetServicesUseCase {
     );
 
     // Calcular información de paginación usando solo los servicios donde no es dueño
-    const pagination = calculatePagination(notOwnerIds.length, params);
+    const pagination = calculatePagination(notOwnerServices.length, params);
 
     return {
       services: transformedServices,
       pagination,
     };
+  }
+
+  /**
+   * Ordena servicios por search_visibility del dueño del servicio
+   * Orden: prioridad_maxima > alta > estandar > sin valor
+   */
+  private sortServicesBySearchVisibility(
+    services: Service[],
+    visibilityMap: Map<number, string>,
+  ): Service[] {
+    const visibilityPriority: Record<string, number> = {
+      prioridad_maxima: 3,
+      alta: 2,
+      estandar: 1,
+    };
+
+    return services.sort((a, b) => {
+      const visibilityA = visibilityMap.get(a.userId);
+      const visibilityB = visibilityMap.get(b.userId);
+
+      const priorityA = visibilityA ? visibilityPriority[visibilityA] || 0 : 0;
+      const priorityB = visibilityB ? visibilityPriority[visibilityB] || 0 : 0;
+
+      // Ordenar de mayor a menor prioridad
+      if (priorityB !== priorityA) {
+        return priorityB - priorityA;
+      }
+
+      // Si tienen la misma prioridad, ordenar por fecha de creación (más reciente primero)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 }

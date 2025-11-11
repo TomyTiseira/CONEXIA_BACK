@@ -7,9 +7,11 @@ import {
   InvalidSkillsException,
   LocalityNotFoundException,
   PastStartDateException,
+  ProjectLimitExceededException,
   ProjectNotFoundException,
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
+import { MembershipsClientService } from '../../../common/services/memberships-client.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { PublishProjectDto } from '../../dtos/publish-project.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
@@ -19,6 +21,7 @@ export class PublishProjectUseCase {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly usersClientService: UsersClientService,
+    private readonly membershipsClientService: MembershipsClientService,
   ) {}
 
   async execute(projectData: PublishProjectDto) {
@@ -32,6 +35,25 @@ export class PublishProjectUseCase {
 
     // Validar que el usuario esté verificado
     await this.usersClientService.validateUserIsVerified(projectData.userId);
+
+    // Validar límite de proyectos según el plan de suscripción
+    const [activeProjects] = await this.projectRepository.findByUserId(
+      projectData.userId,
+      false,
+      1,
+      9999,
+    );
+    const activeProjectsCount = activeProjects.length;
+
+    const { canPublish, limit, current } =
+      await this.membershipsClientService.canPublishProject(
+        projectData.userId,
+        activeProjectsCount,
+      );
+
+    if (!canPublish) {
+      throw new ProjectLimitExceededException(limit, current);
+    }
 
     // Validar que las skills existen (si se proporcionan)
     if (projectData.skills && projectData.skills.length > 0) {

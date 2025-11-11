@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { envs } from './config';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
 import { ModerationAnalysis } from './moderation/entities/moderation-analysis.entity';
 import { ModerationModule } from './moderation/moderation.module';
@@ -61,6 +62,7 @@ import { VerificationModule } from './verification/verification.module';
     PaymentAccountsModule,
     VerificationModule,
     ModerationModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],

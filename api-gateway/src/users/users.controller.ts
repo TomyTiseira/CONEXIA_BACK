@@ -63,7 +63,7 @@ export class UsersController {
       });
     }
 
-    return this.client.send('getUserPlan', userId).pipe(
+    return this.client.send('getUserPlan', { userId }).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

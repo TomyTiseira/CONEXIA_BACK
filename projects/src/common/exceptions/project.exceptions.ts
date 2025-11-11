@@ -143,3 +143,12 @@ export class ProjectNotOwnedByUserException extends RpcException {
     });
   }
 }
+
+export class ProjectLimitExceededException extends RpcException {
+  constructor(limit: number, current: number) {
+    super({
+      status: 403,
+      message: `Has alcanzado el límite de proyectos publicados (${current}/${limit}). Actualiza tu plan de suscripción para publicar más proyectos.`,
+    });
+  }
+}
