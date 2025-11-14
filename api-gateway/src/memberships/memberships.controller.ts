@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -39,6 +38,16 @@ export class MembershipsController {
   @AuthRoles([ROLES.ADMIN, ROLES.USER])
   getBenefits() {
     return this.client.send('getBenefits', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('me/plan')
+  @AuthRoles([ROLES.USER])
+  getMyPlan(@User() user: AuthenticatedUser) {
+    return this.client.send('getUserPlan', { userId: user.id }).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
