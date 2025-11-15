@@ -232,8 +232,17 @@ export class ProjectsController {
 
   @Get('application-types')
   getApplicationTypes() {
-    // Return enum values as an array of strings
-    return Object.values(ApplicationType);
+    // Return enum values as an array of objects with a display name and the key used by the API
+    const displayNames: Record<string, string> = {
+      CV: 'CV',
+      QUESTIONS: 'Preguntas',
+      EVALUATION: 'Evaluación Técnica',
+    };
+
+    return Object.values(ApplicationType).map((key) => ({
+      name: displayNames[key as string] ?? key,
+      key,
+    }));
   }
 
   @Get('contract-types')
