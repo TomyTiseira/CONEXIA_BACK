@@ -7,9 +7,17 @@ export interface ProjectDetailResponse {
   owner: string;
   ownerId: number;
   ownerImage?: string;
-  skills: string[];
+  roles?: Array<{
+    id: number;
+    title: string;
+    description?: string;
+    applicationTypes?: string[];
+    contractType?: { id: number; name: string } | null;
+    collaborationType?: { id: number; name: string } | null;
+    maxCollaborators?: number | null;
+    skills?: { id: number; name?: string }[];
+  }>;
   category: string[];
-  // contractType, collaborationType and maxCollaborators are role-scoped
   isActive: boolean;
   deletedAt?: string;
   startDate?: Date;

@@ -21,7 +21,7 @@ export interface Skill {
 export function transformProjectToDetailResponse(
   project: Project,
   ownerData: UserWithProfile,
-  skillNames: string[],
+  skillsMap: Map<number, string>,
   currentUserId: number,
   location?: string,
   isApplied: boolean = false,
@@ -30,21 +30,35 @@ export function transformProjectToDetailResponse(
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
 
+  // Map roles into the detailed shape
+  const roles = (project.roles || []).map((role) => {
+    const roleSkills =
+      role.roleSkills?.map((rs) => ({ id: rs.skillId, name: skillsMap.get(rs.skillId) })) || [];
+
+
+    return {
+      id: role.id,
+      title: role.title,
+      description: role.description,
+      applicationTypes: role.applicationTypes || [],
+      contractType: role.contractType ? { id: role.contractType.id, name: role.contractType.name } : null,
+      collaborationType: role.collaborationType ? { id: role.collaborationType.id, name: role.collaborationType.name } : null,
+      maxCollaborators: role.maxCollaborators ?? null,
+      skills: roleSkills,
+    };
+  });
+
   return {
     id: project.id,
     title: project.title,
     description: project.description,
     image: project.image,
     location,
-    owner: ownerData.profile
-      ? ownerData.profile.name + ' ' + ownerData.profile.lastName
-      : '',
+    owner: ownerData.profile ? ownerData.profile.name + ' ' + ownerData.profile.lastName : '',
     ownerId,
     ownerImage: ownerData.profile?.profilePicture,
-      // contractType and collaborationType are role-scoped and not included here
-    skills: skillNames,
+    roles: roles.length > 0 ? roles : undefined,
     category: [project.category.name],
-      // maxCollaborators is role-scoped
     isActive: project.isActive,
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,

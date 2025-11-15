@@ -165,6 +165,7 @@ export class RoleCreateDto {
   @IsOptional()
   @IsArray({ message: 'skills must be an array' })
   @IsNumber({}, { each: true, message: 'each skillId must be a number' })
+  @Transform(({ value }) => (Array.isArray(value) ? value.map((v: any) => Number(v)) : value))
   @IsPositive({ each: true, message: 'each skillId must be a positive number' })
   skills?: number[];
 

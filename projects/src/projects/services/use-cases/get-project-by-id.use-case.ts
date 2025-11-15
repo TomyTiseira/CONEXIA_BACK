@@ -63,13 +63,12 @@ export class GetProjectByIdUseCase {
       locationName = locality?.name;
     }
 
-    // Obtener información de las habilidades
+    // Obtener información de las habilidades por proyecto (mapa id->name)
     const projectSkills = await this.projectRepository.getProjectSkills(
       project.id,
     );
     const skills = await this.usersClientService.getSkillsByIds(projectSkills);
     const skillsMap = createSkillsMap(skills);
-    const skillNames = getProjectSkillNames(project, skillsMap);
 
     // Verificar si el usuario actual está postulado al proyecto
     let isApplied = false;
@@ -108,7 +107,7 @@ export class GetProjectByIdUseCase {
     const response = transformProjectToDetailResponse(
       project,
       ownerData,
-      skillNames,
+      skillsMap,
       data.currentUserId,
       locationName,
       isApplied,
