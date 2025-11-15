@@ -34,15 +34,6 @@ export class PublishProjectUseCase {
     // Validar que el usuario esté verificado
     await this.usersClientService.validateUserIsVerified(projectData.userId);
 
-    // Validar que las skills existen (si se proporcionan)
-    if (projectData.skills && projectData.skills.length > 0) {
-      const skillsValidation =
-        await this.usersClientService.validateSkillsExist(projectData.skills);
-      if (!skillsValidation.valid) {
-        throw new InvalidSkillsException(skillsValidation.invalidIds);
-      }
-    }
-
     // Validar que la categoría existe
     const category = await this.projectRepository.findCategoryById(
       projectData.categoryId,
@@ -51,23 +42,39 @@ export class PublishProjectUseCase {
       throw new CategoryNotFoundException(projectData.categoryId);
     }
 
-    // Validar que el tipo de colaboración existe
-    const collaborationType =
-      await this.projectRepository.findCollaborationTypeById(
-        projectData.collaborationTypeId,
-      );
-    if (!collaborationType) {
-      throw new CollaborationTypeNotFoundException(
-        projectData.collaborationTypeId,
+    // Validar por cada role: skills, contractType y collaborationType si se proporcionan
+    if (!projectData.roles || projectData.roles.length === 0) {
+      throw new ProjectBadRequestException(
+        'Project must have at least one role defined',
       );
     }
 
-    // Validar que el tipo de contrato existe
-    const contractType = await this.projectRepository.findContractTypeById(
-      projectData.contractTypeId,
-    );
-    if (!contractType) {
-      throw new ContractTypeNotFoundException(projectData.contractTypeId);
+    for (const r of projectData.roles) {
+      if (r.skills && r.skills.length > 0) {
+        const skillsValidation =
+          await this.usersClientService.validateSkillsExist(r.skills);
+        if (!skillsValidation.valid) {
+          throw new InvalidSkillsException(skillsValidation.invalidIds);
+        }
+      }
+
+      if (r.collaborationTypeId) {
+        const collaborationType =
+          await this.projectRepository.findCollaborationTypeById(
+            r.collaborationTypeId,
+          );
+        if (!collaborationType) {
+          throw new CollaborationTypeNotFoundException(r.collaborationTypeId);
+        }
+      }
+
+      if (r.contractTypeId) {
+        const contractType =
+          await this.projectRepository.findContractTypeById(r.contractTypeId);
+        if (!contractType) {
+          throw new ContractTypeNotFoundException(r.contractTypeId);
+        }
+      }
     }
 
     // Validar que la localidad existe (si se proporciona)
@@ -99,37 +106,24 @@ export class PublishProjectUseCase {
       title: projectData.title,
       description: projectData.description,
       categoryId: projectData.categoryId,
-      collaborationTypeId: projectData.collaborationTypeId,
-      contractTypeId: projectData.contractTypeId,
       startDate: projectData.startDate
         ? new Date(projectData.startDate)
         : undefined,
       endDate: projectData.endDate ? new Date(projectData.endDate) : undefined,
       locationId: projectData.location || undefined,
-      maxCollaborators: projectData.maxCollaborators || undefined,
       image: projectData.image || undefined,
+      requiresPartner: projectData.requiresPartner || false,
+      requiresInvestor: projectData.requiresInvestor || false,
     };
 
     // Crear proyecto
     const project = await this.projectRepository.create(projectToCreate);
 
-    // Crear las habilidades del proyecto si se proporcionan
-    if (projectData.skills && projectData.skills.length > 0) {
-      await this.projectRepository.createProjectSkills(
-        project.id,
-        projectData.skills,
-      );
-    }
-
-    // Validar y crear roles si se proporcionan
-    if (!projectData.roles || projectData.roles.length === 0) {
-      // Según la nueva regla de negocio, no se puede publicar sin al menos un rol
-      throw new ProjectBadRequestException(
-        'Project must have at least one role defined',
-      );
-    }
-
-    await this.projectRepository.createProjectRoles(project.id, projectData.roles as any);
+    // Crear roles (incluye validación previa de skills y tipos)
+    await this.projectRepository.createProjectRoles(
+      project.id,
+      projectData.roles as any,
+    );
 
     // Obtener el proyecto con todas las relaciones
     const projectWithRelations =

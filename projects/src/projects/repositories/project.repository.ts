@@ -7,6 +7,7 @@ import { Category } from '../entities/category.entity';
 import { CollaborationType } from '../entities/collaboration-type.entity';
 import { ContractType } from '../entities/contract-type.entity';
 import { ProjectSkill } from '../entities/project-skill.entity';
+import { RoleSkill } from '../entities/role-skill.entity';
 import { Project } from '../entities/project.entity';
 import { ProjectRole } from '../entities/project-role.entity';
 import { RoleQuestion } from '../entities/role-question.entity';
@@ -20,6 +21,8 @@ export class ProjectRepository {
     private readonly ormRepository: Repository<Project>,
     @InjectRepository(ProjectSkill)
     private readonly projectSkillRepository: Repository<ProjectSkill>,
+    @InjectRepository(RoleSkill)
+    private readonly roleSkillRepository: Repository<RoleSkill>,
     @InjectRepository(ProjectRole)
     private readonly projectRoleRepository: Repository<ProjectRole>,
     @InjectRepository(RoleQuestion)
@@ -40,9 +43,9 @@ export class ProjectRepository {
     return this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('project.contractType', 'contractType')
-      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.questions', 'questions')
+      .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id IN (:...projectIds)', { projectIds })
       .andWhere('project.deletedAt IS NULL')
       .orderBy('project.createdAt', 'DESC')
@@ -72,9 +75,9 @@ export class ProjectRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('project.contractType', 'contractType')
-      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.questions', 'questions')
+      .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id = :id', { id });
 
     if (includeDeleted) {
@@ -85,25 +88,13 @@ export class ProjectRepository {
   }
 
   async findAll(): Promise<Project[]> {
-    return this.ormRepository.find({
-      relations: [
-        'category',
-        'collaborationType',
-        'contractType',
-        'projectSkills',
-      ],
-    });
+    return this.ormRepository.find({ relations: ['category', 'roles'] });
   }
 
   async findActive(): Promise<Project[]> {
     return this.ormRepository.find({
       where: { deletedAt: IsNull() },
-      relations: [
-        'category',
-        'collaborationType',
-        'contractType',
-        'projectSkills',
-      ],
+      relations: ['category', 'roles'],
     });
   }
 
@@ -116,9 +107,7 @@ export class ProjectRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('project.contractType', 'contractType')
-      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .leftJoinAndSelect('project.roles', 'roles')
       .where('project.userId = :userId', { userId });
 
     // Incluir registros eliminados si se solicita
@@ -212,12 +201,13 @@ export class ProjectRepository {
         projectId,
         title: r.title,
         description: r.description,
-        vacancies: r.vacancies || 1,
-        applicationType: r.applicationType,
+        applicationTypes: r.applicationTypes || [],
+        contractTypeId: r.contractTypeId || undefined,
+        collaborationTypeId: r.collaborationTypeId || undefined,
+        maxCollaborators: r.maxCollaborators || undefined,
       };
 
       const savedRole = await this.projectRoleRepository.save(roleToSave as any);
-
       // Questions
       if (r.questions && r.questions.length > 0) {
         for (const q of r.questions) {
@@ -249,15 +239,27 @@ export class ProjectRepository {
           fileSize: r.evaluation.fileSize,
         } as any);
       }
+
+      // Role skills
+      if (r.skills && r.skills.length > 0) {
+        const roleSkills = r.skills.map((skillId: number) => ({
+          roleId: savedRole.id,
+          skillId,
+        }));
+        await this.roleSkillRepository.save(roleSkills as any);
+      }
     }
   }
 
   async getProjectSkills(projectId: number): Promise<number[]> {
-    const projectSkills = await this.projectSkillRepository.find({
-      where: { projectId },
-    });
+    // Get skills from role_skills by joining the role -> project
+    const roleSkills = await this.roleSkillRepository
+      .createQueryBuilder('rs')
+      .innerJoin('rs.role', 'role')
+      .where('role.projectId = :projectId', { projectId })
+      .getMany();
 
-    return projectSkills.map((ps) => ps.skillId);
+    return roleSkills.map((rs) => rs.skillId);
   }
 
   async deleteProjectSkills(projectId: number): Promise<void> {
@@ -289,27 +291,8 @@ export class ProjectRepository {
         categoryIds: filters.categoryIds,
       });
     }
-    // NOTA: Para filtrar por skills, colaboración y contratación, se requiere join, pero para IDs solo filtramos por project.
-    // Si necesitas filtrar por skills, deberías hacer un subquery o join aquí también.
-    if (
-      filters.collaborationTypeIds &&
-      filters.collaborationTypeIds.length > 0
-    ) {
-      idQueryBuilder.andWhere(
-        'project.collaborationTypeId IN (:...collaborationTypeIds)',
-        {
-          collaborationTypeIds: filters.collaborationTypeIds,
-        },
-      );
-    }
-    if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
-      idQueryBuilder.andWhere(
-        'project.contractTypeId IN (:...contractTypeIds)',
-        {
-          contractTypeIds: filters.contractTypeIds,
-        },
-      );
-    }
+    // NOTE: Filtering by collaboration/contract types is now role-scoped.
+    // Implement role-based filtering if required (not implemented here).
 
     idQueryBuilder.orderBy('project.createdAt', 'DESC');
     const skip = (filters.page - 1) * filters.limit;
@@ -326,9 +309,9 @@ export class ProjectRepository {
     const projects = await this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('project.contractType', 'contractType')
-      .leftJoinAndSelect('project.projectSkills', 'projectSkills')
+      .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.questions', 'questions')
+      .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id IN (:...projectIds)', { projectIds })
       .orderBy('project.createdAt', 'DESC')
       .getMany();

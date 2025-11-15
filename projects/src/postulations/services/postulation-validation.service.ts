@@ -173,10 +173,10 @@ export class PostulationValidationService {
   async validateRoleHasAvailableSlots(roleId: number): Promise<void> {
     const role = await this.projectRepository.findRoleById(roleId);
     if (!role) return;
-    const vacancies = role.vacancies || 0;
-    if (!vacancies || vacancies <= 0) return;
+    const max = role.maxCollaborators || 0;
+    if (!max || max <= 0) return;
     const acceptedCount = await this.postulationRepository.countAcceptedByRole(roleId);
-    if (acceptedCount >= vacancies) {
+    if (acceptedCount >= max) {
       throw new ProjectMaxCollaboratorsReachedException(roleId);
     }
   }

@@ -17,6 +17,7 @@ import { ProjectRole } from './projects/entities/project-role.entity';
 import { RoleQuestion } from './projects/entities/role-question.entity';
 import { RoleQuestionOption } from './projects/entities/role-question-option.entity';
 import { RoleEvaluation } from './projects/entities/role-evaluation.entity';
+import { RoleSkill } from './projects/entities/role-skill.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
@@ -35,6 +36,7 @@ import { Skill } from './shared/entities/skill.entity';
       database: envs.dbDatabase,
       entities: [
         Project,
+        RoleSkill,
         ProjectSkill,
         Category,
         CollaborationType,

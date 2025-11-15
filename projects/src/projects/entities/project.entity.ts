@@ -10,9 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Category } from './category.entity';
-import { CollaborationType } from './collaboration-type.entity';
-import { ContractType } from './contract-type.entity';
-import { ProjectSkill } from './project-skill.entity';
+import { ProjectRole } from './project-role.entity';
 
 @Entity('projects')
 export class Project {
@@ -35,36 +33,25 @@ export class Project {
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 
-  @Column()
-  collaborationTypeId: number;
-
-  @ManyToOne(() => CollaborationType)
-  @JoinColumn({ name: 'collaborationTypeId' })
-  collaborationType: CollaborationType;
-
   @Column({ name: 'start_date', type: 'timestamp', nullable: true })
   startDate: Date;
 
   @Column({ name: 'end_date', type: 'timestamp', nullable: true })
   endDate: Date;
 
-  @OneToMany(() => ProjectSkill, (projectSkill) => projectSkill.project, {
-    cascade: true,
-  })
-  projectSkills: ProjectSkill[];
+
+  @OneToMany(() => ProjectRole, (role) => role.project, { cascade: true })
+  roles: ProjectRole[];
 
   @Column({ name: 'location_id', nullable: true })
   locationId: number;
 
-  @Column()
-  contractTypeId: number;
+  // Project-level flags indicating if project requires partner/collaborator
+  @Column({ name: 'requires_partner', default: false })
+  requiresPartner: boolean;
 
-  @ManyToOne(() => ContractType)
-  @JoinColumn({ name: 'contractTypeId' })
-  contractType: ContractType;
-
-  @Column({ nullable: true })
-  maxCollaborators: number;
+  @Column({ name: 'requires_investor', default: false })
+  requiresInvestor: boolean;
 
   @Column({ type: 'varchar', nullable: true })
   image?: string;

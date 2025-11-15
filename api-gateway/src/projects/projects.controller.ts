@@ -14,7 +14,7 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+import { validate, ValidationError } from 'class-validator';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError } from 'rxjs';
@@ -28,7 +28,7 @@ import {
 import { NATS_SERVICE } from '../config';
 import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { GetProjectsDto } from './dtos/get-projects.dto';
-import { PublishProjectDto } from './dtos/publish-project.dto';
+import { PublishProjectDto, ApplicationType } from './dtos/publish-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -87,14 +87,20 @@ export class ProjectsController {
     const errors = await validate(dto);
 
     if (errors.length > 0) {
-      // Lanzamos una excepción HTTP con los errores de validación
+      const format = (err: ValidationError): any => {
+        const out: any = { property: err.property };
+        if (err.constraints && Object.keys(err.constraints).length > 0)
+          out.constraints = err.constraints;
+        if (err.children && err.children.length > 0)
+          out.children = err.children.map((c) => format(c));
+        return out;
+      };
+
+      // Lanzamos una excepción HTTP con los errores de validación, incluyendo hijos
       throw new RpcException({
         status: 400,
         message: 'Validation failed',
-        errors: errors.map((e) => ({
-          property: e.property,
-          constraints: e.constraints,
-        })),
+        errors: errors.map((e) => format(e)),
       });
     }
 
@@ -172,6 +178,12 @@ export class ProjectsController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get('application-types')
+  getApplicationTypes() {
+    // Return enum values as an array of strings
+    return Object.values(ApplicationType);
   }
 
   @Get('contract-types')

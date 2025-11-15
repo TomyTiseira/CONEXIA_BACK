@@ -1,15 +1,16 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
   IsString,
+  ArrayMinSize,
 } from 'class-validator';
-import { ValidateNested, IsEnum, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ValidateNested, IsEnum } from 'class-validator';
 
 export class PublishProjectDto {
   @IsNumber({}, { message: 'userId must be a number' })
@@ -31,16 +32,6 @@ export class PublishProjectDto {
   categoryId: number;
 
   @IsOptional()
-  @IsArray({ message: 'skillIds must be an array' })
-  @IsNumber({}, { each: true, message: 'each skillId must be a number' })
-  @IsPositive({ each: true, message: 'each skillId must be a positive number' })
-  skills?: number[];
-
-  @IsNumber({}, { message: 'collaborationTypeId must be a number' })
-  @IsPositive({ message: 'collaborationTypeId must be a positive number' })
-  collaborationTypeId: number;
-
-  @IsOptional()
   @IsDateString({}, { message: 'startDate must be a valid date' })
   startDate?: string;
 
@@ -54,46 +45,49 @@ export class PublishProjectDto {
   @Transform(({ value }) => (value ? Number(value) : undefined))
   location?: number;
 
-  @IsNumber({}, { message: 'contractTypeId must be a number' })
-  @IsPositive({ message: 'contractTypeId must be a positive number' })
-  contractTypeId: number;
-
+  // Project-level flags: whether the project requires a partner and/or collaborators
   @IsOptional()
-  @IsNumber({}, { message: 'maxCollaborators must be a number' })
-  @IsPositive({ message: 'maxCollaborators must be a positive number' })
-  maxCollaborators?: number;
+  @IsBoolean({ message: 'requiresPartner must be a boolean' })
+  requiresPartner?: boolean;
+
+  // Flag indicating the project requires an investor
+  @IsOptional()
+  @IsBoolean({ message: 'requiresInvestor must be a boolean' })
+  requiresInvestor?: boolean;
 
   @IsString({ message: 'image must be a string' })
   @IsOptional()
   image?: string;
 
   // Roles definitions
-  @IsOptional()
-  @IsArray()
+  @IsArray({ message: 'roles must be an array' })
+  @ArrayMinSize(1, { message: 'At least one role is required' })
   @ValidateNested({ each: true })
   @Type(() => RoleCreateDto)
-  roles?: RoleCreateDto[];
+  roles: RoleCreateDto[];
 }
 
 export class RoleQuestionCreateDto {
-  @IsString()
+  @IsNotEmpty({ message: 'questionText is required' })
+  @IsString({ message: 'questionText must be a string' })
   questionText: string;
 
-  @IsString()
+  @IsNotEmpty({ message: 'questionType is required' })
+  @IsString({ message: 'questionType must be a string' })
   questionType: 'OPEN' | 'MULTIPLE_CHOICE';
 
   @IsOptional()
-  @IsArray()
+  @IsArray({ message: 'options must be an array' })
   options?: string[];
 }
 
 export class RoleEvaluationCreateDto {
-  @IsOptional()
-  @IsString()
-  description?: string;
+  @IsNotEmpty({ message: 'description is required' })
+  @IsString({ message: 'description must be a string' })
+  description: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'link must be a string' })
   link?: string;
 }
 
@@ -107,17 +101,13 @@ export enum ApplicationType {
 }
 
 export class RoleCreateDto {
-  @IsString()
+  @IsNotEmpty({ message: 'title is required' })
+  @IsString({ message: 'title must be a string' })
   title: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'description must be a string' })
   description?: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  vacancies?: number;
 
   @IsOptional()
   @IsNumber({}, { message: 'contractTypeId must be a number' })
@@ -129,17 +119,29 @@ export class RoleCreateDto {
   @IsPositive({ message: 'collaborationTypeId must be a positive number' })
   collaborationTypeId?: number;
 
-  @IsEnum(ApplicationType)
-  applicationType: ApplicationType;
+  @IsOptional()
+  @IsNumber({}, { message: 'maxCollaborators must be a number' })
+  @IsPositive({ message: 'maxCollaborators must be a positive number' })
+  maxCollaborators?: number;
 
   @IsOptional()
-  @IsArray()
+  @IsArray({ message: 'skills must be an array' })
+  @IsNumber({}, { each: true, message: 'each skillId must be a number' })
+  @IsPositive({ each: true, message: 'each skillId must be a positive number' })
+  skills?: number[];
+
+  @IsArray({ message: 'applicationTypes must be an array' })
+  @IsEnum(ApplicationType, { each: true })
+  applicationTypes: ApplicationType[];
+
+  @IsOptional()
+  @IsArray({ message: 'questions must be an array' })
   @ValidateNested({ each: true })
   @Type(() => RoleQuestionCreateDto)
   questions?: RoleQuestionCreateDto[];
 
   @IsOptional()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => RoleEvaluationCreateDto)
   evaluation?: RoleEvaluationCreateDto;
 }

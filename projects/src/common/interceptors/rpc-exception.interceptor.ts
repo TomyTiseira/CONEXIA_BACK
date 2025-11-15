@@ -8,6 +8,7 @@ import {
 import { RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { ValidationError } from 'class-validator';
 
 @Injectable()
 export class RpcExceptionInterceptor implements NestInterceptor {
@@ -21,12 +22,32 @@ export class RpcExceptionInterceptor implements NestInterceptor {
 
         // Si es un error de validación (BadRequestException)
         if (error.status === 400 && error.response) {
+          // format class-validator ValidationError[] into plain serializable objects
+          const rawErrors = Array.isArray(error.response.message)
+            ? error.response.message
+            : [];
+
+          const formatValidationError = (ve: ValidationError): any => {
+            const out: any = { property: ve.property };
+            if (ve.constraints) {
+              out.constraints = ve.constraints;
+            }
+            if (ve.children && ve.children.length) {
+              out.children = ve.children.map((c) => formatValidationError(c));
+            }
+            return out;
+          };
+
+          const formatted = rawErrors.map((r: any) =>
+            r instanceof Object && 'property' in r ? formatValidationError(r as ValidationError) : r,
+          );
+
           return throwError(
             () =>
               new RpcException({
                 status: 400,
-                message: 'Validation error',
-                errors: error.response.message,
+                message: 'Validation failed',
+                errors: formatted,
               }),
           );
         }

@@ -47,6 +47,5 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     MembershipsModule,
   ],
   controllers: [],
-  providers: [],
 })
 export class AppModule {}

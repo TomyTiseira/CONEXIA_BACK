@@ -30,12 +30,12 @@ export function transformProjectsWithOwners(
     const user = usersMap.get(project.userId);
     const profile = user?.profile;
 
-    // Obtener las skills del proyecto
+    // Obtener las skills del proyecto a partir de los roles
     const projectSkills =
-      project.projectSkills?.map((ps) => ({
-        id: ps.skillId,
-        name: skillsMap?.get(ps.skillId),
-      })) || [];
+      project.roles
+        ?.flatMap((role) =>
+          role.roleSkills?.map((rs) => ({ id: rs.skillId, name: skillsMap?.get(rs.skillId) })) || [],
+        ) || [];
 
     return {
       id: project.id,
@@ -45,19 +45,12 @@ export function transformProjectsWithOwners(
         id: project.category.id,
         name: project.category.name,
       },
-      collaborationType: {
-        id: project.collaborationType.id,
-        name: project.collaborationType.name,
-      },
-      contractType: {
-        id: project.contractType.id,
-        name: project.contractType.name,
-      },
+      // collaborationType and contractType are role-scoped and not included here
       owner: {
         id: user?.id || project.userId,
         name: profile
           ? `${profile.name} ${profile.lastName}`
-          : 'Usuario no encontrado',
+          : '',
         image: profile?.profilePicture,
       },
       isOwner: currentUserId === project.userId,
@@ -69,7 +62,7 @@ export function transformProjectsWithOwners(
       isActive: project.isActive,
       isApplied: appliedProjectIds.has(project.id),
       approvedApplications: approvedApplicationsMap.get(project.id) || 0,
-      maxCollaborators: project.maxCollaborators ?? 1,
+  // maxCollaborators is role-scoped
       postulationStatus: postulationStatusMap.get(project.id) ?? null,
     };
   });

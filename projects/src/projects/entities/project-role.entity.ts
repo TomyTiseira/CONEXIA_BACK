@@ -11,6 +11,9 @@ import {
 import { Project } from './project.entity';
 import { RoleQuestion } from './role-question.entity';
 import { RoleEvaluation } from './role-evaluation.entity';
+import { RoleSkill } from './role-skill.entity';
+import { ContractType } from './contract-type.entity';
+import { CollaborationType } from './collaboration-type.entity';
 
 @Entity('project_roles')
 export class ProjectRole {
@@ -30,11 +33,29 @@ export class ProjectRole {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ default: 1 })
-  vacancies: number;
 
-  @Column({ name: 'application_type' })
-  applicationType: string;
+  @Column({ name: 'application_types', type: 'simple-array', nullable: true })
+  applicationTypes: string[];
+
+  @Column({ name: 'contract_type_id', nullable: true })
+  contractTypeId?: number;
+
+  @ManyToOne(() => ContractType)
+  @JoinColumn({ name: 'contract_type_id' })
+  contractType?: ContractType;
+
+  @Column({ name: 'collaboration_type_id', nullable: true })
+  collaborationTypeId?: number;
+
+  @ManyToOne(() => CollaborationType)
+  @JoinColumn({ name: 'collaboration_type_id' })
+  collaborationType?: CollaborationType;
+
+  @Column({ nullable: true })
+  maxCollaborators?: number;
+
+  @OneToMany(() => RoleSkill, (rs) => rs.role, { cascade: true })
+  roleSkills?: RoleSkill[];
 
   @OneToMany(() => RoleQuestion, (q) => q.role, { cascade: true })
   questions: RoleQuestion[];

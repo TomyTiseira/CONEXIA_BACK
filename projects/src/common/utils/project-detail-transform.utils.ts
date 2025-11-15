@@ -38,14 +38,13 @@ export function transformProjectToDetailResponse(
     location,
     owner: ownerData.profile
       ? ownerData.profile.name + ' ' + ownerData.profile.lastName
-      : 'Usuario no encontrado',
+      : '',
     ownerId,
     ownerImage: ownerData.profile?.profilePicture,
-    contractType: [project.contractType.name],
-    collaborationType: [project.collaborationType.name],
+      // contractType and collaborationType are role-scoped and not included here
     skills: skillNames,
     category: [project.category.name],
-    maxCollaborators: project.maxCollaborators,
+      // maxCollaborators is role-scoped
     isActive: project.isActive,
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,
@@ -60,8 +59,8 @@ export function transformProjectToDetailResponse(
 export function extractSkillIdsFromProjects(projects: Project[]): number[] {
   const allSkillIds = new Set<number>();
   projects.forEach((project) => {
-    project.projectSkills.forEach((ps) => {
-      allSkillIds.add(ps.skillId);
+    project.roles?.forEach((role) => {
+      role.roleSkills?.forEach((rs) => allSkillIds.add(rs.skillId));
     });
   });
   return Array.from(allSkillIds);
@@ -75,7 +74,8 @@ export function getProjectSkillNames(
   project: Project,
   skillsMap: Map<number, string>,
 ): string[] {
-  return project.projectSkills
-    .map((ps) => skillsMap.get(ps.skillId))
-    .filter((name): name is string => typeof name === 'string');
+  const names =
+    project.roles
+      ?.flatMap((role) => role.roleSkills?.map((rs) => skillsMap.get(rs.skillId)) || []) || [];
+  return names.filter((name): name is string => typeof name === 'string');
 }
