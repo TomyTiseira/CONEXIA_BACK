@@ -24,7 +24,6 @@ export function transformProjectToDetailResponse(
   skillsMap: Map<number, string>,
   currentUserId: number,
   location?: string,
-  isApplied: boolean = false,
   approvedApplications: number = 0,
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
@@ -63,8 +62,7 @@ export function transformProjectToDetailResponse(
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,
     endDate: project.endDate,
-    isOwner: project.userId === currentUserId,
-    isApplied,
+  isOwner: project.userId === currentUserId,
     approvedApplications,
     hasReported: false, // El use case lo sobrescribirá con el valor correcto
   };

@@ -70,14 +70,7 @@ export class GetProjectByIdUseCase {
     const skills = await this.usersClientService.getSkillsByIds(projectSkills);
     const skillsMap = createSkillsMap(skills);
 
-    // Verificar si el usuario actual está postulado al proyecto
-    let isApplied = false;
-    if (data.currentUserId && project.userId !== data.currentUserId) {
-      isApplied = await this.postulationRepository.existsByProjectAndUser(
-        project.id,
-        data.currentUserId,
-      );
-    }
+    // (isApplied removed from detail response by request)
 
     // Verificar si el usuario actual ya reportó este proyecto
     let hasReported = false;
@@ -110,7 +103,6 @@ export class GetProjectByIdUseCase {
       skillsMap,
       data.currentUserId,
       locationName,
-      isApplied,
       approvedCount,
     );
 

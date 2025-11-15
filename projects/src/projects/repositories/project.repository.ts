@@ -46,6 +46,7 @@ export class ProjectRepository {
       .leftJoinAndSelect('project.roles', 'roles')
       .leftJoinAndSelect('roles.contractType', 'contractType')
       .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('roles.roleSkills', 'roleSkills')
       .leftJoinAndSelect('roles.questions', 'questions')
       .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id IN (:...projectIds)', { projectIds })
@@ -77,11 +78,12 @@ export class ProjectRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-      .leftJoinAndSelect('project.roles', 'roles')
-      .leftJoinAndSelect('roles.contractType', 'contractType')
-      .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
-      .leftJoinAndSelect('roles.questions', 'questions')
-      .leftJoinAndSelect('roles.evaluations', 'evaluations')
+  .leftJoinAndSelect('project.roles', 'roles')
+  .leftJoinAndSelect('roles.contractType', 'contractType')
+  .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
+  .leftJoinAndSelect('roles.roleSkills', 'roleSkills')
+  .leftJoinAndSelect('roles.questions', 'questions')
+  .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id = :id', { id });
 
     if (includeDeleted) {
