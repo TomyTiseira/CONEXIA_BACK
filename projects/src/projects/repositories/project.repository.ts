@@ -237,6 +237,7 @@ export class ProjectRepository {
           fileUrl: r.evaluation.fileUrl,
           fileName: r.evaluation.fileName,
           fileSize: r.evaluation.fileSize,
+          fileMimeType: r.evaluation.fileMimeType,
         } as any);
       }
 

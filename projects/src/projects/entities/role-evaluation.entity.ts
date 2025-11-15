@@ -25,6 +25,9 @@ export class RoleEvaluation {
   @Column({ name: 'file_name', nullable: true })
   fileName?: string;
 
+  @Column({ name: 'file_mime_type', nullable: true })
+  fileMimeType?: string;
+
   @Column({ name: 'file_size', nullable: true })
   fileSize?: number;
 

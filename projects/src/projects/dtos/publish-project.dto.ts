@@ -9,8 +9,9 @@ import {
   IsPositive,
   IsString,
   ArrayMinSize,
+  IsIn,
 } from 'class-validator';
-import { ValidateNested, IsEnum } from 'class-validator';
+import { ValidateNested, IsEnum, ValidateIf } from 'class-validator';
 
 export class PublishProjectDto {
   @IsNumber({}, { message: 'userId must be a number' })
@@ -89,15 +90,33 @@ export class RoleEvaluationCreateDto {
   @IsOptional()
   @IsString({ message: 'link must be a string' })
   link?: string;
+
+  @IsOptional()
+  @IsString({ message: 'fileUrl must be a string' })
+  fileUrl?: string;
+
+  @IsOptional()
+  @IsString({ message: 'fileName must be a string' })
+  fileName?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'fileSize must be a number' })
+  @IsPositive({ message: 'fileSize must be a positive number' })
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  fileSize?: number;
+
+  @IsOptional()
+  @IsString({ message: 'fileMimeType must be a string' })
+  @IsIn(['image/png', 'image/jpeg', 'application/pdf'], {
+    message: 'fileMimeType must be one of: image/png, image/jpeg, application/pdf',
+  })
+  fileMimeType?: string;
 }
 
 export enum ApplicationType {
   CV = 'CV',
   QUESTIONS = 'QUESTIONS',
   EVALUATION = 'EVALUATION',
-  MIXED = 'MIXED',
-  INVESTOR = 'INVESTOR',
-  PARTNER = 'PARTNER',
 }
 
 export class RoleCreateDto {
@@ -131,17 +150,19 @@ export class RoleCreateDto {
   skills?: number[];
 
   @IsArray({ message: 'applicationTypes must be an array' })
+  @ArrayMinSize(1, { message: 'At least one applicationType is required' })
   @IsEnum(ApplicationType, { each: true })
   applicationTypes: ApplicationType[];
 
-  @IsOptional()
+  @ValidateIf((o) => Array.isArray(o.applicationTypes) && o.applicationTypes.includes(ApplicationType.QUESTIONS))
   @IsArray({ message: 'questions must be an array' })
+  @ArrayMinSize(1, { message: 'At least one question is required when applicationTypes includes QUESTIONS' })
   @ValidateNested({ each: true })
   @Type(() => RoleQuestionCreateDto)
   questions?: RoleQuestionCreateDto[];
 
-  @IsOptional()
-  @ValidateNested({ each: true })
+  @ValidateIf((o) => Array.isArray(o.applicationTypes) && o.applicationTypes.includes(ApplicationType.EVALUATION))
+  @ValidateNested()
   @Type(() => RoleEvaluationCreateDto)
   evaluation?: RoleEvaluationCreateDto;
 }

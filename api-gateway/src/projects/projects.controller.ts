@@ -16,6 +16,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { diskStorage } from 'multer';
+import { promises as fs } from 'fs';
 import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
@@ -46,44 +47,109 @@ export class ProjectsController {
   @AuthRoles([ROLES.USER])
   @Post('publish')
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'image', maxCount: 1 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const name = uniqueSuffix + extname(file.originalname);
-          cb(null, name);
+    FileFieldsInterceptor(
+      [
+        { name: 'image', maxCount: 1 },
+        { name: 'evaluationFiles', maxCount: 20 },
+      ],
+      {
+        storage: diskStorage({
+          destination: (req, file, cb) => {
+            const base = join(process.cwd(), 'uploads', 'projects');
+            // images -> uploads/projects/images
+            // evaluation files -> uploads/projects/evaluation
+            let dest: string;
+            if (file.fieldname === 'image') dest = join(base, 'images');
+            else if (file.fieldname === 'evaluationFiles')
+              dest = join(base, 'evaluation');
+            else dest = base;
+            // ensure destination exists
+            fs.mkdir(dest, { recursive: true })
+              .then(() => cb(null, dest))
+              .catch((err) => cb(err, dest));
+          },
+          filename: (req, file, cb) => {
+            const uniqueSuffix =
+              Date.now() + '-' + Math.round(Math.random() * 1e9);
+            const name = uniqueSuffix + extname(file.originalname);
+            cb(null, name);
+          },
+        }),
+        limits: { fileSize: 5 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+          const allowedImageTypes = ['image/jpeg', 'image/png'];
+          const allowedEvaluationTypes = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+          ];
+
+          if (file.fieldname === 'image') {
+            if (allowedImageTypes.includes(file.mimetype)) cb(null, true);
+            else
+              cb(
+                new RpcException({
+                  status: 400,
+                  message:
+                    'Only images in JPEG or PNG format are allowed for project image.',
+                }),
+                false,
+              );
+          } else if (file.fieldname === 'evaluationFiles') {
+            if (allowedEvaluationTypes.includes(file.mimetype)) cb(null, true);
+            else
+              cb(
+                new RpcException({
+                  status: 400,
+                  message:
+                    'Only images (JPEG/PNG) or PDF are allowed for evaluation files.',
+                }),
+                false,
+              );
+          } else cb(null, true);
         },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        if (allowedTypes.includes(file.mimetype)) {
-          cb(null, true);
-        } else {
-          cb(
-            new RpcException({
-              status: 400,
-              message: 'Only images in JPEG or PNG format are allowed.',
-            }),
-            false,
-          );
-        }
       },
-    }),
+    ),
   )
   async publishProject(
     @Req() req: AuthenticatedRequest,
     @UploadedFiles()
     files: {
       image?: Express.Multer.File[];
+      evaluationFiles?: Express.Multer.File[];
     } = {},
     @User() user: AuthenticatedUser,
   ) {
     const body = (req.body as { [key: string]: any }) ?? {};
 
-    const dto = plainToInstance(PublishProjectDto, body);
+    // Common parsing helper: if nested objects/arrays are sent as JSON strings in multipart
+    const parsedBody: any = { ...body };
+    if (typeof parsedBody.roles === 'string') {
+      try {
+        parsedBody.roles = JSON.parse(parsedBody.roles);
+      } catch {
+        // keep as-is; validation will catch it
+      }
+    }
+
+    // Attach evaluation files metadata to corresponding roles (by index)
+    const evalFiles = files.evaluationFiles ?? [];
+    if (Array.isArray(parsedBody.roles)) {
+      for (let i = 0; i < parsedBody.roles.length; i++) {
+        const role = parsedBody.roles[i];
+        const file = evalFiles[i];
+        if (file) {
+          role.evaluation = role.evaluation || {};
+          role.evaluation.fileUrl = file.filename;
+          role.evaluation.fileName = file.originalname;
+          role.evaluation.fileSize = file.size;
+          role.evaluation.fileMimeType = file.mimetype;
+        }
+      }
+    }
+
+    // Now transform and validate after attaching file metadata
+    const dto = plainToInstance(PublishProjectDto, parsedBody);
     const errors = await validate(dto);
 
     if (errors.length > 0) {
@@ -96,41 +162,25 @@ export class ProjectsController {
         return out;
       };
 
-      // Lanzamos una excepción HTTP con los errores de validación, incluyendo hijos
-      throw new RpcException({
-        status: 400,
-        message: 'Validation failed',
-        errors: errors.map((e) => format(e)),
-      });
-    }
-
-    // Validación manual de tipos de archivo
-    const allowedTypes = ['image/jpeg', 'image/png'];
-    let isValid = true;
-    const filesToDelete: string[] = [];
-
-    if (files.image?.[0]) {
-      if (!allowedTypes.includes(files.image[0].mimetype)) {
-        isValid = false;
-      } else {
-        filesToDelete.push(files.image[0].path);
-      }
-    }
-
-    if (!isValid) {
-      // Borra todos los archivos guardados
+      // Clean up uploaded files on validation error
+      const filesToDelete = [
+        ...(files.image?.map((f) => f.path) ?? []),
+        ...(files.evaluationFiles?.map((f) => f.path) ?? []),
+      ];
       await Promise.all(
         filesToDelete.map(async (filePath) => {
           try {
             await import('fs/promises').then((fs) => fs.unlink(filePath));
           } catch {
-            // ignorar errores
+            // ignore
           }
         }),
       );
+
       throw new RpcException({
         status: 400,
-        message: 'Only images in JPEG or PNG format are allowed.',
+        message: 'Validation failed',
+        errors: errors.map((e) => format(e)),
       });
     }
 
