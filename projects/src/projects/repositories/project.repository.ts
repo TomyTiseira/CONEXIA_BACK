@@ -44,6 +44,8 @@ export class ProjectRepository {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
       .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.contractType', 'contractType')
+      .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
       .leftJoinAndSelect('roles.questions', 'questions')
       .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id IN (:...projectIds)', { projectIds })
@@ -76,6 +78,8 @@ export class ProjectRepository {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
       .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.contractType', 'contractType')
+      .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
       .leftJoinAndSelect('roles.questions', 'questions')
       .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id = :id', { id });
@@ -108,6 +112,8 @@ export class ProjectRepository {
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
       .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.contractType', 'contractType')
+      .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
       .where('project.userId = :userId', { userId });
 
     // Incluir registros eliminados si se solicita
@@ -219,9 +225,10 @@ export class ProjectRepository {
           } as any);
 
           if (q.options && q.options.length > 0) {
-            const options = q.options.map((opt: string) => ({
+            const options = q.options.map((opt: any) => ({
               questionId: question.id,
-              optionText: opt,
+              optionText: typeof opt === 'string' ? opt : opt.optionText,
+              isCorrect: typeof opt === 'object' && opt.isCorrect ? true : false,
             }));
             await this.roleQuestionOptionRepository.save(options as any);
           }

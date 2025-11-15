@@ -13,7 +13,7 @@ export class ProjectResponseDto {
     image?: string;
   };
   isOwner: boolean;
-  skills: {
+  skills?: {
     id: number;
     name?: string;
   }[];
@@ -22,6 +22,9 @@ export class ProjectResponseDto {
   isActive: boolean;
   isApplied: boolean;
   approvedApplications: number;
-  // maxCollaborators is now role-scoped
   postulationStatus?: { code: string } | null;
+  summary?: {
+    contractTypes?: string[];
+    collaborationTypes?: string[];
+  };
 }

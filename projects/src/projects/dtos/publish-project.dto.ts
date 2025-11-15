@@ -77,9 +77,22 @@ export class RoleQuestionCreateDto {
   @IsString({ message: 'questionType must be a string' })
   questionType: 'OPEN' | 'MULTIPLE_CHOICE';
 
-  @IsOptional()
+  @ValidateIf((o) => o.questionType === 'MULTIPLE_CHOICE')
   @IsArray({ message: 'options must be an array' })
-  options?: string[];
+  @ArrayMinSize(1, { message: 'At least one option is required when questionType is MULTIPLE_CHOICE' })
+  @ValidateNested({ each: true })
+  @Type(() => OptionCreateDto)
+  options?: OptionCreateDto[];
+}
+
+export class OptionCreateDto {
+  @IsNotEmpty({ message: 'optionText is required' })
+  @IsString({ message: 'optionText must be a string' })
+  optionText: string;
+
+  @IsOptional()
+  @IsBoolean({ message: 'isCorrect must be a boolean' })
+  isCorrect?: boolean;
 }
 
 export class RoleEvaluationCreateDto {

@@ -15,4 +15,7 @@ export class RoleQuestionOption {
 
   @Column({ name: 'option_text' })
   optionText: string;
+
+  @Column({ name: 'is_correct', default: false })
+  isCorrect: boolean;
 }

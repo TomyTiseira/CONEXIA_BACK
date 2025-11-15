@@ -143,6 +143,14 @@ export class GetProjectsUseCase {
     }
 
     // Transformar los proyectos usando la función común
+    // Obtener mapas de contract y collaboration types como fallback en caso de que las relaciones no vengan pobladas
+    const contractTypes = await this.projectRepository.findAllContractTypes();
+    const collaborationTypes = await this.projectRepository.findAllCollaborationTypes();
+    const contractTypeMap = new Map(contractTypes.map((c) => [c.id, c.name]));
+    const collaborationTypeMap = new Map(
+      collaborationTypes.map((c) => [c.id, c.name]),
+    );
+
     const transformedProjects = transformProjectsWithOwners(
       projects,
       users,
@@ -151,6 +159,8 @@ export class GetProjectsUseCase {
       appliedProjectIds,
       approvedApplicationsMap,
       postulationStatusMap,
+      contractTypeMap,
+      collaborationTypeMap,
     );
 
     // Agregar el campo hasReported a cada proyecto
