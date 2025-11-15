@@ -218,6 +218,11 @@ export class MercadoPagoService {
       const frequency = billingCycle === BillingCycle.MONTHLY ? 1 : 12;
       const frequencyType = 'months';
 
+      // DEBUG: Log para verificar el valor de backUrl
+      this.logger.log(`🔍 DEBUG - backUrl value: "${backUrl}"`);
+      this.logger.log(`🔍 DEBUG - backUrl type: ${typeof backUrl}`);
+      this.logger.log(`🔍 DEBUG - envs.mercadoPagoBackUrl: "${envs.mercadoPagoBackUrl}"`);
+
       const planData = {
         reason: `${planName} - ${billingCycle === BillingCycle.MONTHLY ? 'Mensual' : 'Anual'}`,
         auto_recurring: {
@@ -233,6 +238,7 @@ export class MercadoPagoService {
       this.logger.log(
         `Creando plan de suscripción en MercadoPago: ${planName}`,
       );
+      this.logger.log(`🔍 DEBUG - Full planData:`, JSON.stringify(planData, null, 2));
       const response = await this.preApprovalPlan.create({ body: planData });
 
       if (!response.id || !response.init_point) {
