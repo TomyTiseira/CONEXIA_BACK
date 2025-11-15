@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { NATS_SERVICE } from 'src/config';
 import { UserPlanResponseDto } from '../../dto/user-plan-response.dto';
 import { PlanRepository } from '../../repository/plan.repository';
@@ -77,13 +77,20 @@ export class GetUserPlanUseCase {
     // 4. Si no tiene suscripción activa, buscar plan Free
     const freePlan = await this.plans.findFreePlan();
 
-    // 5. Si no existe el plan Free, lanzar excepción
+    // 5. Si no existe el plan Free, retornar plan Free por defecto
     if (!freePlan) {
-      throw new RpcException({
-        statusCode: 500,
-        message:
-          'Free plan not found in database. Please contact system administrator.',
-      });
+      return {
+        plan: {
+          id: 0,
+          name: 'Free',
+          description: 'Plan gratuito básico',
+          monthlyPrice: 0,
+          annualPrice: 0,
+          benefits: [],
+        },
+        memberSince,
+        isFreePlan: true,
+      };
     }
 
     // 6. Retornar plan Free
