@@ -33,4 +33,7 @@ export class RoleEvaluation {
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  @Column({ name: 'days', type: 'int', default: 10, nullable: true })
+  days?: number;
 }

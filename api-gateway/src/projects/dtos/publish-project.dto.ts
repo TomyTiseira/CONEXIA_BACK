@@ -102,6 +102,12 @@ export class RoleEvaluationCreateDto {
       'fileMimeType must be one of: image/png, image/jpeg, application/pdf',
   })
   fileMimeType?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'days must be a number' })
+  @IsPositive({ message: 'days must be a positive number' })
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  days?: number;
 }
 
 export enum ApplicationType {

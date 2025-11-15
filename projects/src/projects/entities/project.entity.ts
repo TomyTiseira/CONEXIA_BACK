@@ -39,7 +39,6 @@ export class Project {
   @Column({ name: 'end_date', type: 'timestamp', nullable: true })
   endDate: Date;
 
-
   @OneToMany(() => ProjectRole, (role) => role.project, { cascade: true })
   roles: ProjectRole[];
 

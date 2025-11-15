@@ -238,6 +238,7 @@ export class ProjectRepository {
           fileName: r.evaluation.fileName,
           fileSize: r.evaluation.fileSize,
           fileMimeType: r.evaluation.fileMimeType,
+          days: r.evaluation.days ?? 10,
         } as any);
       }
 
