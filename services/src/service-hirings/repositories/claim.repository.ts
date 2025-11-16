@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Claim } from '../entities/claim.entity';
 import { ClaimRole, ClaimStatus } from '../enums/claim.enum';
 
@@ -62,24 +62,57 @@ export class ClaimRepository {
     hiringId?: number;
     status?: ClaimStatus;
     claimantRole?: ClaimRole;
+    searchTerm?: string;
     page?: number;
     limit?: number;
   }): Promise<{ claims: Claim[]; total: number }> {
-    const { hiringId, status, claimantRole, page = 1, limit = 10 } = filters;
+    const {
+      hiringId,
+      status,
+      claimantRole,
+      searchTerm,
+      page = 1,
+      limit = 10,
+    } = filters;
 
-    const where: FindOptionsWhere<Claim> = {};
+    const queryBuilder = this.repository
+      .createQueryBuilder('claim')
+      .leftJoinAndSelect('claim.hiring', 'hiring')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .leftJoinAndSelect('hiring.status', 'status');
 
-    if (hiringId) where.hiringId = hiringId;
-    if (status) where.status = status;
-    if (claimantRole) where.claimantRole = claimantRole;
+    // Filtros básicos
+    if (hiringId) {
+      queryBuilder.andWhere('claim.hiringId = :hiringId', { hiringId });
+    }
+    if (status) {
+      queryBuilder.andWhere('claim.status = :status', { status });
+    }
+    if (claimantRole) {
+      queryBuilder.andWhere('claim.claimantRole = :claimantRole', {
+        claimantRole,
+      });
+    }
 
-    const [claims, total] = await this.repository.findAndCount({
-      where,
-      relations: ['hiring', 'hiring.service', 'hiring.status'],
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    // Búsqueda por texto (ID del reclamo)
+    if (searchTerm) {
+      // Si el searchTerm parece un UUID completo, buscar por ID exacto
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(searchTerm)) {
+        queryBuilder.andWhere('claim.id = :searchTerm', { searchTerm });
+      } else {
+        // Si no es UUID completo, buscar por ID parcial (convertir UUID a texto)
+        queryBuilder.andWhere('LOWER(claim.id::text) LIKE LOWER(:searchTerm)', {
+          searchTerm: `%${searchTerm}%`,
+        });
+      }
+    }
+
+    queryBuilder.orderBy('claim.createdAt', 'DESC');
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    const [claims, total] = await queryBuilder.getManyAndCount();
 
     return { claims, total };
   }
@@ -125,7 +158,7 @@ export class ClaimRepository {
   async updateClaimEvidence(
     id: string,
     updateData: {
-      description?: string;
+      clarificationResponse?: string;
       evidenceUrls?: string[];
     },
   ): Promise<Claim | null> {
@@ -136,9 +169,9 @@ export class ClaimRepository {
       status: ClaimStatus.OPEN, // Vuelve a estado OPEN después de subsanar
     };
 
-    // Si hay nueva descripción, actualizarla
-    if (updateData.description) {
-      updates.description = updateData.description;
+    // Si hay nueva respuesta de subsanación, actualizarla (NO pisa la descripción original)
+    if (updateData.clarificationResponse) {
+      updates.clarificationResponse = updateData.clarificationResponse;
     }
 
     // Si hay nuevas evidencias, agregarlas a las existentes

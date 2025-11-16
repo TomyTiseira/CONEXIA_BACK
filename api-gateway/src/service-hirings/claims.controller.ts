@@ -145,10 +145,9 @@ export class ClaimsController {
   /**
    * GET /claims/:id
    * Obtener un reclamo específico
-   * Usuario debe ser parte del hiring o admin/moderador
+   * Endpoint público - no requiere autenticación
    */
   @Get(':id')
-  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
   getClaimById(@Param('id') id: string) {
     return this.client
       .send('getClaimById', {
@@ -232,12 +231,12 @@ export class ClaimsController {
 
   /**
    * PATCH /claims/:id/update
-   * Subsanar un reclamo (actualizar descripción y/o evidencias)
+   * Subsanar un reclamo (actualizar respuesta a observaciones y/o evidencias)
    * Solo el denunciante (cliente o proveedor) puede subsanar
    * Solo disponible para reclamos en estado PENDING_CLARIFICATION
    *
    * FormData fields:
-   * - description: string (opcional, 50-2000 chars)
+   * - clarificationResponse: string (opcional, 50-2000 chars) - Respuesta a las observaciones del moderador
    * - evidence: file[] (opcional, se agregan a las existentes, máximo 10 total)
    */
   @Patch(':id/update')
@@ -283,14 +282,14 @@ export class ClaimsController {
   updateClaim(
     @User() user: AuthenticatedUser,
     @Param('id') id: string,
-    @Body() body: { description?: string },
+    @Body() body: { clarificationResponse?: string },
     @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
   ) {
     const updateDto: UpdateClaimDto = {};
 
-    // Agregar descripción si se proporciona
-    if (body.description) {
-      updateDto.description = body.description;
+    // Agregar respuesta de subsanación si se proporciona
+    if (body.clarificationResponse) {
+      updateDto.clarificationResponse = body.clarificationResponse;
     }
 
     // Agregar las URLs de las nuevas evidencias si existen

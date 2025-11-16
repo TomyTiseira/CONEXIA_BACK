@@ -1,17 +1,17 @@
 import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { CreateClaimDto } from '../../dto/create-claim.dto';
 import { Claim } from '../../entities/claim.entity';
 import {
-  ClaimRole,
-  ClaimTypeLabels,
-  ClaimTypesByRole,
+    ClaimRole,
+    ClaimTypeLabels,
+    ClaimTypesByRole,
 } from '../../enums/claim.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
@@ -79,6 +79,7 @@ export class CreateClaimUseCase {
       ServiceHiringStatusCode.APPROVED,
       ServiceHiringStatusCode.REVISION_REQUESTED,
       ServiceHiringStatusCode.DELIVERED,
+      ServiceHiringStatusCode.COMPLETED, // Permitir reclamos después de completado (período de garantía)
     ];
 
     if (!allowedStatuses.includes(hiring.status.code)) {
