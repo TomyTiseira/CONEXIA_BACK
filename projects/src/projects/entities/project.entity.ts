@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Postulation } from '../../postulations/entities/postulation.entity';
 import { Category } from './category.entity';
 import { CollaborationType } from './collaboration-type.entity';
 import { ContractType } from './contract-type.entity';
@@ -52,6 +53,9 @@ export class Project {
     cascade: true,
   })
   projectSkills: ProjectSkill[];
+
+  @OneToMany(() => Postulation, (postulation) => postulation.project)
+  postulations: Postulation[];
 
   @Column({ name: 'location_id', nullable: true })
   locationId: number;

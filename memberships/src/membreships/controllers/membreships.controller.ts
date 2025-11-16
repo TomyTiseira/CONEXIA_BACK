@@ -87,9 +87,34 @@ export class MembershipsController {
     );
   }
 
+  @MessagePattern('processPreapprovalWebhook')
+  processPreapprovalWebhook(
+    @Payload() data: { preapprovalId: string; action: string },
+  ) {
+    return this.membershipsService.processPreapprovalWebhook(
+      data.preapprovalId,
+      data.action,
+    );
+  }
+
   // User Plan
   @MessagePattern('getUserPlan')
   getUserPlan(@Payload() data: { userId: number }) {
     return this.membershipsService.getUserPlan(data.userId);
+  }
+
+  // Confirm subscription after payment (called from frontend)
+  @MessagePattern('confirmSubscription')
+  confirmSubscription(
+    @Payload()
+    data: {
+      subscriptionId: number;
+      preapprovalId: string;
+    },
+  ) {
+    return this.membershipsService.confirmSubscription(
+      data.subscriptionId,
+      data.preapprovalId,
+    );
   }
 }

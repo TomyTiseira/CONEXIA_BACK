@@ -73,6 +73,7 @@ import { SkillsValidationService } from './services/skills-validation.service';
     MembershipsClientService,
   ],
   exports: [
+    ClientsModule,
     ProfileSkillRepository,
     LocalityRepository,
     SkillsValidationService,

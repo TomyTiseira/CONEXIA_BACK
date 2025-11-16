@@ -57,7 +57,6 @@ export class PublicationRepository extends Repository<Publication> {
   ): Promise<[Publication[], number]> {
     const skip = (page - 1) * limit;
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     // Usar una subconsulta para crear un campo de prioridad y ordenar correctamente
     const queryBuilder = this.createQueryBuilder('publication')
@@ -76,7 +75,6 @@ export class PublicationRepository extends Repository<Publication> {
         'priority',
       )
       .where('publication.deletedAt IS NULL')
-      .andWhere('publication.createdAt > :oneMonthAgo', { oneMonthAgo })
       .andWhere('publication.userId != :currentUserId') // Excluir publicaciones propias
       .andWhere(
         `(

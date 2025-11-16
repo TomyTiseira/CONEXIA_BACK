@@ -32,7 +32,27 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
         return;
       }
 
+      // Verificar si el external_reference es del formato de services (hiring_X_payment_Y)
+      // En ese caso, ignorar ya que no es una suscripción
+      if (paymentData.external_reference.startsWith('hiring_')) {
+        this.logger.log(
+          `Pago ${paymentId} es de un servicio (${paymentData.external_reference}), ignorando en memberships`,
+        );
+        return;
+      }
+
+      // Intentar obtener la suscripción por external_reference (ID numérico)
       const subscriptionId = parseInt(paymentData.external_reference, 10);
+
+      // Verificar que el subscriptionId sea un número válido
+      if (isNaN(subscriptionId)) {
+        // Si no es un número, puede ser un UUID de MercadoPago
+        // En este caso, deberíamos esperar el webhook de preapproval
+        this.logger.log(
+          `external_reference no es un ID numérico (${paymentData.external_reference}). Esperando webhook de preapproval para activar la suscripción.`,
+        );
+        return;
+      }
 
       // Obtener la suscripción
       const subscription =

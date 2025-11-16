@@ -20,6 +20,7 @@ import { GetPlanByIdUseCase } from './services/use-cases/get-plan-by-id.use-case
 import { GetPlansUseCase } from './services/use-cases/get-plans.use-case';
 import { GetUserPlanUseCase } from './services/use-cases/get-user-plan.use-case';
 import { HealthUseCase } from './services/use-cases/health.use-case';
+import { ProcessPreapprovalWebhookUseCase } from './services/use-cases/process-preapproval-webhook.use-case';
 import { ProcessSubscriptionInvoiceWebhookUseCase } from './services/use-cases/process-subscription-invoice-webhook.use-case';
 import { ProcessSubscriptionPaymentWebhookUseCase } from './services/use-cases/process-subscription-payment-webhook.use-case';
 import { SyncPlanWithMercadoPagoUseCase } from './services/use-cases/sync-plan-with-mercadopago.use-case';
@@ -50,6 +51,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     ContractPlanUseCase,
     ProcessSubscriptionPaymentWebhookUseCase,
     ProcessSubscriptionInvoiceWebhookUseCase,
+    ProcessPreapprovalWebhookUseCase,
     SyncPlanWithMercadoPagoUseCase,
     GetUserPlanUseCase,
   ],

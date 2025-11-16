@@ -167,4 +167,22 @@ export class MembershipsController {
       }),
     );
   }
+
+  // Confirm subscription after payment
+  @Post('subscriptions/:subscriptionId/confirm')
+  @AuthRoles([ROLES.USER])
+  confirmSubscription(
+    @Param('subscriptionId') subscriptionId: string,
+    @Body() body: { preapprovalId: string },
+  ) {
+    const payload = {
+      subscriptionId: +subscriptionId,
+      preapprovalId: body.preapprovalId,
+    };
+    return this.client.send('confirmSubscription', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }
