@@ -40,6 +40,8 @@ export class WebhooksController {
   @Get('mercadopago')
   verifyMercadoPagoWebhook(@Res() res: Response) {
     // Endpoint para verificación de webhook por parte de MercadoPago
+    // Agregar header para omitir página de verificación de ngrok
+    res.setHeader('ngrok-skip-browser-warning', 'true');
     return res.status(200).json({
       status: 'ok',
       message: 'MercadoPago webhook endpoint is ready',
@@ -177,6 +179,34 @@ export class WebhooksController {
         console.log(
           '📤 Subscription invoice webhook sent to memberships microservice',
         );
+      } else if (webhookType === 'subscription_preapproval') {
+        // Procesar webhooks de SUSCRIPCIONES CREADAS (preapproval)
+        console.log(
+          '🎉 Processing PREAPPROVAL (subscription created) webhook:',
+          {
+            preapprovalId: webhookId,
+            action: body.action,
+            live_mode: body.live_mode,
+          },
+        );
+
+        // Enviar a microservicio de memberships
+        this.client
+          .send('processPreapprovalWebhook', {
+            preapprovalId: webhookId,
+            action: body.action,
+          })
+          .subscribe({
+            next: (result) =>
+              console.log(
+                '✅ Preapproval webhook processed by memberships:',
+                result,
+              ),
+            error: (error) =>
+              console.error('❌ Error processing preapproval webhook:', error),
+          });
+
+        console.log('📤 Preapproval webhook sent to memberships microservice');
       } else if (
         webhookType === 'payment' &&
         webhookId &&

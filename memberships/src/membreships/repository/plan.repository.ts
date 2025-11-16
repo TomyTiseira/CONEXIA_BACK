@@ -33,8 +33,13 @@ export class PlanRepository {
       where.active = true;
     }
 
-    // Obtener los planes
-    const plans = await this.repo.find({ where });
+    // Obtener los planes ordenados por precio (de menor a mayor)
+    const plans = await this.repo.find({
+      where,
+      order: {
+        monthlyPrice: 'ASC',
+      },
+    });
 
     // Obtener todos los benefits para hacer el mapeo
     const allBenefits = await this.benefitRepo.find();

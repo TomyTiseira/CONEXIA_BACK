@@ -48,13 +48,41 @@ export class MercadoPagoService {
   private payment: Payment;
   private preApprovalPlan: PreApprovalPlan;
   private preApproval: PreApproval;
+  private readonly currencyToSiteId: Record<string, string> = {
+    ARS: 'MLA', // Argentina
+    MXN: 'MLM', // México
+    BRL: 'MLB', // Brasil
+    CLP: 'MLC', // Chile
+    COP: 'MCO', // Colombia
+    PEN: 'MPE', // Perú
+    UYU: 'MLU', // Uruguay
+  };
 
   constructor() {
     const accessToken = envs.mercadoPagoAccessToken;
 
+    // DEBUG: Logs de verificación
+    this.logger.log(
+      `🔑 Access Token (primeros 30 chars): ${accessToken?.substring(0, 30)}...`,
+    );
+    this.logger.log(
+      `🌍 Currency ID configurado: ${envs.mercadoPagoCurrencyId}`,
+    );
+    this.logger.log(`🔗 Back URL configurado: ${envs.mercadoPagoBackUrl}`);
+
     if (!accessToken) {
       this.logger.error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
       throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
+    }
+
+    // Verificar que el token sea de Argentina (APP_USR o TEST)
+    if (
+      !accessToken.startsWith('APP_USR-') &&
+      !accessToken.startsWith('TEST-')
+    ) {
+      this.logger.warn(
+        `⚠️ El Access Token no tiene el formato esperado. Debería comenzar con APP_USR- o TEST-`,
+      );
     }
 
     this.client = new MercadoPagoConfig({
@@ -68,6 +96,8 @@ export class MercadoPagoService {
     this.payment = new Payment(this.client);
     this.preApprovalPlan = new PreApprovalPlan(this.client);
     this.preApproval = new PreApproval(this.client);
+
+    this.logger.log('✅ MercadoPago Service inicializado correctamente');
   }
 
   async createPreference(
@@ -221,7 +251,11 @@ export class MercadoPagoService {
       // DEBUG: Log para verificar el valor de backUrl
       this.logger.log(`🔍 DEBUG - backUrl value: "${backUrl}"`);
       this.logger.log(`🔍 DEBUG - backUrl type: ${typeof backUrl}`);
-      this.logger.log(`🔍 DEBUG - envs.mercadoPagoBackUrl: "${envs.mercadoPagoBackUrl}"`);
+      this.logger.log(
+        `🔍 DEBUG - envs.mercadoPagoBackUrl: "${envs.mercadoPagoBackUrl}"`,
+      );
+
+      const notificationUrl = envs.mercadoPagoNotificationUrl;
 
       const planData = {
         reason: `${planName} - ${billingCycle === BillingCycle.MONTHLY ? 'Mensual' : 'Anual'}`,
@@ -233,12 +267,16 @@ export class MercadoPagoService {
           billing_day_proportional: false,
         },
         back_url: `${backUrl}/subscriptions/success`,
+        notification_url: notificationUrl,
       };
 
       this.logger.log(
         `Creando plan de suscripción en MercadoPago: ${planName}`,
       );
-      this.logger.log(`🔍 DEBUG - Full planData:`, JSON.stringify(planData, null, 2));
+      this.logger.log(
+        `🔍 DEBUG - Full planData:`,
+        JSON.stringify(planData, null, 2),
+      );
       const response = await this.preApprovalPlan.create({ body: planData });
 
       if (!response.id || !response.init_point) {
@@ -265,58 +303,146 @@ export class MercadoPagoService {
   }
 
   /**
-   * Crea una suscripción (preapproval) para un usuario
+   * Obtiene el init_point de un plan para suscripción directa
    */
-  async createSubscription(
+  getPlanInitPoint(planId: string): string {
+    this.logger.log(`Construyendo init_point del plan: ${planId}`);
+
+    // El init_point del plan se construye directamente
+    // Formato: https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id={planId}
+    const initPoint = `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${planId}`;
+
+    this.logger.log(`✅ Init point construido: ${initPoint}`);
+    return initPoint;
+  }
+
+  /**
+   * Valida un cardToken consultando la API de MercadoPago
+   */
+  private async validateCardToken(cardTokenId: string): Promise<void> {
+    try {
+      const url = `https://api.mercadopago.com/v1/card_tokens/${cardTokenId}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${envs.mercadoPagoAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as {
+          message?: string;
+          error?: string;
+        };
+        this.logger.error(
+          `❌ Error al validar cardToken: ${JSON.stringify(errorData)}`,
+        );
+        throw new Error(
+          `Card token inválido o de país incorrecto: ${errorData.message || errorData.error || 'Unknown error'}`,
+        );
+      }
+
+      const tokenData = (await response.json()) as {
+        site_id?: string;
+        id?: string;
+        public_key?: string;
+        status?: string;
+      };
+
+      this.logger.log(
+        `🔍 DEBUG - Token Data completo: ${JSON.stringify(tokenData, null, 2)}`,
+      );
+      this.logger.log(
+        `Card token validado. Site ID: ${tokenData.site_id || 'N/A'}`,
+      );
+
+      // Verificar que el token tenga site_id
+      if (!tokenData.site_id) {
+        this.logger.warn(
+          `⚠️ El card token NO tiene site_id. Token recibido: ${cardTokenId}`,
+        );
+        this.logger.warn(`⚠️ Token data: ${JSON.stringify(tokenData)}`);
+        this.logger.warn(
+          `⚠️ ADVERTENCIA: Estás usando credenciales APP_USR de una cuenta de prueba. Para desarrollo, deberías usar credenciales TEST- desde https://www.mercadopago.com.ar/developers/panel/app`,
+        );
+        this.logger.warn(
+          `⚠️ Continuando sin validación de site_id (solo para desarrollo)...`,
+        );
+        // No lanzar error en desarrollo, solo advertir
+        // throw new Error(`INVALID_CARD_TOKEN: Token sin site_id`);
+      } else if (tokenData.site_id !== 'MLA') {
+        // Verificar que el site_id sea MLA (Argentina)
+        this.logger.error(
+          `❌ Card token de país incorrecto. Esperado: MLA (Argentina), Recibido: ${tokenData.site_id}`,
+        );
+        throw new Error(
+          `El token de tarjeta es de ${tokenData.site_id} pero el backend está configurado para Argentina (MLA). El frontend debe usar el Public Key de Argentina, no de ${tokenData.site_id}.`,
+        );
+      }
+
+      this.logger.log(
+        `✅ Card token validado ${tokenData.site_id ? `para ${tokenData.site_id}` : '(sin site_id - modo desarrollo)'}`,
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error al validar card token: ${errorMessage}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Genera el init_point para que el usuario se suscriba al plan
+   */
+  createSubscription(
     mercadoPagoPlanId: string,
     userEmail: string,
     subscriptionId: number,
-    cardTokenId: string,
-  ): Promise<{
+  ): {
     subscriptionId: string;
     initPoint: string;
     status: string;
     nextPaymentDate: string;
-  }> {
+  } {
     try {
       const backUrl = envs.mercadoPagoBackUrl;
-
-      const subscriptionData = {
-        preapproval_plan_id: mercadoPagoPlanId,
-        reason: `Suscripción #${subscriptionId}`,
-        external_reference: subscriptionId.toString(),
-        payer_email: userEmail,
-        card_token_id: cardTokenId,
-        back_url: `${backUrl}/subscriptions/success`,
-        status: 'authorized',
-      };
 
       this.logger.log(
         `Creando suscripción en MercadoPago para usuario ${userEmail}`,
       );
-      const response = await this.preApproval.create({
-        body: subscriptionData,
-      });
+      this.logger.log(
+        `� USANDO REDIRECT FLOW - El usuario ingresará la tarjeta en MercadoPago`,
+      );
 
-      if (!response.id || !response.init_point) {
-        throw new Error(
-          'La respuesta de MercadoPago no contiene id o init_point',
-        );
-      }
+      // No validar el token ya que usaremos redirect flow
+      // await this.validateCardToken(cardTokenId);
 
-      this.logger.log(`Suscripción creada exitosamente: ${response.id}`);
+      // Construir init_point del plan con parámetros adicionales
+      const initPoint = this.getPlanInitPoint(mercadoPagoPlanId);
+      const initPointWithReference = `${initPoint}&external_reference=${subscriptionId}&payer_email=${encodeURIComponent(userEmail)}&back_url=${encodeURIComponent(`${backUrl}/subscriptions/success`)}`;
+
+      this.logger.log(
+        `✅ Init point generado para suscripción #${subscriptionId}`,
+      );
 
       return {
-        subscriptionId: response.id,
-        initPoint: response.init_point,
-        status: response.status || 'pending',
-        nextPaymentDate: response.next_payment_date || '',
+        subscriptionId: '', // Se creará después del pago
+        initPoint: initPointWithReference,
+        status: 'pending',
+        nextPaymentDate: '',
       };
     } catch (error) {
       this.logger.error(
         `Error al crear suscripción en MercadoPago: ${error.message}`,
-        error,
       );
+      this.logger.error('Error completo:', JSON.stringify(error, null, 2));
+      if (error.cause) {
+        this.logger.error(
+          'Causa del error:',
+          JSON.stringify(error.cause, null, 2),
+        );
+      }
       throw new Error(`Error al crear suscripción: ${error.message}`);
     }
   }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import 'dotenv/config';
 import * as joi from 'joi';
 
@@ -12,6 +11,7 @@ interface EnvVars {
   MERCADOPAGO_ACCESS_TOKEN?: string;
   MERCADOPAGO_BACK_URL?: string;
   MERCADOPAGO_NOTIFICATION_URL?: string;
+  MERCADOPAGO_CURRENCY_ID?: string;
 }
 
 const envSchema = joi
@@ -25,6 +25,7 @@ const envSchema = joi
     MERCADOPAGO_ACCESS_TOKEN: joi.string().optional(),
     MERCADOPAGO_BACK_URL: joi.string().default('http://localhost:3000'),
     MERCADOPAGO_NOTIFICATION_URL: joi.string().optional(),
+    MERCADOPAGO_CURRENCY_ID: joi.string().default('ARS'),
   })
   .unknown(true);
 
@@ -38,6 +39,7 @@ const result = envSchema.validate({
   MERCADOPAGO_ACCESS_TOKEN: process.env.MERCADOPAGO_ACCESS_TOKEN,
   MERCADOPAGO_BACK_URL: process.env.MERCADOPAGO_BACK_URL,
   MERCADOPAGO_NOTIFICATION_URL: process.env.MERCADOPAGO_NOTIFICATION_URL,
+  MERCADOPAGO_CURRENCY_ID: process.env.MERCADOPAGO_CURRENCY_ID,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -55,4 +57,5 @@ export const envs = {
   mercadoPagoAccessToken: envVars.MERCADOPAGO_ACCESS_TOKEN || '',
   mercadoPagoBackUrl: envVars.MERCADOPAGO_BACK_URL || 'http://localhost:3000',
   mercadoPagoNotificationUrl: envVars.MERCADOPAGO_NOTIFICATION_URL || '',
+  mercadoPagoCurrencyId: envVars.MERCADOPAGO_CURRENCY_ID || 'ARS',
 };

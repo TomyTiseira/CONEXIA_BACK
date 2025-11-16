@@ -129,7 +129,6 @@ export class ContractPlanUseCase {
         mercadoPagoPlanId,
         userEmail,
         subscription.id,
-        dto.cardTokenId,
       );
 
       // Actualizar suscripción con los datos de MercadoPago

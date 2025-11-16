@@ -416,11 +416,12 @@ export class ServiceHiringRepository {
       .createQueryBuilder('hiring')
       .leftJoin('hiring.status', 'status')
       .leftJoin('hiring.service', 'service')
-      .select('service.deliveryType', 'type')
+      .leftJoin('service.category', 'category')
+      .select('category.name', 'type')
       .addSelect('COUNT(hiring.id)', 'count')
       .addSelect('SUM(hiring.quotedPrice)', 'revenue')
       .where('status.code = :statusCode', { statusCode: 'completed' })
-      .groupBy('service.deliveryType')
+      .groupBy('category.name')
       .getRawMany();
 
     return result.map((item) => ({

@@ -87,6 +87,16 @@ export class MembershipsController {
     );
   }
 
+  @MessagePattern('processPreapprovalWebhook')
+  processPreapprovalWebhook(
+    @Payload() data: { preapprovalId: string; action: string },
+  ) {
+    return this.membershipsService.processPreapprovalWebhook(
+      data.preapprovalId,
+      data.action,
+    );
+  }
+
   // User Plan
   @MessagePattern('getUserPlan')
   getUserPlan(@Payload() data: { userId: number }) {
