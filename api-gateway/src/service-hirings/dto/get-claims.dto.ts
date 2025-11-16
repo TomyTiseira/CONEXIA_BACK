@@ -1,9 +1,10 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export enum ClaimStatus {
   OPEN = 'open',
   IN_REVIEW = 'in_review',
+  PENDING_CLARIFICATION = 'pending_clarification',
   RESOLVED = 'resolved',
   REJECTED = 'rejected',
 }
@@ -26,6 +27,10 @@ export class GetClaimsDto {
   @IsOptional()
   @IsEnum(ClaimRole)
   claimantRole?: ClaimRole;
+
+  @IsOptional()
+  @IsString()
+  searchTerm?: string;
 
   @IsOptional()
   @Type(() => Number)

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ClaimRole, ClaimStatus } from '../enums/claim.enum';
 
 export class GetClaimsDto {
@@ -15,6 +15,10 @@ export class GetClaimsDto {
   @IsOptional()
   @IsEnum(ClaimRole)
   claimantRole?: ClaimRole;
+
+  @IsOptional()
+  @IsString()
+  searchTerm?: string; // Buscar por ID del reclamo o nombre del reclamante
 
   @IsOptional()
   @Type(() => Number)

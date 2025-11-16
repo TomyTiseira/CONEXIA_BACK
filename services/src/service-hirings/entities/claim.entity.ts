@@ -1,17 +1,17 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import {
-  ClaimResolutionType,
-  ClaimRole,
-  ClaimStatus,
-  ClaimType,
+    ClaimResolutionType,
+    ClaimRole,
+    ClaimStatus,
+    ClaimType,
 } from '../enums/claim.enum';
 import { ServiceHiring } from './service-hiring.entity';
 
@@ -84,6 +84,10 @@ export class Claim {
 
   @Column({ name: 'observations_at', type: 'timestamp', nullable: true })
   observationsAt: Date | null;
+
+  // Respuesta del usuario al subsanar observaciones (no pisa la descripción original)
+  @Column({ name: 'clarification_response', type: 'text', nullable: true })
+  clarificationResponse: string | null;
 
   // Resolución (cuando se cierre el reclamo)
   @Column({ type: 'text', nullable: true })
