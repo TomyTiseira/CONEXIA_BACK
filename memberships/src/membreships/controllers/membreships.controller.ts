@@ -102,4 +102,19 @@ export class MembershipsController {
   getUserPlan(@Payload() data: { userId: number }) {
     return this.membershipsService.getUserPlan(data.userId);
   }
+
+  // Confirm subscription after payment (called from frontend)
+  @MessagePattern('confirmSubscription')
+  confirmSubscription(
+    @Payload()
+    data: {
+      subscriptionId: number;
+      preapprovalId: string;
+    },
+  ) {
+    return this.membershipsService.confirmSubscription(
+      data.subscriptionId,
+      data.preapprovalId,
+    );
+  }
 }

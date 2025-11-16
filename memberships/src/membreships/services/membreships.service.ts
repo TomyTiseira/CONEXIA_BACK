@@ -97,4 +97,13 @@ export class MembershipsService {
   async getUserPlan(userId: number) {
     return this.getUserPlanUC.execute(userId);
   }
+
+  // Confirm subscription after payment (called from frontend)
+  async confirmSubscription(subscriptionId: number, preapprovalId: string) {
+    return this.processPreapprovalWebhookUC.execute(
+      preapprovalId,
+      'created',
+      subscriptionId,
+    );
+  }
 }

@@ -1,5 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { SubscriptionStatus } from '../../entities/membreship.entity';
+import { Injectable, Logger } from '@nestjs/common';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from '../../entities/membreship.entity';
 import { SubscriptionRepository } from '../../repository/subscription.repository';
 import { MercadoPagoService } from '../mercado-pago.service';
 
@@ -12,41 +15,56 @@ export class ProcessPreapprovalWebhookUseCase {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  async execute(preapprovalId: string, action: string): Promise<void> {
+  async execute(
+    preapprovalId: string,
+    action: string,
+    subscriptionIdFromFrontend?: number,
+  ): Promise<{ success: boolean; message: string; subscriptionId: number }> {
     try {
       this.logger.log(
         `🎉 Procesando webhook de preapproval ${preapprovalId}, acción: ${action}`,
       );
 
       // Obtener información del preapproval desde MercadoPago
-      const preapprovalData =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const preapprovalData: any =
         await this.mercadoPagoService.getSubscription(preapprovalId);
 
       this.logger.log(
         `📋 Preapproval data: ${JSON.stringify(preapprovalData)}`,
       );
 
-      if (!preapprovalData.external_reference) {
-        this.logger.warn(
-          `Preapproval ${preapprovalId} no tiene external_reference`,
+      let subscription: Subscription | null = null;
+
+      // Intentar usar el subscriptionId que viene del frontend
+      if (subscriptionIdFromFrontend) {
+        this.logger.log(
+          `Buscando suscripción por ID del frontend: ${subscriptionIdFromFrontend}`,
         );
-        return;
+        subscription = await this.subscriptionRepository.findById(
+          subscriptionIdFromFrontend,
+        );
       }
 
-      const subscriptionId = parseInt(preapprovalData.external_reference, 10);
-
-      // Obtener la suscripción
-      const subscription =
-        await this.subscriptionRepository.findById(subscriptionId);
+      // Si no viene del frontend, intentar obtener desde external_reference
+      if (!subscription && preapprovalData.external_reference) {
+        const subId = parseInt(preapprovalData.external_reference, 10);
+        subscription = await this.subscriptionRepository.findById(subId);
+      }
 
       if (!subscription) {
-        throw new NotFoundException(
-          `Suscripción ${subscriptionId} no encontrada`,
+        this.logger.warn(
+          `No se encontró suscripción para preapproval ${preapprovalId}`,
         );
+        return {
+          success: false,
+          message: 'Suscripción no encontrada',
+          subscriptionId: 0,
+        };
       }
 
       this.logger.log(
-        `📝 Suscripción encontrada: ID ${subscriptionId}, estado actual: ${subscription.status}`,
+        `📝 Suscripción encontrada: ID ${subscription.id}, estado actual: ${subscription.status}`,
       );
 
       // Procesar según la acción
@@ -66,8 +84,14 @@ export class ProcessPreapprovalWebhookUseCase {
       }
 
       this.logger.log(
-        `✅ Webhook de preapproval procesado exitosamente para suscripción ${subscriptionId}`,
+        `✅ Webhook de preapproval procesado exitosamente para suscripción ${subscription.id}`,
       );
+
+      return {
+        success: true,
+        message: 'Suscripción activada correctamente',
+        subscriptionId: subscription.id,
+      };
     } catch (error) {
       this.logger.error(
         `❌ Error al procesar webhook de preapproval ${preapprovalId}:`,
@@ -99,7 +123,7 @@ export class ProcessPreapprovalWebhookUseCase {
     });
 
     this.logger.log(
-      `✅ Suscripción ${subscriptionId} activada exitosamente. Próximo pago: ${nextPaymentDate}`,
+      `✅ Suscripción ${subscriptionId} activada exitosamente. Próximo pago: ${nextPaymentDate ? nextPaymentDate.toISOString() : 'N/A'}`,
     );
   }
 

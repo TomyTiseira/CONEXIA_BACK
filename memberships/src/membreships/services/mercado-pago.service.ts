@@ -419,16 +419,29 @@ export class MercadoPagoService {
       // await this.validateCardToken(cardTokenId);
 
       // Construir init_point del plan con parámetros adicionales
+      const notificationUrl = envs.mercadoPagoNotificationUrl;
       const initPoint = this.getPlanInitPoint(mercadoPagoPlanId);
-      const initPointWithReference = `${initPoint}&external_reference=${subscriptionId}&payer_email=${encodeURIComponent(userEmail)}&back_url=${encodeURIComponent(`${backUrl}/subscriptions/success`)}`;
+
+      // ✅ Usar URLSearchParams para construir correctamente la query string
+      const url = new URL(initPoint);
+      url.searchParams.set('external_reference', subscriptionId.toString());
+      url.searchParams.set('payer_email', userEmail);
+
+      // Agregar back_url y notification_url
+      url.searchParams.set('back_url', `${backUrl}/subscriptions/success`);
+      url.searchParams.set('notification_url', notificationUrl);
+
+      const finalInitPoint = url.toString();
 
       this.logger.log(
         `✅ Init point generado para suscripción #${subscriptionId}`,
       );
+      this.logger.log(`🔔 Notification URL incluida: ${notificationUrl}`);
+      this.logger.log(`🔗 URL completa: ${finalInitPoint}`);
 
       return {
         subscriptionId: '', // Se creará después del pago
-        initPoint: initPointWithReference,
+        initPoint: finalInitPoint,
         status: 'pending',
         nextPaymentDate: '',
       };

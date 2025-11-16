@@ -16,8 +16,10 @@ import { envs } from '../config/envs';
 import { NATS_SERVICE } from '../config/service';
 
 interface MercadoPagoWebhookQuery {
-  'data.id': string;
-  type: string;
+  'data.id'?: string;
+  type?: string;
+  id?: string;
+  topic?: string;
 }
 
 export interface MercadoPagoWebhookDto {
@@ -31,6 +33,7 @@ export interface MercadoPagoWebhookDto {
   live_mode: boolean;
   type: string;
   user_id: number;
+  topic?: string;
 }
 
 @Controller('webhooks')
@@ -66,6 +69,20 @@ export class WebhooksController {
         },
       });
 
+      console.log('📊 RAW WEBHOOK DATA:', {
+        'query keys': Object.keys(query),
+        'body keys': Object.keys(body || {}),
+        'query.id': query.id,
+        'query.topic': query.topic,
+        'query[data.id]': query['data.id'],
+        'body.type': body?.type,
+        'body.topic': body?.topic,
+        'body.action': body?.action,
+        'body.data': body?.data,
+        'full query': JSON.stringify(query),
+        'full body': JSON.stringify(body),
+      });
+
       // 1. Validar firma de seguridad (solo en producción)
       const isDevelopment = envs.nodeEnv === 'development';
 
@@ -86,16 +103,31 @@ export class WebhooksController {
       }
 
       // 2. Detectar tipo de webhook basado en el ID recibido
-      const webhookId = query['data.id'] || body.data?.id;
-      const webhookType = query.type || body.type;
+      const webhookId = query['data.id'] || body.data?.id || query.id;
+      const webhookType = query.type || body.type || query.topic;
 
       console.log('🔍 Analyzing webhook:', {
         webhookId,
         webhookType,
+        query,
+        body,
         idPattern: webhookId?.match(/^(\d+)-/)
           ? 'preference_format'
           : 'payment_format',
         action: body.action,
+      });
+
+      console.log('🎯 WEBHOOK TYPE DETECTION:', {
+        isPayment: webhookType === 'payment',
+        isSubscriptionAuthorizedPayment:
+          webhookType === 'subscription_authorized_payment',
+        isSubscriptionPreapproval: webhookType === 'subscription_preapproval',
+        isPreapproval: webhookType === 'preapproval',
+        isPlanSuscripciones:
+          webhookType === 'subscription' ||
+          webhookType === 'plan' ||
+          String(webhookType).includes('subscription') ||
+          String(webhookType).includes('preapproval'),
       });
 
       // 3. Procesar webhooks de PAGOS (ID numérico simple)
@@ -179,7 +211,10 @@ export class WebhooksController {
         console.log(
           '📤 Subscription invoice webhook sent to memberships microservice',
         );
-      } else if (webhookType === 'subscription_preapproval') {
+      } else if (
+        webhookType === 'subscription_preapproval' ||
+        webhookType === 'preapproval'
+      ) {
         // Procesar webhooks de SUSCRIPCIONES CREADAS (preapproval)
         console.log(
           '🎉 Processing PREAPPROVAL (subscription created) webhook:',
@@ -187,6 +222,7 @@ export class WebhooksController {
             preapprovalId: webhookId,
             action: body.action,
             live_mode: body.live_mode,
+            webhookType,
           },
         );
 
