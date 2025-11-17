@@ -1,12 +1,12 @@
 import {
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
+    IsBoolean,
+    IsEnum,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    MaxLength,
+    Min,
 } from 'class-validator';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
 
@@ -41,4 +41,13 @@ export class CreateQuotationDto {
   @IsOptional()
   @IsBoolean()
   isBusinessDays?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.5, { message: 'hoursPerDay must be at least 0.5' })
+  hoursPerDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  workOnBusinessDaysOnly?: boolean;
 }

@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
-  PaginationInfo,
-  calculatePagination,
+    PaginationInfo,
+    calculatePagination,
 } from '../../common/utils/pagination.utils';
 import { ServiceReviewRepository } from '../../service-reviews/repositories/service-review.repository';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
 import {
-  DeliverableResponseDto,
-  GetServiceHiringsDto,
-  PaymentModalityResponseDto,
+    DeliverableResponseDto,
+    GetServiceHiringsDto,
+    PaymentModalityResponseDto,
 } from '../dto';
 import { Deliverable } from '../entities/deliverable.entity';
 import { ServiceHiring } from '../entities/service-hiring.entity';
@@ -30,6 +30,8 @@ export interface ServiceHiringResponse {
   respondedAt?: Date;
   quotationValidityDays?: number;
   isBusinessDays?: boolean;
+  hoursPerDay?: number | null; // ✅ NUEVO
+  workOnBusinessDaysOnly?: boolean; // ✅ NUEVO
   negotiationDescription?: string;
   isExpired?: boolean;
   paymentModality?: PaymentModalityResponseDto;
@@ -134,6 +136,8 @@ export class ServiceHiringTransformService {
       respondedAt: hiring.respondedAt,
       quotationValidityDays: hiring.quotationValidityDays,
       isBusinessDays: hiring.isBusinessDays,
+      hoursPerDay: hiring.hoursPerDay, // ✅ NUEVO
+      workOnBusinessDaysOnly: hiring.workOnBusinessDaysOnly, // ✅ NUEVO
       negotiationDescription: hiring.negotiationDescription,
       isExpired,
       // Campos de re-cotización

@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class GetServicesDto {
   @IsOptional()
@@ -14,6 +21,13 @@ export class GetServicesDto {
     { each: true, message: 'categoryIds must be an array of numbers' },
   )
   categoryIds?: number[];
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'minRating must be a number' })
+  @Min(0, { message: 'minRating must be between 0 and 5' })
+  @Max(5, { message: 'minRating must be between 0 and 5' })
+  minRating?: number;
 
   @Type(() => Number)
   @IsNumber()

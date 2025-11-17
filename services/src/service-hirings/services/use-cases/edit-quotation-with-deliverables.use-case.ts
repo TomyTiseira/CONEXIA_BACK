@@ -122,6 +122,8 @@ export class EditQuotationWithDeliverablesUseCase {
       quotationNotes: quotationDto.quotationNotes,
       quotationValidityDays: quotationDto.quotationValidityDays,
       isBusinessDays: quotationDto.isBusinessDays || false,
+      hoursPerDay: quotationDto.hoursPerDay !== undefined ? quotationDto.hoursPerDay : null,
+      workOnBusinessDaysOnly: quotationDto.workOnBusinessDaysOnly !== undefined ? quotationDto.workOnBusinessDaysOnly : false,
       paymentModalityId: quotationDto.paymentModalityId,
       quotedAt: new Date(),
       statusId: newStatusId,
