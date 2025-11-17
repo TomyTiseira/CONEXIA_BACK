@@ -126,7 +126,13 @@ export class ProjectsController {
     const parsedBody: any = { ...body };
     if (typeof parsedBody.roles === 'string') {
       try {
-        parsedBody.roles = JSON.parse(parsedBody.roles);
+        const parsed = JSON.parse(parsedBody.roles) as unknown;
+        // Narrow the parsed value before assigning to avoid unsafe `any` assignment
+        if (Array.isArray(parsed)) {
+          parsedBody.roles = parsed as Array<Record<string, unknown>>;
+        } else {
+          parsedBody.roles = parsed as Record<string, unknown>;
+        }
       } catch {
         // keep as-is; validation will catch it
       }
@@ -135,11 +141,21 @@ export class ProjectsController {
     // Attach evaluation files metadata to corresponding roles (by index)
     const evalFiles = files.evaluationFiles ?? [];
     if (Array.isArray(parsedBody.roles)) {
+      type RoleWithEvaluation = {
+        evaluation?: {
+          fileUrl?: string;
+          fileName?: string;
+          fileSize?: number;
+          fileMimeType?: string;
+        };
+        [key: string]: unknown;
+      };
+
       for (let i = 0; i < parsedBody.roles.length; i++) {
-        const role = parsedBody.roles[i];
+        const role = parsedBody.roles[i] as RoleWithEvaluation;
         const file = evalFiles[i];
         if (file) {
-          role.evaluation = role.evaluation || {};
+          role.evaluation = role.evaluation ?? {};
           role.evaluation.fileUrl = file.filename;
           role.evaluation.fileName = file.originalname;
           role.evaluation.fileSize = file.size;
