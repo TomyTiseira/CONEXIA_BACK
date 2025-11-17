@@ -96,6 +96,20 @@ export class GetProjectByIdUseCase {
         1,
       );
 
+    // Buscar la postulación del usuario actual si existe
+    let userPostulationStatus: string | null = null;
+    let userEvaluationDeadline: Date | null = null;
+    if (data.currentUserId && project.userId !== data.currentUserId) {
+      const userPostulation = await this.postulationRepository.findByProjectAndUser(
+        project.id,
+        data.currentUserId,
+      );
+      if (userPostulation) {
+        userPostulationStatus = userPostulation.status?.code || null;
+        userEvaluationDeadline = userPostulation.evaluationDeadline || null;
+      }
+    }
+
     // Construir la respuesta usando la función utilitaria
     const response = transformProjectToDetailResponse(
       project,
@@ -104,6 +118,8 @@ export class GetProjectByIdUseCase {
       data.currentUserId,
       locationName,
       approvedCount,
+      userPostulationStatus,
+      userEvaluationDeadline,
     );
 
     // Agregar el campo hasReported a la respuesta

@@ -25,6 +25,8 @@ export function transformProjectToDetailResponse(
   currentUserId: number,
   location?: string,
   approvedApplications: number = 0,
+  userPostulationStatus: string | null = null,
+  userEvaluationDeadline: Date | null = null,
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
@@ -34,6 +36,30 @@ export function transformProjectToDetailResponse(
     const roleSkills =
       role.roleSkills?.map((rs) => ({ id: rs.skillId, name: skillsMap.get(rs.skillId) })) || [];
 
+    // Map questions with options
+    const questions = (role.questions || []).map((question) => ({
+      id: question.id,
+      questionText: question.questionText,
+      questionType: question.questionType,
+      required: question.required,
+      options: (question.options || []).map((option) => ({
+        id: option.id,
+        optionText: option.optionText,
+        isCorrect: option.isCorrect,
+      })),
+    }));
+
+    // Map evaluation (take first one if exists)
+    const evaluation = role.evaluations?.[0]
+      ? {
+          id: role.evaluations[0].id,
+          description: role.evaluations[0].description,
+          link: role.evaluations[0].link,
+          fileUrl: role.evaluations[0].fileUrl,
+          fileName: role.evaluations[0].fileName,
+          days: role.evaluations[0].days ?? 10,
+        }
+      : null;
 
     return {
       id: role.id,
@@ -44,6 +70,8 @@ export function transformProjectToDetailResponse(
       collaborationType: role.collaborationType ? { id: role.collaborationType.id, name: role.collaborationType.name } : null,
       maxCollaborators: role.maxCollaborators ?? null,
       skills: roleSkills,
+      questions: questions.length > 0 ? questions : undefined,
+      evaluation,
     };
   });
 
@@ -62,9 +90,11 @@ export function transformProjectToDetailResponse(
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,
     endDate: project.endDate,
-  isOwner: project.userId === currentUserId,
+    isOwner: project.userId === currentUserId,
     approvedApplications,
     hasReported: false, // El use case lo sobrescribirá con el valor correcto
+    userPostulationStatus,
+    userEvaluationDeadline,
   };
 }
 

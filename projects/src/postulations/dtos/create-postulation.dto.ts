@@ -1,4 +1,26 @@
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PostulationAnswerDto {
+  @IsNotEmpty({ message: 'questionId is required' })
+  @IsNumber()
+  questionId: number;
+
+  @IsOptional()
+  @IsNumber()
+  optionId?: number;
+
+  @IsOptional()
+  @IsString()
+  answerText?: string;
+}
 
 export class CreatePostulationDto {
   @IsNotEmpty({ message: 'projectId is required' })
@@ -9,7 +31,10 @@ export class CreatePostulationDto {
   @IsNumber()
   roleId: number;
 
-  // CV fields (optional depending on role type)
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber()
+  userId: number;
+
   @IsOptional()
   @IsString()
   cvUrl?: string;
@@ -22,22 +47,14 @@ export class CreatePostulationDto {
   @IsNumber()
   cvSize?: number;
 
-  // Answers for questions
   @IsOptional()
   @IsArray()
-  answers?: { questionId: number; optionId?: number; answerText?: string }[];
-
-  // Evaluation submission fields
-  @IsOptional()
-  @IsString()
-  evaluationLink?: string;
+  @ValidateNested({ each: true })
+  @Type(() => PostulationAnswerDto)
+  answers?: PostulationAnswerDto[];
 
   @IsOptional()
-  @IsString()
-  evaluationFileUrl?: string;
-
-  // Investor / Partner specific
-  @IsOptional()
+  @IsNumber()
   investorAmount?: number;
 
   @IsOptional()

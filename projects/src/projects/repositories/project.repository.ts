@@ -83,6 +83,7 @@ export class ProjectRepository {
   .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
   .leftJoinAndSelect('roles.roleSkills', 'roleSkills')
   .leftJoinAndSelect('roles.questions', 'questions')
+  .leftJoinAndSelect('questions.options', 'options')
   .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id = :id', { id });
 
@@ -353,6 +354,13 @@ export class ProjectRepository {
 
   async findRoleById(roleId: number) {
     return this.ormRepository.manager.findOne(ProjectRole, { where: { id: roleId } });
+  }
+
+  async findRoleByIdWithRelations(roleId: number) {
+    return this.ormRepository.manager.findOne(ProjectRole, {
+      where: { id: roleId },
+      relations: ['questions', 'questions.options', 'evaluations', 'project'],
+    });
   }
 
   ping(): string {

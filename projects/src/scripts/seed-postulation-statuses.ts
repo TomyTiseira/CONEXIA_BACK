@@ -22,13 +22,31 @@ async function seedPostulationStatuses() {
       displayOrder: 1,
     },
     {
+      name: 'Pendiente Evaluación',
+      code: PostulationStatusCode.PENDING_EVALUATION,
+      description: 'Postulación pendiente de completar prueba técnica',
+      canTransitionToOthers: true,
+      canBeModified: true,
+      isFinal: false,
+      displayOrder: 2,
+    },
+    {
+      name: 'Evaluación Expirada',
+      code: PostulationStatusCode.EVALUATION_EXPIRED,
+      description: 'No se completó la prueba técnica en el tiempo establecido',
+      canTransitionToOthers: false,
+      canBeModified: false,
+      isFinal: true,
+      displayOrder: 3,
+    },
+    {
       name: 'Aceptada',
       code: PostulationStatusCode.ACCEPTED,
       description: 'Postulación aceptada por el dueño del proyecto',
       canTransitionToOthers: false,
       canBeModified: false,
       isFinal: true,
-      displayOrder: 2,
+      displayOrder: 4,
     },
     {
       name: 'Rechazada',
@@ -37,7 +55,7 @@ async function seedPostulationStatuses() {
       canTransitionToOthers: false,
       canBeModified: false,
       isFinal: true,
-      displayOrder: 3,
+      displayOrder: 5,
     },
     {
       name: 'Cancelada',
@@ -46,7 +64,7 @@ async function seedPostulationStatuses() {
       canTransitionToOthers: false,
       canBeModified: false,
       isFinal: true,
-      displayOrder: 4,
+      displayOrder: 6,
     },
   ];
 

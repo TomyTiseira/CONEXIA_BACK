@@ -12,7 +12,7 @@ import {
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
-import { PublishProjectDto } from '../../dtos/publish-project.dto';
+import { ApplicationType, PublishProjectDto } from '../../dtos/publish-project.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
 
 @Injectable()
@@ -119,10 +119,31 @@ export class PublishProjectUseCase {
     // Crear proyecto
     const project = await this.projectRepository.create(projectToCreate);
 
+    // Preparar roles a crear (roles definidos por el usuario + roles automáticos)
+    const rolesToCreate = [...projectData.roles];
+
+    // Agregar rol automático para Inversor si el proyecto lo requiere
+    if (projectData.requiresInvestor) {
+      rolesToCreate.push({
+        title: 'Inversor',
+        description: 'Buscamos inversores para financiar el proyecto',
+        applicationTypes: [ApplicationType.CV],
+      });
+    }
+
+    // Agregar rol automático para Socio si el proyecto lo requiere
+    if (projectData.requiresPartner) {
+      rolesToCreate.push({
+        title: 'Socio',
+        description: 'Buscamos socios estratégicos para el proyecto',
+        applicationTypes: [ApplicationType.CV],
+      });
+    }
+
     // Crear roles (incluye validación previa de skills y tipos)
     await this.projectRepository.createProjectRoles(
       project.id,
-      projectData.roles as any,
+      rolesToCreate as any,
     );
 
     // Obtener el proyecto con todas las relaciones

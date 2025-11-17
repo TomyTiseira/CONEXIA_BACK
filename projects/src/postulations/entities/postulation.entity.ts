@@ -5,12 +5,14 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Project } from '../../projects/entities/project.entity';
 import { PostulationStatus } from './postulation-status.entity';
 import { ProjectRole } from '../../projects/entities/project-role.entity';
+import { PostulationAnswer } from './postulation-answer.entity';
 
 @Entity('postulations')
 @Index(['userId', 'roleId'], { unique: true })
@@ -52,6 +54,21 @@ export class Postulation {
   @Column({ name: 'evaluation_submission_size', nullable: true })
   evaluationSubmissionSize?: number;
 
+  @Column({ name: 'evaluation_submission_mimetype', nullable: true })
+  evaluationSubmissionMimetype?: string;
+
+  @Column({ name: 'evaluation_link', nullable: true })
+  evaluationLink?: string;
+
+  @Column({ name: 'evaluation_description', type: 'text', nullable: true })
+  evaluationDescription?: string;
+
+  @Column({ name: 'evaluation_deadline', type: 'timestamp', nullable: true })
+  evaluationDeadline?: Date;
+
+  @Column({ name: 'evaluation_submitted_at', type: 'timestamp', nullable: true })
+  evaluationSubmittedAt?: Date;
+
   @Column({ name: 'investor_amount', type: 'numeric', nullable: true })
   investorAmount?: number;
 
@@ -68,6 +85,9 @@ export class Postulation {
   @ManyToOne(() => Project, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'project_id' })
   project: Project;
+
+  @OneToMany(() => PostulationAnswer, (answer) => answer.postulation)
+  answers?: PostulationAnswer[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

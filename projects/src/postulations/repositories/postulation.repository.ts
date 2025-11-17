@@ -39,6 +39,7 @@ export class PostulationRepository {
   ): Promise<Postulation | null> {
     return await this.postulationRepository.findOne({
       where: { projectId, userId },
+      relations: ['status'],
     });
   }
 
@@ -87,7 +88,15 @@ export class PostulationRepository {
     const [postulations, total] = await this.postulationRepository.findAndCount(
       {
         where,
-        relations: ['project', 'status'],
+        relations: [
+          'project',
+          'status',
+          'role',
+          'role.questions',
+          'role.questions.options',
+          'answers',
+          'answers.question',
+        ],
         skip,
         take: limit,
         order: {
@@ -123,6 +132,14 @@ export class PostulationRepository {
   ): Promise<Postulation | null> {
     await this.postulationRepository.update(id, { statusId: status.id });
     return await this.findById(id);
+  }
+
+  async update(
+    id: number,
+    updateData: Partial<Postulation>,
+  ): Promise<Postulation | null> {
+    await this.postulationRepository.update(id, updateData);
+    return await this.findByIdWithState(id);
   }
 
   async createWithAnswers(

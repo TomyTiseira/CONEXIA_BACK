@@ -21,6 +21,7 @@ import { CreatePostulationUseCase } from './services/use-cases/create-postulatio
 import { GetPostulationsByUserUseCase } from './services/use-cases/get-postulations-by-user.use-case';
 import { GetPostulationsUseCase } from './services/use-cases/get-postulations.use-case';
 import { RejectPostulationUseCase } from './services/use-cases/reject-postulation.use-case';
+import { SubmitEvaluationUseCase } from './services/use-cases/submit-evaluation.use-case';
 
 @Module({
   controllers: [PostulationsController],
@@ -34,6 +35,7 @@ import { RejectPostulationUseCase } from './services/use-cases/reject-postulatio
     ApprovePostulationUseCase,
     CancelPostulationUseCase,
     RejectPostulationUseCase,
+    SubmitEvaluationUseCase,
     PostulationStatusService,
     PostulationValidationService,
     PostulationOperationsService,

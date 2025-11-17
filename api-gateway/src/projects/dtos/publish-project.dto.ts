@@ -43,11 +43,21 @@ export class PublishProjectDto {
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   requiresPartner?: boolean;
 
   // Flag indicating the project requires an investor
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   requiresInvestor?: boolean;
 
   // Roles definitions
@@ -85,6 +95,11 @@ export class OptionCreateDto {
 
   @IsOptional()
   @IsBoolean({ message: 'isCorrect must be a boolean' })
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   isCorrect?: boolean;
 }
 

@@ -42,8 +42,6 @@ export class PostulationOperationsService {
       cvUrl: createPostulationDto.cvUrl,
       cvFilename: createPostulationDto.cvFilename,
       cvSize: createPostulationDto.cvSize,
-      evaluationSubmissionUrl: createPostulationDto.evaluationLink || createPostulationDto.evaluationFileUrl,
-      evaluationSubmissionFilename: createPostulationDto.evaluationFileUrl ? undefined : undefined,
       investorAmount: createPostulationDto.investorAmount,
       investorMessage: createPostulationDto.investorMessage,
       partnerDescription: createPostulationDto.partnerDescription,

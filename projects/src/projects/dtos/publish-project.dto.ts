@@ -46,12 +46,10 @@ export class PublishProjectDto {
   @Transform(({ value }) => (value ? Number(value) : undefined))
   location?: number;
 
-  // Project-level flags: whether the project requires a partner and/or collaborators
   @IsOptional()
   @IsBoolean({ message: 'requiresPartner must be a boolean' })
   requiresPartner?: boolean;
 
-  // Flag indicating the project requires an investor
   @IsOptional()
   @IsBoolean({ message: 'requiresInvestor must be a boolean' })
   requiresInvestor?: boolean;
@@ -60,7 +58,6 @@ export class PublishProjectDto {
   @IsOptional()
   image?: string;
 
-  // Roles definitions
   @IsArray({ message: 'roles must be an array' })
   @ArrayMinSize(1, { message: 'At least one role is required' })
   @ValidateNested({ each: true })
