@@ -22,7 +22,9 @@ async function bootstrap() {
 
       return callback(new Error(`CORS not allowed for origin ${origin}`));
     },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders:
+      'Content-Type, Accept, Authorization, Origin, X-Requested-With, Access-Control-Allow-Credentials',
     credentials: true,
   });
 

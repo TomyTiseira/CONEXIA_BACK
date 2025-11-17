@@ -454,6 +454,69 @@ export class ProjectRepository {
     });
   }
 
+  /**
+   * Obtiene proyectos completados de un usuario que tuvieron al menos un colaborador aprobado
+   */
+  async findCompletedProjectsByUserId(userId: number): Promise<Project[]> {
+    const now = new Date();
+
+    return this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.postulations', 'postulation')
+      .leftJoin('postulation.status', 'postulationStatus')
+      .where('project.userId = :userId', { userId })
+      .andWhere('project.deletedAt IS NULL')
+      .andWhere('project.endDate < :now', { now })
+      .andWhere('postulationStatus.code = :approvedCode', {
+        approvedCode: 'approved',
+      })
+      .groupBy('project.id')
+      .having('COUNT(DISTINCT postulation.id) > 0')
+      .getMany();
+  }
+
+  /**
+   * Obtiene el total de proyectos (incluyendo eliminados)
+   */
+  async getTotalCount(): Promise<number> {
+    return this.ormRepository.count();
+  }
+
+  /**
+   * Obtiene el total de proyectos completados
+   */
+  async getCompletedCount(): Promise<number> {
+    const now = new Date();
+
+    const result = await this.ormRepository
+      .createQueryBuilder('project')
+      .leftJoin('project.postulations', 'postulation')
+      .leftJoin('postulation.status', 'postulationStatus')
+      .where('project.deletedAt IS NULL')
+      .andWhere('project.endDate < :now', { now })
+      .andWhere('postulationStatus.code = :approvedCode', {
+        approvedCode: 'approved',
+      })
+      .groupBy('project.id')
+      .having('COUNT(DISTINCT postulation.id) > 0')
+      .getCount();
+
+    return result;
+  }
+
+  /**
+   * Obtiene el total de proyectos activos (no eliminados y con fecha futura o sin fecha)
+   */
+  async getActiveCount(): Promise<number> {
+    const now = new Date();
+
+    return this.ormRepository
+      .createQueryBuilder('project')
+      .where('project.deletedAt IS NULL')
+      .andWhere('(project.endDate > :now OR project.endDate IS NULL)', { now })
+      .getCount();
+  }
+
   ping(): string {
     return 'pong';
   }

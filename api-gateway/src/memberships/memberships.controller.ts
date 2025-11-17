@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Body,
   Controller,
@@ -39,6 +38,16 @@ export class MembershipsController {
   @AuthRoles([ROLES.ADMIN, ROLES.USER])
   getBenefits() {
     return this.client.send('getBenefits', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Get('me/plan')
+  @AuthRoles([ROLES.USER])
+  getMyPlan(@User() user: AuthenticatedUser) {
+    return this.client.send('getUserPlan', { userId: user.id }).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
@@ -153,6 +162,24 @@ export class MembershipsController {
       dto: body,
     };
     return this.client.send('contractPlan', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  // Confirm subscription after payment
+  @Post('subscriptions/:subscriptionId/confirm')
+  @AuthRoles([ROLES.USER])
+  confirmSubscription(
+    @Param('subscriptionId') subscriptionId: string,
+    @Body() body: { preapprovalId: string },
+  ) {
+    const payload = {
+      subscriptionId: +subscriptionId,
+      preapprovalId: body.preapprovalId,
+    };
+    return this.client.send('confirmSubscription', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

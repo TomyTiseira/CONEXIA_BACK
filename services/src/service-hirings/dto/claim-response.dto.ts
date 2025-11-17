@@ -18,6 +18,7 @@ export class ClaimResponseDto {
   observations: string | null;
   observationsBy: number | null;
   observationsAt: Date | null;
+  clarificationResponse: string | null;
   resolution: string | null;
   resolutionType: ClaimResolutionType | null;
   partialAgreementDetails: string | null;
@@ -31,7 +32,14 @@ export class ClaimResponseDto {
   claimantName?: string;
   claimantFirstName?: string;
   claimantLastName?: string;
+  claimedUserId?: number;
+  claimedUserName?: string;
+  claimedUserFirstName?: string;
+  claimedUserLastName?: string;
   hiringTitle?: string;
+  
+  // Información segura del moderador/admin que resolvió (solo prefijo del email)
+  resolvedByEmail?: string | null;
 
   // Objeto hiring completo (para validaciones de permisos en frontend)
   hiring?: {
@@ -63,6 +71,7 @@ export class ClaimResponseDto {
     dto.observations = claim.observations;
     dto.observationsBy = claim.observationsBy;
     dto.observationsAt = claim.observationsAt;
+    dto.clarificationResponse = claim.clarificationResponse;
     dto.resolution = claim.resolution;
     dto.resolutionType = claim.resolutionType;
     dto.partialAgreementDetails = claim.partialAgreementDetails;
@@ -98,7 +107,12 @@ export class ClaimResponseDto {
       dto.claimantName = additionalInfo.claimantName;
       dto.claimantFirstName = additionalInfo.claimantFirstName;
       dto.claimantLastName = additionalInfo.claimantLastName;
+      dto.claimedUserId = additionalInfo.claimedUserId;
+      dto.claimedUserName = additionalInfo.claimedUserName;
+      dto.claimedUserFirstName = additionalInfo.claimedUserFirstName;
+      dto.claimedUserLastName = additionalInfo.claimedUserLastName;
       dto.hiringTitle = additionalInfo.hiringTitle;
+      dto.resolvedByEmail = additionalInfo.resolvedByEmail;
     }
 
     return dto;

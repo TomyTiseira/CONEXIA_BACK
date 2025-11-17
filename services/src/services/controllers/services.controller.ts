@@ -122,4 +122,24 @@ export class ServicesController {
       throw error;
     }
   }
+
+  @MessagePattern('getUserServiceMetrics')
+  async getUserServiceMetrics(@Payload() data: { userId: number }) {
+    try {
+      return await this.servicesService.getUserServiceMetrics(data.userId);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getAdminServiceMetrics')
+  async getAdminServiceMetrics() {
+    try {
+      return await this.servicesService.getAdminServiceMetrics();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

@@ -21,6 +21,9 @@ import { DeleteProjectUseCase } from './services/use-cases/delete-project.use-ca
 import { GetProjectByIdUseCase } from './services/use-cases/get-project-by-id.use-case';
 import { GetProjectsByUserUseCase } from './services/use-cases/get-projects-by-user.use-case';
 import { GetProjectsUseCase } from './services/use-cases/get-projects.use-case';
+import { GetAdminProjectMetricsUseCase } from './services/use-cases/metrics/get-admin-project-metrics.use-case';
+import { GetUserPostulationMetricsUseCase } from './services/use-cases/metrics/get-user-postulation-metrics.use-case';
+import { GetUserProjectMetricsUseCase } from './services/use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './services/use-cases/ping.use-case';
 import { PublishProjectUseCase } from './services/use-cases/publish-project.use-case';
 
@@ -36,6 +39,9 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
     DeleteProjectUseCase,
     PingUseCase,
     SkillsService,
+    GetUserProjectMetricsUseCase,
+    GetUserPostulationMetricsUseCase,
+    GetAdminProjectMetricsUseCase,
   ],
   imports: [
     TypeOrmModule.forFeature([

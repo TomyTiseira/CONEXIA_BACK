@@ -1,11 +1,19 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { BillingCycle, SubscriptionStatus } from '../../entities/membreship.entity';
+import {
+  BillingCycle,
+  SubscriptionStatus,
+} from '../../entities/membreship.entity';
 import { SubscriptionRepository } from '../../repository/subscription.repository';
-import { MercadoPagoService } from '../mercado-pago.service';
+import {
+  MercadoPagoPaymentResponse,
+  MercadoPagoService,
+} from '../mercado-pago.service';
 
 @Injectable()
 export class ProcessSubscriptionPaymentWebhookUseCase {
-  private readonly logger = new Logger(ProcessSubscriptionPaymentWebhookUseCase.name);
+  private readonly logger = new Logger(
+    ProcessSubscriptionPaymentWebhookUseCase.name,
+  );
 
   constructor(
     private readonly subscriptionRepository: SubscriptionRepository,
@@ -24,16 +32,41 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
         return;
       }
 
-      const subscriptionId = parseInt(paymentData.external_reference, 10);
-
-      // Obtener la suscripción
-      const subscription = await this.subscriptionRepository.findById(subscriptionId);
-
-      if (!subscription) {
-        throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+      // Verificar si el external_reference es del formato de services (hiring_X_payment_Y)
+      // En ese caso, ignorar ya que no es una suscripción
+      if (paymentData.external_reference.startsWith('hiring_')) {
+        this.logger.log(
+          `Pago ${paymentId} es de un servicio (${paymentData.external_reference}), ignorando en memberships`,
+        );
+        return;
       }
 
-      this.logger.log(`Procesando pago para suscripción ${subscriptionId}, estado: ${paymentData.status}`);
+      // Intentar obtener la suscripción por external_reference (ID numérico)
+      const subscriptionId = parseInt(paymentData.external_reference, 10);
+
+      // Verificar que el subscriptionId sea un número válido
+      if (isNaN(subscriptionId)) {
+        // Si no es un número, puede ser un UUID de MercadoPago
+        // En este caso, deberíamos esperar el webhook de preapproval
+        this.logger.log(
+          `external_reference no es un ID numérico (${paymentData.external_reference}). Esperando webhook de preapproval para activar la suscripción.`,
+        );
+        return;
+      }
+
+      // Obtener la suscripción
+      const subscription =
+        await this.subscriptionRepository.findById(subscriptionId);
+
+      if (!subscription) {
+        throw new NotFoundException(
+          `Suscripción ${subscriptionId} no encontrada`,
+        );
+      }
+
+      this.logger.log(
+        `Procesando pago para suscripción ${subscriptionId}, estado: ${paymentData.status}`,
+      );
 
       // Si el pago fue aprobado
       if (this.mercadoPagoService.isPaymentApproved(paymentData.status)) {
@@ -48,18 +81,29 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
         await this.handlePendingPayment(subscription.id, paymentData);
       }
 
-      this.logger.log(`Webhook procesado exitosamente para suscripción ${subscriptionId}`);
+      this.logger.log(
+        `Webhook procesado exitosamente para suscripción ${subscriptionId}`,
+      );
     } catch (error) {
-      this.logger.error(`Error al procesar webhook de pago ${paymentId}:`, error.stack);
+      this.logger.error(
+        `Error al procesar webhook de pago ${paymentId}:`,
+        error.stack,
+      );
       throw error;
     }
   }
 
-  private async handleApprovedPayment(subscriptionId: number, paymentData: any): Promise<void> {
-    const subscription = await this.subscriptionRepository.findById(subscriptionId);
+  private async handleApprovedPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
 
     if (!subscription) {
-      throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+      throw new NotFoundException(
+        `Suscripción ${subscriptionId} no encontrada`,
+      );
     }
 
     // Si ya está activa, no hacer nada
@@ -85,29 +129,48 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       paymentId: paymentData.id.toString(),
       paymentStatus: paymentData.status,
       paymentStatusDetail: paymentData.status_detail,
-      paidAt: paymentData.date_approved ? new Date(paymentData.date_approved) : now,
+      paidAt: paymentData.date_approved
+        ? new Date(paymentData.date_approved)
+        : now,
       startDate,
       endDate,
+      // Guardar información del método de pago
+      paymentMethodType: paymentData.payment_method?.type || null,
+      cardLastFourDigits: paymentData.card?.last_four_digits || null,
+      cardBrand: paymentData.payment_method?.id || null,
     });
 
-    this.logger.log(`Suscripción ${subscriptionId} activada. Válida desde ${startDate} hasta ${endDate}`);
+    this.logger.log(
+      `Suscripción ${subscriptionId} activada. Válida desde ${startDate.toISOString()} hasta ${endDate.toISOString()}`,
+    );
 
     // Si esta suscripción reemplaza a otra, marcar la anterior como reemplazada
     if (subscription.replacesSubscriptionId) {
-      await this.subscriptionRepository.update(subscription.replacesSubscriptionId, {
-        status: SubscriptionStatus.REPLACED,
-        endDate: now, // Finalizar inmediatamente
-      });
+      await this.subscriptionRepository.update(
+        subscription.replacesSubscriptionId,
+        {
+          status: SubscriptionStatus.REPLACED,
+          endDate: now, // Finalizar inmediatamente
+        },
+      );
 
-      this.logger.log(`Suscripción ${subscription.replacesSubscriptionId} marcada como REPLACED`);
+      this.logger.log(
+        `Suscripción ${subscription.replacesSubscriptionId} marcada como REPLACED`,
+      );
     }
   }
 
-  private async handleRejectedPayment(subscriptionId: number, paymentData: any): Promise<void> {
-    const subscription = await this.subscriptionRepository.findById(subscriptionId);
+  private async handleRejectedPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
 
     if (!subscription) {
-      throw new NotFoundException(`Suscripción ${subscriptionId} no encontrada`);
+      throw new NotFoundException(
+        `Suscripción ${subscriptionId} no encontrada`,
+      );
     }
 
     // Incrementar contador de reintentos
@@ -121,10 +184,15 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       retryCount,
     });
 
-    this.logger.log(`Suscripción ${subscriptionId} marcada como PAYMENT_FAILED. Intento ${retryCount}`);
+    this.logger.log(
+      `Suscripción ${subscriptionId} marcada como PAYMENT_FAILED. Intento ${retryCount}`,
+    );
   }
 
-  private async handlePendingPayment(subscriptionId: number, paymentData: any): Promise<void> {
+  private async handlePendingPayment(
+    subscriptionId: number,
+    paymentData: MercadoPagoPaymentResponse,
+  ): Promise<void> {
     await this.subscriptionRepository.update(subscriptionId, {
       paymentId: paymentData.id.toString(),
       paymentStatus: paymentData.status,

@@ -97,4 +97,34 @@ export class ProjectsController {
   async getRubros() {
     return await this.skillsService.getRubros();
   }
+
+  @MessagePattern('getUserProjectMetrics')
+  async getUserProjectMetrics(@Payload() data: { userId: number }) {
+    try {
+      return await this.projectsService.getUserProjectMetrics(data.userId);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getUserPostulationMetrics')
+  async getUserPostulationMetrics(@Payload() data: { userId: number }) {
+    try {
+      return await this.projectsService.getUserPostulationMetrics(data.userId);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getAdminProjectMetrics')
+  async getAdminProjectMetrics() {
+    try {
+      return await this.projectsService.getAdminProjectMetrics();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

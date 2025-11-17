@@ -1,16 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
+import { NATS_SERVICE } from 'src/config';
 import { Skill } from '../../../shared/interfaces/skill.interface';
 import { ConnectionInfoService } from '../../../shared/services/connection-info.service';
 import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
-    ProfileSkillResponse,
-    ProfileWithSkills,
+  ProfileSkillResponse,
+  ProfileWithSkills,
 } from '../../../shared/types/skill.types';
 import { UserReviewRepository } from '../../../user-reviews/repository/user-review.repository';
 import { GetProfileDto } from '../../dto/get-profile.dto';
 import { ProfileRepository } from '../../repository/profile.repository';
+
+interface PlanResponse {
+  plan?: {
+    id: string;
+    name: string;
+    [key: string]: unknown;
+  } | null;
+}
 
 @Injectable()
 export class GetProfileUseCase {
@@ -20,6 +31,7 @@ export class GetProfileUseCase {
     private readonly connectionInfoService: ConnectionInfoService,
     private readonly conversationInfoService: ConversationInfoService,
     private readonly userReviewRepository: UserReviewRepository,
+    @Inject(NATS_SERVICE) private readonly natsClient: ClientProxy,
   ) {}
 
   async execute(getProfileDto: GetProfileDto) {
@@ -98,13 +110,30 @@ export class GetProfileUseCase {
           getProfileDto.authenticatedUser.id,
           getProfileDto.targetUserId,
         );
-      hasReviewed = existingReview !== null;
+      hasReviewed = !!existingReview;
+    }
+
+    // Obtener información del plan/suscripción del usuario
+    let userPlan: PlanResponse['plan'] = null;
+    try {
+      const planResponse = await firstValueFrom<PlanResponse>(
+        this.natsClient.send('getUserPlan', {
+          userId: getProfileDto.targetUserId,
+        }),
+      );
+      userPlan = planResponse?.plan || null;
+    } catch {
+      // Si hay error al obtener el plan, simplemente no lo incluimos
+      console.warn(
+        `No se pudo obtener el plan del usuario ${getProfileDto.targetUserId}`,
+      );
     }
 
     return {
       profile: transformedProfile,
       isOwner,
       hasReviewed,
-    };
+      plan: userPlan,
+    } as any;
   }
 }

@@ -125,33 +125,38 @@ export class ContractPlanUseCase {
         initPoint,
         status,
         nextPaymentDate,
-      } = await this.mercadoPagoService.createSubscription(
+      } = this.mercadoPagoService.createSubscription(
         mercadoPagoPlanId,
         userEmail,
         subscription.id,
-        dto.cardTokenId,
       );
 
-      // Actualizar suscripción con los datos de MercadoPago
-      await this.subscriptionRepository.update(subscription.id, {
-        mercadoPagoSubscriptionId: mpSubscriptionId,
-        paymentStatus: status,
-        nextPaymentDate: nextPaymentDate ? new Date(nextPaymentDate) : null,
-        // Si MercadoPago devuelve status 'authorized', activar inmediatamente
-        status:
-          status === 'authorized'
-            ? SubscriptionStatus.ACTIVE
-            : SubscriptionStatus.PENDING_PAYMENT,
-        startDate: status === 'authorized' ? new Date() : undefined,
-        endDate:
-          status === 'authorized'
-            ? this.calculateEndDate(new Date(), dto.billingCycle)
-            : undefined,
-      });
+      // En redirect flow, solo actualizamos si MercadoPago devuelve un subscriptionId
+      // De lo contrario, esperamos el webhook después del pago
+      if (mpSubscriptionId) {
+        await this.subscriptionRepository.update(subscription.id, {
+          mercadoPagoSubscriptionId: mpSubscriptionId,
+          paymentStatus: status,
+          nextPaymentDate: nextPaymentDate ? new Date(nextPaymentDate) : null,
+          status:
+            status === 'authorized'
+              ? SubscriptionStatus.ACTIVE
+              : SubscriptionStatus.PENDING_PAYMENT,
+          startDate: status === 'authorized' ? new Date() : undefined,
+          endDate:
+            status === 'authorized'
+              ? this.calculateEndDate(new Date(), dto.billingCycle)
+              : undefined,
+        });
 
-      this.logger.log(
-        `Suscripción ${subscription.id} vinculada a MercadoPago: ${mpSubscriptionId}`,
-      );
+        this.logger.log(
+          `Suscripción ${subscription.id} vinculada a MercadoPago: ${mpSubscriptionId}`,
+        );
+      } else {
+        this.logger.log(
+          `Suscripción ${subscription.id} creada. Esperando pago del usuario y webhook de MercadoPago para activarla.`,
+        );
+      }
 
       // Calcular fecha de expiración de la preferencia (24 horas)
       const expiresAt = new Date();

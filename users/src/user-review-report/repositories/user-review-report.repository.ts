@@ -40,6 +40,7 @@ export class UserReviewReportRepository {
   ): Promise<[any[], number]> {
     const query = this.repository
       .createQueryBuilder('report')
+      .leftJoinAndSelect('report.userReview', 'userReview')
       .select([
         'report.id',
         'report.reason',
@@ -48,6 +49,7 @@ export class UserReviewReportRepository {
         'report.createdAt',
         'report.userReviewId',
         'report.reporterId',
+        'userReview.reviewedUserId',
       ])
       .where('report.userReviewId = :userReviewId', { userReviewId })
       .orderBy('report.createdAt', 'DESC');

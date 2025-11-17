@@ -14,6 +14,8 @@ import { DeleteServiceUseCase } from './use-cases/delete-service.use-case';
 import { GetServiceByIdUseCase } from './use-cases/get-service-by-id.use-case';
 import { GetServicesByUserUseCase } from './use-cases/get-services-by-user.use-case';
 import { GetServicesUseCase } from './use-cases/get-services.use-case';
+import { GetAdminServiceMetricsUseCase } from './use-cases/metrics/get-admin-service-metrics.use-case';
+import { GetUserServiceMetricsUseCase } from './use-cases/metrics/get-user-service-metrics.use-case';
 import { UpdateServiceUseCase } from './use-cases/update-service.use-case';
 
 @Injectable()
@@ -26,6 +28,8 @@ export class ServicesService {
     private readonly getServicesByUserUseCase: GetServicesByUserUseCase,
     private readonly getServiceByIdUseCase: GetServiceByIdUseCase,
     private readonly categoryService: CategoryService,
+    private readonly getUserServiceMetricsUseCase: GetUserServiceMetricsUseCase,
+    private readonly getAdminServiceMetricsUseCase: GetAdminServiceMetricsUseCase,
   ) {}
 
   async createService(createServiceDto: CreateServiceDto, userId: number) {
@@ -66,5 +70,13 @@ export class ServicesService {
     },
   ) {
     return this.updateServiceUseCase.execute(serviceId, userId, updates);
+  }
+
+  async getUserServiceMetrics(userId: number) {
+    return this.getUserServiceMetricsUseCase.execute(userId);
+  }
+
+  async getAdminServiceMetrics() {
+    return this.getAdminServiceMetricsUseCase.execute();
   }
 }

@@ -9,6 +9,9 @@ import { DeleteProjectUseCase } from './use-cases/delete-project.use-case';
 import { GetProjectByIdUseCase } from './use-cases/get-project-by-id.use-case';
 import { GetProjectsByUserUseCase } from './use-cases/get-projects-by-user.use-case';
 import { GetProjectsUseCase } from './use-cases/get-projects.use-case';
+import { GetAdminProjectMetricsUseCase } from './use-cases/metrics/get-admin-project-metrics.use-case';
+import { GetUserPostulationMetricsUseCase } from './use-cases/metrics/get-user-postulation-metrics.use-case';
+import { GetUserProjectMetricsUseCase } from './use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './use-cases/ping.use-case';
 import { PublishProjectUseCase } from './use-cases/publish-project.use-case';
 
@@ -22,6 +25,9 @@ export class ProjectsService {
     private readonly deleteProjectUseCase: DeleteProjectUseCase,
     private readonly pingUseCase: PingUseCase,
     private readonly projectRepository: ProjectRepository,
+    private readonly getUserProjectMetricsUseCase: GetUserProjectMetricsUseCase,
+    private readonly getUserPostulationMetricsUseCase: GetUserPostulationMetricsUseCase,
+    private readonly getAdminProjectMetricsUseCase: GetAdminProjectMetricsUseCase,
   ) {}
 
   ping() {
@@ -62,5 +68,17 @@ export class ProjectsService {
 
   async getProjectsByUser(data: GetProjectsByUserDto) {
     return this.getProjectsByUserUseCase.execute(data);
+  }
+
+  async getUserProjectMetrics(userId: number) {
+    return this.getUserProjectMetricsUseCase.execute(userId);
+  }
+
+  async getUserPostulationMetrics(userId: number) {
+    return this.getUserPostulationMetricsUseCase.execute(userId);
+  }
+
+  async getAdminProjectMetrics() {
+    return this.getAdminProjectMetricsUseCase.execute();
   }
 }

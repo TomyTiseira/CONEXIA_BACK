@@ -19,6 +19,9 @@ interface UpdateSubscriptionData {
   nextPaymentDate?: Date | null;
   retryCount?: number;
   autoRenew?: boolean;
+  paymentMethodType?: string | null;
+  cardLastFourDigits?: string | null;
+  cardBrand?: string | null;
 }
 
 @Injectable()

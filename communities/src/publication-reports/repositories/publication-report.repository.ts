@@ -237,4 +237,17 @@ export class PublicationReportRepository extends Repository<PublicationReport> {
       .execute();
     return { affected: result.affected };
   }
+
+  /**
+   * Obtiene reportes por sus IDs con información de la publicación
+   */
+  async findReportsByIds(reportIds: number[]): Promise<PublicationReport[]> {
+    if (!reportIds || reportIds.length === 0) return [];
+
+    return this.find({
+      where: reportIds.map((id) => ({ id })),
+      relations: ['publication'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }

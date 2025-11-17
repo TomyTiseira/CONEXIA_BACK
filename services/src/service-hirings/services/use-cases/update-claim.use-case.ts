@@ -1,8 +1,8 @@
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
@@ -26,12 +26,12 @@ export class UpdateClaimUseCase {
     userId: number,
     updateDto: UpdateClaimDto,
   ): Promise<Claim> {
-    const { description, evidenceUrls } = updateDto;
+    const { clarificationResponse, evidenceUrls } = updateDto;
 
     // 1. Validar que se envíe al menos uno de los dos campos
-    if (!description && (!evidenceUrls || evidenceUrls.length === 0)) {
+    if (!clarificationResponse && (!evidenceUrls || evidenceUrls.length === 0)) {
       throw new BadRequestException(
-        'Debes proporcionar al menos una nueva descripción o evidencias',
+        'Debes proporcionar al menos una respuesta de subsanación o evidencias',
       );
     }
 
@@ -68,7 +68,7 @@ export class UpdateClaimUseCase {
     const updatedClaim = await this.claimRepository.updateClaimEvidence(
       claimId,
       {
-        description,
+        clarificationResponse,
         evidenceUrls,
       },
     );

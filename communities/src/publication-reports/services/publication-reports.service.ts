@@ -172,4 +172,29 @@ export class PublicationReportsService {
   async deactivateReports(reportIds: number[]) {
     return await this.publicationReportRepository.deactivateReports(reportIds);
   }
+
+  /**
+   * Obtiene reportes por sus IDs con información de la publicación
+   * Para el sistema de moderación
+   */
+  async getReportsByIds(reportIds: number[]) {
+    if (!reportIds || reportIds.length === 0) return [];
+
+    const reports =
+      await this.publicationReportRepository.findReportsByIds(reportIds);
+    return reports.map((report) => ({
+      id: report.id,
+      reporterId: report.reporterId,
+      reason: report.reason,
+      otherReason: report.otherReason,
+      description: report.description,
+      createdAt: report.createdAt,
+      isActive: report.isActive,
+      updatedAt: report.updatedAt,
+      reportedUserId: report.publication?.userId || null,
+      publicationId: report.publication?.id || null,
+      resourceTitle: null,
+      resourceDescription: report.publication?.description || null,
+    }));
+  }
 }

@@ -12,6 +12,7 @@ export interface UserReviewReportResponseDto {
   createdAt: Date;
   userReviewId: number;
   reporterId: number;
+  reviewedUserId: number;
   reporter: {
     id: number;
     email: string;
@@ -58,6 +59,7 @@ function transformUserReviewReportsWithUsers(
       createdAt: report.createdAt,
       userReviewId: report.userReviewId,
       reporterId: report.reporterId,
+      reviewedUserId: report.userReview?.reviewedUserId || null,
       reporter: user
         ? {
             id: user.id,
