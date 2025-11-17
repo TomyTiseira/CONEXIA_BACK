@@ -1,15 +1,15 @@
 import { Type } from 'class-transformer';
 import {
-  IsArray,
-  IsBoolean,
-  IsDateString,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  MaxLength,
-  Min,
-  ValidateNested,
+    IsArray,
+    IsBoolean,
+    IsDateString,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    MaxLength,
+    Min,
+    ValidateNested,
 } from 'class-validator';
 
 export class CreateDeliverableDto {
@@ -62,6 +62,15 @@ export class CreateQuotationWithDeliverablesDto {
   @IsOptional()
   @IsBoolean()
   isBusinessDays?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.5, { message: 'hoursPerDay must be at least 0.5' })
+  hoursPerDay?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  workOnBusinessDaysOnly?: boolean;
 
   // Para modalidad "Pago total al finalizar"
   @IsOptional()

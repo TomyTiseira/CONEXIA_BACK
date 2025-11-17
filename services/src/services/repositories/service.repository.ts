@@ -39,12 +39,19 @@ export class ServiceRepository {
   async findServicesWithFilters(filters: {
     search?: string;
     categoryIds?: number[];
+    minRating?: number;
     page: number;
     limit: number;
   }): Promise<[Service[], number]> {
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.category', 'category')
+      // LEFT JOIN con service_reviews para calcular el promedio de calificaciones
+      .leftJoin(
+        'service_reviews',
+        'review',
+        'review.serviceId = service.id AND review.deletedAt IS NULL',
+      )
       .where('service.status = :status', { status: 'active' })
       .andWhere('service.deletedAt IS NULL');
 
@@ -61,6 +68,19 @@ export class ServiceRepository {
       });
     }
 
+    // Agrupar por servicio para poder aplicar HAVING con el promedio de rating
+    queryBuilder
+      .groupBy('service.id')
+      .addGroupBy('category.id');
+
+    // Si hay filtro de calificación mínima, aplicar HAVING
+    if (filters.minRating !== undefined && filters.minRating > 0) {
+      queryBuilder.having('COALESCE(AVG(review.rating), 0) >= :minRating', {
+        minRating: filters.minRating,
+      });
+    }
+
+    // Ordenar por fecha de creación (más recientes primero)
     queryBuilder.orderBy('service.createdAt', 'DESC');
 
     const skip = (filters.page - 1) * filters.limit;
