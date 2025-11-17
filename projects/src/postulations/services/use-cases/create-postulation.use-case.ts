@@ -202,27 +202,20 @@ export class CreatePostulationUseCase {
       }
     }
 
-    // 10. Determinar estado inicial y deadline según applicationTypes
+    // 10. Determinar estado inicial según applicationTypes
     let initialStatus;
-    let evaluationDeadline: Date | undefined;
 
     if (hasEvaluation) {
       // Si tiene evaluación técnica, estado inicial es PENDING_EVALUATION
       initialStatus = await this.postulationStatusService.getByCode(
         PostulationStatusCode.PENDING_EVALUATION,
       );
-
-      // Calcular deadline basado en los días de la evaluación
-      const evaluation = role.evaluations?.[0];
-      const evaluationDays = evaluation?.days || 10;
-      evaluationDeadline = new Date();
-      evaluationDeadline.setDate(evaluationDeadline.getDate() + evaluationDays);
     } else {
       // Si solo tiene CV y/o preguntas, estado inicial es ACTIVE
       initialStatus = await this.postulationStatusService.getActiveStatus();
     }
 
-    // 11. Crear la postulación
+    // 11. Crear la postulación (sin deadline todavía)
     const postulationData: Partial<Postulation> = {
       userId: currentUserId,
       projectId: role.projectId,
@@ -231,7 +224,6 @@ export class CreatePostulationUseCase {
       cvUrl: createPostulationDto.cvUrl,
       cvFilename: createPostulationDto.cvFilename,
       cvSize: createPostulationDto.cvSize,
-      evaluationDeadline,
       // Campos para inversores
       investorAmount: createPostulationDto.investorAmount,
       investorMessage: createPostulationDto.investorMessage,
@@ -240,14 +232,35 @@ export class CreatePostulationUseCase {
     };
 
     // Si vienen respuestas, crear con answers en una transacción
+    let createdPostulation: Postulation;
     if (createPostulationDto.answers && createPostulationDto.answers.length > 0) {
-      return await this.postulationRepository.createWithAnswers(
+      createdPostulation = await this.postulationRepository.createWithAnswers(
         postulationData,
         createPostulationDto.answers,
       );
+    } else {
+      createdPostulation = await this.postulationRepository.create(postulationData);
     }
 
-    return await this.postulationRepository.create(postulationData);
+    // 12. Si hay evaluación, calcular y actualizar el deadline usando el createdAt real
+    if (hasEvaluation) {
+      const evaluation = role.evaluations?.[0];
+      const evaluationDays = evaluation?.days || 10;
+      
+      // Calcular deadline desde el createdAt de la postulación
+      const evaluationDeadline = new Date(createdPostulation.createdAt);
+      evaluationDeadline.setDate(evaluationDeadline.getDate() + evaluationDays);
+      
+      // Actualizar la postulación con el deadline correcto
+      const updatedPostulation = await this.postulationRepository.update(
+        createdPostulation.id,
+        { evaluationDeadline }
+      );
+      
+      return updatedPostulation || createdPostulation;
+    }
+
+    return createdPostulation;
   }
 
   /**
