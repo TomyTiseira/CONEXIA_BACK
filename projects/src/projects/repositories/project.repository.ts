@@ -13,6 +13,7 @@ import { ProjectRole } from '../entities/project-role.entity';
 import { RoleQuestion } from '../entities/role-question.entity';
 import { RoleQuestionOption } from '../entities/role-question-option.entity';
 import { RoleEvaluation } from '../entities/role-evaluation.entity';
+import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 
 @Injectable()
 export class ProjectRepository {
@@ -134,7 +135,7 @@ export class ProjectRepository {
   async update(id: number, project: Partial<Project>): Promise<Project> {
     const existingProject = await this.ormRepository.findOne({ where: { id } });
     if (!existingProject) {
-      throw new Error(`Project with id ${id} not found`);
+      throw new ProjectNotFoundException(id);
     }
 
     const updatedProject = this.ormRepository.merge(existingProject, project);
