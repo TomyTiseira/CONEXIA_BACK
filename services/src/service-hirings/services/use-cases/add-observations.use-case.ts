@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
+    BadRequestException,
+    Injectable,
+    NotFoundException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
@@ -65,12 +65,12 @@ export class AddObservationsUseCase {
    */
   private async sendObservationNotifications(claim: Claim): Promise<void> {
     try {
-      // Obtener información del reclamante
+      // Obtener información del reclamante (con profile)
       const claimant = await this.usersClient.getUserByIdWithRelations(
         claim.claimantUserId,
       );
-      const claimantName = claimant
-        ? `${claimant.name} ${claimant.lastName}`.trim()
+      const claimantName = claimant?.profile
+        ? `${claimant.profile.name} ${claimant.profile.lastName}`.trim()
         : 'Usuario';
 
       // Obtener información del hiring

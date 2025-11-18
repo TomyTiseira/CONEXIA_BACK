@@ -142,24 +142,24 @@ export class CreateClaimUseCase {
     claimantUserId: number,
   ): Promise<void> {
     try {
-      // Obtener información del usuario reclamante
-      const claimant = await this.usersClient.getUserById(claimantUserId);
-      const claimantName = claimant
-        ? `${claimant.name} ${claimant.lastName}`.trim()
+      // Obtener información del usuario reclamante (con profile para obtener name y lastName)
+      const claimant = await this.usersClient.getUserByIdWithRelations(claimantUserId);
+      const claimantName = claimant?.profile
+        ? `${claimant.profile.name} ${claimant.profile.lastName}`.trim()
         : 'Usuario';
 
-      // Obtener información del proveedor
-      const provider = await this.usersClient.getUserById(
+      // Obtener información del proveedor (con profile)
+      const provider = await this.usersClient.getUserByIdWithRelations(
         hiring.service.userId,
       );
-      const providerName = provider
-        ? `${provider.name} ${provider.lastName}`.trim()
+      const providerName = provider?.profile
+        ? `${provider.profile.name} ${provider.profile.lastName}`.trim()
         : 'Proveedor';
 
-      // Obtener información del cliente
-      const client = await this.usersClient.getUserById(hiring.userId);
-      const clientName = client
-        ? `${client.name} ${client.lastName}`.trim()
+      // Obtener información del cliente (con profile)
+      const client = await this.usersClient.getUserByIdWithRelations(hiring.userId);
+      const clientName = client?.profile
+        ? `${client.profile.name} ${client.profile.lastName}`.trim()
         : 'Cliente';
 
       const claimData = {
@@ -170,6 +170,15 @@ export class CreateClaimUseCase {
         claimantRole: claim.claimantRole,
         description: claim.description,
       };
+
+      // Enviar email al reclamante confirmando que su reclamo fue creado
+      if (claimant?.email) {
+        await this.emailService.sendClaimCreatedConfirmationEmail(
+          claimant.email,
+          claimantName,
+          claimData,
+        );
+      }
 
       // Determinar quién recibe el email según el rol del reclamante
       if (claim.claimantRole === ClaimRole.CLIENT) {
