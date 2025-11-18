@@ -49,6 +49,18 @@ export class CreatePlanUseCase {
         changes: { id: created.id, ...dto },
       });
 
+      // Si el plan es completamente gratuito (sin precio mensual ni anual),
+      // evitar sincronizar con MercadoPago porque la API rechaza montos muy bajos.
+      if (
+        (created.monthlyPrice ?? 0) === 0 &&
+        (created.annualPrice ?? 0) === 0
+      ) {
+        this.logger.log(
+          `Plan ${created.id} es gratuito. Se omitirá la sincronización con MercadoPago.`,
+        );
+        return created;
+      }
+
       // Sincronizar con MercadoPago de forma SÍNCRONA
       // Si falla, hacer rollback del plan creado
       try {
