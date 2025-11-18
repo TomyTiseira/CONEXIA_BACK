@@ -215,3 +215,129 @@ export class UserNotProjectOwnerException extends RpcException {
     });
   }
 }
+
+export class RoleNotBelongToProjectException extends RpcException {
+  constructor(roleId: number, projectId: number) {
+    super({
+      status: 400,
+      message: `Role ${roleId} does not belong to project ${projectId}`,
+    });
+  }
+}
+
+export class RoleNotFoundException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 404,
+      message: `Role with id ${roleId} not found`,
+    });
+  }
+}
+
+export class AlreadyAppliedToRoleException extends RpcException {
+  constructor(userId: number, roleId: number) {
+    super({
+      status: 409,
+      message: `User ${userId} has already applied to role ${roleId}`,
+    });
+  }
+}
+
+export class EvaluationDeadlineExpiredException extends RpcException {
+  constructor(postulationId: number) {
+    super({
+      status: 400,
+      message: `The evaluation deadline for postulation ${postulationId} has expired`,
+    });
+  }
+}
+
+export class InvalidPostulationStateException extends RpcException {
+  constructor(postulationId: number, expectedState: string, currentState: string) {
+    super({
+      status: 400,
+      message: `Postulation ${postulationId} is in ${currentState} state, expected ${expectedState}`,
+    });
+  }
+}
+
+export class UnauthorizedPostulationAccessException extends RpcException {
+  constructor(postulationId: number, userId: number) {
+    super({
+      status: 403,
+      message: `User ${userId} is not authorized to access postulation ${postulationId}`,
+    });
+  }
+}
+
+export class InvalidApplicationTypesException extends RpcException {
+  constructor(roleId: number, message: string) {
+    super({
+      status: 400,
+      message: `Invalid application types for role ${roleId}: ${message}`,
+    });
+  }
+}
+
+export class MissingRequiredAnswersException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 400,
+      message: `Missing required answers for role ${roleId} questions`,
+    });
+  }
+}
+
+export class RoleNotAcceptingApplicationsException extends RpcException {
+  constructor(roleId: number, reason: string) {
+    super({
+      status: 400,
+      message: `Role ${roleId} is not accepting applications: ${reason}`,
+    });
+  }
+}
+
+export class RoleMaxCollaboratorsReachedException extends RpcException {
+  constructor(roleId: number) {
+    super({
+      status: 400,
+      message: `Role with id ${roleId} has reached the maximum number of collaborators`,
+    });
+  }
+}
+
+export class EvaluationFileTooLargeException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Evaluation file size cannot exceed 10MB',
+    });
+  }
+}
+
+export class InvalidEvaluationFileTypeException extends RpcException {
+  constructor() {
+    super({
+      status: 400,
+      message: 'Only PDF files are allowed for evaluation submissions',
+    });
+  }
+}
+
+export class EvaluationSubmissionFailedException extends RpcException {
+  constructor() {
+    super({
+      status: 500,
+      message: 'Failed to submit evaluation',
+    });
+  }
+}
+
+export class MissingEvaluationSubmissionException extends RpcException {
+  constructor(postulationId: number) {
+    super({
+      status: 400,
+      message: `Evaluation file, link or description is required for postulation ${postulationId}`,
+    });
+  }
+}

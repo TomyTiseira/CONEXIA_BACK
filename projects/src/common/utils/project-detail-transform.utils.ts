@@ -21,14 +21,59 @@ export interface Skill {
 export function transformProjectToDetailResponse(
   project: Project,
   ownerData: UserWithProfile,
-  skillNames: string[],
+  skillsMap: Map<number, string>,
   currentUserId: number,
   location?: string,
-  isApplied: boolean = false,
   approvedApplications: number = 0,
+  userPostulationStatus: string | null = null,
+  userEvaluationDeadline: Date | null = null,
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
+
+  // Map roles into the detailed shape
+  const roles = (project.roles || []).map((role) => {
+    const roleSkills =
+      role.roleSkills?.map((rs) => ({ id: rs.skillId, name: skillsMap.get(rs.skillId) })) || [];
+
+    // Map questions with options
+    const questions = (role.questions || []).map((question) => ({
+      id: question.id,
+      questionText: question.questionText,
+      questionType: question.questionType,
+      required: question.required,
+      options: (question.options || []).map((option) => ({
+        id: option.id,
+        optionText: option.optionText,
+        isCorrect: option.isCorrect,
+      })),
+    }));
+
+    // Map evaluation (take first one if exists)
+    const evaluation = role.evaluations?.[0]
+      ? {
+          id: role.evaluations[0].id,
+          description: role.evaluations[0].description,
+          link: role.evaluations[0].link,
+          fileUrl: role.evaluations[0].fileUrl,
+          fileName: role.evaluations[0].fileName,
+          days: role.evaluations[0].days ?? 10,
+        }
+      : null;
+
+    return {
+      id: role.id,
+      title: role.title,
+      description: role.description,
+      applicationTypes: role.applicationTypes || [],
+      contractType: role.contractType ? { id: role.contractType.id, name: role.contractType.name } : null,
+      collaborationType: role.collaborationType ? { id: role.collaborationType.id, name: role.collaborationType.name } : null,
+      maxCollaborators: role.maxCollaborators ?? null,
+      skills: roleSkills,
+      questions: questions.length > 0 ? questions : undefined,
+      evaluation,
+    };
+  });
 
   return {
     id: project.id,
@@ -36,32 +81,28 @@ export function transformProjectToDetailResponse(
     description: project.description,
     image: project.image,
     location,
-    owner: ownerData.profile
-      ? ownerData.profile.name + ' ' + ownerData.profile.lastName
-      : 'Usuario no encontrado',
+    owner: ownerData.profile ? ownerData.profile.name + ' ' + ownerData.profile.lastName : '',
     ownerId,
     ownerImage: ownerData.profile?.profilePicture,
-    contractType: [project.contractType.name],
-    collaborationType: [project.collaborationType.name],
-    skills: skillNames,
+    roles: roles.length > 0 ? roles : undefined,
     category: [project.category.name],
-    maxCollaborators: project.maxCollaborators,
     isActive: project.isActive,
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,
     endDate: project.endDate,
     isOwner: project.userId === currentUserId,
-    isApplied,
     approvedApplications,
     hasReported: false, // El use case lo sobrescribirá con el valor correcto
+    userPostulationStatus,
+    userEvaluationDeadline,
   };
 }
 
 export function extractSkillIdsFromProjects(projects: Project[]): number[] {
   const allSkillIds = new Set<number>();
   projects.forEach((project) => {
-    project.projectSkills.forEach((ps) => {
-      allSkillIds.add(ps.skillId);
+    project.roles?.forEach((role) => {
+      role.roleSkills?.forEach((rs) => allSkillIds.add(rs.skillId));
     });
   });
   return Array.from(allSkillIds);
@@ -75,7 +116,8 @@ export function getProjectSkillNames(
   project: Project,
   skillsMap: Map<number, string>,
 ): string[] {
-  return project.projectSkills
-    .map((ps) => skillsMap.get(ps.skillId))
-    .filter((name): name is string => typeof name === 'string');
+  const names =
+    project.roles
+      ?.flatMap((role) => role.roleSkills?.map((rs) => skillsMap.get(rs.skillId)) || []) || [];
+  return names.filter((name): name is string => typeof name === 'string');
 }

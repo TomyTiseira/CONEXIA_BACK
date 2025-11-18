@@ -32,6 +32,7 @@ import { CreatePostulationDto } from './dto/create-postulation.dto';
 import { GetPostulationsByUserDto } from './dto/get-postulations-by-user.dto';
 import { GetPostulationsDto } from './dto/get-postulations.dto';
 import { RejectPostulationDto } from './dto/reject-postulation.dto';
+import { SubmitEvaluationDto } from './dto/submit-evaluation.dto';
 
 @Controller('postulations')
 export class PostulationsController {
@@ -59,7 +60,7 @@ export class PostulationsController {
           cb(
             new RpcException({
               status: 400,
-              message: 'Only PDF files are allowed for CV',
+              message: 'Only PDF files are allowed',
             }),
             false,
           );
@@ -77,6 +78,23 @@ export class PostulationsController {
   ) {
     const body = (req.body as { [key: string]: any }) ?? {};
 
+    // Parse answers if they come as JSON string
+    if (body.answers && typeof body.answers === 'string') {
+      try {
+        body.answers = JSON.parse(body.answers);
+      } catch {
+        throw new RpcException({
+          status: 400,
+          message: 'Invalid answers format',
+        });
+      }
+    }
+
+    // Parse investorAmount if it comes as string
+    if (body.investorAmount && typeof body.investorAmount === 'string') {
+      body.investorAmount = Number(body.investorAmount);
+    }
+
     const dto = plainToInstance(CreatePostulationDto, body);
     const errors = await validate(dto);
 
@@ -91,51 +109,153 @@ export class PostulationsController {
       });
     }
 
-    // Validar que se haya enviado el CV
-    if (!files.cv?.[0]) {
-      throw new RpcException({
-        status: 400,
-        message: 'CV file is required',
-      });
-    }
-
-    // Validar tipo de archivo
-    const allowedTypes = ['application/pdf'];
-    if (!allowedTypes.includes(files?.cv?.[0].mimetype)) {
-      // Borrar archivo subido
-      try {
-        await import('fs/promises').then((fs) =>
-          fs.unlink(files?.cv?.[0].path),
-        );
-      } catch {
-        // ignorar errores
-      }
-      throw new RpcException({
-        status: 400,
-        message: 'Only PDF files are allowed for CV',
-      });
-    }
-
-    const payload = {
+    // CV is optional - will be validated by the use case based on role's applicationTypes
+    const payload: any = {
       createPostulationDto: {
         ...dto,
-        cvUrl: `/uploads/cv/${files.cv[0].filename}`,
-        cvFilename: files.cv[0].originalname,
-        cvSize: files.cv[0].size,
+        userId: user.id,
       },
       currentUserId: user.id,
     };
 
+    // Add CV data if file was uploaded (fileFilter already validated PDF type)
+    if (files.cv?.[0]) {
+      payload.createPostulationDto.cvUrl = `/uploads/cv/${files.cv[0].filename}`;
+      payload.createPostulationDto.cvFilename = files.cv[0].originalname;
+      payload.createPostulationDto.cvSize = files.cv[0].size;
+    }
+
     return this.client.send('createPostulation', payload).pipe(
       catchError(async (error) => {
-        // En caso de error, borrar el archivo subido
+        // In case of error, delete uploaded file
         if (files.cv?.[0]) {
           try {
-            await import('fs/promises').then((fs) =>
-              fs.unlink(files?.cv?.[0].path),
-            );
+            const uploadedPath = files.cv?.[0]?.path;
+            if (uploadedPath) {
+              await import('fs/promises').then((fs) => fs.unlink(uploadedPath));
+            }
           } catch {
-            // ignorar errores
+            // ignore errors
+          }
+        }
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @AuthRoles([ROLES.USER])
+  @Post(':postulationId/submit-evaluation')
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'evaluation', maxCount: 1 }], {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads', 'evaluations'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const name = uniqueSuffix + extname(file.originalname);
+          cb(null, name);
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+          'application/pdf',
+          'image/png',
+          'image/jpeg',
+          'image/jpg',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new RpcException({
+              status: 400,
+              message: 'Only PDF, PNG and JPG files are allowed for evaluation',
+            }),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  async submitEvaluation(
+    @Req() req: AuthenticatedRequest,
+    @Param('postulationId') postulationId: string,
+    @UploadedFiles()
+    files: {
+      evaluation?: any[];
+    } = {},
+    @User() user: AuthenticatedUser,
+  ) {
+    const body = (req.body as { [key: string]: any }) ?? {};
+
+    const dto = plainToInstance(SubmitEvaluationDto, body);
+    const errors = await validate(dto);
+
+    if (errors.length > 0) {
+      throw new RpcException({
+        status: 400,
+        message: 'Validation failed',
+        errors: errors.map((e) => ({
+          property: e.property,
+          constraints: e.constraints,
+        })),
+      });
+    }
+
+    const payload: any = {
+      submitEvaluationDto: {
+        ...dto,
+        postulationId: Number(postulationId),
+        userId: user.id,
+      },
+    };
+
+    // Add evaluation file data if uploaded
+    if (files.evaluation?.[0]) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+      ];
+      const evaluationFile = files.evaluation[0];
+      if (!allowedTypes.includes(evaluationFile.mimetype)) {
+        // Delete uploaded file
+        try {
+          const fs = await import('fs/promises');
+          if (evaluationFile.path) {
+            await fs.unlink(evaluationFile.path);
+          }
+        } catch {
+          // ignore errors
+        }
+        throw new RpcException({
+          status: 400,
+          message: 'Only PDF, PNG and JPG files are allowed for evaluation',
+        });
+      }
+
+      payload.submitEvaluationDto.evaluationFileUrl = `/uploads/evaluations/${evaluationFile.filename}`;
+      payload.submitEvaluationDto.evaluationFilename =
+        evaluationFile.originalname;
+      payload.submitEvaluationDto.evaluationFileSize = evaluationFile.size;
+      payload.submitEvaluationDto.evaluationFileMimetype =
+        evaluationFile.mimetype;
+    }
+
+    return this.client.send('submitEvaluation', payload).pipe(
+      catchError(async (error) => {
+        // In case of error, delete uploaded file
+        if (files.evaluation?.[0]) {
+          try {
+            const uploadedPath = files.evaluation?.[0]?.path;
+            if (uploadedPath) {
+              await import('fs/promises').then((fs) => fs.unlink(uploadedPath));
+            }
+          } catch {
+            // ignore errors
           }
         }
         throw new RpcException(error);

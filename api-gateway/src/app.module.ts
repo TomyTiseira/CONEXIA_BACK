@@ -49,6 +49,5 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     DashboardModule,
   ],
   controllers: [],
-  providers: [],
 })
 export class AppModule {}

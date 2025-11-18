@@ -7,6 +7,14 @@ import { ProjectsController } from './controllers/projects.controller';
 import { Category } from './entities/category.entity';
 import { CollaborationType } from './entities/collaboration-type.entity';
 import { ContractType } from './entities/contract-type.entity';
+import { Project } from './entities/project.entity';
+import { ProjectRole } from './entities/project-role.entity';
+import { ProjectSkill } from './entities/project-skill.entity';
+import { RoleSkill } from './entities/role-skill.entity';
+import { RoleQuestion } from './entities/role-question.entity';
+import { RoleQuestionOption } from './entities/role-question-option.entity';
+import { RoleEvaluation } from './entities/role-evaluation.entity';
+import { ProjectRepository } from './repositories/project.repository';
 import { ProjectsService } from './services/projects.service';
 import { SkillsService } from './services/skills.service';
 import { DeleteProjectUseCase } from './services/use-cases/delete-project.use-case';
@@ -23,6 +31,7 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
   controllers: [ProjectsController],
   providers: [
     ProjectsService,
+    ProjectRepository,
     PublishProjectUseCase,
     GetProjectsUseCase,
     GetProjectByIdUseCase,
@@ -35,11 +44,22 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
     GetAdminProjectMetricsUseCase,
   ],
   imports: [
-    TypeOrmModule.forFeature([Category, CollaborationType, ContractType]),
+    TypeOrmModule.forFeature([
+      Project,
+      Category,
+      CollaborationType,
+      ContractType,
+      ProjectSkill,
+      RoleSkill,
+      ProjectRole,
+      RoleQuestion,
+      RoleQuestionOption,
+      RoleEvaluation,
+    ]),
+    SharedModule,
     forwardRef(() => PostulationsModule),
     forwardRef(() => ReportsModule),
-    SharedModule,
   ],
-  exports: [ProjectsService, SkillsService],
+  exports: [ProjectsService, SkillsService, ProjectRepository],
 })
 export class ProjectsModule {}

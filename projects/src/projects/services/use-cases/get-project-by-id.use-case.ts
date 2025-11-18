@@ -63,22 +63,14 @@ export class GetProjectByIdUseCase {
       locationName = locality?.name;
     }
 
-    // Obtener información de las habilidades
+    // Obtener información de las habilidades por proyecto (mapa id->name)
     const projectSkills = await this.projectRepository.getProjectSkills(
       project.id,
     );
     const skills = await this.usersClientService.getSkillsByIds(projectSkills);
     const skillsMap = createSkillsMap(skills);
-    const skillNames = getProjectSkillNames(project, skillsMap);
 
-    // Verificar si el usuario actual está postulado al proyecto
-    let isApplied = false;
-    if (data.currentUserId && project.userId !== data.currentUserId) {
-      isApplied = await this.postulationRepository.existsByProjectAndUser(
-        project.id,
-        data.currentUserId,
-      );
-    }
+    // (isApplied removed from detail response by request)
 
     // Verificar si el usuario actual ya reportó este proyecto
     let hasReported = false;
@@ -104,15 +96,30 @@ export class GetProjectByIdUseCase {
         1,
       );
 
+    // Buscar la postulación del usuario actual si existe
+    let userPostulationStatus: string | null = null;
+    let userEvaluationDeadline: Date | null = null;
+    if (data.currentUserId && project.userId !== data.currentUserId) {
+      const userPostulation = await this.postulationRepository.findByProjectAndUser(
+        project.id,
+        data.currentUserId,
+      );
+      if (userPostulation) {
+        userPostulationStatus = userPostulation.status?.code || null;
+        userEvaluationDeadline = userPostulation.evaluationDeadline || null;
+      }
+    }
+
     // Construir la respuesta usando la función utilitaria
     const response = transformProjectToDetailResponse(
       project,
       ownerData,
-      skillNames,
+      skillsMap,
       data.currentUserId,
       locationName,
-      isApplied,
       approvedCount,
+      userPostulationStatus,
+      userEvaluationDeadline,
     );
 
     // Agregar el campo hasReported a la respuesta

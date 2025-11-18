@@ -6,21 +6,14 @@ export class ProjectResponseDto {
     id: number;
     name: string;
   };
-  collaborationType: {
-    id: number;
-    name: string;
-  };
-  contractType: {
-    id: number;
-    name: string;
-  };
+  // collaborationType and contractType are now role-scoped and not present at project level
   owner: {
     id: number;
     name: string;
     image?: string;
   };
   isOwner: boolean;
-  skills: {
+  skills?: {
     id: number;
     name?: string;
   }[];
@@ -29,6 +22,9 @@ export class ProjectResponseDto {
   isActive: boolean;
   isApplied: boolean;
   approvedApplications: number;
-  maxCollaborators: number;
   postulationStatus?: { code: string } | null;
+  summary?: {
+    contractTypes?: string[];
+    collaborationTypes?: string[];
+  };
 }

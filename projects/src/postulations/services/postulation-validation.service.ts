@@ -11,6 +11,7 @@ import {
   UserNotActiveException,
   UserNotPostulationOwnerException,
   UserNotProjectOwnerException,
+  RoleNotBelongToProjectException,
 } from '../../common/exceptions/postulation.exceptions';
 import { ProjectNotFoundException } from '../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../common/services/users-client.service';
@@ -100,21 +101,19 @@ export class PostulationValidationService {
    * @param projectId - ID del proyecto
    * @param userId - ID del usuario
    */
-  async validateUserNotAlreadyApplied(
-    projectId: number,
-    userId: number,
-  ): Promise<void> {
-    const existingPostulation =
-      await this.postulationRepository.findByProjectAndUser(projectId, userId);
+  async validateUserNotAlreadyApplied(roleId: number, userId: number): Promise<void> {
+    const existingPostulation = await this.postulationRepository.findByRoleAndUser(
+      roleId,
+      userId,
+    );
 
     if (existingPostulation) {
       // Solo bloquear si la postulación está en estado activo, aceptada o rechazada
       // Permitir nueva postulación si la anterior fue cancelada
-      const cancelledStatus =
-        await this.postulationStatusService.getCancelledStatus();
+      const cancelledStatus = await this.postulationStatusService.getCancelledStatus();
 
       if (existingPostulation.statusId !== cancelledStatus.id) {
-        throw new UserAlreadyAppliedException(projectId, userId);
+        throw new UserAlreadyAppliedException(roleId, userId);
       }
     }
   }
@@ -151,6 +150,34 @@ export class PostulationValidationService {
 
     if (approvedPostulations.length >= maxCollaborators) {
       throw new ProjectMaxCollaboratorsReachedException(projectId);
+    }
+  }
+
+  /**
+   * Valida que un role exista y pertenezca al proyecto
+   */
+  async validateRoleExists(roleId: number, projectId: number): Promise<void> {
+    const role = await this.projectRepository.findRoleById(roleId);
+    if (!role) {
+      throw new ProjectNotFoundException(roleId); // reuse exception for missing resource
+    }
+
+    if (role.projectId !== projectId) {
+      throw new RoleNotBelongToProjectException(roleId, projectId);
+    }
+  }
+
+  /**
+   * Valida que un role aún tenga vacantes disponibles según sus vacantes configuradas
+   */
+  async validateRoleHasAvailableSlots(roleId: number): Promise<void> {
+    const role = await this.projectRepository.findRoleById(roleId);
+    if (!role) return;
+    const max = role.maxCollaborators || 0;
+    if (!max || max <= 0) return;
+    const acceptedCount = await this.postulationRepository.countAcceptedByRole(roleId);
+    if (acceptedCount >= max) {
+      throw new ProjectMaxCollaboratorsReachedException(roleId);
     }
   }
 

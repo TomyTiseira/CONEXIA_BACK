@@ -5,6 +5,7 @@ import { CreatePostulationDto } from '../dtos/create-postulation.dto';
 import { GetPostulationsByUserDto } from '../dtos/get-postulations-by-user.dto';
 import { GetPostulationsDto } from '../dtos/get-postulations.dto';
 import { RejectPostulationDto } from '../dtos/reject-postulation.dto';
+import { SubmitEvaluationDto } from '../dtos/submit-evaluation.dto';
 import { PostulationStatusService } from '../services/postulation-status.service';
 import { PostulationsService } from '../services/postulations.service';
 
@@ -100,5 +101,17 @@ export class PostulationsController {
       console.error(error);
       throw error;
     }
+  }
+
+  @MessagePattern('submitEvaluation')
+  async submitEvaluation(
+    @Payload()
+    data: {
+      submitEvaluationDto: SubmitEvaluationDto;
+    },
+  ) {
+    return await this.postulationsService.submitEvaluation(
+      data.submitEvaluationDto,
+    );
   }
 }

@@ -7,24 +7,24 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Project } from './project.entity';
+import { ProjectRole } from './project-role.entity';
 
-@Entity('project_skills')
-export class ProjectSkill {
+@Entity('role_skills')
+export class RoleSkill {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'project_id' })
-  projectId: number;
+  @Column({ name: 'role_id' })
+  roleId: number;
 
   @Column({ name: 'skill_id' })
   skillId: number;
 
-  @ManyToOne(() => Project, {
+  @ManyToOne(() => ProjectRole, (role) => role.roleSkills, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'project_id' })
-  project: Project;
+  @JoinColumn({ name: 'role_id' })
+  role: ProjectRole;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

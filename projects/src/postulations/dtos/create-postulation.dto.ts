@@ -1,19 +1,67 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PostulationAnswerDto {
+  @IsNotEmpty({ message: 'questionId is required' })
+  @IsNumber()
+  questionId: number;
+
+  @IsOptional()
+  @IsNumber()
+  optionId?: number;
+
+  @IsOptional()
+  @IsString()
+  answerText?: string;
+}
 
 export class CreatePostulationDto {
   @IsNotEmpty({ message: 'projectId is required' })
   @IsNumber()
   projectId: number;
 
-  @IsNotEmpty({ message: 'cvUrl is required' })
-  @IsString()
-  cvUrl: string;
-
-  @IsNotEmpty({ message: 'cvFilename is required' })
-  @IsString()
-  cvFilename: string;
-
-  @IsNotEmpty({ message: 'cvSize is required' })
+  @IsNotEmpty({ message: 'roleId is required' })
   @IsNumber()
-  cvSize: number;
+  roleId: number;
+
+  @IsNotEmpty({ message: 'userId is required' })
+  @IsNumber()
+  userId: number;
+
+  @IsOptional()
+  @IsString()
+  cvUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  cvFilename?: string;
+
+  @IsOptional()
+  @IsNumber()
+  cvSize?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PostulationAnswerDto)
+  answers?: PostulationAnswerDto[];
+
+  @IsOptional()
+  @IsNumber()
+  investorAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  investorMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  partnerDescription?: string;
 }

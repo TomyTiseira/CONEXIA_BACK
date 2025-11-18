@@ -5,12 +5,14 @@ import { CreatePostulationDto } from '../dtos/create-postulation.dto';
 import { GetPostulationsByUserDto } from '../dtos/get-postulations-by-user.dto';
 import { GetPostulationsDto } from '../dtos/get-postulations.dto';
 import { RejectPostulationDto } from '../dtos/reject-postulation.dto';
+import { SubmitEvaluationDto } from '../dtos/submit-evaluation.dto';
 import { ApprovePostulationUseCase } from './use-cases/approve-postulation.use-case';
 import { CancelPostulationUseCase } from './use-cases/cancel-postulation.use-case';
 import { CreatePostulationUseCase } from './use-cases/create-postulation.use-case';
 import { GetPostulationsByUserUseCase } from './use-cases/get-postulations-by-user.use-case';
 import { GetPostulationsUseCase } from './use-cases/get-postulations.use-case';
 import { RejectPostulationUseCase } from './use-cases/reject-postulation.use-case';
+import { SubmitEvaluationUseCase } from './use-cases/submit-evaluation.use-case';
 
 @Injectable()
 export class PostulationsService {
@@ -21,6 +23,7 @@ export class PostulationsService {
     private readonly rejectPostulationUseCase: RejectPostulationUseCase,
     private readonly getPostulationsByUserUseCase: GetPostulationsByUserUseCase,
     private readonly getPostulationsUseCase: GetPostulationsUseCase,
+    private readonly submitEvaluationUseCase: SubmitEvaluationUseCase,
   ) {}
 
   async createPostulation(
@@ -61,5 +64,9 @@ export class PostulationsService {
       getPostulationsDto,
       currentUserId,
     );
+  }
+
+  async submitEvaluation(submitEvaluationDto: SubmitEvaluationDto) {
+    return await this.submitEvaluationUseCase.execute(submitEvaluationDto);
   }
 }

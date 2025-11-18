@@ -37,11 +37,11 @@ export class GetProjectsByUserUseCase {
       params.limit,
     );
 
-    // Obtener todas las skill IDs de todos los proyectos
+    // Obtener todas las skill IDs de todos los proyectos (desde roles)
     const allSkillIds = [
       ...new Set(
-        projects.flatMap(
-          (project) => project.projectSkills?.map((ps) => ps.skillId) || [],
+        projects.flatMap((project) =>
+          project.roles?.flatMap((role) => role.roleSkills?.map((rs) => rs.skillId) || []) || [],
         ),
       ),
     ];

@@ -23,6 +23,8 @@ export function transformProjectsWithOwners(
   appliedProjectIds: Set<number> = new Set(),
   approvedApplicationsMap: Map<number, number> = new Map(),
   postulationStatusMap: Map<number, { code: string }> = new Map(),
+  contractTypeMap?: Map<number, string>,
+  collaborationTypeMap?: Map<number, string>,
 ): ProjectResponseDto[] {
   const usersMap = new Map(users.map((user) => [user.id, user]));
 
@@ -30,12 +32,30 @@ export function transformProjectsWithOwners(
     const user = usersMap.get(project.userId);
     const profile = user?.profile;
 
-    // Obtener las skills del proyecto
-    const projectSkills =
-      project.projectSkills?.map((ps) => ({
-        id: ps.skillId,
-        name: skillsMap?.get(ps.skillId),
-      })) || [];
+    // Agregar resumen agrupado de tipos de contratación y modalidades de colaboración
+    const contractTypesSet = new Set<string>();
+    const collaborationTypesSet = new Set<string>();
+    if (project.roles && project.roles.length > 0) {
+      for (const role of project.roles) {
+        // Preferir la relación poblada; si no está, usar los mapas por id como fallback
+        if (role.contractType && role.contractType.name) {
+          contractTypesSet.add(role.contractType.name);
+        } else if (contractTypeMap && (role as any).contractTypeId) {
+          const name = contractTypeMap.get((role as any).contractTypeId);
+          if (name) contractTypesSet.add(name);
+        }
+
+        if (role.collaborationType && role.collaborationType.name) {
+          collaborationTypesSet.add(role.collaborationType.name);
+        } else if (collaborationTypeMap && (role as any).collaborationTypeId) {
+          const name = collaborationTypeMap.get((role as any).collaborationTypeId);
+          if (name) collaborationTypesSet.add(name);
+        }
+      }
+    }
+
+    const contractTypes = Array.from(contractTypesSet);
+    const collaborationTypes = Array.from(collaborationTypesSet);
 
     return {
       id: project.id,
@@ -45,23 +65,15 @@ export function transformProjectsWithOwners(
         id: project.category.id,
         name: project.category.name,
       },
-      collaborationType: {
-        id: project.collaborationType.id,
-        name: project.collaborationType.name,
-      },
-      contractType: {
-        id: project.contractType.id,
-        name: project.contractType.name,
-      },
+      // collaborationType and contractType are role-scoped and not included here
       owner: {
         id: user?.id || project.userId,
         name: profile
           ? `${profile.name} ${profile.lastName}`
-          : 'Usuario no encontrado',
+          : '',
         image: profile?.profilePicture,
       },
       isOwner: currentUserId === project.userId,
-      skills: projectSkills,
       endDate: project.endDate ? project.endDate.toISOString() : undefined,
       deletedAt: project.deletedAt
         ? project.deletedAt.toISOString()
@@ -69,8 +81,11 @@ export function transformProjectsWithOwners(
       isActive: project.isActive,
       isApplied: appliedProjectIds.has(project.id),
       approvedApplications: approvedApplicationsMap.get(project.id) || 0,
-      maxCollaborators: project.maxCollaborators ?? 1,
       postulationStatus: postulationStatusMap.get(project.id) ?? null,
+      summary: {
+        contractTypes,
+        collaborationTypes,
+      },
     };
   });
 }
