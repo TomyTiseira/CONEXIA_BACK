@@ -30,6 +30,19 @@ export abstract class EmailService {
     },
   ): Promise<void>;
 
+  abstract sendClaimCreatedConfirmationEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      claimType: string;
+      claimantName: string;
+      claimantRole: 'client' | 'provider';
+      description: string;
+    },
+  ): Promise<void>;
+
   /**
    * Envía un email cuando se resuelve un reclamo
    */
@@ -41,6 +54,7 @@ export abstract class EmailService {
       hiringTitle: string;
       status: 'resolved' | 'rejected';
       resolution: string;
+      resolutionType?: string | null;
     },
   ): Promise<void>;
 

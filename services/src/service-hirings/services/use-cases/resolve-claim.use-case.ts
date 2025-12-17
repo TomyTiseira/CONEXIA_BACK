@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
+    BadRequestException,
+    Injectable,
+    NotFoundException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
@@ -143,18 +143,18 @@ export class ResolveClaimUseCase {
         return;
       }
 
-      // Obtener información del cliente
-      const client = await this.usersClient.getUserById(hiring.userId);
-      const clientName = client
-        ? `${client.name} ${client.lastName}`.trim()
+      // Obtener información del cliente (con profile)
+      const client = await this.usersClient.getUserByIdWithRelations(hiring.userId);
+      const clientName = client?.profile
+        ? `${client.profile.name} ${client.profile.lastName}`.trim()
         : 'Cliente';
 
-      // Obtener información del proveedor
-      const provider = await this.usersClient.getUserById(
+      // Obtener información del proveedor (con profile)
+      const provider = await this.usersClient.getUserByIdWithRelations(
         hiring.service.userId,
       );
-      const providerName = provider
-        ? `${provider.name} ${provider.lastName}`.trim()
+      const providerName = provider?.profile
+        ? `${provider.profile.name} ${provider.profile.lastName}`.trim()
         : 'Proveedor';
 
       const claimData = {
@@ -162,6 +162,7 @@ export class ResolveClaimUseCase {
         hiringTitle: hiring.service.title,
         status: claim.status as 'resolved' | 'rejected',
         resolution: claim.resolution || '',
+        resolutionType: claim.resolutionType,
       };
 
       // Enviar email al cliente

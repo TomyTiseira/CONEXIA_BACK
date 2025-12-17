@@ -94,6 +94,26 @@ export class NodemailerService extends EmailService {
     });
   }
 
+  async sendClaimCreatedConfirmationEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      claimType: string;
+      claimantName: string;
+      claimantRole: 'client' | 'provider';
+      description: string;
+    },
+  ): Promise<void> {
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `✅ Tu reclamo ha sido creado - ${claimData.hiringTitle}`,
+      html: this.generateClaimConfirmationEmailHTML(recipientName, claimData),
+      text: this.generateClaimConfirmationEmailText(recipientName, claimData),
+    });
+  }
+
   async sendClaimResolvedEmail(
     recipientEmail: string,
     recipientName: string,
@@ -102,6 +122,7 @@ export class NodemailerService extends EmailService {
       hiringTitle: string;
       status: 'resolved' | 'rejected';
       resolution: string;
+      resolutionType?: string | null;
     },
   ): Promise<void> {
     const statusLabel =
@@ -171,8 +192,8 @@ export class NodemailerService extends EmailService {
           
           <div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0;">
             <p style="margin: 0; color: #856404; font-size: 14px;">
-              <strong>⚠️ Importante:</strong> El servicio y los pagos están congelados hasta que un moderador resuelva el reclamo.
-            </p>
+              <strong>⚠️ Importante:</strong>
+            </p> El servicio quedará pausado hasta que un moderador resuelva el reclamo.
           </div>
           
           <p style="color: #666; font-size: 14px; margin-top: 20px;">
@@ -197,6 +218,63 @@ export class NodemailerService extends EmailService {
     `;
   }
 
+  private generateClaimConfirmationEmailHTML(
+    recipientName: string,
+    claimData: any,
+  ): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #28a745; margin: 0;">✅ Reclamo Creado Exitosamente</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Tu reclamo ha sido creado y registrado exitosamente:
+          </p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${claimData.hiringTitle}</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>ID Reclamo:</strong> ${claimData.claimId}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Motivo:</strong> ${claimData.claimType}</p>
+          </div>
+          
+          <div style="background-color: #d1ecf1; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <p style="margin: 0; color: #0c5460; font-size: 14px;">
+              <strong>ℹ️ ¿Qué sucede ahora?</strong>
+            </p>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460; font-size: 14px;">
+              <li>El servicio quedará pausado hasta que un moderador revise tu reclamo</li>
+              <li>Un moderador analizará las evidencias presentadas</li>
+              <li>Recibirás notificaciones sobre el progreso del reclamo</li>
+              <li>Te informaremos cuando se tome una decisión</li>
+            </ul>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">
+            <strong>Tu descripción:</strong><br>
+            ${claimData.description}
+          </p>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/claims/${claimData.claimId}" 
+               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              Ver Estado del Reclamo
+            </a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+              Si el moderador necesita información adicional, recibirás un email solicitando aclaraciones.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   private generateClaimResolvedEmailHTML(
     recipientName: string,
     statusLabel: string,
@@ -204,6 +282,29 @@ export class NodemailerService extends EmailService {
   ): string {
     const statusColor = claimData.status === 'resolved' ? '#28a745' : '#dc3545';
     const statusIcon = claimData.status === 'resolved' ? '✅' : '❌';
+
+    // Mapear tipo de resolución a texto legible
+    const resolutionTypeLabels: Record<string, { label: string; description: string; icon: string }> = {
+      'client_favor': {
+        label: 'A favor del cliente',
+        description: 'El servicio ha sido cancelado y el cliente no realizará el pago.',
+        icon: '👤'
+      },
+      'provider_favor': {
+        label: 'A favor del proveedor',
+        description: 'El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
+        icon: '🏢'
+      },
+      'partial_agreement': {
+        label: 'Acuerdo parcial',
+        description: 'Ambas partes llegaron a un acuerdo. Se aplicarán los términos negociados.',
+        icon: '🤝'
+      }
+    };
+
+    const resolutionInfo = claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
+      ? resolutionTypeLabels[claimData.resolutionType]
+      : null;
 
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
@@ -217,6 +318,13 @@ export class NodemailerService extends EmailService {
           <p style="color: #666; font-size: 14px;">
             El reclamo para el servicio <strong>${claimData.hiringTitle}</strong> ha sido ${statusLabel.toLowerCase()} por un moderador.
           </p>
+          
+          ${resolutionInfo ? `
+          <div style="background-color: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">${resolutionInfo.icon} Tipo de Resolución: ${resolutionInfo.label}</h3>
+            <p style="margin: 0; color: #666; font-size: 14px;">${resolutionInfo.description}</p>
+          </div>
+          ` : ''}
           
           <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${statusColor}; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">Resolución:</h3>
@@ -314,7 +422,7 @@ El ${roleLabel} ha creado un reclamo para el servicio: ${claimData.hiringTitle}
 Motivo: ${claimData.claimType}
 Reclamante: ${claimData.claimantName}
 
-IMPORTANTE: El servicio y los pagos están congelados hasta que un moderador resuelva el reclamo.
+IMPORTANTE: El servicio está congelado hasta que un moderador resuelva el reclamo.
 
 Descripción del problema:
 ${claimData.description}
@@ -325,15 +433,53 @@ Recibirás una notificación cuando el reclamo sea resuelto.
     `;
   }
 
-  private generateClaimResolvedEmailText(
+  private generateClaimConfirmationEmailText(
     recipientName: string,
-    statusLabel: string,
     claimData: any,
   ): string {
     return `
 Hola ${recipientName},
 
-El reclamo para el servicio "${claimData.hiringTitle}" ha sido ${statusLabel.toLowerCase()} por un moderador.
+Tu reclamo ha sido creado y registrado exitosamente:
+
+Servicio: ${claimData.hiringTitle}
+ID Reclamo: ${claimData.claimId}
+Motivo: ${claimData.claimType}
+
+¿Qué sucede ahora?
+- El servicio quedará pausado hasta que un moderador revise tu reclamo
+- Un moderador analizará las evidencias presentadas
+- Recibirás notificaciones sobre el progreso del reclamo
+- Te informaremos cuando se tome una decisión
+
+Tu descripción:
+${claimData.description}
+
+Ver estado: https://conexia.com/claims/${claimData.claimId}
+
+Si el moderador necesita información adicional, recibirás un email solicitando aclaraciones.
+    `;
+  }
+
+  private generateClaimResolvedEmailText(
+    recipientName: string,
+    statusLabel: string,
+    claimData: any,
+  ): string {
+    const resolutionTypeLabels: Record<string, string> = {
+      'client_favor': 'A favor del cliente - El servicio ha sido cancelado y el cliente no realizará el pago.',
+      'provider_favor': 'A favor del proveedor - El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
+      'partial_agreement': 'Acuerdo parcial - Ambas partes llegaron a un acuerdo.'
+    };
+
+    const resolutionTypeText = claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
+      ? `\n\nTipo de Resolución:\n${resolutionTypeLabels[claimData.resolutionType]}`
+      : '';
+
+    return `
+Hola ${recipientName},
+
+El reclamo para el servicio "${claimData.hiringTitle}" ha sido ${statusLabel.toLowerCase()} por un moderador.${resolutionTypeText}
 
 Resolución:
 ${claimData.resolution}
