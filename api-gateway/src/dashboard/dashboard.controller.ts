@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Query, Res } from '@nestjs/common';
+import { Controller, Get, Inject, Res } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -47,10 +47,13 @@ export class DashboardController {
     try {
       // Obtener el plan del usuario desde memberships
       const userPlanResponse = await firstValueFrom(
-        this.client.send<{ plan?: { name?: string } }>('getUserPlan', { userId }),
+        this.client.send<{ plan?: { name?: string } }>('getUserPlan', {
+          userId,
+        }),
       );
 
-      const userPlan: string = (userPlanResponse?.plan?.name as string) || 'Free';
+      const userPlan: string =
+        (userPlanResponse?.plan?.name as string) || 'Free';
 
       // Obtener métricas de servicios con el plan del usuario
       return await firstValueFrom(
@@ -82,17 +85,23 @@ export class DashboardController {
     try {
       // Obtener el plan del usuario
       const userPlanResponse = await firstValueFrom(
-        this.client.send<{ plan?: { name?: string } }>('getUserPlan', { userId }),
+        this.client.send<{ plan?: { name?: string } }>('getUserPlan', {
+          userId,
+        }),
       );
 
-      const userPlan: string = (userPlanResponse?.plan?.name as string) || 'Free';
+      const userPlan: string =
+        (userPlanResponse?.plan?.name as string) || 'Free';
 
       // Exportar métricas
       const exportResponse = await firstValueFrom(
-        this.client.send<{ filename: string; data: string }>('exportServiceMetricsCSV', {
-          userId,
-          userPlan,
-        }),
+        this.client.send<{ filename: string; data: string }>(
+          'exportServiceMetricsCSV',
+          {
+            userId,
+            userPlan,
+          },
+        ),
       );
 
       // Enviar archivo CSV
