@@ -7,13 +7,13 @@ import { ProjectsController } from './controllers/projects.controller';
 import { Category } from './entities/category.entity';
 import { CollaborationType } from './entities/collaboration-type.entity';
 import { ContractType } from './entities/contract-type.entity';
-import { Project } from './entities/project.entity';
 import { ProjectRole } from './entities/project-role.entity';
 import { ProjectSkill } from './entities/project-skill.entity';
-import { RoleSkill } from './entities/role-skill.entity';
-import { RoleQuestion } from './entities/role-question.entity';
-import { RoleQuestionOption } from './entities/role-question-option.entity';
+import { Project } from './entities/project.entity';
 import { RoleEvaluation } from './entities/role-evaluation.entity';
+import { RoleQuestionOption } from './entities/role-question-option.entity';
+import { RoleQuestion } from './entities/role-question.entity';
+import { RoleSkill } from './entities/role-skill.entity';
 import { ProjectRepository } from './repositories/project.repository';
 import { ProjectsService } from './services/projects.service';
 import { SkillsService } from './services/skills.service';
@@ -22,10 +22,16 @@ import { GetProjectByIdUseCase } from './services/use-cases/get-project-by-id.us
 import { GetProjectsByUserUseCase } from './services/use-cases/get-projects-by-user.use-case';
 import { GetProjectsUseCase } from './services/use-cases/get-projects.use-case';
 import { GetAdminProjectMetricsUseCase } from './services/use-cases/metrics/get-admin-project-metrics.use-case';
+import { GetProjectDashboardMetricsUseCase } from './services/use-cases/metrics/get-project-dashboard-metrics.use-case';
+import { GetProjectsWithPostulationsPercentageUseCase } from './services/use-cases/metrics/get-projects-with-postulations-percentage.use-case';
+import { GetReceivedPostulationsMetricsUseCase } from './services/use-cases/metrics/get-received-postulations-metrics.use-case';
+import { GetSentPostulationsMetricsUseCase } from './services/use-cases/metrics/get-sent-postulations-metrics.use-case';
+import { GetTopProjectsByPostulationsUseCase } from './services/use-cases/metrics/get-top-projects-by-postulations.use-case';
 import { GetUserPostulationMetricsUseCase } from './services/use-cases/metrics/get-user-postulation-metrics.use-case';
 import { GetUserProjectMetricsUseCase } from './services/use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './services/use-cases/ping.use-case';
 import { PublishProjectUseCase } from './services/use-cases/publish-project.use-case';
+import { GetProjectPostulationsStatsUseCase } from './services/use-cases/stats/get-project-postulations-stats.use-case';
 
 @Module({
   controllers: [ProjectsController],
@@ -42,6 +48,12 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
     GetUserProjectMetricsUseCase,
     GetUserPostulationMetricsUseCase,
     GetAdminProjectMetricsUseCase,
+    GetReceivedPostulationsMetricsUseCase,
+    GetSentPostulationsMetricsUseCase,
+    GetProjectsWithPostulationsPercentageUseCase,
+    GetTopProjectsByPostulationsUseCase,
+    GetProjectDashboardMetricsUseCase,
+    GetProjectPostulationsStatsUseCase,
   ],
   imports: [
     TypeOrmModule.forFeature([

@@ -127,4 +127,38 @@ export class ProjectsController {
       throw error;
     }
   }
+
+  @MessagePattern('getProjectDashboardMetrics')
+  async getProjectDashboardMetrics(
+    @Payload()
+    data: {
+      userId: number;
+      userPlan: { name: string; isFreePlan: boolean };
+    },
+  ) {
+    try {
+      return await this.projectsService.getProjectDashboardMetrics(
+        data.userId,
+        data.userPlan,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getProjectPostulationsStats')
+  async getProjectPostulationsStats(
+    @Payload() data: { projectId: number; userId: number },
+  ) {
+    try {
+      return await this.projectsService.getProjectPostulationsStats(
+        data.projectId,
+        data.userId,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

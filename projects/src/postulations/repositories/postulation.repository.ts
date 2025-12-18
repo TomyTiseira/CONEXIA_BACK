@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PostulationAnswer } from '../entities/postulation-answer.entity';
 import { PostulationStatus } from '../entities/postulation-status.entity';
 import { Postulation } from '../entities/postulation.entity';
-import { PostulationAnswer } from '../entities/postulation-answer.entity';
 
 @Injectable()
 export class PostulationRepository {
@@ -147,22 +147,24 @@ export class PostulationRepository {
     answers?: { questionId: number; optionId?: number; answerText?: string }[],
   ): Promise<Postulation> {
     // Use a transaction to create postulation and answers atomically
-    return await this.postulationRepository.manager.transaction(async (manager) => {
-      const postulation = manager.create(Postulation, postulationData);
-      const saved = await manager.save(postulation);
+    return await this.postulationRepository.manager.transaction(
+      async (manager) => {
+        const postulation = manager.create(Postulation, postulationData);
+        const saved = await manager.save(postulation);
 
-      if (answers && answers.length > 0) {
-        const answerEntities = answers.map((a) => ({
-          postulationId: saved.id,
-          questionId: a.questionId,
-          optionId: a.optionId,
-          answerText: a.answerText,
-        }));
-        await manager.save(PostulationAnswer, answerEntities as any);
-      }
+        if (answers && answers.length > 0) {
+          const answerEntities = answers.map((a) => ({
+            postulationId: saved.id,
+            questionId: a.questionId,
+            optionId: a.optionId,
+            answerText: a.answerText,
+          }));
+          await manager.save(PostulationAnswer, answerEntities as any);
+        }
 
-      return saved;
-    });
+        return saved;
+      },
+    );
   }
 
   async delete(id: number): Promise<void> {
@@ -198,6 +200,42 @@ export class PostulationRepository {
     return await this.postulationRepository.find({
       where: { userId },
       relations: ['status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * Obtiene todas las postulaciones de una lista de proyectos
+   */
+  async findByProjectIds(projectIds: number[]): Promise<Postulation[]> {
+    if (!projectIds || projectIds.length === 0) {
+      return [];
+    }
+
+    return await this.postulationRepository
+      .createQueryBuilder('postulation')
+      .leftJoinAndSelect('postulation.status', 'status')
+      .where('postulation.projectId IN (:...projectIds)', { projectIds })
+      .orderBy('postulation.createdAt', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Cuenta las postulaciones de un proyecto específico
+   */
+  async countByProjectId(projectId: number): Promise<number> {
+    return await this.postulationRepository.count({
+      where: { projectId },
+    });
+  }
+
+  /**
+   * Obtiene todas las postulaciones de un proyecto con detalles completos (para estadísticas)
+   */
+  async findByProjectIdWithDetails(projectId: number): Promise<Postulation[]> {
+    return await this.postulationRepository.find({
+      where: { projectId },
+      relations: ['role', 'answers', 'answers.question', 'status'],
       order: { createdAt: 'DESC' },
     });
   }

@@ -7,14 +7,17 @@ import {
   InvalidSkillsException,
   LocalityNotFoundException,
   PastStartDateException,
+  ProjectBadRequestException,
   ProjectLimitExceededException,
   ProjectNotFoundException,
-  ProjectBadRequestException,
   UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { MembershipsClientService } from '../../../common/services/memberships-client.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
-import { ApplicationType, PublishProjectDto } from '../../dtos/publish-project.dto';
+import {
+  ApplicationType,
+  PublishProjectDto,
+} from '../../dtos/publish-project.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
 
 @Injectable()
@@ -38,7 +41,7 @@ export class PublishProjectUseCase {
     await this.usersClientService.validateUserIsVerified(projectData.userId);
 
     // Validar límite de proyectos según el plan de suscripción
-    const [activeProjects] = await this.projectRepository.findByUserId(
+    const [activeProjects] = await this.projectRepository.findByUserIdPaginated(
       projectData.userId,
       false,
       1,
@@ -91,8 +94,9 @@ export class PublishProjectUseCase {
       }
 
       if (r.contractTypeId) {
-        const contractType =
-          await this.projectRepository.findContractTypeById(r.contractTypeId);
+        const contractType = await this.projectRepository.findContractTypeById(
+          r.contractTypeId,
+        );
         if (!contractType) {
           throw new ContractTypeNotFoundException(r.contractTypeId);
         }
