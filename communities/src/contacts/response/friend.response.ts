@@ -5,6 +5,7 @@ export interface FriendResponse {
   userEmail: string;
   profession: string;
   profilePicture?: string;
+  coverPicture?: string | null;
   connectionId: number;
   status: string;
   conversationId: number | null;

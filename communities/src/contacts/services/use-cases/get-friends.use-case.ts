@@ -19,6 +19,7 @@ export class GetFriendsUseCase {
 
   async execute(getFriendsDto: GetFriendsDto): Promise<{
     friends: FriendResponse[];
+    connectionsCount: number;
     pagination: PaginationInfo;
   }> {
     const { userId, limit = 12, page = 1 } = getFriendsDto;
@@ -37,6 +38,7 @@ export class GetFriendsUseCase {
 
         return {
           friends: [],
+          connectionsCount: total, // Total de conexiones del usuario
           pagination,
         };
       }
@@ -113,6 +115,7 @@ export class GetFriendsUseCase {
 
       return {
         friends,
+        connectionsCount: total, // Total de conexiones del usuario
         pagination,
       };
     } catch {
