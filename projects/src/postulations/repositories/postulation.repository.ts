@@ -228,4 +228,15 @@ export class PostulationRepository {
       where: { projectId },
     });
   }
+
+  /**
+   * Obtiene todas las postulaciones de un proyecto con detalles completos (para estadísticas)
+   */
+  async findByProjectIdWithDetails(projectId: number): Promise<Postulation[]> {
+    return await this.postulationRepository.find({
+      where: { projectId },
+      relations: ['role', 'answers', 'answers.question', 'status'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 }
