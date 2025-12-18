@@ -5,12 +5,17 @@ import {
   GetServiceByIdDto,
   GetServicesByUserDto,
   GetServicesDto,
+  ServiceMetricsDto
 } from '../dto';
+import { ServiceMetricsService } from '../services/service-metrics.service';
 import { ServicesService } from '../services/services.service';
 
 @Controller()
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) {}
+  constructor(
+    private readonly servicesService: ServicesService,
+    private readonly serviceMetricsService: ServiceMetricsService,
+  ) {}
 
   @MessagePattern('ping')
   async ping() {
@@ -137,6 +142,31 @@ export class ServicesController {
   async getAdminServiceMetrics() {
     try {
       return await this.servicesService.getAdminServiceMetrics();
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('getServiceMetricsByUser')
+  async getServiceMetricsByUser(@Payload() dto: ServiceMetricsDto) {
+    try {
+      return await this.serviceMetricsService.getServiceMetrics(dto);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  @MessagePattern('exportServiceMetricsCSV')
+  async exportServiceMetricsCSV(@Payload() dto: ServiceMetricsDto) {
+    try {
+      const csv = await this.serviceMetricsService.exportMetricsToCSV(dto);
+      return {
+        success: true,
+        data: csv,
+        filename: `service-metrics-${dto.userId}-${Date.now()}.csv`,
+      };
     } catch (error) {
       console.error(error);
       throw error;

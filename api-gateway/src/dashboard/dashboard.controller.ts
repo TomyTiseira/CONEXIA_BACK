@@ -1,6 +1,7 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Query, Res } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { catchError } from 'rxjs';
+import { Response } from 'express';
+import { catchError, firstValueFrom } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { AutoRefreshAuth } from '../auth/decorators/auto-refresh-auth.decorator';
@@ -29,6 +30,82 @@ export class DashboardController {
         throw new RpcException(error);
       }),
     );
+  }
+
+  @Get('user/services')
+  @AutoRefreshAuth()
+  async getUserServiceMetrics(@User() user: AuthenticatedUser) {
+    const userId = Number(user.id);
+
+    if (!userId || isNaN(userId)) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Invalid user ID',
+      });
+    }
+
+    try {
+      // Obtener el plan del usuario desde memberships
+      const userPlanResponse = await firstValueFrom(
+        this.client.send('getUserPlan', { userId }),
+      );
+
+      const userPlan = userPlanResponse?.plan?.name || 'Free';
+
+      // Obtener métricas de servicios con el plan del usuario
+      return await firstValueFrom(
+        this.client.send('getServiceMetricsByUser', {
+          userId,
+          userPlan,
+        }),
+      );
+    } catch (error) {
+      throw new RpcException(error);
+    }
+  }
+
+  @Get('user/services/export')
+  @AutoRefreshAuth()
+  async exportUserServiceMetrics(
+    @User() user: AuthenticatedUser,
+    @Res() res: Response,
+    @Query('format') format: 'csv' | 'json' = 'csv',
+  ) {
+    const userId = Number(user.id);
+
+    if (!userId || isNaN(userId)) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Invalid user ID',
+      });
+    }
+
+    try {
+      // Obtener el plan del usuario
+      const userPlanResponse = await firstValueFrom(
+        this.client.send('getUserPlan', { userId }),
+      );
+
+      const userPlan = userPlanResponse?.plan?.name || 'Free';
+
+      // Exportar métricas
+      const exportResponse = await firstValueFrom(
+        this.client.send('exportServiceMetricsCSV', {
+          userId,
+          userPlan,
+        }),
+      );
+
+      // Enviar archivo CSV
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${exportResponse.filename}"`,
+      );
+      res.send(exportResponse.data);
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Get('admin')

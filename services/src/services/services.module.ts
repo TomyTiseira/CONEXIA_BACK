@@ -1,17 +1,20 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
+import { ServiceHiring } from '../service-hirings/entities/service-hiring.entity';
 import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
 import { ServiceReportsModule } from '../service-reports/service-reports.module';
+import { ServiceReview } from '../service-reviews/entities/service-review.entity';
 import { ServiceReviewsModule } from '../service-reviews/service-reviews.module';
 import { ServicesController } from './controllers';
 import { Service, ServiceCategory } from './entities';
 import { ServiceRepository } from './repositories';
 import { CategoryService, ServicesService } from './services';
+import { ServiceMetricsService } from './services/service-metrics.service';
 import {
-  CreateServiceUseCase,
-  DeleteServiceUseCase,
-  UpdateServiceUseCase,
+    CreateServiceUseCase,
+    DeleteServiceUseCase,
+    UpdateServiceUseCase,
 } from './services/use-cases';
 import { GetServiceByIdUseCase } from './services/use-cases/get-service-by-id.use-case';
 import { GetServicesByUserUseCase } from './services/use-cases/get-services-by-user.use-case';
@@ -21,7 +24,12 @@ import { GetUserServiceMetricsUseCase } from './services/use-cases/metrics/get-u
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Service, ServiceCategory]),
+    TypeOrmModule.forFeature([
+      Service,
+      ServiceCategory,
+      ServiceHiring,
+      ServiceReview,
+    ]),
     CommonModule,
     forwardRef(() => ServiceHiringsModule),
     forwardRef(() => ServiceReviewsModule),
@@ -32,6 +40,7 @@ import { GetUserServiceMetricsUseCase } from './services/use-cases/metrics/get-u
     ServiceRepository,
     ServicesService,
     CategoryService,
+    ServiceMetricsService,
     CreateServiceUseCase,
     UpdateServiceUseCase,
     DeleteServiceUseCase,
@@ -42,6 +51,6 @@ import { GetUserServiceMetricsUseCase } from './services/use-cases/metrics/get-u
     GetUserServiceMetricsUseCase,
     GetAdminServiceMetricsUseCase,
   ],
-  exports: [ServicesService, ServiceRepository],
+  exports: [ServicesService, ServiceRepository, ServiceMetricsService],
 })
 export class ServicesModule {}
