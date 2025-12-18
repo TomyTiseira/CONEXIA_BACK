@@ -127,4 +127,23 @@ export class ProjectsController {
       throw error;
     }
   }
+
+  @MessagePattern('getProjectDashboardMetrics')
+  async getProjectDashboardMetrics(
+    @Payload()
+    data: {
+      userId: number;
+      userPlan: { name: string; isFreePlan: boolean };
+    },
+  ) {
+    try {
+      return await this.projectsService.getProjectDashboardMetrics(
+        data.userId,
+        data.userPlan,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

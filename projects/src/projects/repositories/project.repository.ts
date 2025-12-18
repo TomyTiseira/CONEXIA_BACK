@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
 import { Rubro } from 'src/shared/entities/rubro.entity';
 import { Skill } from 'src/shared/entities/skill.entity';
 import { IsNull, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CollaborationType } from '../entities/collaboration-type.entity';
 import { ContractType } from '../entities/contract-type.entity';
-import { ProjectSkill } from '../entities/project-skill.entity';
-import { RoleSkill } from '../entities/role-skill.entity';
-import { Project } from '../entities/project.entity';
 import { ProjectRole } from '../entities/project-role.entity';
-import { RoleQuestion } from '../entities/role-question.entity';
-import { RoleQuestionOption } from '../entities/role-question-option.entity';
+import { ProjectSkill } from '../entities/project-skill.entity';
+import { Project } from '../entities/project.entity';
 import { RoleEvaluation } from '../entities/role-evaluation.entity';
-import { ProjectNotFoundException } from 'src/common/exceptions/project.exceptions';
+import { RoleQuestionOption } from '../entities/role-question-option.entity';
+import { RoleQuestion } from '../entities/role-question.entity';
+import { RoleSkill } from '../entities/role-skill.entity';
 
 @Injectable()
 export class ProjectRepository {
@@ -79,13 +79,13 @@ export class ProjectRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('project')
       .leftJoinAndSelect('project.category', 'category')
-  .leftJoinAndSelect('project.roles', 'roles')
-  .leftJoinAndSelect('roles.contractType', 'contractType')
-  .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
-  .leftJoinAndSelect('roles.roleSkills', 'roleSkills')
-  .leftJoinAndSelect('roles.questions', 'questions')
-  .leftJoinAndSelect('questions.options', 'options')
-  .leftJoinAndSelect('roles.evaluations', 'evaluations')
+      .leftJoinAndSelect('project.roles', 'roles')
+      .leftJoinAndSelect('roles.contractType', 'contractType')
+      .leftJoinAndSelect('roles.collaborationType', 'collaborationType')
+      .leftJoinAndSelect('roles.roleSkills', 'roleSkills')
+      .leftJoinAndSelect('roles.questions', 'questions')
+      .leftJoinAndSelect('questions.options', 'options')
+      .leftJoinAndSelect('roles.evaluations', 'evaluations')
       .where('project.id = :id', { id });
 
     if (includeDeleted) {
@@ -106,7 +106,7 @@ export class ProjectRepository {
     });
   }
 
-  async findByUserId(
+  async findByUserIdPaginated(
     userId: number,
     includeDeleted: boolean = false,
     page: number = 1,
@@ -217,7 +217,9 @@ export class ProjectRepository {
         maxCollaborators: r.maxCollaborators || undefined,
       };
 
-      const savedRole = await this.projectRoleRepository.save(roleToSave as any);
+      const savedRole = await this.projectRoleRepository.save(
+        roleToSave as any,
+      );
       // Questions
       if (r.questions && r.questions.length > 0) {
         for (const q of r.questions) {
@@ -232,7 +234,8 @@ export class ProjectRepository {
             const options = q.options.map((opt: any) => ({
               questionId: question.id,
               optionText: typeof opt === 'string' ? opt : opt.optionText,
-              isCorrect: typeof opt === 'object' && opt.isCorrect ? true : false,
+              isCorrect:
+                typeof opt === 'object' && opt.isCorrect ? true : false,
             }));
             await this.roleQuestionOptionRepository.save(options as any);
           }
@@ -318,12 +321,18 @@ export class ProjectRepository {
     }
 
     // Filtro por collaborationTypeIds: debe tener al menos un rol con uno de los tipos de colaboración especificados
-    if (filters.collaborationTypeIds && filters.collaborationTypeIds.length > 0) {
+    if (
+      filters.collaborationTypeIds &&
+      filters.collaborationTypeIds.length > 0
+    ) {
       if (filters.skillIds && filters.skillIds.length > 0) {
         // Ya hicimos innerJoin con 'role', reutilizamos
-        idQueryBuilder.andWhere('role.collaborationTypeId IN (:...collaborationTypeIds)', {
-          collaborationTypeIds: filters.collaborationTypeIds,
-        });
+        idQueryBuilder.andWhere(
+          'role.collaborationTypeId IN (:...collaborationTypeIds)',
+          {
+            collaborationTypeIds: filters.collaborationTypeIds,
+          },
+        );
       } else {
         idQueryBuilder
           .innerJoin('project.roles', 'role')
@@ -335,11 +344,18 @@ export class ProjectRepository {
 
     // Filtro por contractTypeIds: debe tener al menos un rol con uno de los tipos de contrato especificados
     if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
-      if ((filters.skillIds && filters.skillIds.length > 0) || (filters.collaborationTypeIds && filters.collaborationTypeIds.length > 0)) {
+      if (
+        (filters.skillIds && filters.skillIds.length > 0) ||
+        (filters.collaborationTypeIds &&
+          filters.collaborationTypeIds.length > 0)
+      ) {
         // Ya hicimos innerJoin con 'role', reutilizamos
-        idQueryBuilder.andWhere('role.contractTypeId IN (:...contractTypeIds)', {
-          contractTypeIds: filters.contractTypeIds,
-        });
+        idQueryBuilder.andWhere(
+          'role.contractTypeId IN (:...contractTypeIds)',
+          {
+            contractTypeIds: filters.contractTypeIds,
+          },
+        );
       } else {
         idQueryBuilder
           .innerJoin('project.roles', 'role')
@@ -395,24 +411,40 @@ export class ProjectRepository {
           skillIds: filters.skillIds,
         });
     }
-    if (filters.collaborationTypeIds && filters.collaborationTypeIds.length > 0) {
+    if (
+      filters.collaborationTypeIds &&
+      filters.collaborationTypeIds.length > 0
+    ) {
       if (filters.skillIds && filters.skillIds.length > 0) {
-        countQueryBuilder.andWhere('roleCount.collaborationTypeId IN (:...collaborationTypeIds)', {
-          collaborationTypeIds: filters.collaborationTypeIds,
-        });
+        countQueryBuilder.andWhere(
+          'roleCount.collaborationTypeId IN (:...collaborationTypeIds)',
+          {
+            collaborationTypeIds: filters.collaborationTypeIds,
+          },
+        );
       } else {
         countQueryBuilder
           .innerJoin('project.roles', 'roleCount')
-          .andWhere('roleCount.collaborationTypeId IN (:...collaborationTypeIds)', {
-            collaborationTypeIds: filters.collaborationTypeIds,
-          });
+          .andWhere(
+            'roleCount.collaborationTypeId IN (:...collaborationTypeIds)',
+            {
+              collaborationTypeIds: filters.collaborationTypeIds,
+            },
+          );
       }
     }
     if (filters.contractTypeIds && filters.contractTypeIds.length > 0) {
-      if ((filters.skillIds && filters.skillIds.length > 0) || (filters.collaborationTypeIds && filters.collaborationTypeIds.length > 0)) {
-        countQueryBuilder.andWhere('roleCount.contractTypeId IN (:...contractTypeIds)', {
-          contractTypeIds: filters.contractTypeIds,
-        });
+      if (
+        (filters.skillIds && filters.skillIds.length > 0) ||
+        (filters.collaborationTypeIds &&
+          filters.collaborationTypeIds.length > 0)
+      ) {
+        countQueryBuilder.andWhere(
+          'roleCount.contractTypeId IN (:...contractTypeIds)',
+          {
+            contractTypeIds: filters.contractTypeIds,
+          },
+        );
       } else {
         countQueryBuilder
           .innerJoin('project.roles', 'roleCount')
@@ -445,7 +477,9 @@ export class ProjectRepository {
   }
 
   async findRoleById(roleId: number) {
-    return this.ormRepository.manager.findOne(ProjectRole, { where: { id: roleId } });
+    return this.ormRepository.manager.findOne(ProjectRole, {
+      where: { id: roleId },
+    });
   }
 
   async findRoleByIdWithRelations(roleId: number) {
@@ -463,7 +497,7 @@ export class ProjectRepository {
 
     return this.ormRepository
       .createQueryBuilder('project')
-      .leftJoinAndSelect('project.postulations', 'postulation')
+      .leftJoin('project.postulations', 'postulation')
       .leftJoin('postulation.status', 'postulationStatus')
       .where('project.userId = :userId', { userId })
       .andWhere('project.deletedAt IS NULL')
@@ -472,6 +506,21 @@ export class ProjectRepository {
         approvedCode: 'approved',
       })
       .groupBy('project.id')
+      .addGroupBy('project.title')
+      .addGroupBy('project.description')
+      .addGroupBy('project.user_id')
+      .addGroupBy('project.categoryId')
+      .addGroupBy('project.start_date')
+      .addGroupBy('project.end_date')
+      .addGroupBy('project.location_id')
+      .addGroupBy('project.requires_partner')
+      .addGroupBy('project.requires_investor')
+      .addGroupBy('project.image')
+      .addGroupBy('project.isActive')
+      .addGroupBy('project.deletedReason')
+      .addGroupBy('project.createdAt')
+      .addGroupBy('project.updatedAt')
+      .addGroupBy('project.deletedAt')
       .having('COUNT(DISTINCT postulation.id) > 0')
       .getMany();
   }
@@ -516,6 +565,17 @@ export class ProjectRepository {
       .where('project.deletedAt IS NULL')
       .andWhere('(project.endDate > :now OR project.endDate IS NULL)', { now })
       .getCount();
+  }
+
+  /**
+   * Obtiene todos los proyectos de un usuario (sin paginación, para métricas)
+   */
+  async findByUserId(userId: number): Promise<Project[]> {
+    return this.ormRepository
+      .createQueryBuilder('project')
+      .where('project.userId = :userId', { userId })
+      .andWhere('project.deletedAt IS NULL')
+      .getMany();
   }
 
   ping(): string {

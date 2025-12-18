@@ -10,6 +10,10 @@ import { GetProjectByIdUseCase } from './use-cases/get-project-by-id.use-case';
 import { GetProjectsByUserUseCase } from './use-cases/get-projects-by-user.use-case';
 import { GetProjectsUseCase } from './use-cases/get-projects.use-case';
 import { GetAdminProjectMetricsUseCase } from './use-cases/metrics/get-admin-project-metrics.use-case';
+import {
+  GetProjectDashboardMetricsUseCase,
+  UserPlanInfo,
+} from './use-cases/metrics/get-project-dashboard-metrics.use-case';
 import { GetUserPostulationMetricsUseCase } from './use-cases/metrics/get-user-postulation-metrics.use-case';
 import { GetUserProjectMetricsUseCase } from './use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './use-cases/ping.use-case';
@@ -28,6 +32,7 @@ export class ProjectsService {
     private readonly getUserProjectMetricsUseCase: GetUserProjectMetricsUseCase,
     private readonly getUserPostulationMetricsUseCase: GetUserPostulationMetricsUseCase,
     private readonly getAdminProjectMetricsUseCase: GetAdminProjectMetricsUseCase,
+    private readonly getProjectDashboardMetricsUseCase: GetProjectDashboardMetricsUseCase,
   ) {}
 
   ping() {
@@ -80,5 +85,9 @@ export class ProjectsService {
 
   async getAdminProjectMetrics() {
     return this.getAdminProjectMetricsUseCase.execute();
+  }
+
+  async getProjectDashboardMetrics(userId: number, userPlan: UserPlanInfo) {
+    return this.getProjectDashboardMetricsUseCase.execute(userId, userPlan);
   }
 }

@@ -1,18 +1,3 @@
-export class ServiceMetricsDto {
-  totalServicesHired: number;
-  totalRevenueGenerated: number; // En ARS
-}
-
-export class ProjectMetricsDto {
-  totalProjectsEstablished: number; // Proyectos completados con al menos un colaborador
-}
-
-export class PostulationMetricsDto {
-  totalPostulations: number;
-  acceptedPostulations: number;
-  successRate: number; // Porcentaje de éxito
-}
-
 export class PostulationStatusBreakdown {
   activo: number;
   pendiente_evaluacion: number;
@@ -48,11 +33,4 @@ export class ProjectDashboardMetricsDto {
 
   // Métricas Premium
   topProjectsByPostulations?: ProjectWithPostulationsRankingDto[];
-}
-
-export class UserDashboardMetricsDto {
-  services: ServiceMetricsDto;
-  projects: ProjectMetricsDto;
-  postulations: PostulationMetricsDto;
-  projectDashboard?: ProjectDashboardMetricsDto;
 }
