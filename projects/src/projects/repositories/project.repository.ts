@@ -503,7 +503,7 @@ export class ProjectRepository {
       .andWhere('project.deletedAt IS NULL')
       .andWhere('project.endDate < :now', { now })
       .andWhere('postulationStatus.code = :approvedCode', {
-        approvedCode: 'approved',
+        approvedCode: 'aceptada',
       })
       .groupBy('project.id')
       .addGroupBy('project.title')

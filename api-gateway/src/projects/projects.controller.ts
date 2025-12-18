@@ -15,8 +15,8 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import { diskStorage } from 'multer';
 import { promises as fs } from 'fs';
+import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
@@ -29,7 +29,7 @@ import {
 import { NATS_SERVICE } from '../config';
 import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { GetProjectsDto } from './dtos/get-projects.dto';
-import { PublishProjectDto, ApplicationType } from './dtos/publish-project.dto';
+import { ApplicationType, PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -325,6 +325,24 @@ export class ProjectsController {
       .send('getProjectById', {
         id,
         currentUserId: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Get(':id/statistics')
+  @AuthRoles([ROLES.USER])
+  getProjectStatistics(
+    @Param('id') id: number,
+    @User() user: AuthenticatedUser,
+  ) {
+    return this.client
+      .send('getProjectPostulationsStats', {
+        projectId: +id,
+        userId: +user.id,
       })
       .pipe(
         catchError((error) => {

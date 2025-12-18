@@ -31,6 +31,7 @@ import { GetUserPostulationMetricsUseCase } from './services/use-cases/metrics/g
 import { GetUserProjectMetricsUseCase } from './services/use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './services/use-cases/ping.use-case';
 import { PublishProjectUseCase } from './services/use-cases/publish-project.use-case';
+import { GetProjectPostulationsStatsUseCase } from './services/use-cases/stats/get-project-postulations-stats.use-case';
 
 @Module({
   controllers: [ProjectsController],
@@ -52,6 +53,7 @@ import { PublishProjectUseCase } from './services/use-cases/publish-project.use-
     GetProjectsWithPostulationsPercentageUseCase,
     GetTopProjectsByPostulationsUseCase,
     GetProjectDashboardMetricsUseCase,
+    GetProjectPostulationsStatsUseCase,
   ],
   imports: [
     TypeOrmModule.forFeature([

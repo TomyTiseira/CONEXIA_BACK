@@ -146,4 +146,19 @@ export class ProjectsController {
       throw error;
     }
   }
+
+  @MessagePattern('getProjectPostulationsStats')
+  async getProjectPostulationsStats(
+    @Payload() data: { projectId: number; userId: number },
+  ) {
+    try {
+      return await this.projectsService.getProjectPostulationsStats(
+        data.projectId,
+        data.userId,
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

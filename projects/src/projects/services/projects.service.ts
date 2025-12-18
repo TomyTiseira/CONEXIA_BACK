@@ -18,6 +18,7 @@ import { GetUserPostulationMetricsUseCase } from './use-cases/metrics/get-user-p
 import { GetUserProjectMetricsUseCase } from './use-cases/metrics/get-user-project-metrics.use-case';
 import { PingUseCase } from './use-cases/ping.use-case';
 import { PublishProjectUseCase } from './use-cases/publish-project.use-case';
+import { GetProjectPostulationsStatsUseCase } from './use-cases/stats/get-project-postulations-stats.use-case';
 
 @Injectable()
 export class ProjectsService {
@@ -33,6 +34,7 @@ export class ProjectsService {
     private readonly getUserPostulationMetricsUseCase: GetUserPostulationMetricsUseCase,
     private readonly getAdminProjectMetricsUseCase: GetAdminProjectMetricsUseCase,
     private readonly getProjectDashboardMetricsUseCase: GetProjectDashboardMetricsUseCase,
+    private readonly getProjectPostulationsStatsUseCase: GetProjectPostulationsStatsUseCase,
   ) {}
 
   ping() {
@@ -89,5 +91,9 @@ export class ProjectsService {
 
   async getProjectDashboardMetrics(userId: number, userPlan: UserPlanInfo) {
     return this.getProjectDashboardMetricsUseCase.execute(userId, userPlan);
+  }
+
+  async getProjectPostulationsStats(projectId: number, userId: number) {
+    return this.getProjectPostulationsStatsUseCase.execute(projectId, userId);
   }
 }
