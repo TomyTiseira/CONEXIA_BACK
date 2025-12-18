@@ -5,8 +5,8 @@ import { ServiceHiring } from '../../service-hirings/entities/service-hiring.ent
 import { ServiceHiringStatusCode } from '../../service-hirings/enums/service-hiring-status.enum';
 import { ServiceReview } from '../../service-reviews/entities/service-review.entity';
 import {
-    ServiceMetricsDto,
-    ServiceMetricsResponseDto,
+  ServiceMetricsDto,
+  ServiceMetricsResponseDto,
 } from '../dto/service-metrics.dto';
 import { Service } from '../entities/service.entity';
 
@@ -137,17 +137,11 @@ export class ServiceMetricsService {
 
   /**
    * Calcula los ingresos totales de servicios completados
-   * Solo cuenta servicios completados con pagos aprobados
+   * Solo cuenta servicios en estado COMPLETED (sin reclamos)
    */
   private calculateRevenue(hirings: ServiceHiring[]): number {
-    const completedStatuses = [
-      ServiceHiringStatusCode.COMPLETED,
-      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
-      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
-    ];
-
     return hirings
-      .filter((h) => completedStatuses.includes(h.status?.code))
+      .filter((h) => h.status?.code === ServiceHiringStatusCode.COMPLETED)
       .reduce((sum, h) => {
         // El monto es el quotedPrice del hiring
         const amount = h.quotedPrice || 0;
@@ -157,7 +151,8 @@ export class ServiceMetricsService {
 
   /**
    * Calcula los ingresos desglosados por cada servicio
-   * Solo cuenta servicios completados
+   * Solo cuenta servicios en estado COMPLETED (sin reclamos)
+   * Cada hiring (solicitud) se cuenta una sola vez, independiente de cuántos entregables tenga
    */
   private async calculateRevenueByService(
     hirings: ServiceHiring[],
@@ -170,40 +165,46 @@ export class ServiceMetricsService {
       timesCompleted: number;
     }>
   > {
-    const completedStatuses = [
-      ServiceHiringStatusCode.COMPLETED,
-      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
-      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
-    ];
+    // Filtrar solo hirings completados
+    const completedHirings = hirings.filter(
+      (h) => h.status?.code === ServiceHiringStatusCode.COMPLETED,
+    );
 
-    // Agrupar contrataciones completadas por servicio
+    // Deduplicar por hiring ID para evitar contar el mismo hiring múltiples veces
+    // (en caso de que haya duplicados por joins o deliveries)
+    const uniqueHiringsMap = new Map<number, ServiceHiring>();
+    completedHirings.forEach((hiring) => {
+      if (!uniqueHiringsMap.has(hiring.id)) {
+        uniqueHiringsMap.set(hiring.id, hiring);
+      }
+    });
+
+    // Agrupar contrataciones únicas por servicio
     const revenueMap = new Map<
       number,
       { revenue: number; count: number; title: string }
     >();
 
-    hirings
-      .filter((h) => completedStatuses.includes(h.status?.code))
-      .forEach((hiring) => {
-        const serviceId = hiring.serviceId;
-        const revenue = Number(hiring.quotedPrice || 0);
-        const service = publishedServices.find((s) => s.id === serviceId);
+    Array.from(uniqueHiringsMap.values()).forEach((hiring) => {
+      const serviceId = hiring.serviceId;
+      const revenue = Number(hiring.quotedPrice || 0);
+      const service = publishedServices.find((s) => s.id === serviceId);
 
-        if (revenueMap.has(serviceId)) {
-          const current = revenueMap.get(serviceId)!;
-          revenueMap.set(serviceId, {
-            revenue: current.revenue + revenue,
-            count: current.count + 1,
-            title: current.title,
-          });
-        } else {
-          revenueMap.set(serviceId, {
-            revenue,
-            count: 1,
-            title: service?.title || 'Servicio eliminado',
-          });
-        }
-      });
+      if (revenueMap.has(serviceId)) {
+        const current = revenueMap.get(serviceId)!;
+        revenueMap.set(serviceId, {
+          revenue: current.revenue + revenue,
+          count: current.count + 1,
+          title: current.title,
+        });
+      } else {
+        revenueMap.set(serviceId, {
+          revenue,
+          count: 1,
+          title: service?.title || 'Servicio eliminado',
+        });
+      }
+    });
 
     // Convertir a array y ordenar por ingresos descendente
     return Array.from(revenueMap.entries())
@@ -217,7 +218,7 @@ export class ServiceMetricsService {
   }
 
   /* 
-   * COMPLETADOS: completed, completed_by_claim, completed_with_agreement
+   * COMPLETADOS: solo completed (sin reclamos)
    * CANCELADOS: cancelled, cancelled_by_claim, rejected
    * CON RECLAMOS: completed_by_claim, completed_with_agreement, cancelled_by_claim
    */
@@ -226,12 +227,6 @@ export class ServiceMetricsService {
     cancelled: number;
     withClaims: number;
   } {
-    const completedStatuses = [
-      ServiceHiringStatusCode.COMPLETED,
-      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
-      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
-    ];
-
     const cancelledStatuses = [
       ServiceHiringStatusCode.CANCELLED,
       ServiceHiringStatusCode.CANCELLED_BY_CLAIM,
@@ -245,8 +240,9 @@ export class ServiceMetricsService {
       ServiceHiringStatusCode.CANCELLED_BY_CLAIM, // Cancelado por reclamo
     ];
 
-    const completed = hirings.filter((h) =>
-      completedStatuses.includes(h.status?.code),
+    // Solo contar COMPLETED (sin reclamos)
+    const completed = hirings.filter(
+      (h) => h.status?.code === ServiceHiringStatusCode.COMPLETED,
     ).length;
 
     const cancelled = hirings.filter((h) =>
@@ -290,7 +286,7 @@ export class ServiceMetricsService {
       .addSelect('COUNT(hiring.id)', 'timesHired')
       .addSelect(
         `SUM(CASE 
-          WHEN status.code IN ('completed', 'completed_by_claim', 'completed_with_agreement') 
+          WHEN status.code = 'completed' 
           THEN COALESCE(hiring.quotedPrice, 0) 
           ELSE 0 
         END)`,
