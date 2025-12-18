@@ -47,10 +47,10 @@ export class DashboardController {
     try {
       // Obtener el plan del usuario desde memberships
       const userPlanResponse = await firstValueFrom(
-        this.client.send('getUserPlan', { userId }),
+        this.client.send<{ plan?: { name?: string } }>('getUserPlan', { userId }),
       );
 
-      const userPlan = userPlanResponse?.plan?.name || 'Free';
+      const userPlan: string = (userPlanResponse?.plan?.name as string) || 'Free';
 
       // Obtener métricas de servicios con el plan del usuario
       return await firstValueFrom(
@@ -69,7 +69,6 @@ export class DashboardController {
   async exportUserServiceMetrics(
     @User() user: AuthenticatedUser,
     @Res() res: Response,
-    @Query('format') format: 'csv' | 'json' = 'csv',
   ) {
     const userId = Number(user.id);
 
@@ -83,14 +82,14 @@ export class DashboardController {
     try {
       // Obtener el plan del usuario
       const userPlanResponse = await firstValueFrom(
-        this.client.send('getUserPlan', { userId }),
+        this.client.send<{ plan?: { name?: string } }>('getUserPlan', { userId }),
       );
 
-      const userPlan = userPlanResponse?.plan?.name || 'Free';
+      const userPlan: string = (userPlanResponse?.plan?.name as string) || 'Free';
 
       // Exportar métricas
       const exportResponse = await firstValueFrom(
-        this.client.send('exportServiceMetricsCSV', {
+        this.client.send<{ filename: string; data: string }>('exportServiceMetricsCSV', {
           userId,
           userPlan,
         }),
