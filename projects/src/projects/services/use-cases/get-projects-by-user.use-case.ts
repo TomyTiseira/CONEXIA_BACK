@@ -30,18 +30,22 @@ export class GetProjectsByUserUseCase {
     };
 
     // Obtener proyectos del usuario con paginación
-    const [projects, total] = await this.projectRepository.findByUserId(
-      data.userId,
-      data.includeDeleted,
-      params.page,
-      params.limit,
-    );
+    const [projects, total] =
+      await this.projectRepository.findByUserIdPaginated(
+        data.userId,
+        data.includeDeleted,
+        params.page,
+        params.limit,
+      );
 
     // Obtener todas las skill IDs de todos los proyectos (desde roles)
     const allSkillIds = [
       ...new Set(
-        projects.flatMap((project) =>
-          project.roles?.flatMap((role) => role.roleSkills?.map((rs) => rs.skillId) || []) || [],
+        projects.flatMap(
+          (project) =>
+            project.roles?.flatMap(
+              (role) => role.roleSkills?.map((rs) => rs.skillId) || [],
+            ) || [],
         ),
       ),
     ];
