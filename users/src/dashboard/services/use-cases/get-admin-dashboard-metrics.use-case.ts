@@ -56,8 +56,7 @@ export class GetAdminDashboardMetricsUseCase {
         await this.getMembershipsMetrics();
 
       // Obtener métricas de reportes
-      const reportsMetrics: ReportsMetricsDto =
-        await this.getReportsMetrics();
+      const reportsMetrics: ReportsMetricsDto = await this.getReportsMetrics();
 
       return {
         users: usersMetrics,
@@ -155,7 +154,7 @@ export class GetAdminDashboardMetricsUseCase {
 
   private async getVerifiedUsersMetrics(): Promise<VerifiedUsersMetricsDto> {
     const USER_ROLE_ID = 2; // roleId para usuarios generales (no admins ni moderadores)
-    
+
     // Total de usuarios generales
     const totalUsers = await this.userRepository.count({
       where: {

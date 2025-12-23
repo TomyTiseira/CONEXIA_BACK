@@ -5,6 +5,20 @@ import { NATS_SERVICE } from '../../../config';
 import { ModeratorDashboardMetricsDto } from '../../dto/moderator-dashboard-metrics.dto';
 import { DashboardReportsService } from '../dashboard-reports.service';
 
+type ServiceClaimsMetrics = {
+  totalClaims: number;
+  resolvedClaims: number;
+  servicesInProgress: number;
+  totalServicesHired: number;
+  claimRate: number;
+  resolutionRate: number;
+  averageResolutionTimeInHours: number;
+};
+
+type AdminServiceMetricsResponse = {
+  claims?: Partial<ServiceClaimsMetrics>;
+};
+
 @Injectable()
 export class GetModeratorDashboardMetricsUseCase {
   constructor(
@@ -30,22 +44,25 @@ export class GetModeratorDashboardMetricsUseCase {
     }
   }
 
-  private async getServiceClaimsMetrics() {
+  private async getServiceClaimsMetrics(): Promise<ServiceClaimsMetrics> {
     try {
       // Obtener todas las métricas de servicios y extraer solo claims
       const response = await firstValueFrom(
-        this.client.send<any>('getAdminServiceMetrics', {}),
+        this.client.send<AdminServiceMetricsResponse>(
+          'getAdminServiceMetrics',
+          {},
+        ),
       );
 
       return {
-        totalClaims: response.claims?.totalClaims || 0,
-        resolvedClaims: response.claims?.resolvedClaims || 0,
-        servicesInProgress: response.claims?.servicesInProgress || 0,
-        totalServicesHired: response.claims?.totalServicesHired || 0,
-        claimRate: response.claims?.claimRate || 0,
-        resolutionRate: response.claims?.resolutionRate || 0,
+        totalClaims: response.claims?.totalClaims ?? 0,
+        resolvedClaims: response.claims?.resolvedClaims ?? 0,
+        servicesInProgress: response.claims?.servicesInProgress ?? 0,
+        totalServicesHired: response.claims?.totalServicesHired ?? 0,
+        claimRate: response.claims?.claimRate ?? 0,
+        resolutionRate: response.claims?.resolutionRate ?? 0,
         averageResolutionTimeInHours:
-          response.claims?.averageResolutionTimeInHours || 0,
+          response.claims?.averageResolutionTimeInHours ?? 0,
       };
     } catch (error) {
       console.error('Error getting service claims metrics:', error);

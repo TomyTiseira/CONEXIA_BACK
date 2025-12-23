@@ -66,11 +66,11 @@ export class User {
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deletedAt: Date;
 
-  @Column({ 
+  @Column({
     name: 'last_activity_at',
     type: 'timestamp',
     nullable: true,
-    comment: 'Última vez que el usuario hizo login'
+    comment: 'Última vez que el usuario hizo login',
   })
   lastActivityAt: Date;
 }

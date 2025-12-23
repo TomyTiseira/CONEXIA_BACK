@@ -6,11 +6,15 @@ import { NATS_SERVICE } from 'src/config';
 import { UserReviewReport } from 'src/user-review-report/entities/user-review-report.entity';
 import { Repository } from 'typeorm';
 import {
-    ReportsByReasonDto,
-    ReportsByStatusDto,
-    ReportsByTypeDto,
-    ReportsMetricsDto,
+  ReportsByReasonDto,
+  ReportsByStatusDto,
+  ReportsByTypeDto,
+  ReportsMetricsDto,
 } from '../dto/moderator-dashboard-metrics.dto';
+
+type ReportWithReason = {
+  reason?: string | null;
+};
 
 @Injectable()
 export class DashboardReportsService {
@@ -28,10 +32,10 @@ export class DashboardReportsService {
       });
 
       // Obtener reportes de proyectos (projects microservice)
-      let projectReports: any[] = [];
+      let projectReports: ReportWithReason[] = [];
       try {
         const projectReportsResponse = await firstValueFrom(
-          this.client.send<any[]>('getActiveProjectReports', {}),
+          this.client.send<ReportWithReason[]>('getActiveProjectReports', {}),
         );
         projectReports = projectReportsResponse || [];
       } catch (error) {
@@ -39,10 +43,10 @@ export class DashboardReportsService {
       }
 
       // Obtener reportes de servicios (services microservice)
-      let serviceReports: any[] = [];
+      let serviceReports: ReportWithReason[] = [];
       try {
         const serviceReportsResponse = await firstValueFrom(
-          this.client.send<any[]>('getActiveServiceReports', {}),
+          this.client.send<ReportWithReason[]>('getActiveServiceReports', {}),
         );
         serviceReports = serviceReportsResponse || [];
       } catch (error) {
@@ -50,10 +54,13 @@ export class DashboardReportsService {
       }
 
       // Obtener reportes de publicaciones (communities microservice)
-      let publicationReports: any[] = [];
+      let publicationReports: ReportWithReason[] = [];
       try {
         const publicationReportsResponse = await firstValueFrom(
-          this.client.send<any[]>('getActivePublicationReports', {}),
+          this.client.send<ReportWithReason[]>(
+            'getActivePublicationReports',
+            {},
+          ),
         );
         publicationReports = publicationReportsResponse || [];
       } catch (error) {
@@ -61,10 +68,10 @@ export class DashboardReportsService {
       }
 
       // Obtener reportes de comentarios (communities microservice)
-      let commentReports: any[] = [];
+      let commentReports: ReportWithReason[] = [];
       try {
         const commentReportsResponse = await firstValueFrom(
-          this.client.send<any[]>('getActiveCommentReports', {}),
+          this.client.send<ReportWithReason[]>('getActiveCommentReports', {}),
         );
         commentReports = commentReportsResponse || [];
       } catch (error) {
@@ -72,10 +79,13 @@ export class DashboardReportsService {
       }
 
       // Obtener reportes de reseñas de servicios (services microservice)
-      let serviceReviewReports: any[] = [];
+      let serviceReviewReports: ReportWithReason[] = [];
       try {
         const serviceReviewReportsResponse = await firstValueFrom(
-          this.client.send<any[]>('getActiveServiceReviewReports', {}),
+          this.client.send<ReportWithReason[]>(
+            'getActiveServiceReviewReports',
+            {},
+          ),
         );
         serviceReviewReports = serviceReviewReportsResponse || [];
       } catch (error) {
@@ -137,32 +147,32 @@ export class DashboardReportsService {
       });
 
       // Agregar motivos de project reports
-      projectReports.forEach((report: any) => {
-        const reason = report.reason || 'Sin especificar';
+      projectReports.forEach((report) => {
+        const reason = report.reason ?? 'Sin especificar';
         reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
       });
 
       // Agregar motivos de service reports
-      serviceReports.forEach((report: any) => {
-        const reason = report.reason || 'Sin especificar';
+      serviceReports.forEach((report) => {
+        const reason = report.reason ?? 'Sin especificar';
         reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
       });
 
       // Agregar motivos de publication reports
-      publicationReports.forEach((report: any) => {
-        const reason = report.reason || 'Sin especificar';
+      publicationReports.forEach((report) => {
+        const reason = report.reason ?? 'Sin especificar';
         reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
       });
 
       // Agregar motivos de comment reports
-      commentReports.forEach((report: any) => {
-        const reason = report.reason || 'Sin especificar';
+      commentReports.forEach((report) => {
+        const reason = report.reason ?? 'Sin especificar';
         reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
       });
 
       // Agregar motivos de service review reports
-      serviceReviewReports.forEach((report: any) => {
-        const reason = report.reason || 'Sin especificar';
+      serviceReviewReports.forEach((report) => {
+        const reason = report.reason ?? 'Sin especificar';
         reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
       });
 
