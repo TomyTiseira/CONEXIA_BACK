@@ -130,8 +130,8 @@ export class DashboardController {
   @AuthRoles([ROLES.ADMIN])
   async exportAdminMetrics(@Res() res: Response) {
     try {
-      const metrics: any = await firstValueFrom(
-        this.client.send('getAdminDashboardMetrics', {}),
+      const metrics = await firstValueFrom(
+        this.client.send<Record<string, any>>('getAdminDashboardMetrics', {}),
       );
 
       // Convertir las métricas a CSV
@@ -164,8 +164,11 @@ export class DashboardController {
   @AuthRoles([ROLES.MODERATOR])
   async exportModeratorMetrics(@Res() res: Response) {
     try {
-      const metrics: any = await firstValueFrom(
-        this.client.send('getModeratorDashboardMetrics', {}),
+      const metrics = await firstValueFrom(
+        this.client.send<Record<string, any>>(
+          'getModeratorDashboardMetrics',
+          {},
+        ),
       );
 
       // Convertir las métricas a CSV
@@ -184,7 +187,7 @@ export class DashboardController {
     }
   }
 
-  private convertMetricsToCSV(metrics: any): string {
+  private convertMetricsToCSV(metrics: Record<string, any>): string {
     const lines: string[] = [];
 
     // Encabezado
@@ -333,7 +336,7 @@ export class DashboardController {
     return lines.join('\n');
   }
 
-  private convertModeratorMetricsToCSV(metrics: any): string {
+  private convertModeratorMetricsToCSV(metrics: Record<string, any>): string {
     const lines: string[] = [];
 
     // Encabezado
