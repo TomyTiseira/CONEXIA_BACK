@@ -56,8 +56,26 @@ export interface ServicesByTypeDto {
   revenue: number;
 }
 
+export interface QuotationsMetricsDto {
+  sent: number;
+  accepted: number;
+  acceptanceRate: number; // Porcentaje
+}
+
+export interface ClaimsMetricsDto {
+  totalClaims: number;
+  resolvedClaims: number;
+  servicesInProgress: number; // Servicios actualmente en progreso
+  totalServicesHired: number;
+  claimRate: number; // (ServiceHirings con claims / Total serviceHirings) * 100
+  resolutionRate: number; // Servicios con reclamo resuelto / Servicios con reclamo
+  averageResolutionTimeInHours: number; // Tiempo promedio de resolución en horas
+}
+
 export interface AdminServiceMetricsDto {
   totalServicesHired: number;
   totalRevenue: number;
   byType: ServicesByTypeDto[];
+  quotations: QuotationsMetricsDto;
+  claims: ClaimsMetricsDto;
 }

@@ -526,10 +526,14 @@ export class ProjectRepository {
   }
 
   /**
-   * Obtiene el total de proyectos (incluyendo eliminados)
+   * Obtiene el total de proyectos (excluyendo eliminados)
    */
   async getTotalCount(): Promise<number> {
-    return this.ormRepository.count();
+    return this.ormRepository.count({
+      where: {
+        deletedAt: null as any,
+      },
+    });
   }
 
   /**
@@ -545,7 +549,7 @@ export class ProjectRepository {
       .where('project.deletedAt IS NULL')
       .andWhere('project.endDate < :now', { now })
       .andWhere('postulationStatus.code = :approvedCode', {
-        approvedCode: 'approved',
+        approvedCode: 'aceptada',
       })
       .groupBy('project.id')
       .having('COUNT(DISTINCT postulation.id) > 0')

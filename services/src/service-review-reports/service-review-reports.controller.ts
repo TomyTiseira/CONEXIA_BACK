@@ -1,9 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
-  CreateServiceReviewReportDto,
-  GetServiceReviewReportsDto,
+    CreateServiceReviewReportDto,
+    GetServiceReviewReportsDto,
 } from './dto';
+import { ServiceReviewReport } from './entities/service-review-report.entity';
 import { CreateServiceReviewReportUseCase } from './services/use-cases/create-service-review-report.use-case';
 import { GetServiceReviewReportsUseCase } from './services/use-cases/get-service-review-reports.use-case';
 import { GetServiceReviewsWithReportsUseCase } from './services/use-cases/get-service-reviews-with-reports.use-case';
@@ -14,6 +17,8 @@ export class ServiceReviewReportsController {
     private readonly createReportUseCase: CreateServiceReviewReportUseCase,
     private readonly getReportsUseCase: GetServiceReviewReportsUseCase,
     private readonly getReviewsWithReportsUseCase: GetServiceReviewsWithReportsUseCase,
+    @InjectRepository(ServiceReviewReport)
+    private readonly serviceReviewReportRepository: Repository<ServiceReviewReport>,
   ) {}
 
   @MessagePattern('create_service_review_report')
@@ -38,6 +43,13 @@ export class ServiceReviewReportsController {
       page: dto.page || 1,
       limit: dto.limit || 10,
       orderBy: dto.orderBy,
+    });
+  }
+
+  @MessagePattern('getActiveServiceReviewReports')
+  async getActiveServiceReviewReports() {
+    return await this.serviceReviewReportRepository.find({
+      where: { isActive: true },
     });
   }
 }

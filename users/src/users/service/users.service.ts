@@ -8,9 +8,9 @@ import { UserRepository } from '../repository/users.repository';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import {
-  FindUserByIdIncludingDeletedUseCase,
-  FindUserByIdUseCase,
-  FindUserByIdWithRelationsUseCase,
+    FindUserByIdIncludingDeletedUseCase,
+    FindUserByIdUseCase,
+    FindUserByIdWithRelationsUseCase,
 } from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
@@ -136,5 +136,10 @@ export class UsersService {
 
   async searchUsersPaginated(searchParams: any) {
     return this.searchUsersPaginatedUseCase.execute(searchParams);
+  }
+
+  async getTotalGeneralUsers(): Promise<number> {
+    const USER_ROLE_ID = 2; // roleId para usuarios generales (no admins ni moderadores)
+    return this.userRepository.countByRoleId(USER_ROLE_ID);
   }
 }
