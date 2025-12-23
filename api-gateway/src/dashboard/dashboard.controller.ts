@@ -225,13 +225,25 @@ export class DashboardController {
     lines.push('Categoría,Valor');
     lines.push(`Total de proyectos,${metrics.projects.totalProjects}`);
     lines.push(`Proyectos activos,${metrics.projects.activeProjects}`);
-    lines.push(`Proyectos con postulaciones,${metrics.projects.projectsWithPostulations}`);
-    lines.push(`Proyectos con postulación aceptada,${metrics.projects.projectsWithAcceptedPostulation}`);
-    lines.push(`Promedio de postulaciones por proyecto,${metrics.projects.averagePostulationsPerProject}`);
+    lines.push(
+      `Proyectos con postulaciones,${metrics.projects.projectsWithPostulations}`,
+    );
+    lines.push(
+      `Proyectos con postulación aceptada,${metrics.projects.projectsWithAcceptedPostulation}`,
+    );
+    lines.push(
+      `Promedio de postulaciones por proyecto,${metrics.projects.averagePostulationsPerProject}`,
+    );
     lines.push(`Tasa de engagement,${metrics.projects.projectEngagementRate}%`);
-    lines.push(`Nuevos proyectos (7 días),${metrics.projects.newProjectsLast7Days}`);
-    lines.push(`Nuevos proyectos (30 días),${metrics.projects.newProjectsLast30Days}`);
-    lines.push(`Nuevos proyectos (90 días),${metrics.projects.newProjectsLast90Days}`);
+    lines.push(
+      `Nuevos proyectos (7 días),${metrics.projects.newProjectsLast7Days}`,
+    );
+    lines.push(
+      `Nuevos proyectos (30 días),${metrics.projects.newProjectsLast30Days}`,
+    );
+    lines.push(
+      `Nuevos proyectos (90 días),${metrics.projects.newProjectsLast90Days}`,
+    );
     lines.push(
       `Tasa de aprobación de postulaciones,${metrics.projects.postulationApprovalRate}%`,
     );
@@ -241,7 +253,9 @@ export class DashboardController {
     lines.push('PROYECTOS POR CATEGORÍA');
     lines.push('Categoría,Total Proyectos,Promedio Postulaciones');
     metrics.projects.projectsByCategory.forEach((cat: any) => {
-      lines.push(`${cat.categoryName},${cat.totalProjects},${cat.avgPostulations}`);
+      lines.push(
+        `${cat.categoryName},${cat.totalProjects},${cat.avgPostulations}`,
+      );
     });
     lines.push('');
 

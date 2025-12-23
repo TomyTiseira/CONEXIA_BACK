@@ -6,10 +6,10 @@ import { NATS_SERVICE } from 'src/config';
 import { UserReviewReport } from 'src/user-review-report/entities/user-review-report.entity';
 import { Repository } from 'typeorm';
 import {
-  ReportsByReasonDto,
-  ReportsByStatusDto,
-  ReportsByTypeDto,
-  ReportsMetricsDto,
+    ReportsByReasonDto,
+    ReportsByStatusDto,
+    ReportsByTypeDto,
+    ReportsMetricsDto,
 } from '../dto/moderator-dashboard-metrics.dto';
 
 @Injectable()

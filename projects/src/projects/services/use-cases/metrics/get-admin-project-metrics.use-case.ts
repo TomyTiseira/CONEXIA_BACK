@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
+import { PostulationStatus } from '../../../../postulations/entities/postulation-status.entity';
+import { Postulation } from '../../../../postulations/entities/postulation.entity';
 import {
   AdminProjectMetricsDto,
   PostulationsByStatusDto,
   ProjectsByCategoryDto,
 } from '../../../dtos/admin-project-metrics.dto';
-import { PostulationStatus } from '../../../../postulations/entities/postulation-status.entity';
-import { Postulation } from '../../../../postulations/entities/postulation.entity';
 import { Category } from '../../../entities/category.entity';
 import { Project } from '../../../entities/project.entity';
 import { ProjectRepository } from '../../../repositories/project.repository';
