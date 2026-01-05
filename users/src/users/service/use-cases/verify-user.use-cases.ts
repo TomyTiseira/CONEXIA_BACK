@@ -58,32 +58,54 @@ export class VerifyUserUseCase {
       this.userBaseService.validateUserActivation(updatedUser);
 
     try {
-      // Obtener el tipo de documento "DNI" dinámicamente
-      const otherDocumentType = await this.documentTypeRepository.findOne({
-        where: { name: 'DNI' },
-      });
+      // Verificar si el usuario es admin o moderador
+      // Si es admin/moderador, NO crear perfil y asignar isProfileComplete = null
+      // Si es usuario general, crear perfil vacío y asignar isProfileComplete = false
+      
+      const userRole = validatedUser.role || (await this.userRepository.findById(validatedUser.id))?.role;
+      const isAdminOrModerator = userRole && (userRole.name === 'admin' || userRole.name === 'moderador');
 
-      if (!otherDocumentType) {
-        throw new Error(
-          'No se encontró el tipo de documento "DNI" en la base de datos',
-        );
+      let finalUser;
+      let isProfileComplete: boolean | null;
+
+      if (isAdminOrModerator) {
+        // Admin o moderador: NO crear perfil, isProfileComplete = null
+        isProfileComplete = null;
+        finalUser = await this.userRepository.update(validatedUser.id, {
+          isProfileComplete,
+        });
+      } else {
+        // Usuario general: Crear perfil vacío, isProfileComplete = false
+        isProfileComplete = false;
+
+        // Obtener el tipo de documento "DNI" dinámicamente
+        const otherDocumentType = await this.documentTypeRepository.findOne({
+          where: { name: 'DNI' },
+        });
+
+        if (!otherDocumentType) {
+          throw new Error(
+            'No se encontró el tipo de documento "DNI" en la base de datos',
+          );
+        }
+
+        const emptyProfile = await this.profileRepository.create({
+          userId: validatedUser.id,
+          name: '',
+          lastName: '',
+          documentNumber: '',
+          documentTypeId: otherDocumentType.id,
+          profession: '',
+          phoneNumber: '',
+          country: '',
+          state: '',
+        });
+
+        finalUser = await this.userRepository.update(validatedUser.id, {
+          profileId: emptyProfile.id,
+          isProfileComplete,
+        });
       }
-
-      const emptyProfile = await this.profileRepository.create({
-        userId: validatedUser.id,
-        name: '',
-        lastName: '',
-        documentNumber: '',
-        documentTypeId: otherDocumentType.id,
-        profession: '',
-        phoneNumber: '',
-        country: '',
-        state: '',
-      });
-
-      const finalUser = await this.userRepository.update(validatedUser.id, {
-        profileId: emptyProfile.id,
-      });
 
       // Enviar email de bienvenida después de activar la cuenta exitosamente
       await this.emailService.sendWelcomeEmail(validatedUser.email);
@@ -91,7 +113,7 @@ export class VerifyUserUseCase {
       // Generar token de verificación de usuario
       // Validar que finalUser no sea nulo antes de acceder a sus propiedades
       if (!finalUser) {
-        throw new Error('Failed to update user with empty profile');
+        throw new Error('Failed to update user with profile');
       }
 
       const token = this.tokenService.createLoginResponse(
@@ -99,6 +121,7 @@ export class VerifyUserUseCase {
         finalUser.email,
         finalUser.roleId,
         finalUser.profileId,
+        isProfileComplete, // null para admin/moderador, false para usuario general
       );
 
       return {

@@ -28,6 +28,9 @@ export class User {
   @Column({ default: false })
   verified: boolean;
 
+  @Column({ name: 'is_profile_complete', type: 'boolean', default: false, nullable: true })
+  isProfileComplete: boolean | null;
+
   @Column({ nullable: true })
   verificationCode: string;
 

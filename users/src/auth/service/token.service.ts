@@ -16,6 +16,7 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    isProfileComplete: boolean | null,
     lastActivityAt?: Date,
   ): string {
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
@@ -23,6 +24,7 @@ export class TokenService {
       email,
       roleId,
       profileId,
+      isProfileComplete,
       type: 'access',
       ...(lastActivityAt && { lastActivityAt: lastActivityAt.toISOString() }),
     };
@@ -37,12 +39,14 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    isProfileComplete: boolean | null,
   ): string {
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
       sub: userId,
       email,
       roleId,
       profileId,
+      isProfileComplete,
       type: 'refresh',
     };
 
@@ -60,6 +64,7 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    isProfileComplete: boolean | null,
     lastActivityAt?: Date,
   ): LoginResponse {
     const accessToken = this.generateAccessToken(
@@ -67,6 +72,7 @@ export class TokenService {
       email,
       roleId,
       profileId,
+      isProfileComplete,
       lastActivityAt,
     );
     const refreshToken = this.generateRefreshToken(
@@ -74,6 +80,7 @@ export class TokenService {
       email,
       roleId,
       profileId,
+      isProfileComplete,
     );
 
     return {
@@ -82,6 +89,7 @@ export class TokenService {
         email,
         roleId,
         profileId,
+        isProfileComplete,
       },
       accessToken,
       refreshToken,
@@ -94,6 +102,7 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    isProfileComplete: boolean | null,
     lastActivityAt?: Date,
   ): RefreshTokenResponse {
     const accessToken = this.generateAccessToken(
@@ -101,6 +110,7 @@ export class TokenService {
       email,
       roleId,
       profileId,
+      isProfileComplete,
       lastActivityAt,
     );
 

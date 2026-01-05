@@ -445,23 +445,27 @@ export class ModerationService {
 
     // Obtener perfiles de los usuarios reportados
     const userIds = results.map((r) => r.userId);
-    const profiles = await this.moderationRepository.manager
-      .createQueryBuilder('profiles', 'p')
-      .select(['p.userId', 'p.name', 'p.lastName'])
-      .where('p.userId IN (:...userIds)', { userIds })
-      .getRawMany();
-
-    // Mapear userId a nombre y apellido
     const profileMap = new Map<number, { name: string; lastName: string }>();
-    for (const p of profiles as Array<{
-      p_userId: number;
-      p_name: string;
-      p_lastName: string;
-    }>) {
-      profileMap.set(Number(p.p_userId), {
-        name: String(p.p_name),
-        lastName: String(p.p_lastName),
-      });
+    
+    // Solo consultar si hay userIds para evitar SQL inválido: IN ()
+    if (userIds.length > 0) {
+      const profiles = await this.moderationRepository.manager
+        .createQueryBuilder('profiles', 'p')
+        .select(['p.userId', 'p.name', 'p.lastName'])
+        .where('p.userId IN (:...userIds)', { userIds })
+        .getRawMany();
+
+      // Mapear userId a nombre y apellido
+      for (const p of profiles as Array<{
+        p_userId: number;
+        p_name: string;
+        p_lastName: string;
+      }>) {
+        profileMap.set(Number(p.p_userId), {
+          name: String(p.p_name),
+          lastName: String(p.p_lastName),
+        });
+      }
     }
 
     // Agregar nombre y apellido a cada resultado

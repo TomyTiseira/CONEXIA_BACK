@@ -44,6 +44,7 @@ export class CreateInternalUserUseCase {
       password: hashedPassword,
       roleId: roleEntity.id,
       isValidate: true,
+      isProfileComplete: null, // Admins y moderadores no necesitan perfil
     };
     const createdUser = await this.userRepository.create(user);
     return {

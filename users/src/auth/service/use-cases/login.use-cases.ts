@@ -49,6 +49,7 @@ export class LoginUseCase {
       user.email,
       user.roleId,
       user.profileId,
+      user.isProfileComplete,
       new Date(), // lastActivityAt actualizado
     );
   }

@@ -111,6 +111,14 @@ export class CreateProfileUseCase {
         );
       }
 
+      // Verificar si el perfil está completo y actualizar el flag en la tabla users
+      const isProfileComplete = this.checkProfileComplete(updatedProfile);
+      
+      // Actualizar isProfileComplete en la tabla users si es necesario
+      if (user.isProfileComplete !== isProfileComplete) {
+        await this.userRepo.update(userId, { isProfileComplete });
+      }
+
       return updatedProfile;
     }
 
@@ -127,6 +135,38 @@ export class CreateProfileUseCase {
       );
     }
 
+    // Verificar si el perfil está completo y actualizar el flag en la tabla users
+    const isProfileComplete = this.checkProfileComplete(newProfile);
+    
+    // Actualizar isProfileComplete en la tabla users
+    await this.userRepo.update(userId, { isProfileComplete });
+
     return newProfile;
+  }
+
+  private checkProfileComplete(profile: any): boolean {
+    // Campos obligatorios para considerar el perfil completo
+    // 1. name (not null and not empty)
+    // 2. lastName (not null and not empty)
+    // 3. profession (not null and not empty)
+    // 4. documentTypeId (not null)
+    // 5. documentNumber (not null and not empty)
+    
+    const requiredFields = [
+      profile.name,
+      profile.lastName,
+      profile.profession,
+      profile.documentNumber,
+    ];
+
+    // Verificar que todos los campos obligatorios estén presentes y no vacíos
+    const allFieldsFilled = requiredFields.every(
+      (field) => field !== null && field !== undefined && field.trim() !== '',
+    );
+
+    // Verificar que documentTypeId no sea null
+    const hasDocumentType = profile.documentTypeId !== null && profile.documentTypeId !== undefined;
+
+    return allFieldsFilled && hasDocumentType;
   }
 }
