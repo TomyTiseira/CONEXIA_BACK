@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  InvalidCredentialsException,
-  UserNotFoundException,
-  UserNotVerifiedException,
+    InvalidCredentialsException,
+    UserNotFoundException,
+    UserNotVerifiedException,
 } from 'src/common/exceptions/user.exceptions';
 import { CryptoUtils } from '../../../common/utils/crypto.utils';
 import { LoginDto } from '../../dto/login.dto';

@@ -5,22 +5,22 @@ import { User } from '../../shared/entities/user.entity';
 import { ROLES } from '../../users/constants';
 import { UserRepository } from '../../users/repository/users.repository';
 import {
-  InvalidCurrentPasswordException,
-  InvalidPasswordResetCodeException,
-  InvalidVerificationCodeException,
-  MissingRequiredFieldsException,
-  NewPasswordSameAsCurrentException,
-  PasswordResetCodeExpiredException,
-  ProfileAlreadyExistsException,
-  RoleNotFoundException,
-  UserActivationFailedException,
-  UserAlreadyActiveException,
-  UserAlreadyExistsException,
-  UserNotFoundByIdException,
-  UserNotFoundException,
-  UserNotVerifiedException,
-  VerificationCodeExpiredException,
-  VerificationCodeUpdateFailedException,
+    InvalidCurrentPasswordException,
+    InvalidPasswordResetCodeException,
+    InvalidVerificationCodeException,
+    MissingRequiredFieldsException,
+    NewPasswordSameAsCurrentException,
+    PasswordResetCodeExpiredException,
+    ProfileAlreadyExistsException,
+    RoleNotFoundException,
+    UserActivationFailedException,
+    UserAlreadyActiveException,
+    UserAlreadyExistsException,
+    UserNotFoundByIdException,
+    UserNotFoundException,
+    UserNotVerifiedException,
+    VerificationCodeExpiredException,
+    VerificationCodeUpdateFailedException,
 } from '../exceptions/user.exceptions';
 import { CryptoUtils } from '../utils/crypto.utils';
 

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import {
-  UserBadRequestException,
-  UserNotFoundByIdException,
+    UserBadRequestException,
+    UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
 import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';

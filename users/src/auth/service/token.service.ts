@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  JwtPayload,
-  LoginResponse,
-  PasswordResetTokenPayload,
-  RefreshTokenResponse,
+    JwtPayload,
+    LoginResponse,
+    PasswordResetTokenPayload,
+    RefreshTokenResponse,
 } from '../interfaces/auth.interface';
 
 @Injectable()
