@@ -8,6 +8,10 @@ export class GetPostulationsDto {
   @IsNumber()
   statusId?: number;
 
+  @IsOptional()
+  @IsNumber()
+  roleId?: number;
+
   @IsNumber()
   @IsOptional()
   @Min(1, { message: 'page must be greater than 0' })

@@ -17,20 +17,41 @@ export class RpcExceptionFilter implements ExceptionFilter {
     const error = exception.getError();
 
     // Si el error tiene la estructura que enviamos desde el microservicio
-    if (typeof error === 'object' && error !== null && 'statusCode' in error) {
+    // Soportamos tanto 'statusCode' como 'status' para compatibilidad
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      ('statusCode' in error || 'status' in error)
+    ) {
       const errorObj = error as {
-        statusCode: number;
+        statusCode?: number;
+        status?: number;
         message: string;
-        error: string;
+        error?: string;
+        code?: string;
+        errors?: any[];
       };
 
-      response.status(errorObj.statusCode).json({
-        statusCode: errorObj.statusCode,
+      const statusCode =
+        errorObj.statusCode ||
+        errorObj.status ||
+        HttpStatus.INTERNAL_SERVER_ERROR;
+      const errorName = errorObj.error || errorObj.code || 'Error';
+
+      const responseBody: any = {
+        statusCode: statusCode,
         message: errorObj.message,
-        error: errorObj.error,
+        error: errorName,
         timestamp: new Date().toISOString(),
         path: request.url,
-      });
+      };
+
+      // Incluir errores de validación si existen
+      if (errorObj.errors) {
+        responseBody.errors = errorObj.errors;
+      }
+
+      response.status(statusCode).json(responseBody);
     } else {
       // Fallback para errores no estructurados
       response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

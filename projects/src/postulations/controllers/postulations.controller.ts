@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { CancelPostulationDto } from '../dtos/cancel-postulation.dto';
 import { CreatePostulationDto } from '../dtos/create-postulation.dto';
 import { GetPostulationsByUserDto } from '../dtos/get-postulations-by-user.dto';
@@ -29,11 +29,29 @@ export class PostulationsController {
       currentUserId: number;
     },
   ) {
-    const result = await this.postulationsService.createPostulation(
-      data.createPostulationDto,
-      data.currentUserId,
-    );
-    return result;
+    try {
+      const result = await this.postulationsService.createPostulation(
+        data.createPostulationDto,
+        data.currentUserId,
+      );
+      return result;
+    } catch (error: any) {
+      // Si el error ya tiene estructura de RPC (status, message, code), re-lanzar como RpcException
+      if (error?.status || error?.statusCode) {
+        throw new RpcException({
+          status: error.status || error.statusCode,
+          statusCode: error.status || error.statusCode,
+          message: error.message,
+          code: error.code,
+        });
+      }
+      // Si es un RpcException, obtener el error interno
+      if (error instanceof RpcException) {
+        const rpcError = error.getError();
+        throw new RpcException(rpcError);
+      }
+      throw error;
+    }
   }
 
   @MessagePattern('approvePostulation')
