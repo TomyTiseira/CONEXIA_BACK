@@ -62,8 +62,15 @@ export class GetPostulationsUseCase {
     const transformedPostulations =
       this.postulationTransformService.transformManyToResponseDto(postulations);
 
+    // Mapear los roles del proyecto
+    const roles = (project.roles || []).map((role) => ({
+      id: role.id,
+      title: role.title,
+    }));
+
     return {
       postulations: transformedPostulations,
+      roles,
       pagination,
     };
   }
