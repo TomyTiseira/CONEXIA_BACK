@@ -382,4 +382,19 @@ export class PostulationsController {
         }),
       );
   }
+
+  /**
+   * Endpoint para ejecutar manualmente el job de expiración de evaluaciones
+   * Solo para testing - REMOVER EN PRODUCCIÓN
+   */
+  @AuthRoles([ROLES.ADMIN])
+  @Post('run-expired-evaluations-job')
+  runExpiredEvaluationsJob() {
+    return this.client.send('runExpiredEvaluationsJob', {}).pipe(
+      catchError((error) => {
+        console.error('Error in runExpiredEvaluationsJob:', error);
+        throw new RpcException(error);
+      }),
+    );
+  }
 }

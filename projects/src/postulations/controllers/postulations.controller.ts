@@ -6,6 +6,7 @@ import { GetPostulationsByUserDto } from '../dtos/get-postulations-by-user.dto';
 import { GetPostulationsDto } from '../dtos/get-postulations.dto';
 import { RejectPostulationDto } from '../dtos/reject-postulation.dto';
 import { SubmitEvaluationDto } from '../dtos/submit-evaluation.dto';
+import { PostulationSchedulerService } from '../services/postulation-scheduler.service';
 import { PostulationStatusService } from '../services/postulation-status.service';
 import { PostulationsService } from '../services/postulations.service';
 
@@ -14,6 +15,7 @@ export class PostulationsController {
   constructor(
     private readonly postulationsService: PostulationsService,
     private readonly postulationStatusService: PostulationStatusService,
+    private readonly postulationSchedulerService: PostulationSchedulerService,
   ) {}
 
   @MessagePattern('postulations_get_statuses')
@@ -35,14 +37,18 @@ export class PostulationsController {
         data.currentUserId,
       );
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Si el error ya tiene estructura de RPC (status, message, code), re-lanzar como RpcException
-      if (error?.status || error?.statusCode) {
+      if (
+        error instanceof Object &&
+        ('status' in error || 'statusCode' in error)
+      ) {
+        const errorObj = error as Record<string, any>;
         throw new RpcException({
-          status: error.status || error.statusCode,
-          statusCode: error.status || error.statusCode,
-          message: error.message,
-          code: error.code,
+          status: (errorObj.status || errorObj.statusCode) as number,
+          statusCode: (errorObj.status || errorObj.statusCode) as number,
+          message: (errorObj.message as string) || 'Unknown error',
+          code: (errorObj.code as string) || undefined,
         });
       }
       // Si es un RpcException, obtener el error interno
@@ -131,5 +137,20 @@ export class PostulationsController {
     return await this.postulationsService.submitEvaluation(
       data.submitEvaluationDto,
     );
+  }
+
+  /**
+   * Endpoint para ejecutar manualmente el job de expiración de evaluaciones
+   * Útil para testing - REMOVER EN PRODUCCIÓN
+   */
+  @MessagePattern('runExpiredEvaluationsJob')
+  async runExpiredEvaluationsJob() {
+    const expiredCount =
+      await this.postulationSchedulerService.expireOverdueEvaluations();
+    return {
+      success: true,
+      message: `Se procesaron ${expiredCount} postulaciones con evaluación expirada`,
+      expiredCount,
+    };
   }
 }

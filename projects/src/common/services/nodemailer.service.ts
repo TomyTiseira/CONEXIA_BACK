@@ -23,6 +23,10 @@ export class NodemailerService extends EmailService {
         user: envs.smtpUser,
         pass: envs.smtpPass,
       },
+      tls: {
+        // No verificar certificados en desarrollo
+        rejectUnauthorized: false,
+      },
     });
 
     // Verificar la conexión
@@ -63,6 +67,19 @@ export class NodemailerService extends EmailService {
       subject: '📝 Tu postulación fue revisada - Conexia',
       html: this.generatePostulationRejectedEmailHTML(userName, projectTitle),
       text: this.generatePostulationRejectedEmailText(userName, projectTitle),
+    });
+  }
+
+  async sendEvaluationExpiredEmail(
+    email: string,
+    userName: string,
+    projectTitle: string,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: '⏰ Tu plazo de evaluación ha expirado - Conexia',
+      html: this.generateEvaluationExpiredEmailHTML(userName, projectTitle),
+      text: this.generateEvaluationExpiredEmailText(userName, projectTitle),
     });
   }
 
