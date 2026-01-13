@@ -1,6 +1,7 @@
 ﻿import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NatsModule } from '../transports/nats.module';
+import { DashboardController } from './controllers/dashboard.controller';
 import { MembershipsController } from './controllers/membreships.controller';
 import { Benefit } from './entities/benefit.entity';
 import { Subscription } from './entities/membreship.entity';
@@ -15,6 +16,7 @@ import { MercadoPagoService } from './services/mercado-pago.service';
 import { ContractPlanUseCase } from './services/use-cases/contract-plan.use-case';
 import { CreatePlanUseCase } from './services/use-cases/create-plan.use-case';
 import { DeletePlanUseCase } from './services/use-cases/delete-plan.use-case';
+import { GetAdminMembershipMetricsUseCase } from './services/use-cases/get-admin-membership-metrics.use-case';
 import { GetBenefitsUseCase } from './services/use-cases/get-benefits.use-case';
 import { GetPlanByIdUseCase } from './services/use-cases/get-plan-by-id.use-case';
 import { GetPlansUseCase } from './services/use-cases/get-plans.use-case';
@@ -32,7 +34,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     TypeOrmModule.forFeature([Plan, Benefit, PlanLog, Subscription]),
     NatsModule,
   ],
-  controllers: [MembershipsController],
+  controllers: [MembershipsController, DashboardController],
   providers: [
     MembershipsService,
     PlanRepository,
@@ -54,6 +56,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     ProcessPreapprovalWebhookUseCase,
     SyncPlanWithMercadoPagoUseCase,
     GetUserPlanUseCase,
+    GetAdminMembershipMetricsUseCase,
   ],
   exports: [
     MembershipsService,

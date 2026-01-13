@@ -18,6 +18,7 @@ import { extname } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
@@ -38,7 +39,7 @@ export class ServiceHiringsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
-  @AuthRoles([ROLES.USER])
+  @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden solicitar cotizaciones
   createServiceHiring(
     @User() user: AuthenticatedUser,
     @Body() createDto: CreateServiceHiringDto,

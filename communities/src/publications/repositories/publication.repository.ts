@@ -76,6 +76,7 @@ export class PublicationRepository extends Repository<Publication> {
       )
       .where('publication.deletedAt IS NULL')
       .andWhere('publication.userId != :currentUserId') // Excluir publicaciones propias
+      .andWhere('publication.ownerModerationStatus IS NULL') // Excluir publicaciones de usuarios suspendidos/baneados
       .andWhere(
         `(
           -- Publicaciones de contactos de 1 día (prioridad alta)
@@ -107,6 +108,7 @@ export class PublicationRepository extends Repository<Publication> {
       .leftJoinAndSelect('publication.media', 'media')
       .where('publication.id = :id', { id })
       .andWhere('publication.deletedAt IS NULL')
+      .andWhere('publication.ownerModerationStatus IS NULL') // Excluir publicaciones de usuarios suspendidos/baneados
       .orderBy('media.displayOrder', 'ASC');
 
     // Si se proporciona currentUserId, filtrar publicaciones privadas
@@ -157,6 +159,7 @@ export class PublicationRepository extends Repository<Publication> {
       .leftJoinAndSelect('publication.media', 'media')
       .where('publication.userId = :userId', { userId })
       .andWhere('publication.deletedAt IS NULL')
+      .andWhere('publication.ownerModerationStatus IS NULL') // Excluir publicaciones de usuarios suspendidos/baneados
       .orderBy('publication.createdAt', 'DESC')
       .addOrderBy('media.displayOrder', 'ASC');
 

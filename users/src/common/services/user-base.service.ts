@@ -233,6 +233,12 @@ export class UserBaseService {
       throw new RoleNotFoundException(ROLES.USER);
     }
 
+    // Determinar isProfileComplete según el rol
+    // null: Admin/Moderador (no necesitan perfil)
+    // false: Usuario general (perfil incompleto por defecto)
+    // Este método siempre crea usuarios regulares, por lo que isProfileComplete = false
+    const isProfileComplete = false;
+
     // Extraer solo los campos necesarios para la entidad User, excluyendo confirmPassword
     const userDataWithoutConfirm = { ...userData };
     delete userDataWithoutConfirm.confirmPassword;
@@ -244,6 +250,7 @@ export class UserBaseService {
       verificationCode,
       verificationCodeExpires,
       roleId: userRole.id, // Asignar rol de usuario regular por defecto
+      isProfileComplete, // false para usuarios generales creados via registro
     };
   }
 

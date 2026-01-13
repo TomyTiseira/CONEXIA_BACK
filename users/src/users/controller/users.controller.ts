@@ -178,4 +178,20 @@ export class UsersController {
     const result = await this.usersService.searchUsersPaginated(searchParams);
     return result;
   }
+
+  @MessagePattern('getTotalGeneralUsers')
+  async getTotalGeneralUsers() {
+    const count = await this.usersService.getTotalGeneralUsers();
+    return count;
+  }
+
+  /**
+   * Verifica el estado de la cuenta de un usuario (baneado/suspendido)
+   * Usado por el API Gateway en cada request para validar acceso
+   */
+  @MessagePattern('checkUserAccountStatus')
+  async checkUserAccountStatus(@Payload() data: { userId: number }) {
+    const status = await this.usersService.checkUserAccountStatus(data.userId);
+    return status;
+  }
 }

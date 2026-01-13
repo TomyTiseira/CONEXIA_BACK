@@ -6,6 +6,8 @@ export interface LoginResponse {
       id: number;
       email: string;
       roleId: number;
+      profileId: number;
+      isProfileComplete: boolean | null;
     };
     accessToken: string;
     refreshToken: string;

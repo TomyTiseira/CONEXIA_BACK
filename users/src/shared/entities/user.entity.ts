@@ -11,6 +11,12 @@ import {
 } from 'typeorm';
 import { Role } from './role.entity';
 
+export enum AccountStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  BANNED = 'banned',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
@@ -27,6 +33,14 @@ export class User {
 
   @Column({ default: false })
   verified: boolean;
+
+  @Column({
+    name: 'is_profile_complete',
+    type: 'boolean',
+    default: false,
+    nullable: true,
+  })
+  isProfileComplete: boolean | null;
 
   @Column({ nullable: true })
   verificationCode: string;
@@ -65,4 +79,50 @@ export class User {
 
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deletedAt: Date;
+
+  @Column({
+    name: 'last_activity_at',
+    type: 'timestamp',
+    nullable: true,
+    comment: 'Última vez que el usuario hizo login',
+  })
+  lastActivityAt: Date;
+
+  // Campos de estado de cuenta y moderación
+  @Column({
+    name: 'account_status',
+    type: 'enum',
+    enum: AccountStatus,
+    default: AccountStatus.ACTIVE,
+  })
+  accountStatus: AccountStatus;
+
+  @Column({ name: 'suspended_at', type: 'timestamp', nullable: true })
+  suspendedAt: Date | null;
+
+  @Column({ name: 'suspension_expires_at', type: 'timestamp', nullable: true })
+  suspensionExpiresAt: Date | null;
+
+  @Column({ name: 'suspension_reason', type: 'text', nullable: true })
+  suspensionReason: string | null;
+
+  @Column({ name: 'suspension_days', type: 'integer', nullable: true })
+  suspensionDays: number | null;
+
+  @Column({ name: 'suspended_by', type: 'integer', nullable: true })
+  suspendedBy: number | null;
+
+  @Column({ name: 'banned_at', type: 'timestamp', nullable: true })
+  bannedAt: Date | null;
+
+  @Column({ name: 'banned_by', type: 'integer', nullable: true })
+  bannedBy: number | null;
+
+  @Column({ name: 'ban_reason', type: 'text', nullable: true })
+  banReason: string | null;
+
+  // Timestamp de última invalidación de tokens
+  // Se actualiza al suspender/reactivar para forzar re-login
+  @Column({ name: 'tokens_invalidated_at', type: 'timestamp', nullable: true })
+  tokensInvalidatedAt: Date | null;
 }

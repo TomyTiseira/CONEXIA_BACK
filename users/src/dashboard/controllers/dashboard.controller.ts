@@ -15,4 +15,9 @@ export class DashboardController {
   getAdminMetrics() {
     return this.dashboardService.getAdminMetrics();
   }
+
+  @MessagePattern('getModeratorDashboardMetrics')
+  getModeratorMetrics() {
+    return this.dashboardService.getModeratorMetrics();
+  }
 }

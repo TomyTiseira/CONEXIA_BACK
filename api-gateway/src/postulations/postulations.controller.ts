@@ -21,6 +21,7 @@ import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import {
   AuthenticatedRequest,
@@ -41,7 +42,7 @@ import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 export class PostulationsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
-  @AuthRoles([ROLES.USER])
+  @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden postularse
   @Post('apply')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'cv', maxCount: 1 }], {

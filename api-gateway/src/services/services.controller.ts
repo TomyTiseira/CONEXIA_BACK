@@ -18,6 +18,7 @@ import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
@@ -51,7 +52,7 @@ export class ServicesController {
   }
 
   @Post()
-  @AuthRoles([ROLES.USER])
+  @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden crear servicios
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'images', maxCount: 5 }], {
       storage: diskStorage({

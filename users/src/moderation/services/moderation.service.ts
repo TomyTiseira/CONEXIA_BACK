@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,6 +22,7 @@ import {
   ReportData,
   UserReportsGroup,
 } from '../interfaces/moderation.interface';
+import { BanManagementService } from './ban-management.service';
 import { OpenAIService } from './openai.service';
 
 @Injectable()
@@ -27,6 +34,7 @@ export class ModerationService {
     private readonly moderationRepository: Repository<ModerationAnalysis>,
     private readonly openAIService: OpenAIService,
     @Inject(NATS_SERVICE) private readonly natsClient: ClientProxy,
+    private readonly banManagementService: BanManagementService,
   ) {}
 
   /**
@@ -445,23 +453,27 @@ export class ModerationService {
 
     // Obtener perfiles de los usuarios reportados
     const userIds = results.map((r) => r.userId);
-    const profiles = await this.moderationRepository.manager
-      .createQueryBuilder('profiles', 'p')
-      .select(['p.userId', 'p.name', 'p.lastName'])
-      .where('p.userId IN (:...userIds)', { userIds })
-      .getRawMany();
-
-    // Mapear userId a nombre y apellido
     const profileMap = new Map<number, { name: string; lastName: string }>();
-    for (const p of profiles as Array<{
-      p_userId: number;
-      p_name: string;
-      p_lastName: string;
-    }>) {
-      profileMap.set(Number(p.p_userId), {
-        name: String(p.p_name),
-        lastName: String(p.p_lastName),
-      });
+
+    // Solo consultar si hay userIds para evitar SQL inválido: IN ()
+    if (userIds.length > 0) {
+      const profiles = await this.moderationRepository.manager
+        .createQueryBuilder('profiles', 'p')
+        .select(['p.userId', 'p.name', 'p.lastName'])
+        .where('p.userId IN (:...userIds)', { userIds })
+        .getRawMany();
+
+      // Mapear userId a nombre y apellido
+      for (const p of profiles as Array<{
+        p_userId: number;
+        p_name: string;
+        p_lastName: string;
+      }>) {
+        profileMap.set(Number(p.p_userId), {
+          name: String(p.p_name),
+          lastName: String(p.p_lastName),
+        });
+      }
     }
 
     // Agregar nombre y apellido a cada resultado
@@ -508,9 +520,10 @@ export class ModerationService {
    */
   async resolveAnalysis(
     analysisId: number,
-    action: 'ban_user' | 'release_user' | 'keep_monitoring',
+    action: 'ban_user' | 'suspend_user' | 'release_user' | 'keep_monitoring',
     moderatorId: number,
     notes?: string,
+    suspensionDays?: number,
   ) {
     const analysis = await this.moderationRepository.findOne({
       where: { id: analysisId },
@@ -524,6 +537,55 @@ export class ModerationService {
 
     if (analysis.resolved) {
       throw new Error('Este análisis ya fue resuelto previamente');
+    }
+
+    // Validar parámetros según acción
+    if (action === 'suspend_user') {
+      if (!suspensionDays || ![7, 15, 30].includes(suspensionDays)) {
+        throw new BadRequestException(
+          'Para suspensión se requiere especificar días (7, 15 o 30)',
+        );
+      }
+    }
+
+    // Ejecutar acción correspondiente
+    switch (action) {
+      case 'ban_user':
+        await this.banManagementService.banUser(
+          analysis.userId,
+          moderatorId,
+          notes || 'Violación de políticas de la plataforma',
+          analysisId,
+        );
+        this.logger.log(
+          `Usuario ${analysis.userId} BANEADO por moderador ${moderatorId}`,
+        );
+        break;
+
+      case 'suspend_user':
+        await this.banManagementService.suspendUser(
+          analysis.userId,
+          moderatorId,
+          notes || 'Violación temporal de políticas',
+          suspensionDays!,
+          analysisId,
+        );
+        this.logger.log(
+          `Usuario ${analysis.userId} SUSPENDIDO por ${suspensionDays} días por moderador ${moderatorId}`,
+        );
+        break;
+
+      case 'release_user':
+        this.logger.log(
+          `Usuario ${analysis.userId} LIBERADO - Sin violaciones graves encontradas`,
+        );
+        break;
+
+      case 'keep_monitoring':
+        this.logger.log(
+          `Usuario ${analysis.userId} en MONITOREO - Se mantendrá vigilancia`,
+        );
+        break;
     }
 
     // Actualizar el análisis
@@ -745,6 +807,29 @@ export class ModerationService {
         error,
       );
       return [];
+    }
+  }
+
+  /**
+   * 🧪 TESTING: Ejecuta manualmente el proceso de reactivación
+   * Normalmente ejecutado por el cron job a las 2 AM
+   */
+  async triggerManualReactivation() {
+    this.logger.log('🧪 Ejecución manual del proceso de reactivación...');
+
+    try {
+      const result =
+        await this.banManagementService.processExpiredSuspensions();
+
+      return {
+        success: true,
+        message: 'Proceso de reactivación ejecutado manualmente',
+        timestamp: new Date().toISOString(),
+        result,
+      };
+    } catch (error) {
+      this.logger.error('Error en ejecución manual de reactivación:', error);
+      throw error;
     }
   }
 }

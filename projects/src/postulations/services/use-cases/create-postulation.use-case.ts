@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import {
-  AlreadyAppliedToRoleException,
-  InvalidApplicationTypesException,
-  InvalidUserRoleException,
-  MissingRequiredAnswersException,
-  RoleMaxCollaboratorsReachedException,
-  RoleNotAcceptingApplicationsException,
-  RoleNotBelongToProjectException,
-  RoleNotFoundException,
+    AlreadyAppliedToRoleException,
+    InvalidApplicationTypesException,
+    InvalidUserRoleException,
+    MissingRequiredAnswersException,
+    RoleMaxCollaboratorsReachedException,
+    RoleNotAcceptingApplicationsException,
+    RoleNotBelongToProjectException,
+    RoleNotFoundException,
 } from '../../../common/exceptions/postulation.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ApplicationType } from '../../../projects/dtos/publish-project.dto';
@@ -55,6 +56,21 @@ export class CreatePostulationUseCase {
       await this.postulationValidationService.validateProjectExistsAndActive(
         role.projectId,
       );
+
+    // Validar que el dueño del proyecto no esté suspendido o baneado
+    const ownerStatus = await this.usersClientService.checkUserAccountStatus(
+      project.userId,
+    );
+    if (ownerStatus.isBanned) {
+      throw new RpcException(
+        'No puedes postularte a este proyecto porque el propietario tiene la cuenta baneada permanentemente',
+      );
+    }
+    if (ownerStatus.isSuspended) {
+      throw new RpcException(
+        'No puedes postularte a este proyecto porque el propietario tiene la cuenta suspendida temporalmente',
+      );
+    }
 
     // 3. Validar que el usuario no es el dueño del proyecto
     this.postulationValidationService.validateUserNotProjectOwner(

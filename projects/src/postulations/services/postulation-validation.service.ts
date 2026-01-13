@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
-  PostulationNotActiveException,
-  PostulationNotFoundException,
-  PostulationNotPendingException,
-  ProjectEndedException,
-  ProjectMaxCollaboratorsReachedException,
-  ProjectNotActiveException,
-  ProjectOwnerCannotApplyException,
-  UserAlreadyAppliedException,
-  UserNotActiveException,
-  UserNotPostulationOwnerException,
-  UserNotProjectOwnerException,
-  RoleNotBelongToProjectException,
+    PostulationNotActiveException,
+    PostulationNotFoundException,
+    PostulationNotPendingException,
+    ProjectEndedException,
+    ProjectMaxCollaboratorsReachedException,
+    ProjectNotActiveException,
+    ProjectOwnerCannotApplyException,
+    RoleNotBelongToProjectException,
+    UserAlreadyAppliedException,
+    UserNotActiveException,
+    UserNotPostulationOwnerException,
+    UserNotProjectOwnerException,
 } from '../../common/exceptions/postulation.exceptions';
 import { ProjectNotFoundException } from '../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../common/services/users-client.service';

@@ -139,21 +139,25 @@ export class CommentReportsService {
   async getActiveReports() {
     const reports =
       await this.commentReportRepository.findActiveReportsWithComments();
-    return reports.map((report) => ({
-      id: report.id,
-      reporterId: report.reporterId,
-      reason: report.reason,
-      otherReason: report.otherReason,
-      description: report.description,
-      createdAt: report.createdAt,
-      isActive: report.isActive,
-      updatedAt: report.updatedAt,
-      reportedUserId: report.comment.userId,
-      commentId: report.comment.id,
-      publicationId: report.comment.publicationId,
-      resourceTitle: null,
-      resourceDescription: report.comment.content || null,
-    }));
+    
+    // Filtrar reportes huérfanos (comentario eliminado)
+    return reports
+      .filter(report => report.comment != null)
+      .map((report) => ({
+        id: report.id,
+        reporterId: report.reporterId,
+        reason: report.reason,
+        otherReason: report.otherReason,
+        description: report.description,
+        createdAt: report.createdAt,
+        isActive: report.isActive,
+        updatedAt: report.updatedAt,
+        reportedUserId: report.comment.userId,
+        commentId: report.comment.id,
+        publicationId: report.comment.publicationId,
+        resourceTitle: null,
+        resourceDescription: report.comment.content || null,
+      }));
   }
 
   /**

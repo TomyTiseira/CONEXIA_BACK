@@ -297,7 +297,8 @@ export class ProjectRepository {
       .select('project.id', 'id')
       .addSelect('project.createdAt', 'createdAt')
       .distinct(true)
-      .where('project.deletedAt IS NULL');
+      .where('project.deletedAt IS NULL')
+      .andWhere('(project.suspendedByModeration IS NULL OR project.suspendedByModeration = :suspended)', { suspended: false });
 
     if (filters.search) {
       idQueryBuilder.andWhere('project.title ILIKE :search', {
@@ -526,10 +527,14 @@ export class ProjectRepository {
   }
 
   /**
-   * Obtiene el total de proyectos (incluyendo eliminados)
+   * Obtiene el total de proyectos (excluyendo eliminados)
    */
   async getTotalCount(): Promise<number> {
-    return this.ormRepository.count();
+    return this.ormRepository.count({
+      where: {
+        deletedAt: null as any,
+      },
+    });
   }
 
   /**
@@ -545,7 +550,7 @@ export class ProjectRepository {
       .where('project.deletedAt IS NULL')
       .andWhere('project.endDate < :now', { now })
       .andWhere('postulationStatus.code = :approvedCode', {
-        approvedCode: 'approved',
+        approvedCode: 'aceptada',
       })
       .groupBy('project.id')
       .having('COUNT(DISTINCT postulation.id) > 0')

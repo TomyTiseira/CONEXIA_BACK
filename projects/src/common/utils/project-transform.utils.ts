@@ -79,6 +79,7 @@ export function transformProjectsWithOwners(
         ? project.deletedAt.toISOString()
         : undefined,
       isActive: project.isActive,
+      suspendedByModeration: project.suspendedByModeration || false,
       isApplied: appliedProjectIds.has(project.id),
       approvedApplications: approvedApplicationsMap.get(project.id) || 0,
       postulationStatus: postulationStatusMap.get(project.id) ?? null,

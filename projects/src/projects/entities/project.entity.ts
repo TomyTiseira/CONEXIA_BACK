@@ -1,13 +1,13 @@
 import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { Postulation } from '../../postulations/entities/postulation.entity';
 import { Category } from './category.entity';
@@ -64,6 +64,21 @@ export class Project {
 
   @Column({ nullable: true })
   deletedReason: string;
+
+  @Column({ name: 'suspended_by_moderation', type: 'boolean', default: false })
+  suspendedByModeration: boolean;
+
+  @Column({ name: 'moderation_reason', type: 'text', nullable: true })
+  moderationReason: string | null;
+
+  @Column({ name: 'moderation_updated_at', type: 'timestamp', nullable: true })
+  moderationUpdatedAt: Date | null;
+
+  @Column({ name: 'owner_moderation_status', type: 'varchar', length: 20, nullable: true })
+  ownerModerationStatus: string | null; // null (activo), 'suspended', 'banned'
+
+  @Column({ name: 'can_accept_postulations', type: 'boolean', default: true })
+  canAcceptPostulations: boolean;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

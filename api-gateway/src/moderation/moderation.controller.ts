@@ -112,4 +112,23 @@ export class ModerationController {
         }),
       );
   }
+
+  /**
+   * 🧪 ENDPOINT DE TESTING: Ejecuta manualmente el proceso de reactivación de suspensiones expiradas
+   * Normalmente se ejecuta automáticamente todos los días a las 2 AM
+   * Solo para administradores
+   */
+  @Post('trigger-reactivation')
+  @AuthRoles([ROLES.ADMIN])
+  triggerReactivation(@User() user: AuthenticatedUser) {
+    return this.client
+      .send('triggerReactivation', {
+        triggeredBy: user.id,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
 }

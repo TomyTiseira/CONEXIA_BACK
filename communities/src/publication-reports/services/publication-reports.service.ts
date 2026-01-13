@@ -141,20 +141,24 @@ export class PublicationReportsService {
   async getActiveReports() {
     const reports =
       await this.publicationReportRepository.findActiveReportsWithPublications();
-    return reports.map((report) => ({
-      id: report.id,
-      reporterId: report.reporterId,
-      reason: report.reason,
-      otherReason: report.otherReason,
-      description: report.description,
-      createdAt: report.createdAt,
-      isActive: report.isActive,
-      updatedAt: report.updatedAt,
-      reportedUserId: report.publication.userId,
-      publicationId: report.publication.id,
-      resourceTitle: null,
-      resourceDescription: report.publication.description || null,
-    }));
+    
+    // Filtrar reportes huérfanos (publicación eliminada)
+    return reports
+      .filter(report => report.publication != null)
+      .map((report) => ({
+        id: report.id,
+        reporterId: report.reporterId,
+        reason: report.reason,
+        otherReason: report.otherReason,
+        description: report.description,
+        createdAt: report.createdAt,
+        isActive: report.isActive,
+        updatedAt: report.updatedAt,
+        reportedUserId: report.publication.userId,
+        publicationId: report.publication.id,
+        resourceTitle: null,
+        resourceDescription: report.publication.description || null,
+      }));
   }
 
   /**

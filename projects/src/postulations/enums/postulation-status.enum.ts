@@ -5,4 +5,6 @@ export enum PostulationStatusCode {
   ACCEPTED = 'aceptada',
   REJECTED = 'rechazada',
   CANCELLED = 'cancelada',
+  CANCELLED_BY_MODERATION = 'cancelled_by_moderation',
+  CANCELLED_BY_SUSPENSION = 'cancelled_by_suspension',
 }

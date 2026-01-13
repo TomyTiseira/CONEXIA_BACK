@@ -22,6 +22,7 @@ import { UserReviewsModule } from './user-reviews/user-reviews.module';
 import { UsersModule } from './users/users.module';
 import { VerificationModule } from './verification/verification.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     ModerationModule,
     MembershipsModule,
     DashboardModule,
+    WebSocketModule, // Módulo para notificaciones en tiempo real
   ],
   controllers: [],
 })

@@ -30,6 +30,49 @@ export abstract class EmailService {
   ): Promise<void>;
 
   /**
+   * Envía un email al owner cuando un postulante es baneado/suspendido
+   */
+  abstract sendPostulantBannedEmail(
+    ownerEmail: string,
+    ownerName: string,
+    postulationData: {
+      postulantName: string;
+      projectTitle: string;
+      projectId: number;
+      wasAccepted: boolean;
+      reason: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email a postulantes cuando el owner del proyecto es baneado
+   */
+  abstract sendProjectOwnerBannedEmail(
+    postulantEmail: string,
+    postulantName: string,
+    projectData: {
+      projectTitle: string;
+      projectId: number;
+      wasAccepted: boolean;
+      reason: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email al owner cuando un colaborador es suspendido temporalmente
+   */
+  abstract sendCollaboratorSuspendedEmail(
+    ownerEmail: string,
+    ownerName: string,
+    collaboratorData: {
+      collaboratorName: string;
+      projectTitle: string;
+      projectId: number;
+      suspensionEndsAt: Date;
+    },
+  ): Promise<void>;
+
+  /**
    * Envía un email de notificación de evaluación expirada
    */
   abstract sendEvaluationExpiredEmail(
@@ -55,7 +98,7 @@ export abstract class EmailService {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          <h1 style="color: #28a745; text-align: center; margin-bottom: 30px;">🎉 ¡Tu postulación fue aprobada!</h1>
+          <h1 style="color: #28a745; text-align: center; margin-bottom: 30px;">¡Tu postulación fue aprobada!</h1>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
             ¡Hola ${userName}! 👋
           </p>
@@ -98,13 +141,13 @@ export abstract class EmailService {
     projectTitle: string,
   ): string {
     return `
-      🎉 ¡Tu postulación fue aprobada!
+      ¡Tu postulación fue aprobada!
 
-      ¡Hola ${userName}! 👋
+      ¡Hola ${userName}!
 
       ¡Excelente noticia! Tu postulación para el proyecto "${projectTitle}" ha sido aprobada exitosamente.
 
-      ✅ Postulación aprobada
+      Postulación aprobada
 
       El propietario del proyecto se pondrá en contacto contigo pronto para coordinar los próximos pasos de la colaboración.
 
@@ -112,7 +155,7 @@ export abstract class EmailService {
 
       Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Estamos aquí para ti!
 
-      ¡Mucho éxito en tu nuevo proyecto! 💚
+      ¡Mucho éxito en tu nuevo proyecto!
 
       Saludos,
       El equipo de Conexia
@@ -133,14 +176,14 @@ export abstract class EmailService {
         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
           <h1 style="color: #dc3545; text-align: center; margin-bottom: 30px;">📝 Tu postulación fue revisada</h1>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            ¡Hola ${userName}! 👋
+            ¡Hola ${userName}!
           </p>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
             Hemos revisado tu postulación para el proyecto <strong>"${projectTitle}"</strong> y lamentamos informarte que no ha sido seleccionada en esta oportunidad.
           </p>
           <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
             <p style="color: #721c24; margin: 0; font-weight: bold;">
-              📋 Postulación no seleccionada
+              Postulación no seleccionada
             </p>
           </div>
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
@@ -152,7 +195,7 @@ export abstract class EmailService {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${url}" 
                style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              🔍 Explorar más proyectos
+              Explorar más proyectos
             </a>
           </div>
           <p style="font-size: 14px; color: #666; text-align: center;">
@@ -174,13 +217,13 @@ export abstract class EmailService {
     projectTitle: string,
   ): string {
     return `
-      📝 Tu postulación fue revisada
+      Tu postulación fue revisada
 
       ¡Hola ${userName}! 👋
 
       Hemos revisado tu postulación para el proyecto "${projectTitle}" y lamentamos informarte que no ha sido seleccionada en esta oportunidad.
 
-      📋 Postulación no seleccionada
+      Postulación no seleccionada
 
       Queremos que sepas que esto no es un reflejo de tus habilidades o experiencia. Cada proyecto tiene requisitos específicos y en esta ocasión no fue la combinación adecuada.
 

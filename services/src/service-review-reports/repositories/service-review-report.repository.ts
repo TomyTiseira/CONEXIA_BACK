@@ -107,6 +107,20 @@ export class ServiceReviewReportRepository {
   }
 
   /**
+   * Obtener todos los reportes activos (para dashboard admin)
+   */
+  async findAllActive(): Promise<ServiceReviewReport[]> {
+    return await this.repository.find({
+      where: {
+        isActive: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  /**
    * Obtener reseñas con conteo de reportes (para moderadores)
    */
   async getServiceReviewsWithReportCounts(params: {

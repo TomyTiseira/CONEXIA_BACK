@@ -1,11 +1,11 @@
 import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { PublicationPrivacy } from '../enums/privacy.enum';
 import { PublicationComment } from './publication-comment.entity';
@@ -45,6 +45,15 @@ export class Publication {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
+
+  @Column({
+    name: 'ownerModerationStatus',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+    default: null,
+  })
+  ownerModerationStatus: string | null; // null (activo), 'suspended', 'banned'
 
   @OneToMany(() => PublicationComment, (comment) => comment.publication, {
     cascade: true,

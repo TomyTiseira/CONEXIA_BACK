@@ -53,7 +53,8 @@ export class ServiceRepository {
         'review.serviceId = service.id AND review.deletedAt IS NULL',
       )
       .where('service.status = :status', { status: 'active' })
-      .andWhere('service.deletedAt IS NULL');
+      .andWhere('service.deletedAt IS NULL')
+      .andWhere('service.status != :finishedByModeration', { finishedByModeration: 'finished_by_moderation' });
 
     if (filters.search) {
       queryBuilder.andWhere(

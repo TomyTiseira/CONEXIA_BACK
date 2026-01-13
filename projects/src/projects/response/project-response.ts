@@ -20,6 +20,7 @@ export class ProjectResponseDto {
   endDate?: string;
   deletedAt?: string;
   isActive: boolean;
+  suspendedByModeration: boolean; // Indica si el proyecto fue suspendido por moderación
   isApplied: boolean;
   approvedApplications: number;
   postulationStatus?: { code: string } | null;

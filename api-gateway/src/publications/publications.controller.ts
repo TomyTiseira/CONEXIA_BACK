@@ -21,6 +21,7 @@ import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
+import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
@@ -53,8 +54,7 @@ export class PublicationsController {
   }
 
   @Post('create')
-  @UseGuards(JwtAuthGuard)
-  @AuthRoles([ROLES.USER])
+  @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden crear publicaciones
   @UseInterceptors(
     FilesInterceptor('media', 5, {
       storage: diskStorage({

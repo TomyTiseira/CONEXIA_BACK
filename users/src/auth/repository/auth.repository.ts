@@ -9,4 +9,10 @@ export class AuthRepository {
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findByEmail(email);
   }
+
+  async updateLastActivity(userId: number): Promise<void> {
+    await this.userRepository.update(userId, {
+      lastActivityAt: new Date(),
+    });
+  }
 }

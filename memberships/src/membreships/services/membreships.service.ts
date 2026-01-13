@@ -6,6 +6,7 @@ import { UpdatePlanDto } from '../dto/update-plan.dto';
 import { ContractPlanUseCase } from './use-cases/contract-plan.use-case';
 import { CreatePlanUseCase } from './use-cases/create-plan.use-case';
 import { DeletePlanUseCase } from './use-cases/delete-plan.use-case';
+import { GetAdminMembershipMetricsUseCase } from './use-cases/get-admin-membership-metrics.use-case';
 import { GetBenefitsUseCase } from './use-cases/get-benefits.use-case';
 import { GetPlanByIdUseCase } from './use-cases/get-plan-by-id.use-case';
 import { GetPlansUseCase } from './use-cases/get-plans.use-case';
@@ -33,6 +34,7 @@ export class MembershipsService {
     private readonly processSubscriptionInvoiceWebhookUC: ProcessSubscriptionInvoiceWebhookUseCase,
     private readonly processPreapprovalWebhookUC: ProcessPreapprovalWebhookUseCase,
     private readonly getUserPlanUC: GetUserPlanUseCase,
+    private readonly getAdminMembershipMetricsUC: GetAdminMembershipMetricsUseCase,
   ) {}
 
   // Benefits catalog
@@ -105,5 +107,10 @@ export class MembershipsService {
       'created',
       subscriptionId,
     );
+  }
+
+  // Admin metrics
+  async getAdminMetrics() {
+    return this.getAdminMembershipMetricsUC.execute();
   }
 }
