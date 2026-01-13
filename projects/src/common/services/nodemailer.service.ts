@@ -110,8 +110,14 @@ export class NodemailerService extends EmailService {
     await this.sendEmail({
       to: postulantEmail,
       subject,
-      html: this.generateProjectOwnerBannedEmailHTML(postulantName, projectData),
-      text: this.generateProjectOwnerBannedEmailText(postulantName, projectData),
+      html: this.generateProjectOwnerBannedEmailHTML(
+        postulantName,
+        projectData,
+      ),
+      text: this.generateProjectOwnerBannedEmailText(
+        postulantName,
+        projectData,
+      ),
     });
   }
 
@@ -128,8 +134,14 @@ export class NodemailerService extends EmailService {
     await this.sendEmail({
       to: ownerEmail,
       subject: `Colaborador suspendido temporalmente - ${collaboratorData.projectTitle}`,
-      html: this.generateCollaboratorSuspendedEmailHTML(ownerName, collaboratorData),
-      text: this.generateCollaboratorSuspendedEmailText(ownerName, collaboratorData),
+      html: this.generateCollaboratorSuspendedEmailHTML(
+        ownerName,
+        collaboratorData,
+      ),
+      text: this.generateCollaboratorSuspendedEmailText(
+        ownerName,
+        collaboratorData,
+      ),
     });
   }
 
@@ -176,7 +188,7 @@ export class NodemailerService extends EmailService {
     postulationData: any,
   ): string {
     const url = `${envs.frontendUrl}/project/${postulationData.projectId}`;
-    
+
     if (postulationData.wasAccepted) {
       return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
@@ -304,8 +316,8 @@ Ver proyecto: ${envs.frontendUrl}/project/${postulationData.projectId}
     postulantName: string,
     projectData: any,
   ): string {
-    const url = `${envs.frontendUrl}/project/${projectData.projectId}`;
-    
+    const url = `${envs.frontendUrl}/project/search`;
+
     if (projectData.wasAccepted) {
       return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
@@ -342,7 +354,7 @@ Ver proyecto: ${envs.frontendUrl}/project/${postulationData.projectId}
             </p>
             
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${envs.frontendUrl}/projects" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              <a href="${url}" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 Buscar Otros Proyectos
               </a>
             </div>
@@ -374,7 +386,7 @@ Ver proyecto: ${envs.frontendUrl}/project/${postulationData.projectId}
             </p>
             
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${envs.frontendUrl}/projects" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              <a href="${url}" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
                 Buscar Proyectos
               </a>
             </div>
@@ -435,12 +447,14 @@ Te invitamos a explorar otros proyectos similares: ${envs.frontendUrl}/projects
     collaboratorData: any,
   ): string {
     const url = `${envs.frontendUrl}/project/${collaboratorData.projectId}`;
-    const formattedDate = new Date(collaboratorData.suspensionEndsAt).toLocaleDateString('es-ES', {
+    const formattedDate = new Date(
+      collaboratorData.suspensionEndsAt,
+    ).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-    
+
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -481,12 +495,14 @@ Te invitamos a explorar otros proyectos similares: ${envs.frontendUrl}/projects
     ownerName: string,
     collaboratorData: any,
   ): string {
-    const formattedDate = new Date(collaboratorData.suspensionEndsAt).toLocaleDateString('es-ES', {
+    const formattedDate = new Date(
+      collaboratorData.suspensionEndsAt,
+    ).toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-    
+
     return `
 Información del Colaborador
 
@@ -505,4 +521,3 @@ Ver proyecto: ${envs.frontendUrl}/project/${collaboratorData.projectId}
     `;
   }
 }
-
