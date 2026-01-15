@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import {
-    UserBadRequestException,
-    UserNotFoundByIdException,
+  UserBadRequestException,
+  UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
 import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
@@ -113,7 +113,7 @@ export class CreateProfileUseCase {
 
       // Verificar si el perfil está completo y actualizar el flag en la tabla users
       const isProfileComplete = this.checkProfileComplete(updatedProfile);
-      
+
       // Actualizar isProfileComplete en la tabla users si es necesario
       if (user.isProfileComplete !== isProfileComplete) {
         await this.userRepo.update(userId, { isProfileComplete });
@@ -137,7 +137,7 @@ export class CreateProfileUseCase {
 
     // Verificar si el perfil está completo y actualizar el flag en la tabla users
     const isProfileComplete = this.checkProfileComplete(newProfile);
-    
+
     // Actualizar isProfileComplete en la tabla users
     await this.userRepo.update(userId, { isProfileComplete });
 
@@ -151,7 +151,7 @@ export class CreateProfileUseCase {
     // 3. profession (not null and not empty)
     // 4. documentTypeId (not null)
     // 5. documentNumber (not null and not empty)
-    
+
     const requiredFields = [
       profile.name,
       profile.lastName,
@@ -165,7 +165,8 @@ export class CreateProfileUseCase {
     );
 
     // Verificar que documentTypeId no sea null
-    const hasDocumentType = profile.documentTypeId !== null && profile.documentTypeId !== undefined;
+    const hasDocumentType =
+      profile.documentTypeId !== null && profile.documentTypeId !== undefined;
 
     return allFieldsFilled && hasDocumentType;
   }

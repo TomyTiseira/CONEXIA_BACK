@@ -49,7 +49,11 @@ export class ModerationController {
     data: {
       analysisId: number;
       resolveDto: {
-        action: 'ban_user' | 'suspend_user' | 'release_user' | 'keep_monitoring';
+        action:
+          | 'ban_user'
+          | 'suspend_user'
+          | 'release_user'
+          | 'keep_monitoring';
         notes?: string;
         suspensionDays?: number;
       };
@@ -85,9 +89,7 @@ export class ModerationController {
    * Normalmente se ejecuta automáticamente a las 2 AM por el cron job
    */
   @MessagePattern('triggerReactivation')
-  async handleTriggerReactivation(
-    @Payload() data: { triggeredBy: number },
-  ) {
+  async handleTriggerReactivation(@Payload() data: { triggeredBy: number }) {
     this.logger.log(
       `Ejecución manual de reactivación solicitada por usuario ${data.triggeredBy}`,
     );

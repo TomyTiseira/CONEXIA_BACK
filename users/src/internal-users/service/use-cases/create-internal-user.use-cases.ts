@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ROLES } from 'src/common/constants/roles';
 import {
-    InvalidRoleException,
-    MissingRequiredFieldsException,
+  InvalidRoleException,
+  MissingRequiredFieldsException,
 } from 'src/common/exceptions/user.exceptions';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import { CryptoUtils } from 'src/common/utils/crypto.utils';

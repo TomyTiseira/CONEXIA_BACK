@@ -5,7 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { NATS_SERVICE } from '../../../config';
 import { AccountStatus, User } from '../../../shared/entities/user.entity';
-import { ModeratorDashboardMetricsDto, UserModerationMetricsDto } from '../../dto/moderator-dashboard-metrics.dto';
+import {
+  ModeratorDashboardMetricsDto,
+  UserModerationMetricsDto,
+} from '../../dto/moderator-dashboard-metrics.dto';
 import { DashboardReportsService } from '../dashboard-reports.service';
 
 type ServiceClaimsMetrics = {
@@ -101,14 +104,18 @@ export class GetModeratorDashboardMetricsUseCase {
     const suspendedUsers = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.accountStatus = :status', { status: AccountStatus.SUSPENDED })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.SUSPENDED,
+      })
       .getCount();
 
     // Usuarios baneados
     const bannedUsers = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.accountStatus = :status', { status: AccountStatus.BANNED })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.BANNED,
+      })
       .getCount();
 
     // Usuarios activos (sin sanciones)

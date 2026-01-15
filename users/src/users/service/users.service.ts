@@ -8,9 +8,9 @@ import { UserRepository } from '../repository/users.repository';
 import { CreateUserUseCase } from './use-cases/create-user.use-cases';
 import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
 import {
-    FindUserByIdIncludingDeletedUseCase,
-    FindUserByIdUseCase,
-    FindUserByIdWithRelationsUseCase,
+  FindUserByIdIncludingDeletedUseCase,
+  FindUserByIdUseCase,
+  FindUserByIdWithRelationsUseCase,
 } from './use-cases/find-user-by-id.use-cases';
 import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
 import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
@@ -170,15 +170,20 @@ export class UsersService {
     return {
       isBanned,
       isSuspended,
-      tokensInvalidatedAt: user.tokensInvalidatedAt 
-        ? new Date(user.tokensInvalidatedAt).toISOString() 
+      tokensInvalidatedAt: user.tokensInvalidatedAt
+        ? new Date(user.tokensInvalidatedAt).toISOString()
         : undefined,
-      banReason: isBanned ? user.banReason || 'Violación de políticas' : undefined,
+      banReason: isBanned
+        ? user.banReason || 'Violación de políticas'
+        : undefined,
       // Devolver fecha en formato ISO 8601 para que el API Gateway pueda parsearla correctamente
-      suspensionExpiresAt: isSuspended && user.suspensionExpiresAt
-        ? new Date(user.suspensionExpiresAt).toISOString()
+      suspensionExpiresAt:
+        isSuspended && user.suspensionExpiresAt
+          ? new Date(user.suspensionExpiresAt).toISOString()
+          : undefined,
+      suspensionReason: isSuspended
+        ? user.suspensionReason || 'Violación temporal de políticas'
         : undefined,
-      suspensionReason: isSuspended ? user.suspensionReason || 'Violación temporal de políticas' : undefined,
     };
   }
 }

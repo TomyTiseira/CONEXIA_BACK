@@ -29,8 +29,10 @@ export class BanManagementService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async processExpiredSuspensions() {
-    this.logger.log('Iniciando proceso de reactivación de suspensiones expiradas...');
-    
+    this.logger.log(
+      'Iniciando proceso de reactivación de suspensiones expiradas...',
+    );
+
     try {
       // Buscar usuarios suspendidos cuya fecha de expiración es hoy o anterior
       const today = new Date();
@@ -53,10 +55,7 @@ export class BanManagementService {
           await this.reactivateUser(user);
           this.logger.log(`Usuario ${user.id} reactivado exitosamente`);
         } catch (error) {
-          this.logger.error(
-            `Error al reactivar usuario ${user.id}:`,
-            error,
-          );
+          this.logger.error(`Error al reactivar usuario ${user.id}:`, error);
         }
       }
 
@@ -174,7 +173,7 @@ export class BanManagementService {
     );
 
     // Notificar a usuarios afectados
-    await this.notifyAffectedUsers(userId, commitments);
+    this.notifyAffectedUsers();
 
     this.logger.log(`Usuario ${userId} baneado exitosamente`);
   }
@@ -259,7 +258,7 @@ export class BanManagementService {
     );
 
     // Notificar a owners sobre postulaciones canceladas
-    await this.notifyPostulationsCancelled(userId, commitments);
+    this.notifyPostulationsCancelled();
 
     this.logger.log(`Usuario ${userId} suspendido por ${days} días`);
   }
@@ -283,11 +282,17 @@ export class BanManagementService {
 
       return {
         services:
-          services.status === 'fulfilled' ? services.value.details || [] : [],
+          services.status === 'fulfilled'
+            ? (services.value as { details?: any[] })?.details || []
+            : [],
         ownProjects:
-          ownProjects.status === 'fulfilled' ? ownProjects.value.details || [] : [],
+          ownProjects.status === 'fulfilled'
+            ? (ownProjects.value as { details?: any[] })?.details || []
+            : [],
         collaborations:
-          collaborations.status === 'fulfilled' ? collaborations.value.details || [] : [],
+          collaborations.status === 'fulfilled'
+            ? (collaborations.value as { details?: any[] })?.details || []
+            : [],
       };
     } catch (error) {
       this.logger.error('Error verificando compromisos activos:', error);
@@ -306,10 +311,10 @@ export class BanManagementService {
     try {
       // Emitir evento para actualizar ownerModerationStatus a 'banned'
       await firstValueFrom(
-        this.natsClient.emit('user.banned', { 
+        this.natsClient.emit('user.banned', {
           userId,
           moderationStatus: 'banned',
-          reason: reason || 'Violación de términos y condiciones'
+          reason: reason || 'Violación de términos y condiciones',
         }),
       );
       this.logger.log(`Evento user.banned emitido para usuario ${userId}`);
@@ -321,15 +326,19 @@ export class BanManagementService {
   /**
    * Notifica a microservicios sobre la suspensión
    */
-  private async notifySuspension(userId: number, reason?: string, expiresAt?: Date): Promise<void> {
+  private async notifySuspension(
+    userId: number,
+    reason?: string,
+    expiresAt?: Date,
+  ): Promise<void> {
     try {
       // Emitir evento para actualizar ownerModerationStatus a 'suspended'
       await firstValueFrom(
-        this.natsClient.emit('user.suspended', { 
+        this.natsClient.emit('user.suspended', {
           userId,
           moderationStatus: 'suspended',
           reason: reason || 'Suspensión temporal',
-          expiresAt: expiresAt
+          expiresAt: expiresAt,
         }),
       );
       this.logger.log(`Evento user.suspended emitido para usuario ${userId}`);
@@ -365,7 +374,9 @@ export class BanManagementService {
         ),
       ]);
 
-      this.logger.log(`Contenido del usuario ${userId} eliminado (soft-delete)`);
+      this.logger.log(
+        `Contenido del usuario ${userId} eliminado (soft-delete)`,
+      );
     } catch (error) {
       this.logger.error('Error en soft-delete de contenido:', error);
     }
@@ -420,16 +431,20 @@ export class BanManagementService {
   /**
    * Notifica a usuarios afectados por el baneo
    */
-  private async notifyAffectedUsers(userId: number, commitments: any): Promise<void> {
-    // Esta lógica se maneja en cada microservicio cuando reciben el evento user.banned
-    this.logger.log(`Notificaciones a usuarios afectados delegadas a microservicios`);
+  private notifyAffectedUsers(): void {
+    // Esta lógica se maneja dentro de cada microservicio cuando reciben el evento de baneo
+    this.logger.log(
+      `Notificaciones a usuarios afectados delegadas a microservicios`,
+    );
   }
 
   /**
    * Notifica cancelación de postulaciones por suspensión
    */
-  private async notifyPostulationsCancelled(userId: number, commitments: any): Promise<void> {
+  private notifyPostulationsCancelled(): void {
     // Esta lógica se maneja en el microservicio de projects
-    this.logger.log(`Notificaciones de postulaciones canceladas delegadas a microservicio de projects`);
+    this.logger.log(
+      `Notificaciones de postulaciones canceladas delegadas a microservicio de projects`,
+    );
   }
 }

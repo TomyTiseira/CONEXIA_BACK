@@ -1,9 +1,9 @@
 import {
-    CanActivate,
-    ExecutionContext,
-    ForbiddenException,
-    Injectable,
-    Logger,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountStatus, User } from 'src/shared/entities/user.entity';
@@ -22,7 +22,9 @@ export class NotBannedGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: { id?: number; sub?: number } }>();
     const userId = request.user?.id || request.user?.sub;
 
     if (!userId) {

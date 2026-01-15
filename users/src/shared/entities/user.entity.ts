@@ -1,13 +1,13 @@
 import { Profile } from 'src/profile/entities/profile.entity';
 import {
-    Column,
-    DeleteDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 
@@ -34,7 +34,12 @@ export class User {
   @Column({ default: false })
   verified: boolean;
 
-  @Column({ name: 'is_profile_complete', type: 'boolean', default: false, nullable: true })
+  @Column({
+    name: 'is_profile_complete',
+    type: 'boolean',
+    default: false,
+    nullable: true,
+  })
   isProfileComplete: boolean | null;
 
   @Column({ nullable: true })

@@ -85,7 +85,7 @@ export class MockEmailService extends EmailService {
     reason: string,
     days: number,
     expiresAt: Date,
-    commitments: any,
+    // commitments parameter not used in mock service
   ): Promise<void> {
     await this.sendEmail({
       to: email,

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import {
-    InvalidCredentialsException,
-    UserNotFoundException,
-    UserNotVerifiedException,
+  InvalidCredentialsException,
+  UserNotFoundException,
+  UserNotVerifiedException,
 } from 'src/common/exceptions/user.exceptions';
 import { CryptoUtils } from '../../../common/utils/crypto.utils';
 import { AccountStatus } from '../../../shared/entities/user.entity';

@@ -7,18 +7,18 @@ import { AccountStatus, User } from 'src/shared/entities/user.entity';
 import { UserVerification } from 'src/verification/entities/user-verification.entity';
 import { IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import {
-    ActiveUsersMetricsDto,
-    AdminDashboardMetricsDto,
-    DeletedUserReasonDto,
-    DeletedUsersMetricsDto,
-    MembershipsMetricsDto,
-    ModerationMetricsDto,
-    NewUsersMetricsDto,
-    ProjectsMetricsDto,
-    ReportsMetricsDto,
-    ServicesMetricsDto,
-    UsersMetricsDto,
-    VerifiedUsersMetricsDto,
+  ActiveUsersMetricsDto,
+  AdminDashboardMetricsDto,
+  DeletedUserReasonDto,
+  DeletedUsersMetricsDto,
+  MembershipsMetricsDto,
+  ModerationMetricsDto,
+  NewUsersMetricsDto,
+  ProjectsMetricsDto,
+  ReportsMetricsDto,
+  ServicesMetricsDto,
+  UsersMetricsDto,
+  VerifiedUsersMetricsDto,
 } from '../../dto/admin-dashboard-metrics.dto';
 
 @Injectable()
@@ -302,14 +302,18 @@ export class GetAdminDashboardMetricsUseCase {
     const suspendedUsers = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.accountStatus = :status', { status: AccountStatus.SUSPENDED })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.SUSPENDED,
+      })
       .getCount();
 
     // Usuarios baneados (accountStatus = 'banned')
     const bannedUsers = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.accountStatus = :status', { status: AccountStatus.BANNED })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.BANNED,
+      })
       .getCount();
 
     return {

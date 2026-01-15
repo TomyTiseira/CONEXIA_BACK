@@ -61,9 +61,13 @@ export class VerifyUserUseCase {
       // Verificar si el usuario es admin o moderador
       // Si es admin/moderador, NO crear perfil y asignar isProfileComplete = null
       // Si es usuario general, crear perfil vacío y asignar isProfileComplete = false
-      
-      const userRole = validatedUser.role || (await this.userRepository.findById(validatedUser.id))?.role;
-      const isAdminOrModerator = userRole && (userRole.name === 'admin' || userRole.name === 'moderador');
+
+      const userRole =
+        validatedUser.role ||
+        (await this.userRepository.findById(validatedUser.id))?.role;
+      const isAdminOrModerator =
+        userRole &&
+        (userRole.name === 'admin' || userRole.name === 'moderador');
 
       let finalUser;
       let isProfileComplete: boolean | null;
@@ -123,17 +127,22 @@ export class VerifyUserUseCase {
         finalUser.profileId,
         isProfileComplete, // null para admin/moderador, false para usuario general
         new Date(), // lastActivityAt
-      );
+      ) as { accessToken: string; refreshToken: string; expiresIn: number };
 
-      return {
-        user: finalUser,
+      const response: {
+        user: User;
+        data: { accessToken: string; refreshToken: string; expiresIn: number };
+      } = {
+        user: finalUser as User,
         data: {
           accessToken: token.accessToken,
           refreshToken: token.refreshToken,
           expiresIn: token.expiresIn,
         },
       };
-    } catch (error) {
+
+      return response;
+    } catch (error: unknown) {
       console.error('error creating profile:', error);
       throw error;
     }

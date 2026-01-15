@@ -8,8 +8,8 @@ import { ConnectionInfoService } from '../../../shared/services/connection-info.
 import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
-    ProfileSkillResponse,
-    ProfileWithSkills,
+  ProfileSkillResponse,
+  ProfileWithSkills,
 } from '../../../shared/types/skill.types';
 import { UserReviewRepository } from '../../../user-reviews/repository/user-review.repository';
 import { GetProfileDto } from '../../dto/get-profile.dto';
@@ -130,8 +130,8 @@ export class GetProfileUseCase {
     }
 
     // Agregar información de baneo/suspensión
-    const isBanned = profile.user?.accountStatus === 'banned';
-    const isSuspended = profile.user?.accountStatus === 'suspended';
+    const isBanned = profile.user?.accountStatus === AccountStatus.BANNED;
+    const isSuspended = profile.user?.accountStatus === AccountStatus.SUSPENDED;
     const suspensionExpiresAt = profile.user?.suspensionExpiresAt || null;
 
     return {

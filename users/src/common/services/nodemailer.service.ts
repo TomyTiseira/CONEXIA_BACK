@@ -301,8 +301,20 @@ export class NodemailerService extends EmailService {
     await this.sendEmail({
       to: email,
       subject: '⏸️ Cuenta Suspendida Temporalmente - Conexia',
-      html: this.generateAccountSuspendedEmailHTML(userName, reason, days, expiresAt, commitments),
-      text: this.generateAccountSuspendedEmailText(userName, reason, days, expiresAt, commitments),
+      html: this.generateAccountSuspendedEmailHTML(
+        userName,
+        reason,
+        days,
+        expiresAt,
+        commitments,
+      ),
+      text: this.generateAccountSuspendedEmailText(
+        userName,
+        reason,
+        days,
+        expiresAt,
+        commitments,
+      ),
     });
   }
 
@@ -321,7 +333,10 @@ export class NodemailerService extends EmailService {
     });
   }
 
-  private generateAccountBannedEmailHTML(userName: string, reason: string): string {
+  private generateAccountBannedEmailHTML(
+    userName: string,
+    reason: string,
+  ): string {
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -367,7 +382,10 @@ export class NodemailerService extends EmailService {
     `;
   }
 
-  private generateAccountBannedEmailText(userName: string, reason: string): string {
+  private generateAccountBannedEmailText(
+    userName: string,
+    reason: string,
+  ): string {
     return `
       ⚠️ Cuenta Baneada
 
@@ -407,9 +425,10 @@ export class NodemailerService extends EmailService {
 
     let commitmentsHTML = '';
     if (commitments) {
-      const activeServices = commitments.services?.length || 0;
-      const activeProjects = commitments.ownProjects?.length || 0;
-      const activeCollaborations = commitments.collaborations?.length || 0;
+      const activeServices = (commitments.services as any[])?.length || 0;
+      const activeProjects = (commitments.ownProjects as any[])?.length || 0;
+      const activeCollaborations =
+        (commitments.collaborations as any[])?.length || 0;
 
       if (activeServices + activeProjects + activeCollaborations > 0) {
         commitmentsHTML = `
@@ -494,15 +513,19 @@ export class NodemailerService extends EmailService {
 
     let commitmentsText = '';
     if (commitments) {
-      const activeServices = commitments.services?.length || 0;
-      const activeProjects = commitments.ownProjects?.length || 0;
-      const activeCollaborations = commitments.collaborations?.length || 0;
+      const activeServices = (commitments.services as any[])?.length || 0;
+      const activeProjects = (commitments.ownProjects as any[])?.length || 0;
+      const activeCollaborations =
+        (commitments.collaborations as any[])?.length || 0;
 
       if (activeServices + activeProjects + activeCollaborations > 0) {
         commitmentsText = `\n📋 Compromisos activos:\n`;
-        if (activeServices > 0) commitmentsText += `• ${activeServices} servicio(s) que estás prestando\n`;
-        if (activeProjects > 0) commitmentsText += `• ${activeProjects} proyecto(s) como dueño\n`;
-        if (activeCollaborations > 0) commitmentsText += `• ${activeCollaborations} colaboración(es) en proyectos\n`;
+        if (activeServices > 0)
+          commitmentsText += `• ${activeServices} servicio(s) que estás prestando\n`;
+        if (activeProjects > 0)
+          commitmentsText += `• ${activeProjects} proyecto(s) como dueño\n`;
+        if (activeCollaborations > 0)
+          commitmentsText += `• ${activeCollaborations} colaboración(es) en proyectos\n`;
         commitmentsText += `\nImportante: Debes completar estos compromisos. No puedes crear nuevos servicios ni proyectos hasta que tu cuenta sea reactivada.\n`;
       }
     }

@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,14 +13,14 @@ import { Repository } from 'typeorm';
 import { NATS_SERVICE } from '../config';
 import { ModerationAnalysis } from '../entities/moderation-analysis.entity';
 import {
-    AnalyzedReportsResponse,
-    ReportDetail,
+  AnalyzedReportsResponse,
+  ReportDetail,
 } from '../interfaces/analyzed-reports-response.interface';
 import {
-    NotificationPayload,
-    OpenAIModerationResult,
-    ReportData,
-    UserReportsGroup,
+  NotificationPayload,
+  OpenAIModerationResult,
+  ReportData,
+  UserReportsGroup,
 } from '../interfaces/moderation.interface';
 import { BanManagementService } from './ban-management.service';
 import { OpenAIService } from './openai.service';
@@ -448,7 +454,7 @@ export class ModerationService {
     // Obtener perfiles de los usuarios reportados
     const userIds = results.map((r) => r.userId);
     const profileMap = new Map<number, { name: string; lastName: string }>();
-    
+
     // Solo consultar si hay userIds para evitar SQL inválido: IN ()
     if (userIds.length > 0) {
       const profiles = await this.moderationRepository.manager
@@ -551,7 +557,9 @@ export class ModerationService {
           notes || 'Violación de políticas de la plataforma',
           analysisId,
         );
-        this.logger.log(`Usuario ${analysis.userId} BANEADO por moderador ${moderatorId}`);
+        this.logger.log(
+          `Usuario ${analysis.userId} BANEADO por moderador ${moderatorId}`,
+        );
         break;
 
       case 'suspend_user':
@@ -808,10 +816,11 @@ export class ModerationService {
    */
   async triggerManualReactivation() {
     this.logger.log('🧪 Ejecución manual del proceso de reactivación...');
-    
+
     try {
-      const result = await this.banManagementService.processExpiredSuspensions();
-      
+      const result =
+        await this.banManagementService.processExpiredSuspensions();
+
       return {
         success: true,
         message: 'Proceso de reactivación ejecutado manualmente',
