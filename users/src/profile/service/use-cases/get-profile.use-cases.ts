@@ -3,6 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
 import { NATS_SERVICE } from 'src/config';
+import { AccountStatus } from 'src/shared/entities/user.entity';
 import { Skill } from '../../../shared/interfaces/skill.interface';
 import { ConnectionInfoService } from '../../../shared/services/connection-info.service';
 import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
