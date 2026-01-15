@@ -226,8 +226,12 @@ export class DashboardController {
     // === MODERACIÓN ===
     lines.push('MODERACIÓN DE USUARIOS');
     lines.push('Categoría,Valor');
-    lines.push(`Usuarios suspendidos,${metrics.users.moderationMetrics.suspendedUsers}`);
-    lines.push(`Usuarios baneados,${metrics.users.moderationMetrics.bannedUsers}`);
+    lines.push(
+      `Usuarios suspendidos,${metrics.users.moderationMetrics.suspendedUsers}`,
+    );
+    lines.push(
+      `Usuarios baneados,${metrics.users.moderationMetrics.bannedUsers}`,
+    );
     lines.push('');
 
     // === USUARIOS DADOS DE BAJA ===
@@ -371,7 +375,9 @@ export class DashboardController {
     lines.push('MODERACIÓN Y ESTADO DE CUENTAS');
     lines.push('Categoría,Valor');
     lines.push(`Total de usuarios,${metrics.userModeration.totalUsers}`);
-    lines.push(`Usuarios activos (sin sanciones),${metrics.userModeration.activeUsers}`);
+    lines.push(
+      `Usuarios activos (sin sanciones),${metrics.userModeration.activeUsers}`,
+    );
     lines.push(`Usuarios suspendidos,${metrics.userModeration.suspendedUsers}`);
     lines.push(`Usuarios baneados,${metrics.userModeration.bannedUsers}`);
     lines.push('');

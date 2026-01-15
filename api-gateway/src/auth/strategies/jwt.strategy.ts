@@ -44,7 +44,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     // Verificar estado de cuenta en tiempo real (protección contra baneo durante sesión activa)
-    let userStatus: any = {
+    let userStatus: {
+      isBanned: boolean;
+      isSuspended: boolean;
+      banReason: string | null;
+      suspensionExpiresAt: string | null;
+    } = {
       isBanned: false,
       isSuspended: false,
       banReason: null,
@@ -102,7 +107,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       id: payload.sub,
       email: payload.email,
       roleId: payload.roleId,
-      profileId: payload.profileId,
+      profileId: payload.profileId as number | null,
       accountStatus: userStatus.isBanned
         ? 'banned'
         : userStatus.isSuspended

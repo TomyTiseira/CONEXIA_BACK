@@ -33,8 +33,16 @@ export class ActiveAccountGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user; // Usuario inyectado por JwtAuthGuard
+    const request = context.switchToHttp().getRequest<{ user?: any }>();
+    const user = request.user as
+      | {
+          id: number;
+          email: string;
+          accountStatus: string;
+          suspensionExpiresAt?: string;
+          banReason?: string;
+        }
+      | undefined;
 
     if (!user) {
       // Si no hay usuario, dejar que JwtAuthGuard maneje la autenticación
@@ -42,7 +50,9 @@ export class ActiveAccountGuard implements CanActivate {
       return true;
     }
 
-    const { accountStatus, suspensionExpiresAt, banReason } = user;
+    const accountStatus = user.accountStatus;
+    const suspensionExpiresAt = user.suspensionExpiresAt;
+    const banReason = user.banReason;
 
     // Validar usuario BANEADO
     if (accountStatus === 'banned') {

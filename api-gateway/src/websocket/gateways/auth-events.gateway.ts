@@ -35,11 +35,11 @@ export class AuthEventsGateway
 
   constructor(private readonly jwtService: JwtService) {}
 
-  afterInit(server: Server) {
+  afterInit() {
     this.logger.log('WebSocket Gateway inicializado en namespace /auth-events');
   }
 
-  async handleConnection(client: Socket) {
+  handleConnection(client: Socket) {
     try {
       this.logger.debug(`🔌 Intento de conexión - Socket ID: ${client.id}`);
 
@@ -57,7 +57,7 @@ export class AuthEventsGateway
       this.logger.debug(`🍪 Cookies recibidas: ${cookies.substring(0, 50)}...`);
 
       // Parsear cookies y extraer access_token
-      const parsedCookies = cookie.parse(cookies);
+      const parsedCookies = cookie.parse(cookies) as Record<string, string>;
       const token = parsedCookies['access_token'] || parsedCookies['jwt'];
 
       if (!token) {
@@ -73,9 +73,20 @@ export class AuthEventsGateway
       );
 
       // Verificar y decodificar token
-      const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-      });
+      let payload: { sub: number };
+      try {
+        payload = this.jwtService.verify(token, {
+          secret: process.env.JWT_SECRET || 'your-secret-key',
+        });
+      } catch {
+        // Error de verificación del token
+        this.logger.warn(
+          `❌ Conexión rechazada - token inválido (socket: ${client.id})`,
+        );
+        client.disconnect();
+        return;
+      }
+
       const userId = payload.sub;
 
       this.logger.debug(`🔓 Token decodificado - userId: ${userId}`);
@@ -98,10 +109,10 @@ export class AuthEventsGateway
       }
 
       // Unir al cliente a una room con su userId (para envío dirigido)
-      client.join(`user-${userId}`);
+      void client.join(`user-${userId}`);
 
       // Guardar userId en el socket para acceso posterior
-      client.data.userId = userId;
+      (client.data as Record<string, any>).userId = userId;
 
       this.logger.log(
         `✅ Usuario ${userId} conectado exitosamente (socket: ${client.id}, total conexiones: ${userSockets?.size || 1})`,
@@ -110,16 +121,18 @@ export class AuthEventsGateway
       this.logger.debug(
         `📊 Usuarios conectados actualmente: ${this.connectedUsers.size}`,
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
-        `Error en autenticación WebSocket (socket: ${client.id}): ${error.message}`,
+        `Error en autenticación WebSocket (socket: ${client.id}): ${errorMessage}`,
       );
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.data.userId;
+    const userId = (client.data as { userId?: number }).userId;
 
     if (userId) {
       const userSockets = this.connectedUsers.get(userId);

@@ -1,5 +1,4 @@
 import {
-  ExecutionContext,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -12,7 +11,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * Sobrescribimos handleRequest para preservar ForbiddenException
    * Por defecto, Passport convierte todas las excepciones en UnauthorizedException
    */
-  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+  handleRequest(err: any, user: any, info: any) {
     // Si hay un error y es ForbiddenException (baneo/suspensión), propagarlo tal cual
     if (err instanceof ForbiddenException) {
       throw err;

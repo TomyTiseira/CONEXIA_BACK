@@ -58,12 +58,15 @@ export class AuthController {
       let errorMessage = 'Internal server error';
 
       if (error instanceof RpcException) {
-        const rpcError: any = error.getError();
+        const rpcError = error.getError() as Record<string, any>;
 
         // Extraer información del error RPC
         if (typeof rpcError === 'object' && rpcError !== null) {
-          statusCode = rpcError.statusCode || rpcError.status || 400;
-          errorMessage = rpcError.message || errorMessage;
+          statusCode =
+            (rpcError.statusCode as number) ||
+            (rpcError.status as number) ||
+            400;
+          errorMessage = (rpcError.message as string) || errorMessage;
         } else if (typeof rpcError === 'string') {
           errorMessage = rpcError;
         }
