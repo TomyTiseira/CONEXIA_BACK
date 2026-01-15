@@ -1,3 +1,11 @@
+// ===== USUARIOS - MODERACIÓN =====
+export class UserModerationMetricsDto {
+  suspendedUsers: number;
+  bannedUsers: number;
+  totalUsers: number;
+  activeUsers: number; // Sin sanciones
+}
+
 // ===== REPORTES =====
 export class ReportsByStatusDto {
   status: string;
@@ -34,6 +42,7 @@ export class ClaimsMetricsDto {
 
 // ===== DASHBOARD COMPLETO DE MODERADOR =====
 export class ModeratorDashboardMetricsDto {
+  userModeration: UserModerationMetricsDto;
   reports: ReportsMetricsDto;
   claims: ClaimsMetricsDto;
 }

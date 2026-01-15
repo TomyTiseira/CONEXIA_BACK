@@ -38,6 +38,7 @@ export interface ProjectDetailResponse {
   }>;
   category: string[];
   isActive: boolean;
+  suspendedByModeration: boolean; // Indica si el proyecto fue suspendido por moderación
   deletedAt?: string;
   startDate?: Date;
   endDate?: Date;
@@ -46,4 +47,10 @@ export interface ProjectDetailResponse {
   hasReported: boolean; // Indica si el usuario actual ya reportó este proyecto
   userPostulationStatus: string | null; // Estado de la postulación del usuario actual (ACTIVE, ACCEPTED, REJECTED, etc.) o null si no ha aplicado
   userEvaluationDeadline: Date | null; // Fecha límite para completar la evaluación técnica (solo si está en PENDING_EVALUATION)
+  ownerAccountStatus?: string; // Estado de cuenta del owner: 'active' | 'suspended' | 'banned'
+  ownerIsSuspended?: boolean; // Si el owner está suspendido
+  ownerIsBanned?: boolean; // Si el owner está baneado
+  ownerSuspensionExpiresAt?: string; // Fecha de expiración de la suspensión
+  ownerSuspensionReason?: string; // Razón de la suspensión
+  ownerBanReason?: string; // Razón del baneo
 }

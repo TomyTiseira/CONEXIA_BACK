@@ -37,20 +37,26 @@ export class GetServicesUseCase {
       (s) => s.userId !== currentUserId,
     );
 
-    // 2. Obtener search_visibility de los dueños de los servicios
-    const serviceOwnerIds = [...new Set(notOwnerServices.map((s) => s.userId))];
+    // 2. Filtrar servicios de usuarios suspendidos o baneados usando ownerModerationStatus
+    // Ya no necesitamos consultar NATS, el campo está denormalizado
+    const activeOwnerServices = notOwnerServices.filter(
+      (s) => !s.ownerModerationStatus, // null = owner activo
+    );
+
+    // 3. Obtener search_visibility de los dueños de los servicios
+    const activeServiceOwnerIds = [...new Set(activeOwnerServices.map((s) => s.userId))];
     const visibilityMap =
       await this.membershipsClientService.getUsersSearchVisibility(
-        serviceOwnerIds,
+        activeServiceOwnerIds,
       );
 
-    // 3. Ordenar servicios por search_visibility del dueño
+    // 4. Ordenar servicios por search_visibility del dueño
     const sortedServices = this.sortServicesBySearchVisibility(
-      notOwnerServices,
+      activeOwnerServices,
       visibilityMap,
     );
 
-    // 4. Aplicar paginación sobre los servicios ya ordenados
+    // 5. Aplicar paginación sobre los servicios ya ordenados
     const start = (params.page - 1) * params.limit;
     const end = start + params.limit;
     const services = sortedServices.slice(start, end);
@@ -97,8 +103,8 @@ export class GetServicesUseCase {
       reviewsInfo,
     );
 
-    // Calcular información de paginación usando solo los servicios donde no es dueño
-    const pagination = calculatePagination(notOwnerServices.length, params);
+    // Calcular información de paginación usando solo los servicios donde no es dueño y el owner está activo
+    const pagination = calculatePagination(activeOwnerServices.length, params);
 
     return {
       services: transformedServices,

@@ -223,6 +223,30 @@ export class DashboardController {
     );
     lines.push('');
 
+    // === MODERACIÓN ===
+    lines.push('MODERACIÓN DE USUARIOS');
+    lines.push('Categoría,Valor');
+    lines.push(`Usuarios suspendidos,${metrics.users.moderationMetrics.suspendedUsers}`);
+    lines.push(`Usuarios baneados,${metrics.users.moderationMetrics.bannedUsers}`);
+    lines.push('');
+
+    // === USUARIOS DADOS DE BAJA ===
+    lines.push('USUARIOS DADOS DE BAJA');
+    lines.push('Categoría,Valor');
+    lines.push(`Total usuarios eliminados,${metrics.users.deletedUsers.total}`);
+    lines.push(`Eliminados (7 días),${metrics.users.deletedUsers.last7Days}`);
+    lines.push(`Eliminados (30 días),${metrics.users.deletedUsers.last30Days}`);
+    lines.push(`Eliminados (90 días),${metrics.users.deletedUsers.last90Days}`);
+    lines.push('');
+
+    // Razones de baja categorizadas
+    lines.push('RAZONES DE BAJA (CATEGORIZADAS)');
+    lines.push('Categoría,Cantidad,Porcentaje');
+    metrics.users.deletedUsers.reasonCategories.forEach((reason: any) => {
+      lines.push(`${reason.category},${reason.count},${reason.percentage}%`);
+    });
+    lines.push('');
+
     // === PROYECTOS ===
     lines.push('PROYECTOS');
     lines.push('Categoría,Valor');
@@ -341,6 +365,15 @@ export class DashboardController {
 
     // Encabezado
     lines.push('MÉTRICAS DEL DASHBOARD DE MODERACIÓN');
+    lines.push('');
+
+    // === MODERACIÓN DE USUARIOS ===
+    lines.push('MODERACIÓN Y ESTADO DE CUENTAS');
+    lines.push('Categoría,Valor');
+    lines.push(`Total de usuarios,${metrics.userModeration.totalUsers}`);
+    lines.push(`Usuarios activos (sin sanciones),${metrics.userModeration.activeUsers}`);
+    lines.push(`Usuarios suspendidos,${metrics.userModeration.suspendedUsers}`);
+    lines.push(`Usuarios baneados,${metrics.userModeration.bannedUsers}`);
     lines.push('');
 
     // === REPORTES ===

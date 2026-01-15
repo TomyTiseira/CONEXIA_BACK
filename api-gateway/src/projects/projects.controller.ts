@@ -21,6 +21,7 @@ import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
+import { RequiresActiveAccount } from 'src/auth/decorators/requires-active-account.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
 import {
   AuthenticatedRequest,
@@ -44,7 +45,7 @@ export class ProjectsController {
     );
   }
 
-  @AuthRoles([ROLES.USER])
+  @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden publicar proyectos
   @Post('publish')
   @UseInterceptors(
     FileFieldsInterceptor(

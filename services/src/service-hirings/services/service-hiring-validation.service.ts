@@ -56,6 +56,21 @@ export class ServiceHiringValidationService {
       throw new RpcException('Servicio no encontrado');
     }
 
+    // Validar que el dueño del servicio no esté suspendido o baneado
+    const ownerStatus = await this.usersClientService.checkUserAccountStatus(
+      serviceResponse.owner.id,
+    );
+    if (ownerStatus.isBanned) {
+      throw new RpcException(
+        'No puedes solicitar cotización para este servicio porque el proveedor tiene la cuenta baneada permanentemente',
+      );
+    }
+    if (ownerStatus.isSuspended) {
+      throw new RpcException(
+        'No puedes solicitar cotización para este servicio porque el proveedor tiene la cuenta suspendida temporalmente',
+      );
+    }
+
     // Validar que el usuario no es el dueño del servicio
     if (serviceResponse.isOwner) {
       throw new RpcException('No puedes contratar tu propio servicio');

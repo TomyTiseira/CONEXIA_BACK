@@ -1,8 +1,8 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('reports_moderation_analysis')
@@ -57,7 +57,7 @@ export class ModerationAnalysis {
     length: 50,
     nullable: true,
   })
-  resolutionAction: 'ban_user' | 'release_user' | 'keep_monitoring' | null;
+  resolutionAction: 'ban_user' | 'suspend_user' | 'release_user' | 'keep_monitoring' | null;
 
   @Column({ name: 'resolution_notes', type: 'text', nullable: true })
   resolutionNotes: string | null;

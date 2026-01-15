@@ -46,18 +46,24 @@ export class GetProjectsUseCase {
         await this.projectRepository.findProjectsByIds(notOwnerIds);
     }
 
+    // 2.5. Filtrar proyectos de usuarios suspendidos o baneados usando ownerModerationStatus
+    // Ya no necesitamos consultar NATS, el campo está denormalizado
+    const activeOwnerProjects = allProjectsToSort.filter(
+      (p) => !p.ownerModerationStatus, // null = owner activo
+    );
+
     // 3. Obtener search_visibility de los dueños de los proyectos
-    const projectOwnerIds = [
-      ...new Set(allProjectsToSort.map((p) => p.userId)),
+    const activeProjectOwnerIds = [
+      ...new Set(activeOwnerProjects.map((p) => p.userId)),
     ];
     const visibilityMap =
       await this.membershipsClientService.getUsersSearchVisibility(
-        projectOwnerIds,
+        activeProjectOwnerIds,
       );
 
     // 4. Ordenar proyectos por search_visibility del dueño
     const sortedProjects = this.sortProjectsBySearchVisibility(
-      allProjectsToSort,
+      activeOwnerProjects,
       visibilityMap,
     );
 
@@ -187,8 +193,8 @@ export class GetProjectsUseCase {
       hasReported: hasReportedMap.get(project.id) ?? false,
     }));
 
-    // Calcular información de paginación usando solo los proyectos donde no es dueño
-    const pagination = calculatePagination(notOwnerIds.length, params);
+    // Calcular información de paginación usando solo los proyectos donde no es dueño y el owner está activo
+    const pagination = calculatePagination(activeOwnerProjects.length, params);
 
     return {
       projects: projectsWithReportStatus,

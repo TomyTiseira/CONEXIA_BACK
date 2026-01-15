@@ -19,10 +19,31 @@ export class VerifiedUsersMetricsDto {
   verificationPercentage: number; // Porcentaje de usuarios verificados sobre el total
 }
 
+export class ModerationMetricsDto {
+  suspendedUsers: number;
+  bannedUsers: number;
+}
+
+export class DeletedUserReasonDto {
+  category: string;
+  count: number;
+  percentage: number;
+}
+
+export class DeletedUsersMetricsDto {
+  total: number;
+  last7Days: number;
+  last30Days: number;
+  last90Days: number;
+  reasonCategories: DeletedUserReasonDto[];
+}
+
 export class UsersMetricsDto {
   newUsers: NewUsersMetricsDto;
   activeUsers: ActiveUsersMetricsDto;
   verifiedUsers: VerifiedUsersMetricsDto;
+  moderationMetrics: ModerationMetricsDto;
+  deletedUsers: DeletedUsersMetricsDto;
 }
 
 // ===== PROYECTOS =====

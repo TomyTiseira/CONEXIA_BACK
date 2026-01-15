@@ -19,4 +19,7 @@ export enum ServiceHiringStatusCode {
   CANCELLED_BY_CLAIM = 'cancelled_by_claim', // A favor del cliente
   COMPLETED_BY_CLAIM = 'completed_by_claim', // A favor del proveedor
   COMPLETED_WITH_AGREEMENT = 'completed_with_agreement', // Acuerdo parcial
+  // Estados por moderación
+  TERMINATED_BY_MODERATION = 'terminated_by_moderation', // Proveedor baneado
+  FINISHED_BY_MODERATION = 'finished_by_moderation', // Servicio de proveedor baneado
 }

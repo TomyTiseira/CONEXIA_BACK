@@ -49,6 +49,35 @@ export abstract class EmailService {
   ): Promise<void>;
 
   /**
+   * Envía un email de cuenta baneada
+   */
+  abstract sendAccountBannedEmail(
+    email: string,
+    userName: string,
+    reason: string,
+  ): Promise<void>;
+
+  /**
+   * Envía un email de cuenta suspendida
+   */
+  abstract sendAccountSuspendedEmail(
+    email: string,
+    userName: string,
+    reason: string,
+    days: number,
+    expiresAt: Date,
+    commitments: any,
+  ): Promise<void>;
+
+  /**
+   * Envía un email de reactivación de cuenta
+   */
+  abstract sendAccountReactivatedEmail(
+    email: string,
+    userName: string,
+  ): Promise<void>;
+
+  /**
    * Método genérico para enviar emails
    */
   protected abstract sendEmail(options: EmailOptions): Promise<void>;

@@ -52,10 +52,26 @@ export class AuthController {
           expiresIn: result.data.expiresIn,
         },
       });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      res.status(400).json({
+    } catch (error: any) {
+      // Manejar errores del microservicio preservando el código de estado
+      let statusCode = 400;
+      let errorMessage = 'Internal server error';
+
+      if (error instanceof RpcException) {
+        const rpcError: any = error.getError();
+
+        // Extraer información del error RPC
+        if (typeof rpcError === 'object' && rpcError !== null) {
+          statusCode = rpcError.statusCode || rpcError.status || 400;
+          errorMessage = rpcError.message || errorMessage;
+        } else if (typeof rpcError === 'string') {
+          errorMessage = rpcError;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      res.status(statusCode).json({
         success: false,
         message: errorMessage,
       });

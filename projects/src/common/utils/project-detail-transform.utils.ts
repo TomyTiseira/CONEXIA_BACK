@@ -87,6 +87,7 @@ export function transformProjectToDetailResponse(
     roles: roles.length > 0 ? roles : undefined,
     category: [project.category.name],
     isActive: project.isActive,
+    suspendedByModeration: project.suspendedByModeration || false,
     deletedAt: project.deletedAt ? project.deletedAt.toISOString() : undefined,
     startDate: project.startDate,
     endDate: project.endDate,

@@ -122,6 +122,7 @@ export class VerifyUserUseCase {
         finalUser.roleId,
         finalUser.profileId,
         isProfileComplete, // null para admin/moderador, false para usuario general
+        new Date(), // lastActivityAt
       );
 
       return {

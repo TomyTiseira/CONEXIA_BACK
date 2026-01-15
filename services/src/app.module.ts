@@ -2,19 +2,21 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
+import { ModerationController } from './common/controllers/moderation.controller';
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { DeliveryAttachmentMigrationService } from './common/services/delivery-attachment-migration.service';
+import { ModerationListenerService } from './common/services/moderation-listener.service';
 import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
-  Claim,
-  Deliverable,
-  DeliveryAttachment,
-  DeliverySubmission,
-  Payment,
-  PaymentModality,
-  ServiceHiring,
-  ServiceHiringStatus,
+    Claim,
+    Deliverable,
+    DeliveryAttachment,
+    DeliverySubmission,
+    Payment,
+    PaymentModality,
+    ServiceHiring,
+    ServiceHiringStatus,
 } from './service-hirings/entities';
 import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
@@ -59,6 +61,8 @@ import { ServicesModule } from './services/services.module';
       PaymentModality,
       DeliverySubmission,
       DeliveryAttachment,
+      Service,
+      ServiceHiring,
     ]),
     CommonModule,
     ServicesModule,
@@ -67,7 +71,7 @@ import { ServicesModule } from './services/services.module';
     ServiceReviewsModule,
     ServiceReviewReportsModule,
   ],
-  controllers: [],
+  controllers: [ModerationController],
   providers: [
     {
       provide: APP_INTERCEPTOR,
@@ -77,6 +81,7 @@ import { ServicesModule } from './services/services.module';
     PaymentModalityRepository,
     SeedService,
     DeliveryAttachmentMigrationService,
+    ModerationListenerService,
   ],
 })
 export class AppModule {}

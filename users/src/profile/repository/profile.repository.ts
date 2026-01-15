@@ -43,6 +43,10 @@ export class ProfileRepository {
         user: {
           id: true,
           verified: true,
+          accountStatus: true,
+          bannedAt: true,
+          suspendedAt: true,
+          suspensionExpiresAt: true,
         },
       },
       where: { userId, deletedAt: IsNull() },

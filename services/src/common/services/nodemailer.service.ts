@@ -164,6 +164,24 @@ export class NodemailerService extends EmailService {
     });
   }
 
+  async sendServiceTerminatedByModerationEmail(
+    clientEmail: string,
+    clientName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      providerName: string;
+      reason: string;
+    },
+  ): Promise<void> {
+    await this.sendEmail({
+      to: clientEmail,
+      subject: `Actualización importante sobre tu contratación: ${serviceData.serviceTitle}`,
+      html: this.generateServiceTerminatedEmailHTML(clientName, serviceData),
+      text: this.generateServiceTerminatedEmailText(clientName, serviceData),
+    });
+  }
+
   // ===== HTML Templates =====
 
   private generateClaimCreatedEmailHTML(
@@ -175,7 +193,7 @@ export class NodemailerService extends EmailService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #dc3545; margin: 0;">⚠️ Nuevo Reclamo</h1>
+            <h1 style="color: #ff4953; margin: 0;">⚠️ Nuevo Reclamo</h1>
           </div>
           
           <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
@@ -184,7 +202,7 @@ export class NodemailerService extends EmailService {
             El <strong>${roleLabel}</strong> ha creado un reclamo para el servicio:
           </p>
           
-          <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #dc3545; margin: 20px 0;">
+          <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid #ff4953; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">${claimData.hiringTitle}</h3>
             <p style="margin: 5px 0; color: #666;"><strong>Motivo:</strong> ${claimData.claimType}</p>
             <p style="margin: 5px 0; color: #666;"><strong>Reclamante:</strong> ${claimData.claimantName}</p>
@@ -203,7 +221,7 @@ export class NodemailerService extends EmailService {
           
           <div style="text-align: center; margin-top: 30px;">
             <a href="https://conexia.com/claims/${claimData.claimId}" 
-               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+               style="display: inline-block; background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Ver Detalles del Reclamo
             </a>
           </div>
@@ -260,7 +278,7 @@ export class NodemailerService extends EmailService {
           
           <div style="text-align: center; margin-top: 30px;">
             <a href="https://conexia.com/claims/${claimData.claimId}" 
-               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+               style="display: inline-block; background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Ver Estado del Reclamo
             </a>
           </div>
@@ -280,7 +298,7 @@ export class NodemailerService extends EmailService {
     statusLabel: string,
     claimData: any,
   ): string {
-    const statusColor = claimData.status === 'resolved' ? '#28a745' : '#dc3545';
+    const statusColor = claimData.status === 'resolved' ? '#28a745' : '#ff4953';
     const statusIcon = claimData.status === 'resolved' ? '✅' : '❌';
 
     // Mapear tipo de resolución a texto legible
@@ -320,7 +338,7 @@ export class NodemailerService extends EmailService {
           </p>
           
           ${resolutionInfo ? `
-          <div style="background-color: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; margin: 20px 0;">
+          <div style="background-color: #e7f3ff; padding: 20px; border-left: 4px solid #48a6a7; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">${resolutionInfo.icon} Tipo de Resolución: ${resolutionInfo.label}</h3>
             <p style="margin: 0; color: #666; font-size: 14px;">${resolutionInfo.description}</p>
           </div>
@@ -343,7 +361,7 @@ export class NodemailerService extends EmailService {
           
           <div style="text-align: center; margin-top: 30px;">
             <a href="https://conexia.com/claims/${claimData.claimId}" 
-               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+               style="display: inline-block; background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Ver Detalles Completos
             </a>
           </div>
@@ -392,7 +410,7 @@ export class NodemailerService extends EmailService {
           
           <div style="text-align: center; margin-top: 30px;">
             <a href="https://conexia.com/admin/claims/${claimData.claimId}" 
-               style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+               style="display: inline-block; background-color: #ff4953; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold;">
               Revisar Reclamo Ahora
             </a>
           </div>
@@ -509,4 +527,267 @@ IMPORTANTE: El servicio está congelado hasta que se resuelva este reclamo.
 Revisar reclamo: https://conexia.com/admin/claims/${claimData.claimId}
     `;
   }
+
+  private generateServiceTerminatedEmailHTML(
+    clientName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      providerName: string;
+      reason: string;
+    },
+  ): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; padding: 20px; background-color: #ff4953; border-radius: 5px; margin-bottom: 20px;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Actualización Importante</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${clientName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Lamentamos informarte que el servicio que contrataste ha sido <strong>finalizado por nuestro equipo de moderación</strong>.
+          </p>
+          
+          <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #ff4953; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">Detalles de la Contratación</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>Servicio:</strong> ${serviceData.serviceTitle}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Proveedor:</strong> ${serviceData.providerName}</p>
+          </div>
+          
+          <div style="background-color: #ffedee; padding: 20px; border-left: 4px solid #ff4953; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #bf373e; font-size: 14px;">
+              <strong>Motivo de la finalización:</strong>
+            </p>
+            <p style="margin: 0; color: #bf373e; font-size: 14px;">
+              ${serviceData.reason}
+            </p>
+          </div>
+
+          <div style="background-color: #e8f5f5; padding: 20px; border-left: 4px solid #48a6a7; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #2d6a6b; font-size: 14px;">
+              <strong>📋 Información sobre reembolso:</strong>
+            </p>
+            <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #2d6a6b; font-size: 14px;">
+              <li style="margin-bottom: 8px;">Nuestro equipo procesará el reembolso si corresponde en las próximas 24-48 horas</li>
+              <li style="margin-bottom: 8px;">Recibirás una notificación cuando el reembolso se complete</li>
+              <li style="margin-bottom: 8px;"><strong>Si tienes dudas sobre el proceso de reembolso, contáctanos en soporte@conexia.com</strong></li>
+            </ul>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 20px;">
+            Lamentamos sinceramente las molestias que esto pueda haber causado. En Conexia trabajamos constantemente para mantener un entorno seguro y profesional.
+          </p>
+
+          <p style="color: #666; font-size: 14px;">
+            Te invitamos a explorar otros proveedores similares en nuestra plataforma que puedan ayudarte con tus necesidades.
+          </p>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/servicios" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              Buscar Servicios Similares
+            </a>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #e1e4e4; margin: 30px 0;">
+          
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center;">
+            Si tienes alguna pregunta o necesitas asistencia, contáctanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a>
+          </p>
+          
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center; margin-top: 10px;">
+            Este es un mensaje automático, por favor no respondas a este email.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateServiceTerminatedEmailText(
+    clientName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      providerName: string;
+      reason: string;
+    },
+  ): string {
+    return `
+Actualización Importante sobre tu Contratación
+
+Hola ${clientName},
+
+Lamentamos informarte que el servicio que contrataste ha sido finalizado por nuestro equipo de moderación.
+
+DETALLES DE LA CONTRATACIÓN:
+- Servicio: ${serviceData.serviceTitle}
+- Proveedor: ${serviceData.providerName}
+
+MOTIVO DE LA FINALIZACIÓN:
+${serviceData.reason}
+
+INFORMACIÓN SOBRE REEMBOLSO:
+✓ Nuestro equipo procesará el reembolso si corresponde en las próximas 24-48 horas
+✓ Recibirás una notificación cuando el reembolso se complete
+✓ Si tienes dudas sobre el proceso de reembolso, contáctanos en soporte@conexia.com
+
+Lamentamos sinceramente las molestias que esto pueda haber causado. En Conexia trabajamos constantemente para mantener un entorno seguro y profesional.
+
+Te invitamos a explorar otros proveedores similares en nuestra plataforma:
+https://conexia.com/servicios
+
+---
+Para consultas sobre reembolsos o asistencia general, contáctanos en soporte@conexia.com
+
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+
+  /**
+   * Envía un email al proveedor cuando el cliente es baneado
+   */
+  async sendServiceTerminatedClientBannedEmail(
+    providerEmail: string,
+    providerName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      clientName: string;
+      reason: string;
+    },
+  ): Promise<void> {
+    const html = this.generateServiceTerminatedClientBannedEmailHTML(providerName, serviceData);
+    const text = this.generateServiceTerminatedClientBannedEmailText(providerName, serviceData);
+
+    await this.sendEmail({
+      to: providerEmail,
+      subject: `Actualización importante sobre tu servicio: ${serviceData.serviceTitle} - Conexia`,
+      html,
+      text,
+    });
+
+    this.logger.log(
+      `Email de servicio terminado (cliente baneado) enviado a proveedor: ${providerEmail}`,
+    );
+  }
+
+  private generateServiceTerminatedClientBannedEmailHTML(
+    providerName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      clientName: string;
+      reason: string;
+    },
+  ): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; padding: 20px; background-color: #48a6a7; border-radius: 5px; margin-bottom: 20px;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Actualización Importante</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${providerName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Te informamos que una contratación de tu servicio ha sido finalizada por nuestro equipo de moderación debido a que el cliente ha sido suspendido de la plataforma.
+          </p>
+          
+          <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #48a6a7; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #333; margin-top: 0;">Detalles de la Contratación</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>Servicio:</strong> ${serviceData.serviceTitle}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>Cliente:</strong> ${serviceData.clientName}</p>
+          </div>
+
+          <div style="background-color: #ffedee; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ff4953;">
+            <p style="margin: 0; color: #bf373e; font-size: 14px;">
+              <strong>Motivo de la finalización:</strong><br>
+              ${serviceData.reason}
+            </p>
+          </div>
+
+          <div style="background-color: #e8f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #48a6a7;">
+            <p style="margin: 0 0 10px 0; color: #2d6a6b; font-size: 14px;">
+              <strong>💡 Información importante:</strong>
+            </p>
+            <ul style="margin: 0; padding-left: 20px; color: #2d6a6b; font-size: 14px;">
+              <li style="margin-bottom: 8px;">Esta finalización <strong>no afecta tu reputación</strong> en la plataforma</li>
+              <li style="margin-bottom: 8px;">Tu servicio sigue disponible para otros clientes</li>
+              <li style="margin-bottom: 8px;">No es necesario que tomes ninguna acción adicional</li>
+              <li style="margin-bottom: 8px;"><strong>Si hay trabajo completado pendiente de pago, contáctanos en soporte@conexia.com para coordinar el proceso</strong></li>
+            </ul>
+          </div>
+
+          <p style="color: #666; font-size: 14px;">
+            Lamentamos los inconvenientes que esto pueda causar. Esta medida es parte de nuestro compromiso de mantener un entorno seguro y profesional en Conexia.
+          </p>
+
+          <p style="color: #666; font-size: 14px;">
+            Puedes seguir recibiendo nuevas contrataciones de otros clientes sin ninguna restricción.
+          </p>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/mis-servicios" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              Ver Mis Servicios
+            </a>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #e1e4e4; margin: 30px 0;">
+          
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center;">
+            Si tienes alguna pregunta o necesitas asistencia, contáctanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a>
+          </p>
+          
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center; margin-top: 10px;">
+            Este es un mensaje automático, por favor no respondas a este email.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateServiceTerminatedClientBannedEmailText(
+    providerName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      clientName: string;
+      reason: string;
+    },
+  ): string {
+    return `
+Actualización Importante
+
+Hola ${providerName},
+
+Te informamos que una contratación de tu servicio ha sido finalizada por nuestro equipo de moderación debido a que el cliente ha sido suspendido de la plataforma.
+
+DETALLES DE LA CONTRATACIÓN:
+- Servicio: ${serviceData.serviceTitle}
+- Cliente: ${serviceData.clientName}
+
+MOTIVO DE LA FINALIZACIÓN:
+${serviceData.reason}
+
+INFORMACIÓN IMPORTANTE:
+✓ Esta finalización NO afecta tu reputación en la plataforma
+✓ Tu servicio sigue disponible para otros clientes
+✓ No es necesario que tomes ninguna acción adicional
+✓ Si hay trabajo completado pendiente de pago, contáctanos en soporte@conexia.com para coordinar el proceso
+
+Lamentamos los inconvenientes que esto pueda causar. Esta medida es parte de nuestro compromiso de mantener un entorno seguro y profesional en Conexia.
+
+Puedes seguir recibiendo nuevas contrataciones de otros clientes sin ninguna restricción.
+
+Ver mis servicios:
+https://conexia.com/mis-servicios
+
+---
+Para consultas sobre pagos pendientes o asistencia general, contáctanos en soporte@conexia.com
+
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
 }
+

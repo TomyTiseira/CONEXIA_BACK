@@ -49,8 +49,9 @@ export class ModerationController {
     data: {
       analysisId: number;
       resolveDto: {
-        action: 'ban_user' | 'release_user' | 'keep_monitoring';
+        action: 'ban_user' | 'suspend_user' | 'release_user' | 'keep_monitoring';
         notes?: string;
+        suspensionDays?: number;
       };
       moderatorId: number;
     },
@@ -63,6 +64,7 @@ export class ModerationController {
       data.resolveDto?.action,
       data.moderatorId,
       data.resolveDto?.notes,
+      data.resolveDto?.suspensionDays,
     );
   }
 
@@ -76,5 +78,19 @@ export class ModerationController {
     return await this.moderationService.getAnalyzedReportsDetails(
       data.analysisId,
     );
+  }
+
+  /**
+   * 🧪 TESTING: Ejecuta manualmente el proceso de reactivación de suspensiones expiradas
+   * Normalmente se ejecuta automáticamente a las 2 AM por el cron job
+   */
+  @MessagePattern('triggerReactivation')
+  async handleTriggerReactivation(
+    @Payload() data: { triggeredBy: number },
+  ) {
+    this.logger.log(
+      `Ejecución manual de reactivación solicitada por usuario ${data.triggeredBy}`,
+    );
+    return await this.moderationService.triggerManualReactivation();
   }
 }

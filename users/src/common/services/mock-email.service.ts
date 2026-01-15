@@ -66,6 +66,47 @@ export class MockEmailService extends EmailService {
     });
   }
 
+  async sendAccountBannedEmail(
+    email: string,
+    userName: string,
+    reason: string,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: '⚠️ Cuenta Baneada - Conexia',
+      html: `<h1>⚠️ Cuenta Baneada</h1><p>Hola <strong>${userName}</strong>,</p><p>Tu cuenta ha sido baneada permanentemente.</p><p><strong>Motivo:</strong> ${reason}</p>`,
+      text: `Cuenta Baneada\n\nHola ${userName},\n\nTu cuenta ha sido baneada permanentemente.\n\nMotivo: ${reason}`,
+    });
+  }
+
+  async sendAccountSuspendedEmail(
+    email: string,
+    userName: string,
+    reason: string,
+    days: number,
+    expiresAt: Date,
+    commitments: any,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: '⏸️ Cuenta Suspendida Temporalmente - Conexia',
+      html: `<h1>⏸️ Cuenta Suspendida</h1><p>Hola <strong>${userName}</strong>,</p><p>Tu cuenta ha sido suspendida por ${days} días.</p><p><strong>Motivo:</strong> ${reason}</p><p><strong>Reactivación:</strong> ${expiresAt.toLocaleDateString('es-ES')}</p>`,
+      text: `Cuenta Suspendida\n\nHola ${userName},\n\nTu cuenta ha sido suspendida por ${days} días.\n\nMotivo: ${reason}\n\nReactivación: ${expiresAt.toLocaleDateString('es-ES')}`,
+    });
+  }
+
+  async sendAccountReactivatedEmail(
+    email: string,
+    userName: string,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: '✅ Cuenta Reactivada - Conexia',
+      html: `<h1>✅ ¡Cuenta Reactivada!</h1><p>Hola <strong>${userName}</strong>,</p><p>¡Buenas noticias! Tu cuenta ha sido reactivada exitosamente.</p>`,
+      text: `¡Cuenta Reactivada!\n\nHola ${userName},\n\n¡Buenas noticias! Tu cuenta ha sido reactivada exitosamente.`,
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     this.logger.log(`[MOCK EMAIL] Email would be sent to ${options.to}`);
     this.logger.log(`[MOCK EMAIL] Subject: ${options.subject}`);

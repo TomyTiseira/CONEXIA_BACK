@@ -77,6 +77,15 @@ export class ServiceHiring {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   previousQuotedPrice: number;
 
+  @Column({ name: 'terminated_by_moderation', type: 'boolean', default: false })
+  terminatedByModeration: boolean;
+
+  @Column({ name: 'terminated_reason', type: 'text', nullable: true })
+  terminatedReason: string | null;
+
+  @Column({ name: 'terminated_at', type: 'timestamp', nullable: true })
+  terminatedAt: Date | null;
+
   @Column({ type: 'timestamp', nullable: true })
   previousQuotedAt: Date;
 

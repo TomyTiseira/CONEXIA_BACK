@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { envs } from './config';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { InternalUsersModule } from './internal-users/internal-users.module';
+import { ModerationAction } from './moderation/entities/moderation-action.entity';
 import { ModerationAnalysis } from './moderation/entities/moderation-analysis.entity';
 import { ModerationModule } from './moderation/moderation.module';
 import { PaymentAccountsModule } from './payment-accounts/payment-accounts.module';
@@ -49,6 +50,7 @@ import { VerificationModule } from './verification/verification.module';
         DigitalPlatform,
         UserVerification,
         ModerationAnalysis,
+        ModerationAction,
       ],
       synchronize: true,
     }),
