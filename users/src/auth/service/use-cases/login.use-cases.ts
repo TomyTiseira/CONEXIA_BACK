@@ -40,12 +40,16 @@ export class LoginUseCase {
       throw new InvalidCredentialsException();
     }
 
+    // Actualizar última actividad en login
+    await this.authRepository.updateLastActivity(user.id);
+
     // Generar tokens usando el servicio especializado
     return this.tokenService.createLoginResponse(
       user.id,
       user.email,
       user.roleId,
       user.profileId,
+      new Date(), // lastActivityAt actualizado
     );
   }
 }

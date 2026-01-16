@@ -137,4 +137,9 @@ export class UsersService {
   async searchUsersPaginated(searchParams: any) {
     return this.searchUsersPaginatedUseCase.execute(searchParams);
   }
+
+  async getTotalGeneralUsers(): Promise<number> {
+    const USER_ROLE_ID = 2; // roleId para usuarios generales (no admins ni moderadores)
+    return this.userRepository.countByRoleId(USER_ROLE_ID);
+  }
 }

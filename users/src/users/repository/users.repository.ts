@@ -187,6 +187,12 @@ export class UserRepository {
     return { users, total };
   }
 
+  async countByRoleId(roleId: number): Promise<number> {
+    return this.ormRepository.count({
+      where: { roleId },
+    });
+  }
+
   ping(): string {
     return 'pong';
   }

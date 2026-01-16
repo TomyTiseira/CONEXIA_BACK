@@ -178,4 +178,10 @@ export class UsersController {
     const result = await this.usersService.searchUsersPaginated(searchParams);
     return result;
   }
+
+  @MessagePattern('getTotalGeneralUsers')
+  async getTotalGeneralUsers() {
+    const count = await this.usersService.getTotalGeneralUsers();
+    return count;
+  }
 }

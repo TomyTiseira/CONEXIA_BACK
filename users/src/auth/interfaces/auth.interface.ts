@@ -4,6 +4,7 @@ export interface JwtPayload {
   roleId: number;
   profileId: number;
   type: 'access' | 'refresh';
+  lastActivityAt?: string; // ISO string de la última actividad
   iat?: number;
   exp?: number;
 }

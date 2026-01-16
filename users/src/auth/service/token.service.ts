@@ -16,6 +16,7 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    lastActivityAt?: Date,
   ): string {
     const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
       sub: userId,
@@ -23,6 +24,7 @@ export class TokenService {
       roleId,
       profileId,
       type: 'access',
+      ...(lastActivityAt && { lastActivityAt: lastActivityAt.toISOString() }),
     };
 
     return this.jwtService.sign(payload, {
@@ -58,12 +60,14 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    lastActivityAt?: Date,
   ): LoginResponse {
     const accessToken = this.generateAccessToken(
       userId,
       email,
       roleId,
       profileId,
+      lastActivityAt,
     );
     const refreshToken = this.generateRefreshToken(
       userId,
@@ -90,12 +94,14 @@ export class TokenService {
     email: string,
     roleId: number,
     profileId: number,
+    lastActivityAt?: Date,
   ): RefreshTokenResponse {
     const accessToken = this.generateAccessToken(
       userId,
       email,
       roleId,
       profileId,
+      lastActivityAt,
     );
 
     return {
