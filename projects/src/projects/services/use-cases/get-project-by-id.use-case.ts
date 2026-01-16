@@ -8,8 +8,7 @@ import {
 import { UsersClientService } from '../../../common/services/users-client.service';
 import {
     createSkillsMap,
-    getProjectSkillNames,
-    transformProjectToDetailResponse,
+    transformProjectToDetailResponse
 } from '../../../common/utils/project-detail-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { ReportRepository } from '../../../reports/repositories/report.repository';
@@ -122,8 +121,21 @@ export class GetProjectByIdUseCase {
       userEvaluationDeadline,
     );
 
+    // Verificar el estado de cuenta del dueño del proyecto
+    const ownerStatus = await this.usersClientService.checkUserAccountStatus(
+      project.userId,
+    );
+
     // Agregar el campo hasReported a la respuesta
     response.hasReported = hasReported;
+
+    // Agregar información del estado de cuenta del owner
+    response.ownerAccountStatus = ownerStatus.isBanned ? 'banned' : ownerStatus.isSuspended ? 'suspended' : 'active';
+    response.ownerIsSuspended = ownerStatus.isSuspended;
+    response.ownerIsBanned = ownerStatus.isBanned;
+    response.ownerSuspensionExpiresAt = ownerStatus.suspensionExpiresAt;
+    response.ownerSuspensionReason = ownerStatus.suspensionReason;
+    response.ownerBanReason = ownerStatus.banReason;
 
     return response;
   }

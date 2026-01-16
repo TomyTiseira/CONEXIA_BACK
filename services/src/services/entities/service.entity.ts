@@ -1,11 +1,11 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 import { TimeUnit } from '../enums/time-unit.enum';
 import { ServiceCategory } from './category.entity';
@@ -51,6 +51,18 @@ export class Service {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   deleteReason: string | null;
+
+  @Column({ name: 'hidden_by_moderation', type: 'boolean', default: false })
+  hiddenByModeration: boolean;
+
+  @Column({ name: 'moderation_reason', type: 'text', nullable: true })
+  moderationReason: string | null;
+
+  @Column({ name: 'moderation_updated_at', type: 'timestamp', nullable: true })
+  moderationUpdatedAt: Date | null;
+
+  @Column({ name: 'owner_moderation_status', type: 'varchar', length: 20, nullable: true })
+  ownerModerationStatus: string | null; // null (activo), 'suspended', 'banned'
 
   @CreateDateColumn()
   createdAt: Date;

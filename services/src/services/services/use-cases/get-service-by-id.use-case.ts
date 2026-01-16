@@ -89,6 +89,11 @@ export class GetServiceByIdUseCase {
       quotationInfo,
     );
 
+    // Verificar el estado de cuenta del dueño del servicio
+    const ownerStatus = await this.usersClientService.checkUserAccountStatus(
+      service.userId,
+    );
+
     // Verificar si el usuario actual ya reportó este servicio
     let hasReported = false;
     if (data.currentUserId && data.currentUserId !== service.userId) {
@@ -99,12 +104,18 @@ export class GetServiceByIdUseCase {
       hasReported = existingReport !== null;
     }
 
-    // Retornar el primer (y único) servicio transformado junto con la cotización activa, entregables y estado de reporte
+    // Retornar el primer (y único) servicio transformado junto con la cotización activa, entregables, estado de reporte y estado del owner
     const result = {
       ...transformedServices[0],
       serviceHiring,
       deliverables,
       hasReported,
+      ownerAccountStatus: ownerStatus.isBanned ? 'banned' : ownerStatus.isSuspended ? 'suspended' : 'active',
+      ownerIsSuspended: ownerStatus.isSuspended,
+      ownerIsBanned: ownerStatus.isBanned,
+      ownerSuspensionExpiresAt: ownerStatus.suspensionExpiresAt,
+      ownerSuspensionReason: ownerStatus.suspensionReason,
+      ownerBanReason: ownerStatus.banReason,
     };
 
     return result;

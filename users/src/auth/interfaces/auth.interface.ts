@@ -3,6 +3,7 @@ export interface JwtPayload {
   email: string;
   roleId: number;
   profileId: number;
+  isProfileComplete: boolean | null;
   type: 'access' | 'refresh';
   lastActivityAt?: string; // ISO string de la última actividad
   iat?: number;
@@ -15,6 +16,7 @@ export interface LoginResponse {
     email: string;
     roleId: number;
     profileId: number;
+    isProfileComplete: boolean | null;
   };
   accessToken: string;
   refreshToken: string;

@@ -1,8 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
+import { Repository } from 'typeorm';
 import { NATS_SERVICE } from '../../../config';
-import { ModeratorDashboardMetricsDto } from '../../dto/moderator-dashboard-metrics.dto';
+import { AccountStatus, User } from '../../../shared/entities/user.entity';
+import {
+  ModeratorDashboardMetricsDto,
+  UserModerationMetricsDto,
+} from '../../dto/moderator-dashboard-metrics.dto';
 import { DashboardReportsService } from '../dashboard-reports.service';
 
 type ServiceClaimsMetrics = {
@@ -22,12 +28,17 @@ type AdminServiceMetricsResponse = {
 @Injectable()
 export class GetModeratorDashboardMetricsUseCase {
   constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @Inject(NATS_SERVICE) private readonly client: ClientProxy,
     private readonly reportsService: DashboardReportsService,
   ) {}
 
   async execute(): Promise<ModeratorDashboardMetricsDto> {
     try {
+      // Obtener métricas de moderación de usuarios
+      const userModeration = await this.getUserModerationMetrics();
+
       // Obtener métricas de reportes (mismo servicio que admin)
       const reportsMetrics = await this.reportsService.getAdminReportMetrics();
 
@@ -35,6 +46,7 @@ export class GetModeratorDashboardMetricsUseCase {
       const serviceMetrics = await this.getServiceClaimsMetrics();
 
       return {
+        userModeration,
         reports: reportsMetrics,
         claims: serviceMetrics,
       };
@@ -76,5 +88,44 @@ export class GetModeratorDashboardMetricsUseCase {
         averageResolutionTimeInHours: 0,
       };
     }
+  }
+
+  private async getUserModerationMetrics(): Promise<UserModerationMetricsDto> {
+    const USER_ROLE_ID = 2;
+
+    // Total de usuarios
+    const totalUsers = await this.userRepository.count({
+      where: {
+        roleId: USER_ROLE_ID,
+      },
+    });
+
+    // Usuarios suspendidos
+    const suspendedUsers = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.SUSPENDED,
+      })
+      .getCount();
+
+    // Usuarios baneados
+    const bannedUsers = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.BANNED,
+      })
+      .getCount();
+
+    // Usuarios activos (sin sanciones)
+    const activeUsers = totalUsers - suspendedUsers - bannedUsers;
+
+    return {
+      suspendedUsers,
+      bannedUsers,
+      totalUsers,
+      activeUsers,
+    };
   }
 }

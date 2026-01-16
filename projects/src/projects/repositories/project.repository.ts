@@ -297,7 +297,8 @@ export class ProjectRepository {
       .select('project.id', 'id')
       .addSelect('project.createdAt', 'createdAt')
       .distinct(true)
-      .where('project.deletedAt IS NULL');
+      .where('project.deletedAt IS NULL')
+      .andWhere('(project.suspendedByModeration IS NULL OR project.suspendedByModeration = :suspended)', { suspended: false });
 
     if (filters.search) {
       idQueryBuilder.andWhere('project.title ILIKE :search', {

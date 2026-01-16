@@ -3,13 +3,14 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { ProfileNotFoundException } from 'src/common/exceptions/user.exceptions';
 import { NATS_SERVICE } from 'src/config';
+import { AccountStatus } from 'src/shared/entities/user.entity';
 import { Skill } from '../../../shared/interfaces/skill.interface';
 import { ConnectionInfoService } from '../../../shared/services/connection-info.service';
 import { ConversationInfoService } from '../../../shared/services/conversation-info.service';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import {
-  ProfileSkillResponse,
-  ProfileWithSkills,
+    ProfileSkillResponse,
+    ProfileWithSkills,
 } from '../../../shared/types/skill.types';
 import { UserReviewRepository } from '../../../user-reviews/repository/user-review.repository';
 import { GetProfileDto } from '../../dto/get-profile.dto';
@@ -129,11 +130,19 @@ export class GetProfileUseCase {
       );
     }
 
+    // Agregar información de baneo/suspensión
+    const isBanned = profile.user?.accountStatus === AccountStatus.BANNED;
+    const isSuspended = profile.user?.accountStatus === AccountStatus.SUSPENDED;
+    const suspensionExpiresAt = profile.user?.suspensionExpiresAt || null;
+
     return {
       profile: transformedProfile,
       isOwner,
       hasReviewed,
       plan: userPlan,
+      isBanned,
+      isSuspended,
+      suspensionExpiresAt,
     } as any;
   }
 }

@@ -11,6 +11,7 @@ import { CompletedServiceHiringState } from './completed-service-hiring.state';
 import { CompletedWithAgreementServiceHiringState } from './completed-with-agreement-service-hiring.state';
 import { DeliveredServiceHiringState } from './delivered-service-hiring.state';
 import { ExpiredServiceHiringState } from './expired-service-hiring.state';
+import { FinishedByModerationServiceHiringState } from './finished-by-moderation-service-hiring.state';
 import { InClaimServiceHiringState } from './in-claim-service-hiring.state';
 import { InProgressServiceHiringState } from './in-progress-service-hiring.state';
 import { NegotiatingServiceHiringState } from './negotiating-service-hiring.state';
@@ -21,6 +22,7 @@ import { QuotedServiceHiringState } from './quoted-service-hiring.state';
 import { RejectedServiceHiringState } from './rejected-service-hiring.state';
 import { RequotingServiceHiringState } from './requoting-service-hiring.state';
 import { RevisionRequestedServiceHiringState } from './revision-requested-service-hiring.state';
+import { TerminatedByModerationServiceHiringState } from './terminated-by-moderation-service-hiring.state';
 
 @Injectable()
 export class ServiceHiringStateFactory {
@@ -68,6 +70,10 @@ export class ServiceHiringStateFactory {
         return new CompletedByClaimServiceHiringState();
       case ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT:
         return new CompletedWithAgreementServiceHiringState();
+      case ServiceHiringStatusCode.TERMINATED_BY_MODERATION:
+        return new TerminatedByModerationServiceHiringState();
+      case ServiceHiringStatusCode.FINISHED_BY_MODERATION:
+        return new FinishedByModerationServiceHiringState();
       default:
         throw new Error(`Unknown service hiring status: ${hiring.status.code}`);
     }

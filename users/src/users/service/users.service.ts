@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Locality } from '../../shared/entities/locality.entity';
-import { User } from '../../shared/entities/user.entity';
+import { AccountStatus, User } from '../../shared/entities/user.entity';
 import { LocalityRepository } from '../../shared/repository/locality.repository';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -141,5 +141,49 @@ export class UsersService {
   async getTotalGeneralUsers(): Promise<number> {
     const USER_ROLE_ID = 2; // roleId para usuarios generales (no admins ni moderadores)
     return this.userRepository.countByRoleId(USER_ROLE_ID);
+  }
+
+  /**
+   * Verifica el estado de la cuenta de un usuario
+   * Retorna información sobre si está baneado o suspendido
+   */
+  async checkUserAccountStatus(userId: number): Promise<{
+    isBanned: boolean;
+    isSuspended: boolean;
+    tokensInvalidatedAt?: string;
+    banReason?: string;
+    suspensionExpiresAt?: string;
+    suspensionReason?: string;
+  }> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      return {
+        isBanned: false,
+        isSuspended: false,
+      };
+    }
+
+    const isBanned = user.accountStatus === AccountStatus.BANNED;
+    const isSuspended = user.accountStatus === AccountStatus.SUSPENDED;
+
+    return {
+      isBanned,
+      isSuspended,
+      tokensInvalidatedAt: user.tokensInvalidatedAt
+        ? new Date(user.tokensInvalidatedAt).toISOString()
+        : undefined,
+      banReason: isBanned
+        ? user.banReason || 'Violación de políticas'
+        : undefined,
+      // Devolver fecha en formato ISO 8601 para que el API Gateway pueda parsearla correctamente
+      suspensionExpiresAt:
+        isSuspended && user.suspensionExpiresAt
+          ? new Date(user.suspensionExpiresAt).toISOString()
+          : undefined,
+      suspensionReason: isSuspended
+        ? user.suspensionReason || 'Violación temporal de políticas'
+        : undefined,
+    };
   }
 }

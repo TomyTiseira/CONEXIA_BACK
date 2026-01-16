@@ -3,13 +3,16 @@ import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
-import { User } from 'src/shared/entities/user.entity';
+import { AccountStatus, User } from 'src/shared/entities/user.entity';
 import { UserVerification } from 'src/verification/entities/user-verification.entity';
-import { MoreThanOrEqual, Repository } from 'typeorm';
+import { IsNull, MoreThanOrEqual, Not, Repository } from 'typeorm';
 import {
   ActiveUsersMetricsDto,
   AdminDashboardMetricsDto,
+  DeletedUserReasonDto,
+  DeletedUsersMetricsDto,
   MembershipsMetricsDto,
+  ModerationMetricsDto,
   NewUsersMetricsDto,
   ProjectsMetricsDto,
   ReportsMetricsDto,
@@ -36,11 +39,17 @@ export class GetAdminDashboardMetricsUseCase {
         await this.getActiveUsersMetrics();
       const verifiedUsers: VerifiedUsersMetricsDto =
         await this.getVerifiedUsersMetrics();
+      const moderationMetrics: ModerationMetricsDto =
+        await this.getModerationMetrics();
+      const deletedUsers: DeletedUsersMetricsDto =
+        await this.getDeletedUsersMetrics();
 
       const usersMetrics: UsersMetricsDto = {
         newUsers,
         activeUsers,
         verifiedUsers,
+        moderationMetrics,
+        deletedUsers,
       };
 
       // Obtener métricas de proyectos desde el microservicio de projects
@@ -126,7 +135,7 @@ export class GetAdminDashboardMetricsUseCase {
     const last7Days = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.lastActivityAt >= :date', { date: date7DaysAgo })
+      .andWhere('user.last_activity_at >= :date', { date: date7DaysAgo })
       .getCount();
 
     // Últimos 30 días
@@ -134,7 +143,7 @@ export class GetAdminDashboardMetricsUseCase {
     const last30Days = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.lastActivityAt >= :date', { date: date30DaysAgo })
+      .andWhere('user.last_activity_at >= :date', { date: date30DaysAgo })
       .getCount();
 
     // Últimos 90 días
@@ -142,7 +151,7 @@ export class GetAdminDashboardMetricsUseCase {
     const last90Days = await this.userRepository
       .createQueryBuilder('user')
       .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-      .andWhere('user.lastActivityAt >= :date', { date: date90DaysAgo })
+      .andWhere('user.last_activity_at >= :date', { date: date90DaysAgo })
       .getCount();
 
     return {
@@ -183,7 +192,7 @@ export class GetAdminDashboardMetricsUseCase {
         .createQueryBuilder('user')
         .where('user.id IN (:...ids)', { ids: verifiedUserIds })
         .andWhere('user.roleId = :roleId', { roleId: USER_ROLE_ID })
-        .andWhere('user.lastActivityAt >= :date', { date: date90DaysAgo })
+        .andWhere('user.last_activity_at >= :date', { date: date90DaysAgo })
         .getCount();
     }
 
@@ -284,5 +293,212 @@ export class GetAdminDashboardMetricsUseCase {
         byReason: [],
       };
     }
+  }
+
+  private async getModerationMetrics(): Promise<ModerationMetricsDto> {
+    const USER_ROLE_ID = 2;
+
+    // Usuarios suspendidos (accountStatus = 'suspended')
+    const suspendedUsers = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.SUSPENDED,
+      })
+      .getCount();
+
+    // Usuarios baneados (accountStatus = 'banned')
+    const bannedUsers = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
+      .andWhere('user.accountStatus = :status', {
+        status: AccountStatus.BANNED,
+      })
+      .getCount();
+
+    return {
+      suspendedUsers,
+      bannedUsers,
+    };
+  }
+
+  private async getDeletedUsersMetrics(): Promise<DeletedUsersMetricsDto> {
+    const USER_ROLE_ID = 2;
+    const now = new Date();
+
+    // Total de usuarios eliminados (deletedAt IS NOT NULL)
+    const total = await this.userRepository.count({
+      where: {
+        roleId: USER_ROLE_ID,
+        deletedAt: Not(IsNull()),
+      },
+      withDeleted: true,
+    });
+
+    // Últimos 7 días
+    const date7DaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last7Days = await this.userRepository.count({
+      where: {
+        roleId: USER_ROLE_ID,
+        deletedAt: MoreThanOrEqual(date7DaysAgo),
+      },
+      withDeleted: true,
+    });
+
+    // Últimos 30 días
+    const date30DaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const last30Days = await this.userRepository.count({
+      where: {
+        roleId: USER_ROLE_ID,
+        deletedAt: MoreThanOrEqual(date30DaysAgo),
+      },
+      withDeleted: true,
+    });
+
+    // Últimos 90 días
+    const date90DaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const last90Days = await this.userRepository.count({
+      where: {
+        roleId: USER_ROLE_ID,
+        deletedAt: MoreThanOrEqual(date90DaysAgo),
+      },
+      withDeleted: true,
+    });
+
+    // Agrupar razones de baja y categorizarlas
+    const deletedUsersWithReasons = await this.userRepository
+      .createQueryBuilder('user')
+      .withDeleted()
+      .select('user.deletedReason', 'reason')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.roleId = :roleId', { roleId: USER_ROLE_ID })
+      .andWhere('user.deletedAt IS NOT NULL')
+      .groupBy('user.deletedReason')
+      .orderBy('count', 'DESC')
+      .getRawMany();
+
+    // Categorizar razones de baja
+    const reasonCategories = this.categorizeDeletedReasons(
+      deletedUsersWithReasons,
+      total,
+    );
+
+    return {
+      total,
+      last7Days,
+      last30Days,
+      last90Days,
+      reasonCategories,
+    };
+  }
+
+  /**
+   * Categoriza las razones de baja en grupos más manejables
+   */
+  private categorizeDeletedReasons(
+    reasons: Array<{ reason: string; count: string }>,
+    total: number,
+  ): DeletedUserReasonDto[] {
+    const categories: Map<string, number> = new Map();
+
+    // Palabras clave para categorización
+    const categoryKeywords = {
+      'Insatisfacción con funcionalidades': [
+        'funcionalidad',
+        'función',
+        'features',
+        'herramientas',
+        'insatisfecho',
+        'no me gusta',
+        'limitado',
+        'falta',
+      ],
+      'Encontró alternativa mejor': [
+        'alternativa',
+        'mejor opción',
+        'otra plataforma',
+        'competencia',
+        'encontré otro',
+        'cambié a',
+      ],
+      'Problemas técnicos recurrentes': [
+        'error',
+        'bug',
+        'fallo',
+        'técnico',
+        'no funciona',
+        'problema',
+        'lento',
+        'caída',
+      ],
+      'Costo/Precio elevado': [
+        'caro',
+        'precio',
+        'costo',
+        'pago',
+        'tarifa',
+        'membresía',
+        'suscripción',
+        'económico',
+      ],
+      'Inactividad/Falta de uso': [
+        'no uso',
+        'inactivo',
+        'ya no necesito',
+        'no lo utilizo',
+        'dejé de usar',
+      ],
+      'Privacidad y seguridad': [
+        'privacidad',
+        'seguridad',
+        'datos',
+        'información personal',
+        'cuenta hackeada',
+      ],
+    };
+
+    // Categorizar cada razón
+    for (const { reason, count } of reasons) {
+      if (!reason || reason.trim() === '') {
+        // Sin razón especificada
+        const currentCount = categories.get('Sin razón especificada') || 0;
+        categories.set(
+          'Sin razón especificada',
+          currentCount + parseInt(count, 10),
+        );
+        continue;
+      }
+
+      const reasonLower = reason.toLowerCase();
+      let categorized = false;
+
+      // Buscar en qué categoría encaja
+      for (const [category, keywords] of Object.entries(categoryKeywords)) {
+        if (keywords.some((keyword) => reasonLower.includes(keyword))) {
+          const currentCount = categories.get(category) || 0;
+          categories.set(category, currentCount + parseInt(count, 10));
+          categorized = true;
+          break;
+        }
+      }
+
+      // Si no encaja en ninguna categoría, va a "Otros"
+      if (!categorized) {
+        const currentCount = categories.get('Otros motivos') || 0;
+        categories.set('Otros motivos', currentCount + parseInt(count, 10));
+      }
+    }
+
+    // Convertir a array y calcular porcentajes
+    const result: DeletedUserReasonDto[] = Array.from(categories.entries())
+      .map(([category, count]) => ({
+        category,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100 * 10) / 10 : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10 categorías
+
+    return result;
   }
 }

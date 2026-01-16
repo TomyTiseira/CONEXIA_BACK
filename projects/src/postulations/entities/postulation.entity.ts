@@ -1,18 +1,18 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
-import { Project } from '../../projects/entities/project.entity';
-import { PostulationStatus } from './postulation-status.entity';
 import { ProjectRole } from '../../projects/entities/project-role.entity';
+import { Project } from '../../projects/entities/project.entity';
 import { PostulationAnswer } from './postulation-answer.entity';
+import { PostulationStatus } from './postulation-status.entity';
 
 @Entity('postulations')
 @Index(['userId', 'roleId'], { unique: true })
@@ -77,6 +77,15 @@ export class Postulation {
 
   @Column({ name: 'partner_description', type: 'text', nullable: true })
   partnerDescription?: string;
+
+  @Column({ name: 'cancelled_by_moderation', type: 'boolean', default: false })
+  cancelledByModeration: boolean;
+
+  @Column({ name: 'moderation_cancelled_at', type: 'timestamp', nullable: true })
+  moderationCancelledAt: Date | null;
+
+  @Column({ name: 'moderation_cancel_reason', type: 'text', nullable: true })
+  moderationCancelReason: string | null;
 
   @ManyToOne(() => ProjectRole)
   @JoinColumn({ name: 'role_id' })

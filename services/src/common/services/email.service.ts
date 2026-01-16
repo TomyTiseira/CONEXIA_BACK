@@ -72,4 +72,32 @@ export abstract class EmailService {
       description: string;
     },
   ): Promise<void>;
+
+  /**
+   * Envía un email al cliente cuando su servicio contratado es terminado por moderación
+   */
+  abstract sendServiceTerminatedByModerationEmail(
+    clientEmail: string,
+    clientName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      providerName: string;
+      reason: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email al proveedor cuando el cliente que contrató su servicio es baneado
+   */
+  abstract sendServiceTerminatedClientBannedEmail(
+    providerEmail: string,
+    providerName: string,
+    serviceData: {
+      hiringId: number;
+      serviceTitle: string;
+      clientName: string;
+      reason: string;
+    },
+  ): Promise<void>;
 }

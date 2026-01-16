@@ -29,6 +29,6 @@ import { UsersClientService } from './services/users-client.service';
     },
     UsersClientService,
   ],
-  exports: [EmailService, UsersClientService],
+  exports: [ClientsModule, EmailService, UsersClientService],
 })
 export class CommonModule {}

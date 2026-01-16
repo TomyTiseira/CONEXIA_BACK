@@ -113,4 +113,25 @@ export class UsersClientService {
       return false;
     }
   }
+
+  /**
+   * Verifica el estado de la cuenta de un usuario (baneado/suspendido)
+   */
+  async checkUserAccountStatus(userId: number): Promise<{
+    isBanned: boolean;
+    isSuspended: boolean;
+    banReason?: string;
+    suspensionExpiresAt?: string;
+    suspensionReason?: string;
+  }> {
+    try {
+      const result = await firstValueFrom(
+        this.client.send('checkUserAccountStatus', { userId }),
+      );
+      return result;
+    } catch (error) {
+      console.error('Error checking user account status:', error);
+      return { isBanned: false, isSuspended: false };
+    }
+  }
 }
