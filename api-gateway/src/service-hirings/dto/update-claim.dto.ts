@@ -12,5 +12,8 @@ export class UpdateClaimDto {
   clarificationResponse?: string;
 
   @IsOptional()
+  clarificationEvidenceUrls?: string[];
+
+  @IsOptional()
   evidenceUrls?: string[];
 }

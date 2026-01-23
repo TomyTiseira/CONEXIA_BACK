@@ -100,4 +100,26 @@ export abstract class EmailService {
       reason: string;
     },
   ): Promise<void>;
+
+  /**
+   * Envía un email cuando se asignan compliances al resolver un reclamo
+   */
+  abstract sendComplianceCreatedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      status: 'resolved' | 'rejected';
+      resolution: string;
+      resolutionType?: string | null;
+    },
+    compliances: Array<{
+      id: string;
+      complianceType: string;
+      moderatorInstructions: string;
+      deadline: Date;
+      originalDeadlineDays: number;
+    }>,
+  ): Promise<void>;
 }

@@ -9,14 +9,15 @@ import { ModerationListenerService } from './common/services/moderation-listener
 import { envs } from './config';
 import { SeedService } from './seed/seed.service';
 import {
-    Claim,
-    Deliverable,
-    DeliveryAttachment,
-    DeliverySubmission,
-    Payment,
-    PaymentModality,
-    ServiceHiring,
-    ServiceHiringStatus,
+  Claim,
+  ClaimCompliance,
+  Deliverable,
+  DeliveryAttachment,
+  DeliverySubmission,
+  Payment,
+  PaymentModality,
+  ServiceHiring,
+  ServiceHiringStatus,
 } from './service-hirings/entities';
 import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
@@ -53,6 +54,7 @@ import { ServicesModule } from './services/services.module';
         DeliverySubmission,
         DeliveryAttachment,
         Claim,
+        ClaimCompliance,
       ],
       synchronize: true,
     }),

@@ -1,6 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ClaimRole, ClaimStatus } from '../enums/claim.enum';
+
+const CLAIM_FILTER_STATUSES = [
+  ...Object.values(ClaimStatus),
+  'requires_response',
+  'pending_compliance',
+  'reviewing_compliance',
+] as const;
 
 export class GetClaimsDto {
   @IsOptional()
@@ -9,8 +16,9 @@ export class GetClaimsDto {
   hiringId?: number;
 
   @IsOptional()
-  @IsEnum(ClaimStatus)
-  status?: ClaimStatus;
+  @IsString()
+  @IsIn(CLAIM_FILTER_STATUSES)
+  status?: string;
 
   @IsOptional()
   @IsEnum(ClaimRole)

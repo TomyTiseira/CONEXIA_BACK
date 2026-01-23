@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import {
+  calculatePagination,
+  PaginationInfo,
+} from '../../../common/utils/pagination.utils';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ClaimResponseDto } from '../../dto/claim-response.dto';
 import { GetClaimsDto } from '../../dto/get-claims.dto';
+import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimTypeLabels } from '../../enums/claim.enum';
+import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../repositories/claim.repository';
 
 @Injectable()
@@ -10,11 +16,12 @@ export class GetClaimsUseCase {
   constructor(
     private readonly claimRepository: ClaimRepository,
     private readonly usersClientService: UsersClientService,
+    private readonly complianceRepository: ClaimComplianceRepository,
   ) {}
 
   async execute(
     filters: GetClaimsDto,
-  ): Promise<{ claims: ClaimResponseDto[]; total: number; pages: number }> {
+  ): Promise<{ claims: any[]; pagination: PaginationInfo }> {
     const { claims, total } =
       await this.claimRepository.findWithFilters(filters);
 
@@ -54,80 +61,168 @@ export class GetClaimsUseCase {
     const usersMap = new Map<number, any>();
     users.forEach((u) => usersMap.set(u.id, u));
 
+    // Batch compliances by claim (para acciones/admin)
+    const claimIds = claims.map((c) => c.id);
+    const compliances =
+      claimIds.length > 0
+        ? await this.complianceRepository.findByClaimIds(claimIds)
+        : [];
+
+    const compliancesByClaim = new Map<string, any[]>();
+    for (const compliance of compliances) {
+      const list = compliancesByClaim.get(compliance.claimId) || [];
+      list.push(compliance);
+      compliancesByClaim.set(compliance.claimId, list);
+    }
+
+    const pickProfile = (user: any) => {
+      const profile = user?.profile || {};
+      const name =
+        profile?.firstName || profile?.name || profile?.first_name || null;
+      const lastName = profile?.lastName || profile?.last_name || null;
+      const profilePicture =
+        profile?.profilePicture || profile?.avatar || profile?.picture || null;
+      return {
+        profile: {
+          id: user?.id ?? null,
+          name,
+          lastName,
+          profilePicture,
+        },
+      };
+    };
+
     const claimResponses = claims.map((claim) => {
       const claimTypeLabel = ClaimTypeLabels[claim.claimType];
-      const user = usersMap.get(claim.claimantUserId);
 
-      // Construir nombre completo del reclamante
-      const claimantFirstName =
-        user?.profile?.firstName || user?.profile?.name || null;
-      const claimantLastName = user?.profile?.lastName || null;
-      const claimantName =
-        claimantFirstName && claimantLastName
-          ? `${claimantFirstName} ${claimantLastName}`
-          : claimantFirstName || null;
+      const claimant = usersMap.get(claim.claimantUserId);
 
       // Identificar usuario reclamado (según el rol del reclamante)
-      let claimedUserId: number | null = null;
-      let claimedUserName: string | null = null;
-      let claimedUserFirstName: string | null = null;
-      let claimedUserLastName: string | null = null;
-
+      let otherUserId: number | null = null;
       if (claim.hiring) {
-        // Si el reclamante es cliente, el reclamado es el proveedor
         if (claim.claimantRole === 'client') {
-          claimedUserId = claim.hiring.service?.userId || null;
-        }
-        // Si el reclamante es proveedor, el reclamado es el cliente
-        else if (claim.claimantRole === 'provider') {
-          claimedUserId = claim.hiring.userId || null;
-        }
-
-        // Buscar info del usuario reclamado
-        if (claimedUserId) {
-          const claimedUser = usersMap.get(claimedUserId);
-          if (claimedUser) {
-            claimedUserFirstName =
-              claimedUser.profile?.firstName || claimedUser.profile?.name || null;
-            claimedUserLastName = claimedUser.profile?.lastName || null;
-            claimedUserName =
-              claimedUserFirstName && claimedUserLastName
-                ? `${claimedUserFirstName} ${claimedUserLastName}`
-                : claimedUserFirstName || null;
-          }
+          otherUserId = claim.hiring.service?.userId || null;
+        } else if (claim.claimantRole === 'provider') {
+          otherUserId = claim.hiring.userId || null;
         }
       }
+      const otherUser = otherUserId ? usersMap.get(otherUserId) : null;
 
-      // Información del moderador/admin que resolvió (solo prefijo del email)
-      let resolvedByEmail: string | null = null;
+      // Resolver (moderador/admin) - enviar id + emailPrefix
+      let resolvedByUser: any = null;
+      let resolvedByEmailPrefix: string | null = null;
       if (claim.resolvedBy) {
-        const resolver = usersMap.get(claim.resolvedBy);
-        if (resolver && resolver.email) {
-          // Extraer solo el prefijo antes del @
-          const emailPrefix = resolver.email.split('@')[0];
-          resolvedByEmail = emailPrefix || null;
+        resolvedByUser = usersMap.get(claim.resolvedBy) || null;
+        if (resolvedByUser?.email) {
+          resolvedByEmailPrefix = resolvedByUser.email.split('@')[0] || null;
         }
       }
 
-      return ClaimResponseDto.fromEntity(claim, {
-        claimTypeLabel,
-        claimantName,
-        claimantFirstName,
-        claimantLastName,
-        claimedUserId,
-        claimedUserName,
-        claimedUserFirstName,
-        claimedUserLastName,
-        resolvedByEmail,
-      });
-    });
+      const claimCompliances = compliancesByClaim.get(claim.id) || [];
+      const pendingCompliance =
+        claimCompliances.find((c) => c.status !== ComplianceStatus.APPROVED) ||
+        claimCompliances[0] ||
+        null;
 
-    const pages = Math.ceil(total / (filters.limit || 10));
+      const availableActions: string[] = ['view_detail'];
+
+      // Moderación
+      if (claim.status === 'open') {
+        availableActions.push('mark_in_review');
+      }
+      if (claim.status === 'in_review') {
+        availableActions.push('add_observations');
+        availableActions.push('resolve_claim');
+      }
+      if (claim.status === 'requires_staff_response') {
+        // Cuando el usuario ya subsanó, solo permitir resolver/rechazar (no más observaciones).
+        availableActions.push('resolve_claim');
+      }
+
+      // Cumplimientos
+      if (
+        pendingCompliance &&
+        [
+          ComplianceStatus.SUBMITTED,
+          ComplianceStatus.PEER_APPROVED,
+          ComplianceStatus.PEER_OBJECTED,
+          ComplianceStatus.IN_REVIEW,
+        ].includes(pendingCompliance.status)
+      ) {
+        availableActions.push('review_compliance');
+      }
+
+      return {
+        claim: {
+          id: claim.id,
+          hiringId: claim.hiringId,
+          claimantUserId: claim.claimantUserId,
+          claimantRole: claim.claimantRole,
+          claimType: claim.claimType,
+          claimTypeLabel,
+          description: claim.description,
+          otherReason: claim.otherReason,
+          evidenceUrls: claim.evidenceUrls,
+          clarificationEvidenceUrls: (claim as any).clarificationEvidenceUrls ?? [],
+          status: claim.status,
+          observations: claim.observations,
+          observationsBy: claim.observationsBy,
+          observationsAt: claim.observationsAt,
+          respondentObservations: claim.respondentObservations,
+          respondentEvidenceUrls: claim.respondentEvidenceUrls,
+          respondentObservationsBy: claim.respondentObservationsBy,
+          respondentObservationsAt: claim.respondentObservationsAt,
+          clarificationResponse: (claim as any).clarificationResponse ?? null,
+          resolution: claim.resolution,
+          resolutionType: claim.resolutionType,
+          partialAgreementDetails: claim.partialAgreementDetails,
+          resolvedBy: claim.resolvedBy,
+          resolvedAt: claim.resolvedAt,
+          createdAt: claim.createdAt,
+          updatedAt: claim.updatedAt,
+        },
+        claimant: pickProfile(claimant),
+        otherUser: pickProfile(otherUser),
+        hiring: {
+          id: claim.hiring?.id ?? null,
+          status: claim.hiring?.status
+            ? {
+                id: claim.hiring.status.id,
+                name: claim.hiring.status.name,
+                code: (claim.hiring.status as any).code ?? null,
+              }
+            : null,
+          service: {
+            id: claim.hiring?.service?.id ?? null,
+            title: claim.hiring?.service?.title ?? null,
+          },
+        },
+        assignedModerator: {
+          id: (claim as any).assignedModeratorId ?? null,
+          email: (claim as any).assignedModeratorEmail ?? null,
+        },
+        compliance: pendingCompliance
+          ? {
+              id: pendingCompliance.id,
+              status: pendingCompliance.status,
+              deadline: pendingCompliance.deadline ?? null,
+              responsibleUserId: pendingCompliance.responsibleUserId ?? null,
+            }
+          : null,
+        availableActions,
+        resolvedBy: {
+          id: resolvedByUser?.id ?? null,
+          emailPrefix: resolvedByEmailPrefix,
+        },
+      };
+    });
 
     return {
       claims: claimResponses,
-      total,
-      pages,
+      pagination: calculatePagination(total, {
+        page: filters.page ?? 1,
+        limit: filters.limit ?? 10,
+      }),
     };
   }
 
