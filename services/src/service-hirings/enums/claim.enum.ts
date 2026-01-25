@@ -16,8 +16,10 @@ export enum ClaimStatus {
   OPEN = 'open', // Recién creado, esperando revisión
   IN_REVIEW = 'in_review', // Moderador revisando
   PENDING_CLARIFICATION = 'pending_clarification', // Pendiente subsanación (esperando respuesta)
+  REQUIRES_STAFF_RESPONSE = 'requires_staff_response', // Usuario ya subsanó, requiere acción del moderador/admin
   RESOLVED = 'resolved', // Resuelto favorablemente
   REJECTED = 'rejected', // Rechazado (reclamo infundado)
+  CANCELLED = 'cancelled', // Cancelado por el denunciante (cierre sin resolución)
 }
 
 // Tipo de resolución (determina el estado final del hiring)

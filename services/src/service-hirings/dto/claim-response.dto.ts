@@ -1,8 +1,8 @@
 import {
-    ClaimResolutionType,
-    ClaimRole,
-    ClaimStatus,
-    ClaimType,
+  ClaimResolutionType,
+  ClaimRole,
+  ClaimStatus,
+  ClaimType,
 } from '../enums/claim.enum';
 
 export class ClaimResponseDto {
@@ -18,7 +18,12 @@ export class ClaimResponseDto {
   observations: string | null;
   observationsBy: number | null;
   observationsAt: Date | null;
+  respondentObservations: string | null;
+  respondentEvidenceUrls: string[];
+  respondentObservationsBy: number | null;
+  respondentObservationsAt: Date | null;
   clarificationResponse: string | null;
+  clarificationEvidenceUrls: string[];
   resolution: string | null;
   resolutionType: ClaimResolutionType | null;
   partialAgreementDetails: string | null;
@@ -37,7 +42,7 @@ export class ClaimResponseDto {
   claimedUserFirstName?: string;
   claimedUserLastName?: string;
   hiringTitle?: string;
-  
+
   // Información segura del moderador/admin que resolvió (solo prefijo del email)
   resolvedByEmail?: string | null;
 
@@ -65,13 +70,18 @@ export class ClaimResponseDto {
     dto.claimantRole = claim.claimantRole;
     dto.claimType = claim.claimType;
     dto.description = claim.description;
-  dto.otherReason = claim.otherReason ?? null;
+    dto.otherReason = claim.otherReason ?? null;
     dto.evidenceUrls = claim.evidenceUrls || [];
     dto.status = claim.status;
     dto.observations = claim.observations;
     dto.observationsBy = claim.observationsBy;
     dto.observationsAt = claim.observationsAt;
+    dto.respondentObservations = claim.respondentObservations ?? null;
+    dto.respondentEvidenceUrls = claim.respondentEvidenceUrls || [];
+    dto.respondentObservationsBy = claim.respondentObservationsBy ?? null;
+    dto.respondentObservationsAt = claim.respondentObservationsAt ?? null;
     dto.clarificationResponse = claim.clarificationResponse;
+    dto.clarificationEvidenceUrls = claim.clarificationEvidenceUrls || [];
     dto.resolution = claim.resolution;
     dto.resolutionType = claim.resolutionType;
     dto.partialAgreementDetails = claim.partialAgreementDetails;

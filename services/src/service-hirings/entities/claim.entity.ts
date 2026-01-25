@@ -1,17 +1,17 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import {
-    ClaimResolutionType,
-    ClaimRole,
-    ClaimStatus,
-    ClaimType,
+  ClaimResolutionType,
+  ClaimRole,
+  ClaimStatus,
+  ClaimType,
 } from '../enums/claim.enum';
 import { ServiceHiring } from './service-hiring.entity';
 
@@ -63,6 +63,15 @@ export class Claim {
   })
   evidenceUrls: string[];
 
+  // Evidencias subidas al subsanar observaciones (separadas de la evidencia original)
+  @Column({
+    name: 'clarification_evidence_urls',
+    type: 'jsonb',
+    nullable: true,
+    default: [],
+  })
+  clarificationEvidenceUrls: string[];
+
   // Estado del reclamo
   @Column({
     type: 'enum',
@@ -84,6 +93,28 @@ export class Claim {
 
   @Column({ name: 'observations_at', type: 'timestamp', nullable: true })
   observationsAt: Date | null;
+
+  // Observaciones del reclamado (respondent)
+  @Column({ name: 'respondent_observations', type: 'text', nullable: true })
+  respondentObservations: string | null;
+
+  @Column({
+    name: 'respondent_evidence_urls',
+    type: 'jsonb',
+    nullable: true,
+    default: [],
+  })
+  respondentEvidenceUrls: string[];
+
+  @Column({ name: 'respondent_observations_by', type: 'int', nullable: true })
+  respondentObservationsBy: number | null;
+
+  @Column({
+    name: 'respondent_observations_at',
+    type: 'timestamp',
+    nullable: true,
+  })
+  respondentObservationsAt: Date | null;
 
   // Respuesta del usuario al subsanar observaciones (no pisa la descripción original)
   @Column({ name: 'clarification_response', type: 'text', nullable: true })
@@ -113,6 +144,31 @@ export class Claim {
 
   @Column({ name: 'resolved_at', type: 'timestamp', nullable: true })
   resolvedAt: Date | null;
+
+  // Moderador asignado (trazabilidad)
+  @Column({ name: 'assigned_moderator_id', type: 'int', nullable: true })
+  assignedModeratorId: number | null;
+
+  @Column({ name: 'assigned_moderator_email', type: 'varchar', nullable: true })
+  assignedModeratorEmail: string | null;
+
+  @Column({ name: 'assigned_at', type: 'timestamp', nullable: true })
+  assignedAt: Date | null;
+
+  // Identificación de partes involucradas (para sistema de compliance)
+  @Column({ name: 'defendant_user_id', type: 'int', nullable: true })
+  defendantUserId: number | null; // ID del reclamado
+
+  // Cierre y resultado final
+  @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
+  closedAt: Date | null;
+
+  @Column({ name: 'final_outcome', type: 'text', nullable: true })
+  finalOutcome: string | null;
+
+  // Relación con compliances
+  // @OneToMany(() => ClaimCompliance, compliance => compliance.claim)
+  // compliances: ClaimCompliance[];
 
   // Auditoría
   @CreateDateColumn({ name: 'created_at' })

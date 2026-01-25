@@ -15,7 +15,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError } from 'rxjs';
-import { ROLES } from '../auth/constants/role-ids';
+import { ROLES, ROLES_IDS } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
@@ -36,6 +36,37 @@ export class ClaimsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   /**
+   * GET /claims/my-claims
+   * Lista los reclamos donde el usuario es parte (reclamante o reclamado)
+   */
+  @Get('my-claims')
+  @AuthRoles([ROLES.USER])
+  getMyClaims(
+    @User() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('role') role?: 'claimant' | 'respondent' | 'all',
+    @Query('sortBy') sortBy?: 'createdAt' | 'updatedAt',
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
+  ) {
+    const filters = {
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 12,
+      status,
+      role: role || 'all',
+      sortBy: sortBy || 'updatedAt',
+      sortOrder: sortOrder || 'desc',
+    };
+
+    return this.client.send('getMyClaims', { userId: user.id, filters }).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  /**
    * POST /claims
    * Crear un nuevo reclamo con evidencias (archivos)
    * Solo usuarios autenticados (cliente o proveedor del hiring)
@@ -43,7 +74,6 @@ export class ClaimsController {
    * FormData fields:
    * - hiringId: number
    * - claimType: string
-   * - description: string (50-2000 chars)
    * - evidence: file[] (max 10 files, 10MB each)
    */
   @Post()
@@ -161,6 +191,158 @@ export class ClaimsController {
   }
 
   /**
+   * GET /claims/:id/detail
+   * Detalle completo del reclamo (usuario debe ser parte o staff)
+   */
+  @Get(':id/detail')
+  @AuthRoles([ROLES.USER, ROLES.ADMIN, ROLES.MODERATOR])
+  getClaimDetail(@User() user: AuthenticatedUser, @Param('id') id: string) {
+    const isStaff =
+      user.roleId === ROLES_IDS.ADMIN || user.roleId === ROLES_IDS.MODERATOR;
+    return this.client
+      .send('getClaimDetail', {
+        claimId: id,
+        requesterId: user.id,
+        isStaff,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
+   * POST /claims/:id/observations
+   * Observaciones del reclamado (solo si status=OPEN)
+   */
+  @Post(':id/observations')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'evidenceFiles', maxCount: 5 }], {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads', 'claims'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + extname(file.originalname));
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/jpg',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new RpcException({
+              status: 400,
+              message: 'Solo se permiten imágenes, PDFs y documentos Word.',
+            }),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  submitRespondentObservations(
+    @User() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body('observations') observations: string,
+    @UploadedFiles() files?: { evidenceFiles?: Express.Multer.File[] },
+  ) {
+    const evidenceUrls = (files?.evidenceFiles || []).map(
+      (file) => `/uploads/claims/${file.filename}`,
+    );
+
+    return this.client
+      .send('submitRespondentObservations', {
+        claimId: id,
+        userId: user.id,
+        dto: {
+          observations,
+          evidenceUrls: evidenceUrls.length ? evidenceUrls : null,
+        },
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
+   * POST /claims/:id/compliance/submit
+   * Subir cumplimiento asociado a un reclamo (resuelve compliance internamente)
+   */
+  @Post(':id/compliance/submit')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'evidenceFiles', maxCount: 5 }], {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads', 'compliances'),
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, uniqueSuffix + extname(file.originalname));
+        },
+      }),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/jpg',
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new RpcException({
+              status: 400,
+              message: 'Solo se permiten imágenes, PDFs y documentos Word.',
+            }),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  submitComplianceByClaim(
+    @User() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body('description') description: string,
+    @UploadedFiles() files?: { evidenceFiles?: Express.Multer.File[] },
+  ) {
+    const evidenceUrls = (files?.evidenceFiles || []).map(
+      (file) => `/uploads/compliances/${file.filename}`,
+    );
+
+    return this.client
+      .send('submitComplianceByClaim', {
+        claimId: id,
+        userId: String(user.id),
+        userNotes: description || null,
+        evidenceUrls: evidenceUrls.length ? evidenceUrls : null,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
    * PATCH /claims/:id/resolve
    * Resolver un reclamo (RESOLVED o REJECTED)
    * Solo admins/moderadores
@@ -192,10 +374,12 @@ export class ClaimsController {
    */
   @Patch(':id/review')
   @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
-  markAsInReview(@Param('id') id: string) {
+  markAsInReview(@User() user: AuthenticatedUser, @Param('id') id: string) {
     return this.client
       .send('markClaimAsInReview', {
         claimId: id,
+        moderatorId: user.id,
+        moderatorEmail: user.email,
       })
       .pipe(
         catchError((error) => {
@@ -237,12 +421,12 @@ export class ClaimsController {
    *
    * FormData fields:
    * - clarificationResponse: string (opcional, 50-2000 chars) - Respuesta a las observaciones del moderador
-   * - evidence: file[] (opcional, se agregan a las existentes, máximo 10 total)
+   * - evidence: file[] (opcional, máximo 5 archivos por subsanación)
    */
   @Patch(':id/update')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'evidence', maxCount: 10 }], {
+    FileFieldsInterceptor([{ name: 'evidence', maxCount: 5 }], {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'claims'),
         filename: (req, file, cb) => {
@@ -294,7 +478,7 @@ export class ClaimsController {
 
     // Agregar las URLs de las nuevas evidencias si existen
     if (files && files.evidence && files.evidence.length > 0) {
-      updateDto.evidenceUrls = files.evidence.map(
+      updateDto.clarificationEvidenceUrls = files.evidence.map(
         (file) => `/uploads/claims/${file.filename}`,
       );
     }
@@ -304,6 +488,25 @@ export class ClaimsController {
         claimId: id,
         userId: user.id,
         updateDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  /**
+   * PATCH /claims/:id/cancel
+   * Cancelar un reclamo (solo el denunciante) mientras no esté cerrado.
+   */
+  @Patch(':id/cancel')
+  @AuthRoles([ROLES.USER])
+  cancelClaim(@User() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.client
+      .send('cancelClaim', {
+        claimId: id,
+        userId: user.id,
       })
       .pipe(
         catchError((error) => {

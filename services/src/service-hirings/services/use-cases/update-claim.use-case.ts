@@ -26,10 +26,16 @@ export class UpdateClaimUseCase {
     userId: number,
     updateDto: UpdateClaimDto,
   ): Promise<Claim> {
-    const { clarificationResponse, evidenceUrls } = updateDto;
+    const { clarificationResponse, clarificationEvidenceUrls, evidenceUrls } =
+      updateDto;
+
+    const newEvidenceUrls =
+      (clarificationEvidenceUrls && clarificationEvidenceUrls.length > 0
+        ? clarificationEvidenceUrls
+        : evidenceUrls) || [];
 
     // 1. Validar que se envíe al menos uno de los dos campos
-    if (!clarificationResponse && (!evidenceUrls || evidenceUrls.length === 0)) {
+    if (!clarificationResponse && newEvidenceUrls.length === 0) {
       throw new BadRequestException(
         'Debes proporcionar al menos una respuesta de subsanación o evidencias',
       );
@@ -56,11 +62,10 @@ export class UpdateClaimUseCase {
     }
 
     // 5. Validar que no se excedan los 10 archivos en total
-    const existingCount = claim.evidenceUrls?.length || 0;
-    const newCount = evidenceUrls?.length || 0;
-    if (existingCount + newCount > 10) {
+    const newCount = newEvidenceUrls.length;
+    if (newCount > 5) {
       throw new BadRequestException(
-        `No puedes agregar ${newCount} archivos. Ya tienes ${existingCount} y el máximo es 10`,
+        `No puedes agregar ${newCount} archivos. El máximo por subsanación es 5`,
       );
     }
 
@@ -69,7 +74,7 @@ export class UpdateClaimUseCase {
       claimId,
       {
         clarificationResponse,
-        evidenceUrls,
+        clarificationEvidenceUrls: newEvidenceUrls,
       },
     );
 

@@ -23,9 +23,9 @@ import { RoleSkill } from './projects/entities/role-skill.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
+import { SeedService } from './seed/seed.service';
 import { Rubro } from './shared/entities/rubro.entity';
 import { Skill } from './shared/entities/skill.entity';
-
 
 @Module({
   imports: [
@@ -70,6 +70,7 @@ import { Skill } from './shared/entities/skill.entity';
       useClass: RpcExceptionInterceptor,
     },
     ModerationListenerService,
+    SeedService,
   ],
 })
 export class AppModule {}
