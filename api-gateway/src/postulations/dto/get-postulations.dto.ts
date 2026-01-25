@@ -7,6 +7,11 @@ export class GetPostulationsDto {
   @IsNumber()
   statusId?: number;
 
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  roleId?: number;
+
   @Type(() => Number)
   @IsNumber()
   @IsOptional()

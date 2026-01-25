@@ -73,6 +73,15 @@ export abstract class EmailService {
   ): Promise<void>;
 
   /**
+   * Envía un email de notificación de evaluación expirada
+   */
+  abstract sendEvaluationExpiredEmail(
+    email: string,
+    userName: string,
+    projectTitle: string,
+  ): Promise<void>;
+
+  /**
    * Método genérico para enviar emails
    */
   protected abstract sendEmail(options: EmailOptions): Promise<void>;
@@ -223,6 +232,81 @@ export abstract class EmailService {
       Si tienes alguna pregunta o necesitas ayuda para mejorar tu perfil, no dudes en contactarnos. ¡Estamos aquí para apoyarte!
 
       ¡No te desanimes! Cada "no" te acerca más al "sí" perfecto. 💪
+
+      Saludos,
+      El equipo de Conexia
+    `;
+  }
+
+  /**
+   * Genera el HTML para el email de evaluación expirada
+   */
+  protected generateEvaluationExpiredEmailHTML(
+    userName: string,
+    projectTitle: string,
+  ): string {
+    const url = `${envs.frontendUrl}/project/search`;
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h1 style="color: #fd7e14; text-align: center; margin-bottom: 30px;">Tu plazo de evaluación ha expirado</h1>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            ¡Hola ${userName}!
+          </p>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Te informamos que el plazo para completar la evaluación técnica del proyecto <strong>"${projectTitle}"</strong> ha finalizado.
+          </p>
+          <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; padding: 15px; margin: 20px 0;">
+            <p style="color: #856404; margin: 0; font-weight: bold;">
+              ⚠️ Evaluación no completada a tiempo
+            </p>
+          </div>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            Lamentablemente, como no se recibió tu evaluación dentro del plazo establecido, tu postulación ha sido marcada como expirada.
+          </p>
+          <p style="font-size: 16px; line-height: 1.6; color: #333;">
+            ¡Pero no te preocupes! Hay muchas más oportunidades esperándote. Te invitamos a explorar otros proyectos en nuestra plataforma.
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${url}" 
+               style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              Explorar más proyectos
+            </a>
+          </div>
+          <p style="font-size: 14px; color: #666; text-align: center;">
+            Si crees que esto fue un error o necesitas más información, no dudes en contactarnos.
+          </p>
+          <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
+            ¡Sigue adelante, hay grandes oportunidades esperándote!
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Genera el texto plano para el email de evaluación expirada
+   */
+  protected generateEvaluationExpiredEmailText(
+    userName: string,
+    projectTitle: string,
+  ): string {
+    return `
+      Tu plazo de evaluación ha expirado
+
+      ¡Hola ${userName}! 
+
+      Te informamos que el plazo para completar la evaluación técnica del proyecto "${projectTitle}" ha finalizado.
+
+      ⚠️ Evaluación no completada a tiempo
+
+      Lamentablemente, como no se recibió tu evaluación dentro del plazo establecido, tu postulación ha sido marcada como expirada.
+
+      ¡Pero no te preocupes! Hay muchas más oportunidades esperándote. Te invitamos a explorar otros proyectos en nuestra plataforma.
+
+      Si crees que esto fue un error o necesitas más información, no dudes en contactarnos.
+
+      ¡Sigue adelante, hay grandes oportunidades esperándote! 
 
       Saludos,
       El equipo de Conexia

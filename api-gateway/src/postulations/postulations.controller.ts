@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UploadedFiles,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -34,8 +35,10 @@ import { GetPostulationsByUserDto } from './dto/get-postulations-by-user.dto';
 import { GetPostulationsDto } from './dto/get-postulations.dto';
 import { RejectPostulationDto } from './dto/reject-postulation.dto';
 import { SubmitEvaluationDto } from './dto/submit-evaluation.dto';
+import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 
 @Controller('postulations')
+@UseFilters(RpcExceptionFilter)
 export class PostulationsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
@@ -89,6 +92,14 @@ export class PostulationsController {
           message: 'Invalid answers format',
         });
       }
+    }
+
+    // Si answers es un string vacío o un array vacío, eliminarlo
+    if (
+      body.answers === '' ||
+      (Array.isArray(body.answers) && body.answers.length === 0)
+    ) {
+      delete body.answers;
     }
 
     // Parse investorAmount if it comes as string
@@ -371,5 +382,20 @@ export class PostulationsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  /**
+   * Endpoint para ejecutar manualmente el job de expiración de evaluaciones
+   * Solo para testing - REMOVER EN PRODUCCIÓN
+   */
+  @AuthRoles([ROLES.ADMIN])
+  @Post('run-expired-evaluations-job')
+  runExpiredEvaluationsJob() {
+    return this.client.send('runExpiredEvaluationsJob', {}).pipe(
+      catchError((error) => {
+        console.error('Error in runExpiredEvaluationsJob:', error);
+        throw new RpcException(error);
+      }),
+    );
   }
 }
