@@ -6,6 +6,7 @@ import { ModerationController } from './common/controllers/moderation.controller
 import { RpcExceptionInterceptor } from './common/interceptors/rpc-exception.interceptor';
 import { ModerationListenerService } from './common/services/moderation-listener.service';
 import { envs } from './config';
+import { SeedService } from './seed/seed.service';
 import { PostulationAnswer } from './postulations/entities/postulation-answer.entity';
 import { PostulationStatus } from './postulations/entities/postulation-status.entity';
 import { Postulation } from './postulations/entities/postulation.entity';
@@ -70,6 +71,7 @@ import { Skill } from './shared/entities/skill.entity';
       useClass: RpcExceptionInterceptor,
     },
     ModerationListenerService,
+    SeedService,
   ],
 })
 export class AppModule {}
