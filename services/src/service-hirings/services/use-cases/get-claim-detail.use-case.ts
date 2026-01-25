@@ -1,6 +1,4 @@
-import {
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
@@ -78,7 +76,8 @@ export class GetClaimDetailUseCase {
         status: claim.status,
         description: claim.description,
         evidenceUrls: claim.evidenceUrls,
-        clarificationEvidenceUrls: (claim as any).clarificationEvidenceUrls || [],
+        clarificationEvidenceUrls:
+          (claim as any).clarificationEvidenceUrls || [],
         observations: claim.observations,
         observationsBy: claim.observationsBy,
         observationsAt: claim.observationsAt,
@@ -107,10 +106,21 @@ export class GetClaimDetailUseCase {
         email: (claim as any).assignedModeratorEmail ?? null,
       },
       compliances: (compliances || []).map((c) => ({
-        description: c.moderatorInstructions,
-        evidenceUrls: c.evidenceUrls,
-        submittedAt: c.submittedAt,
+        id: c.id,
+        claimId: c.claimId,
+        responsibleUserId: c.responsibleUserId,
+        complianceType: c.complianceType,
         status: c.status,
+        moderatorInstructions: c.moderatorInstructions,
+        deadline: c.deadline,
+        evidenceUrls: c.evidenceUrls || [],
+        userNotes: c.userNotes,
+        moderatorNotes: c.moderatorNotes,
+        rejectionReason: c.rejectionReason,
+        rejectionCount: c.rejectionCount || 0,
+        submittedAt: c.submittedAt,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
       })),
     };
   }

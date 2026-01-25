@@ -49,7 +49,10 @@ async function bootstrap() {
 
     console.log('✅ Claim assigned-moderator migration completed successfully');
   } catch (error) {
-    console.error('❌ Error running claim assigned-moderator migration:', error);
+    console.error(
+      '❌ Error running claim assigned-moderator migration:',
+      error,
+    );
     throw error;
   } finally {
     await app.close();

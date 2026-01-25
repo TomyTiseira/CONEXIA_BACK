@@ -9,8 +9,8 @@ import { ResolveClaimDto } from '../dto/resolve-claim.dto';
 import { SubmitRespondentObservationsDto } from '../dto/submit-respondent-observations.dto';
 import { UpdateClaimDto } from '../dto/update-claim.dto';
 import { AddObservationsUseCase } from '../services/use-cases/add-observations.use-case';
-import { CreateClaimUseCase } from '../services/use-cases/create-claim.use-case';
 import { CancelClaimUseCase } from '../services/use-cases/cancel-claim.use-case';
+import { CreateClaimUseCase } from '../services/use-cases/create-claim.use-case';
 import { GetClaimDetailUseCase } from '../services/use-cases/get-claim-detail.use-case';
 import { GetClaimsUseCase } from '../services/use-cases/get-claims.use-case';
 import { GetMyClaimsUseCase } from '../services/use-cases/get-my-claims.use-case';
@@ -127,7 +127,11 @@ export class ClaimsController {
   @MessagePattern('markClaimAsInReview')
   async markAsInReview(
     @Payload()
-    data: { claimId: string; moderatorId: number; moderatorEmail?: string },
+    data: {
+      claimId: string;
+      moderatorId: number;
+      moderatorEmail?: string;
+    },
   ) {
     const claim = await this.resolveClaimUseCase.markAsInReview(
       data.claimId,

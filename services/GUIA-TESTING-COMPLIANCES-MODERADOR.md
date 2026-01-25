@@ -1,6 +1,7 @@
 # 🧪 Guía de Testing: Sistema de Compliances Moderador
 
 ## 📋 Índice
+
 1. [Preparación](#preparación)
 2. [Escenarios de Prueba](#escenarios-de-prueba)
 3. [Ejemplos de Requests](#ejemplos-de-requests)
@@ -12,27 +13,33 @@
 ## 🔧 Preparación
 
 ### 1. Verificar que los servicios estén corriendo
+
 ```bash
 docker compose ps
 ```
 
 Debés ver:
+
 - ✅ `api-gateway` - running
 - ✅ `services` - running
 - ✅ `services-db` - running
 
 ### 2. Verificar logs de services
+
 ```bash
 docker compose logs -f services
 ```
 
 Buscá el mensaje:
+
 ```
 [NestApplication] Nest application successfully started
 ```
 
 ### 3. Obtener un token de moderador/admin
+
 Necesitás autenticarte como moderador o admin para resolver claims:
+
 ```http
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
@@ -54,6 +61,7 @@ Guardá el `accessToken` para usarlo en los siguientes requests.
 **Contexto**: El proveedor no entregó el trabajo completo. Se resuelve a favor del cliente ordenando reembolso total.
 
 **Request**:
+
 ```http
 PATCH http://localhost:3000/api/claims/abc-123/resolve
 Authorization: Bearer {{token}}
@@ -75,6 +83,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": true,
@@ -111,6 +120,7 @@ Content-Type: application/json
 ```
 
 **Validaciones**:
+
 - ✅ Claim status = `resolved`
 - ✅ 1 compliance creado
 - ✅ Compliance status = `pending`
@@ -125,6 +135,7 @@ Content-Type: application/json
 **Contexto**: El proveedor entregó 2 de 3 videos acordados. Se decide pago proporcional: cliente paga 66%, proveedor devuelve 33%.
 
 **Request**:
+
 ```http
 PATCH http://localhost:3000/api/claims/xyz-789/resolve
 Authorization: Bearer {{token}}
@@ -155,6 +166,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": true,
@@ -187,6 +199,7 @@ Content-Type: application/json
 ```
 
 **Validaciones**:
+
 - ✅ Claim status = `resolved`
 - ✅ 2 compliances creados
 - ✅ Compliance 1: proveedor (userId 99), order 0, deadline hoy+7
@@ -201,6 +214,7 @@ Content-Type: application/json
 **Contexto**: El reclamo es infundado. No se asignan compliances.
 
 **Request**:
+
 ```http
 PATCH http://localhost:3000/api/claims/def-456/resolve
 Authorization: Bearer {{token}}
@@ -214,6 +228,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": true,
@@ -230,6 +245,7 @@ Content-Type: application/json
 ```
 
 **Validaciones**:
+
 - ✅ Claim status = `rejected`
 - ✅ Array compliances vacío
 - ✅ Hiring vuelve a estado anterior
@@ -242,6 +258,7 @@ Content-Type: application/json
 **Contexto**: Cliente no completó el pago acordado.
 
 **Request**:
+
 ```http
 PATCH http://localhost:3000/api/claims/ghi-789/resolve
 Authorization: Bearer {{token}}
@@ -263,6 +280,7 @@ Content-Type: application/json
 ```
 
 **Validaciones**:
+
 - ✅ Compliance asignado al cliente (userId 87)
 - ✅ Type = `payment_required`
 - ✅ Deadline = hoy + 5 días
@@ -272,6 +290,7 @@ Content-Type: application/json
 ### Escenario 5: Resolución con múltiples compliances (máximo 5)
 
 **Request**:
+
 ```http
 PATCH http://localhost:3000/api/claims/jkl-012/resolve
 Authorization: Bearer {{token}}
@@ -322,6 +341,7 @@ Content-Type: application/json
 ```
 
 **Validaciones**:
+
 - ✅ 5 compliances creados (límite máximo)
 - ✅ Todos con order secuencial (0, 1, 2, 3, 4)
 - ✅ Deadlines progresivos
@@ -333,6 +353,7 @@ Content-Type: application/json
 ### Error 1: Intento de asignar compliance a usuario no involucrado
 
 **Request**:
+
 ```json
 {
   "status": "resolved",
@@ -340,7 +361,7 @@ Content-Type: application/json
   "resolution": "Test",
   "compliances": [
     {
-      "responsibleUserId": 999,  // Usuario no es parte del claim
+      "responsibleUserId": 999, // Usuario no es parte del claim
       "complianceType": "full_refund",
       "instructions": "Test",
       "deadlineDays": 7
@@ -350,6 +371,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": false,
@@ -362,6 +384,7 @@ Content-Type: application/json
 ### Error 2: Intento de asignar compliances a claim rechazado
 
 **Request**:
+
 ```json
 {
   "status": "rejected",
@@ -379,6 +402,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": false,
@@ -391,6 +415,7 @@ Content-Type: application/json
 ### Error 3: Exceder límite de 5 compliances
 
 **Request**:
+
 ```json
 {
   "status": "resolved",
@@ -403,6 +428,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": false,
@@ -415,13 +441,14 @@ Content-Type: application/json
 ### Error 4: Instrucciones muy cortas (menos de 20 caracteres)
 
 **Request**:
+
 ```json
 {
   "compliances": [
     {
       "responsibleUserId": 99,
       "complianceType": "full_refund",
-      "instructions": "Corto",  // < 20 caracteres
+      "instructions": "Corto", // < 20 caracteres
       "deadlineDays": 7
     }
   ]
@@ -429,6 +456,7 @@ Content-Type: application/json
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": false,
@@ -441,28 +469,31 @@ Content-Type: application/json
 ### Error 5: Deadline fuera de rango
 
 **Request con deadline = 0**:
+
 ```json
 {
   "compliances": [
     {
-      "deadlineDays": 0  // Debe ser >= 1
+      "deadlineDays": 0 // Debe ser >= 1
     }
   ]
 }
 ```
 
 **Request con deadline = 100**:
+
 ```json
 {
   "compliances": [
     {
-      "deadlineDays": 100  // Debe ser <= 90
+      "deadlineDays": 100 // Debe ser <= 90
     }
   ]
 }
 ```
 
 **Respuesta esperada**:
+
 ```json
 {
   "success": false,
@@ -477,6 +508,7 @@ Content-Type: application/json
 Después de resolver un claim con compliances, se deberían enviar los siguientes emails:
 
 ### Email 1: Resolución del claim (al cliente)
+
 ```
 Para: cliente@email.com
 Asunto: Tu reclamo ha sido resuelto - Conexia
@@ -498,6 +530,7 @@ Equipo de Conexia
 ```
 
 ### Email 2: Resolución del claim (al proveedor)
+
 ```
 Para: proveedor@email.com
 Asunto: Resolución de reclamo - Conexia
@@ -506,6 +539,7 @@ Asunto: Resolución de reclamo - Conexia
 ```
 
 ### Email 3: Compliance asignado (al responsable)
+
 ```
 Para: responsable@email.com
 Asunto: Se te ha asignado un compromiso - Conexia
@@ -536,12 +570,13 @@ Equipo de Conexia
 ## 🔍 Verificar Estado en Base de Datos
 
 ### Verificar claim resuelto
+
 ```sql
-SELECT 
-  id, 
-  status, 
-  resolution_type, 
-  resolved_by, 
+SELECT
+  id,
+  status,
+  resolution_type,
+  resolved_by,
   resolved_at,
   closed_at,
   final_outcome
@@ -550,6 +585,7 @@ WHERE id = 'abc-123';
 ```
 
 Esperado:
+
 ```
 status         | resolved
 resolution_type| client_favor
@@ -560,8 +596,9 @@ final_outcome  | client_favor
 ```
 
 ### Verificar compliances creados
+
 ```sql
-SELECT 
+SELECT
   id,
   claim_id,
   responsible_user_id,
@@ -576,6 +613,7 @@ ORDER BY order_number;
 ```
 
 Esperado:
+
 ```
 id             | comp-456
 claim_id       | abc-123
@@ -594,11 +632,13 @@ order_number   | 0
 Una vez validado que la resolución con compliances funciona, probar:
 
 1. **Usuario sube evidencia**
+
    ```http
    POST /api/compliances/comp-456/submit
    ```
 
 2. **Moderador revisa y aprueba**
+
    ```http
    POST /api/compliances/comp-456/review
    ```
@@ -613,17 +653,21 @@ Una vez validado que la resolución con compliances funciona, probar:
 ## 🐛 Troubleshooting
 
 ### Error: "CreateComplianceUseCase is not defined"
+
 **Solución**: Verificar que el use case esté en providers del módulo:
+
 ```typescript
 // service-hirings.module.ts
 providers: [
   // ...
   CreateComplianceUseCase,
-]
+];
 ```
 
 ### Error: "complianceType is not valid"
+
 **Solución**: Verificar que el tipo exista en el enum:
+
 ```typescript
 export enum ComplianceType {
   FULL_REFUND = 'full_refund',
@@ -641,7 +685,9 @@ export enum ComplianceType {
 ```
 
 ### Compliances no se crean pero no hay error
+
 **Debugging**:
+
 1. Ver logs del contenedor services:
    ```bash
    docker compose logs -f services
@@ -653,6 +699,7 @@ export enum ComplianceType {
 3. Si no aparece, verificar que el loop se ejecute correctamente
 
 ### Emails no se envían
+
 **Nota**: El método `sendComplianceCreatedEmail` está declarado como abstract en `EmailService`.
 Necesitás implementarlo en tu servicio concreto de emails (ej: `SendGridEmailService` o el que uses).
 

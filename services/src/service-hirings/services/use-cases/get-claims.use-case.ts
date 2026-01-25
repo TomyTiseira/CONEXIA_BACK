@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import {
   calculatePagination,
   PaginationInfo,
 } from '../../../common/utils/pagination.utils';
-import { UsersClientService } from '../../../common/services/users-client.service';
 import { ClaimResponseDto } from '../../dto/claim-response.dto';
 import { GetClaimsDto } from '../../dto/get-claims.dto';
-import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimTypeLabels } from '../../enums/claim.enum';
+import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../repositories/claim.repository';
 
@@ -52,7 +52,9 @@ export class GetClaimsUseCase {
           .filter((id): id is number => id !== null),
       ),
     );
-    const allUserIds = [...new Set([...claimantIds, ...resolverIds, ...claimedIds])];
+    const allUserIds = [
+      ...new Set([...claimantIds, ...resolverIds, ...claimedIds]),
+    ];
 
     const users =
       allUserIds.length > 0
@@ -152,6 +154,24 @@ export class GetClaimsUseCase {
         availableActions.push('review_compliance');
       }
 
+      // Mapear todos los compliances con información completa
+      const compliancesData = claimCompliances.map((compliance) => ({
+        id: compliance.id,
+        claimId: compliance.claimId,
+        responsibleUserId: compliance.responsibleUserId,
+        complianceType: compliance.complianceType,
+        status: compliance.status,
+        moderatorInstructions: compliance.moderatorInstructions,
+        deadline: compliance.deadline,
+        evidenceUrls: compliance.evidenceUrls || [],
+        userNotes: compliance.userNotes,
+        moderatorNotes: compliance.moderatorNotes,
+        rejectionReason: compliance.rejectionReason,
+        rejectionCount: compliance.rejectionCount || 0,
+        createdAt: compliance.createdAt,
+        updatedAt: compliance.updatedAt,
+      }));
+
       return {
         claim: {
           id: claim.id,
@@ -163,7 +183,8 @@ export class GetClaimsUseCase {
           description: claim.description,
           otherReason: claim.otherReason,
           evidenceUrls: claim.evidenceUrls,
-          clarificationEvidenceUrls: (claim as any).clarificationEvidenceUrls ?? [],
+          clarificationEvidenceUrls:
+            (claim as any).clarificationEvidenceUrls ?? [],
           status: claim.status,
           observations: claim.observations,
           observationsBy: claim.observationsBy,
@@ -209,6 +230,7 @@ export class GetClaimsUseCase {
               responsibleUserId: pendingCompliance.responsibleUserId ?? null,
             }
           : null,
+        compliances: compliancesData, // Agregar array completo de compliances
         availableActions,
         resolvedBy: {
           id: resolvedByUser?.id ?? null,
@@ -311,9 +333,8 @@ export class GetClaimsUseCase {
 
       // Buscar info del usuario reclamado
       if (claimedUserId) {
-        const claimedUser = await this.usersClientService.getUserByIdWithRelations(
-          claimedUserId,
-        );
+        const claimedUser =
+          await this.usersClientService.getUserByIdWithRelations(claimedUserId);
         if (claimedUser) {
           const fullClaimedFirstName =
             claimedUser.profile?.firstName || claimedUser.profile?.name || null;

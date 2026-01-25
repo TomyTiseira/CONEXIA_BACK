@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { ClaimRole, ClaimStatus } from '../enums/claim.enum';
 
 const CLAIM_FILTER_STATUSES = [

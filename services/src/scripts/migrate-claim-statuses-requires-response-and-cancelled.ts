@@ -6,7 +6,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const dataSource = app.get(DataSource);
 
-  console.log('🔧 Running claim status enum migration (requires_staff_response, cancelled)...');
+  console.log(
+    '🔧 Running claim status enum migration (requires_staff_response, cancelled)...',
+  );
 
   try {
     await dataSource.query(`

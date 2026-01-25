@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import {
   calculatePagination,
   PaginationInfo,
 } from '../../../common/utils/pagination.utils';
-import { UsersClientService } from '../../../common/services/users-client.service';
 import { GetMyClaimsDto } from '../../dto/get-my-claims.dto';
 import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
@@ -91,6 +91,24 @@ export class GetMyClaimsUseCase {
         ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
         : null;
 
+      // Mapear todos los compliances con información completa
+      const compliancesData = claimCompliances.map((compliance) => ({
+        id: compliance.id,
+        claimId: compliance.claimId,
+        responsibleUserId: compliance.responsibleUserId,
+        complianceType: compliance.complianceType,
+        status: compliance.status,
+        moderatorInstructions: compliance.moderatorInstructions,
+        deadline: compliance.deadline,
+        evidenceUrls: compliance.evidenceUrls || [],
+        userNotes: compliance.userNotes,
+        moderatorNotes: compliance.moderatorNotes,
+        rejectionReason: compliance.rejectionReason,
+        rejectionCount: compliance.rejectionCount || 0,
+        createdAt: compliance.createdAt,
+        updatedAt: compliance.updatedAt,
+      }));
+
       const availableActions: string[] = ['view_detail'];
       if (userRole === 'respondent' && claim.status === 'open') {
         availableActions.push('submit_observations');
@@ -111,7 +129,12 @@ export class GetMyClaimsUseCase {
       // Cancelación: solo el denunciante, solo si no está cerrado (resolved/rejected/cancelled).
       if (
         userRole === 'claimant' &&
-        ['open', 'in_review', 'pending_clarification', 'requires_staff_response'].includes(String(claim.status))
+        [
+          'open',
+          'in_review',
+          'pending_clarification',
+          'requires_staff_response',
+        ].includes(String(claim.status))
       ) {
         availableActions.push('cancel_claim');
       }
@@ -154,6 +177,7 @@ export class GetMyClaimsUseCase {
               daysRemaining,
             }
           : null,
+        compliances: compliancesData, // Agregar array completo de compliances
         availableActions,
       };
     });

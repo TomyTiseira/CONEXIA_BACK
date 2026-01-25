@@ -4,10 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EmailService } from '../../../../common/services/email.service';
+import { UsersClientService } from '../../../../common/services/users-client.service';
 import { SubmitComplianceDto } from '../../../dto/compliance.dto';
 import { ClaimCompliance } from '../../../entities/claim-compliance.entity';
 import { ComplianceStatus } from '../../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../../repositories/claim-compliance.repository';
+import { ClaimRepository } from '../../../repositories/claim.repository';
 
 /**
  * Use case para que un usuario envíe evidencias de cumplimiento
@@ -16,6 +19,9 @@ import { ClaimComplianceRepository } from '../../../repositories/claim-complianc
 export class SubmitComplianceUseCase {
   constructor(
     private readonly complianceRepository: ClaimComplianceRepository,
+    private readonly claimRepository: ClaimRepository,
+    private readonly emailService: EmailService,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async execute(
@@ -25,6 +31,7 @@ export class SubmitComplianceUseCase {
     // Buscar el compliance
     const compliance = await this.complianceRepository.findOne({
       where: { id: dto.complianceId },
+      relations: ['claim', 'claim.hiring', 'claim.hiring.service'],
     });
     if (!compliance) {
       throw new NotFoundException(
@@ -79,7 +86,47 @@ export class SubmitComplianceUseCase {
       `[SubmitComplianceUseCase] Compliance ${compliance.id} enviado por usuario ${dto.userId}`,
     );
 
-    // TODO: Enviar notificación a la contraparte y moderador
+    // Enviar email al moderador asignado
+    try {
+      const claim = compliance.claim;
+      const moderatorId = claim.assignedModeratorId;
+
+      if (moderatorId) {
+        const moderator =
+          await this.usersClientService.getUserByIdWithRelations(moderatorId);
+        const responsibleUser =
+          await this.usersClientService.getUserByIdWithRelations(
+            Number(dto.userId),
+          );
+
+        if (moderator && responsibleUser) {
+          const responsibleUserName =
+            responsibleUser.profile?.firstName ||
+            responsibleUser.profile?.name ||
+            'Usuario';
+
+          await this.emailService.sendComplianceSubmittedEmail(
+            moderator.email,
+            responsibleUserName,
+            {
+              complianceId: compliance.id,
+              complianceType: compliance.complianceType,
+              claimId: compliance.claimId,
+              hiringTitle:
+                claim.hiring?.service?.title || 'Servicio sin título',
+              userNotes: compliance.userNotes,
+              evidenceUrls: compliance.evidenceUrls,
+            },
+          );
+        }
+      }
+    } catch (emailError) {
+      console.error(
+        '[SubmitComplianceUseCase] Error enviando email:',
+        emailError,
+      );
+      // No lanzar error, solo loguear
+    }
 
     return compliance;
   }

@@ -124,6 +124,7 @@ export class NodemailerService extends EmailService {
       resolution: string;
       resolutionType?: string | null;
     },
+    compliances: any[] = [],
   ): Promise<void> {
     const statusLabel =
       claimData.status === 'resolved' ? 'Resuelto' : 'Rechazado';
@@ -136,11 +137,13 @@ export class NodemailerService extends EmailService {
         recipientName,
         statusLabel,
         claimData,
+        compliances,
       ),
       text: this.generateClaimResolvedEmailText(
         recipientName,
         statusLabel,
         claimData,
+        compliances,
       ),
     });
   }
@@ -297,32 +300,103 @@ export class NodemailerService extends EmailService {
     recipientName: string,
     statusLabel: string,
     claimData: any,
+    compliances: any[] = [],
   ): string {
     const statusColor = claimData.status === 'resolved' ? '#28a745' : '#ff4953';
     const statusIcon = claimData.status === 'resolved' ? '✅' : '❌';
 
     // Mapear tipo de resolución a texto legible
-    const resolutionTypeLabels: Record<string, { label: string; description: string; icon: string }> = {
-      'client_favor': {
+    const resolutionTypeLabels: Record<
+      string,
+      { label: string; description: string; icon: string }
+    > = {
+      client_favor: {
         label: 'A favor del cliente',
-        description: 'El servicio ha sido cancelado y el cliente no realizará el pago.',
-        icon: '👤'
+        description:
+          'El servicio ha sido cancelado y el cliente no realizará el pago.',
+        icon: '👤',
       },
-      'provider_favor': {
+      provider_favor: {
         label: 'A favor del proveedor',
-        description: 'El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
-        icon: '🏢'
+        description:
+          'El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
+        icon: '🏢',
       },
-      'partial_agreement': {
+      partial_agreement: {
         label: 'Acuerdo parcial',
-        description: 'Ambas partes llegaron a un acuerdo. Se aplicarán los términos negociados.',
-        icon: '🤝'
-      }
+        description:
+          'Ambas partes llegaron a un acuerdo. Se aplicarán los términos negociados.',
+        icon: '🤝',
+      },
     };
 
-    const resolutionInfo = claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
-      ? resolutionTypeLabels[claimData.resolutionType]
-      : null;
+    const resolutionInfo =
+      claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
+        ? resolutionTypeLabels[claimData.resolutionType]
+        : null;
+
+    // Generar HTML de compliances si existen
+    let compliancesHTML = '';
+    if (compliances && compliances.length > 0) {
+      const complianceTypeLabels: Record<string, string> = {
+        full_refund: 'Reembolso Completo',
+        partial_refund: 'Reembolso Parcial',
+        full_redelivery: 'Reentrega Completa',
+        corrected_delivery: 'Entrega Corregida',
+        additional_delivery: 'Entrega Adicional',
+        payment_required: 'Pago Requerido',
+        partial_payment: 'Pago Parcial',
+        evidence_upload: 'Subir Evidencia',
+        confirmation_only: 'Solo Confirmación',
+        auto_refund: 'Reembolso Automático',
+        no_action_required: 'Sin Acción Requerida',
+        work_completion: 'Completar Trabajo',
+        work_revision: 'Revisión de Trabajo',
+        apology_required: 'Disculpa Requerida',
+        service_discount: 'Descuento en Servicio',
+        penalty_fee: 'Penalización',
+        account_restriction: 'Restricción de Cuenta',
+        other: 'Otro',
+      };
+
+      const compliancesList = compliances
+        .map((c, index) => {
+          const deadline = c.deadline
+            ? new Date(c.deadline).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'No especificado';
+          const typeLabel =
+            complianceTypeLabels[c.complianceType] || c.complianceType;
+
+          return `
+          <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 10px 0; border-radius: 4px;">
+            <p style="margin: 0 0 8px 0; color: #856404; font-weight: bold;">📋 Compromiso ${index + 1}: ${typeLabel}</p>
+            ${c.moderatorInstructions ? `<p style="margin: 5px 0; color: #856404; font-size: 13px;"><strong>Instrucciones:</strong> ${c.moderatorInstructions}</p>` : ''}
+            <p style="margin: 5px 0; color: #856404; font-size: 13px;"><strong>⏰ Plazo:</strong> ${deadline}</p>
+          </div>
+        `;
+        })
+        .join('');
+
+      compliancesHTML = `
+        <div style="margin: 25px 0;">
+          <h3 style="color: #333; margin-bottom: 15px;">📌 Compromisos Asignados</h3>
+          <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+            Como parte de la resolución, se te han asignado los siguientes compromisos que debes cumplir:
+          </p>
+          ${compliancesList}
+          <div style="background-color: #d1ecf1; padding: 12px; border-radius: 4px; margin-top: 15px;">
+            <p style="margin: 0; color: #0c5460; font-size: 13px;">
+              ℹ️ <strong>Importante:</strong> Debes cumplir con estos compromisos en los plazos indicados. 
+              Recibirás notificaciones adicionales con los detalles completos.
+            </p>
+          </div>
+        </div>
+      `;
+    }
 
     return `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
@@ -337,17 +411,23 @@ export class NodemailerService extends EmailService {
             El reclamo para el servicio <strong>${claimData.hiringTitle}</strong> ha sido ${statusLabel.toLowerCase()} por un moderador.
           </p>
           
-          ${resolutionInfo ? `
+          ${
+            resolutionInfo
+              ? `
           <div style="background-color: #e7f3ff; padding: 20px; border-left: 4px solid #48a6a7; margin: 20px 0;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">${resolutionInfo.icon} Tipo de Resolución: ${resolutionInfo.label}</h3>
+            <h3 style="margin: 0 0 10px 0; color: #333;">Tipo de Resolución: ${resolutionInfo.label}</h3>
             <p style="margin: 0; color: #666; font-size: 14px;">${resolutionInfo.description}</p>
           </div>
-          ` : ''}
+          `
+              : ''
+          }
           
           <div style="background-color: #f8f9fa; padding: 20px; border-left: 4px solid ${statusColor}; margin: 20px 0;">
             <h3 style="margin: 0 0 10px 0; color: #333;">Resolución:</h3>
             <p style="margin: 0; color: #666;">${claimData.resolution}</p>
           </div>
+          
+          ${compliancesHTML}
           
           <div style="background-color: ${claimData.status === 'resolved' ? '#d4edda' : '#f8d7da'}; padding: 15px; border-radius: 4px; margin: 20px 0;">
             <p style="margin: 0; color: ${claimData.status === 'resolved' ? '#155724' : '#721c24'}; font-size: 14px;">
@@ -483,16 +563,61 @@ Si el moderador necesita información adicional, recibirás un email solicitando
     recipientName: string,
     statusLabel: string,
     claimData: any,
+    compliances: any[] = [],
   ): string {
-    const resolutionTypeLabels: Record<string, string> = {
-      'client_favor': 'A favor del cliente - El servicio ha sido cancelado y el cliente no realizará el pago.',
-      'provider_favor': 'A favor del proveedor - El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
-      'partial_agreement': 'Acuerdo parcial - Ambas partes llegaron a un acuerdo.'
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Completo',
+      partial_refund: 'Reembolso Parcial',
+      full_redelivery: 'Reentrega Completa',
+      corrected_delivery: 'Entrega Corregida',
+      additional_delivery: 'Entrega Adicional',
+      payment_required: 'Pago Requerido',
+      partial_payment: 'Pago Parcial',
+      evidence_upload: 'Subir Evidencia',
+      confirmation_only: 'Solo Confirmación',
+      auto_refund: 'Reembolso Automático',
+      no_action_required: 'Sin Acción Requerida',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      other: 'Otro',
     };
 
-    const resolutionTypeText = claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
-      ? `\n\nTipo de Resolución:\n${resolutionTypeLabels[claimData.resolutionType]}`
-      : '';
+    let compliancesText = '';
+    if (compliances && compliances.length > 0) {
+      compliancesText = '\n\nCOMPROMISOS ASIGNADOS:\n';
+      compliancesText += '='.repeat(50) + '\n\n';
+      compliances.forEach((c, index) => {
+        const deadline = c.deadline
+          ? new Date(c.deadline).toLocaleDateString('es-ES')
+          : 'No especificado';
+        const typeLabel =
+          complianceTypeLabels[c.complianceType] || c.complianceType;
+        compliancesText += `Compromiso ${index + 1}: ${typeLabel}\n`;
+        if (c.moderatorInstructions) {
+          compliancesText += `Instrucciones: ${c.moderatorInstructions}\n`;
+        }
+        compliancesText += `Plazo: ${deadline}\n\n`;
+      });
+      compliancesText +=
+        'IMPORTANTE: Debes cumplir con estos compromisos en los plazos indicados.\n';
+    }
+    const resolutionTypeLabels: Record<string, string> = {
+      client_favor:
+        'A favor del cliente - El servicio ha sido cancelado y el cliente no realizará el pago.',
+      provider_favor:
+        'A favor del proveedor - El servicio se marca como finalizado y el proveedor recibirá el pago completo.',
+      partial_agreement:
+        'Acuerdo parcial - Ambas partes llegaron a un acuerdo.',
+    };
+
+    const resolutionTypeText =
+      claimData.resolutionType && resolutionTypeLabels[claimData.resolutionType]
+        ? `\n\nTipo de Resolución:\n${resolutionTypeLabels[claimData.resolutionType]}`
+        : '';
 
     return `
 Hola ${recipientName},
@@ -500,7 +625,7 @@ Hola ${recipientName},
 El reclamo para el servicio "${claimData.hiringTitle}" ha sido ${statusLabel.toLowerCase()} por un moderador.${resolutionTypeText}
 
 Resolución:
-${claimData.resolution}
+${claimData.resolution}${compliancesText}
 
 El servicio ha sido desbloqueado y puedes continuar con las acciones correspondientes.
 
@@ -657,8 +782,14 @@ Este es un mensaje automático, por favor no respondas a este email.
       reason: string;
     },
   ): Promise<void> {
-    const html = this.generateServiceTerminatedClientBannedEmailHTML(providerName, serviceData);
-    const text = this.generateServiceTerminatedClientBannedEmailText(providerName, serviceData);
+    const html = this.generateServiceTerminatedClientBannedEmailHTML(
+      providerName,
+      serviceData,
+    );
+    const text = this.generateServiceTerminatedClientBannedEmailText(
+      providerName,
+      serviceData,
+    );
 
     await this.sendEmail({
       to: providerEmail,
@@ -865,7 +996,8 @@ Este es un mensaje automático, por favor no respondas a este email.
 
     const compliancesHTML = compliances
       .map((c, index) => {
-        const typeLabel = complianceTypeLabels[c.complianceType] || c.complianceType;
+        const typeLabel =
+          complianceTypeLabels[c.complianceType] || c.complianceType;
         const deadlineStr = new Date(c.deadline).toLocaleDateString('es-AR', {
           year: 'numeric',
           month: 'long',
@@ -981,6 +1113,555 @@ ${compliancesList}
 - El incumplimiento puede resultar en consecuencias en tu cuenta
 
 Ver mis compromisos: https://conexia.com/compliances
+
+---
+Para consultas, contáctanos en soporte@conexia.com
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+
+  /**
+   * Envía un email cuando el usuario envía evidencia de cumplimiento
+   */
+  async sendComplianceSubmittedEmail(
+    moderatorEmail: string,
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      userNotes?: string | null;
+      evidenceUrls?: string[] | null;
+    },
+  ): Promise<void> {
+    const html = this.generateComplianceSubmittedEmailHTML(
+      responsibleUserName,
+      complianceData,
+    );
+    const text = this.generateComplianceSubmittedEmailText(
+      responsibleUserName,
+      complianceData,
+    );
+
+    await this.sendEmail({
+      to: moderatorEmail,
+      subject: `✅ Compromiso enviado para revisión - ${complianceData.hiringTitle}`,
+      html,
+      text,
+    });
+
+    this.logger.log(
+      `Email de compliance enviado a moderador: ${moderatorEmail}`,
+    );
+  }
+
+  private generateComplianceSubmittedEmailHTML(
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      userNotes?: string | null;
+      evidenceUrls?: string[] | null;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const evidenceSection =
+      complianceData.evidenceUrls && complianceData.evidenceUrls.length > 0
+        ? `
+      <div style="margin-top: 15px;">
+        <h4 style="color: #333;">📎 Evidencia adjunta:</h4>
+        <ul style="margin: 5px 0; padding-left: 20px;">
+          ${complianceData.evidenceUrls.map((url) => `<li><a href="${url}" style="color: #48a6a7;">${url}</a></li>`).join('')}
+        </ul>
+      </div>
+    `
+        : '';
+
+    const notesSection = complianceData.userNotes
+      ? `
+      <div style="margin-top: 15px;">
+        <h4 style="color: #333;">💬 Notas del usuario:</h4>
+        <p style="color: #666; margin: 5px 0;">${complianceData.userNotes}</p>
+      </div>
+    `
+      : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #48a6a7;">✅ Compromiso Enviado</h1>
+          </div>
+
+          <p>Hola Moderador,</p>
+
+          <p><strong>${responsibleUserName}</strong> ha enviado evidencia de cumplimiento para su compromiso.</p>
+
+          <div style="background-color: #f0f8ff; padding: 15px; border-left: 4px solid #48a6a7; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Servicio:</strong> ${complianceData.hiringTitle}</p>
+            <p style="margin: 5px 0;"><strong>Tipo de compromiso:</strong> ${typeLabel}</p>
+            <p style="margin: 5px 0;"><strong>ID del compromiso:</strong> ${complianceData.complianceId}</p>
+          </div>
+
+          ${notesSection}
+          ${evidenceSection}
+
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="https://conexia.com/admin/compliances/${complianceData.complianceId}" 
+               style="display: inline-block; padding: 12px 24px; background-color: #48a6a7; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Revisar Compromiso
+            </a>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
+            <p>Para consultas, contáctanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a></p>
+            <p>Este es un mensaje automático, por favor no respondas a este email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private generateComplianceSubmittedEmailText(
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      userNotes?: string | null;
+      evidenceUrls?: string[] | null;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const evidenceList =
+      complianceData.evidenceUrls && complianceData.evidenceUrls.length > 0
+        ? `\n📎 EVIDENCIA ADJUNTA:\n${complianceData.evidenceUrls.map((url) => `- ${url}`).join('\n')}`
+        : '';
+
+    const notes = complianceData.userNotes
+      ? `\n💬 NOTAS DEL USUARIO:\n${complianceData.userNotes}`
+      : '';
+
+    return `
+✅ COMPROMISO ENVIADO - CONEXIA
+
+Hola Moderador,
+
+${responsibleUserName} ha enviado evidencia de cumplimiento para su compromiso.
+
+DETALLES:
+Servicio: ${complianceData.hiringTitle}
+Tipo de compromiso: ${typeLabel}
+ID del compromiso: ${complianceData.complianceId}
+${notes}
+${evidenceList}
+
+Revisar compromiso: https://conexia.com/admin/compliances/${complianceData.complianceId}
+
+---
+Para consultas, contáctanos en soporte@conexia.com
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+
+  /**
+   * Envía un email cuando el moderador aprueba un compliance
+   */
+  async sendComplianceApprovedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      moderatorNotes?: string | null;
+    },
+  ): Promise<void> {
+    const html = this.generateComplianceApprovedEmailHTML(
+      recipientName,
+      complianceData,
+    );
+    const text = this.generateComplianceApprovedEmailText(
+      recipientName,
+      complianceData,
+    );
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `✅ Compromiso aprobado - ${complianceData.hiringTitle}`,
+      html,
+      text,
+    });
+
+    this.logger.log(
+      `Email de compliance aprobado enviado a: ${recipientEmail}`,
+    );
+  }
+
+  private generateComplianceApprovedEmailHTML(
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      moderatorNotes?: string | null;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const notesSection = complianceData.moderatorNotes
+      ? `
+      <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #4caf50; border-radius: 5px; margin-top: 15px;">
+        <h4 style="color: #333; margin-top: 0;">💬 Comentarios del moderador:</h4>
+        <p style="color: #666; margin: 5px 0;">${complianceData.moderatorNotes}</p>
+      </div>
+    `
+      : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #4caf50;">✅ ¡Compromiso Aprobado!</h1>
+          </div>
+
+          <p>Hola ${recipientName},</p>
+
+          <p>¡Felicidades! El moderador ha <strong>aprobado</strong> tu cumplimiento del compromiso.</p>
+
+          <div style="background-color: #e8f5e9; padding: 15px; border-left: 4px solid #4caf50; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Servicio:</strong> ${complianceData.hiringTitle}</p>
+            <p style="margin: 5px 0;"><strong>Tipo de compromiso:</strong> ${typeLabel}</p>
+            <p style="margin: 5px 0;"><strong>Estado:</strong> <span style="color: #4caf50; font-weight: bold;">Aprobado</span></p>
+          </div>
+
+          ${notesSection}
+
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="https://conexia.com/compliances/${complianceData.complianceId}" 
+               style="display: inline-block; padding: 12px 24px; background-color: #4caf50; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Ver Detalles
+            </a>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
+            <p>Para consultas, contáctanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a></p>
+            <p>Este es un mensaje automático, por favor no respondas a este email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private generateComplianceApprovedEmailText(
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      moderatorNotes?: string | null;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const notes = complianceData.moderatorNotes
+      ? `\n💬 COMENTARIOS DEL MODERADOR:\n${complianceData.moderatorNotes}`
+      : '';
+
+    return `
+✅ ¡COMPROMISO APROBADO! - CONEXIA
+
+Hola ${recipientName},
+
+¡Felicidades! El moderador ha aprobado tu cumplimiento del compromiso.
+
+DETALLES:
+Servicio: ${complianceData.hiringTitle}
+Tipo de compromiso: ${typeLabel}
+Estado: APROBADO
+${notes}
+
+Ver detalles: https://conexia.com/compliances/${complianceData.complianceId}
+
+---
+Para consultas, contáctanos en soporte@conexia.com
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+
+  /**
+   * Envía un email cuando el moderador rechaza un compliance
+   */
+  async sendComplianceRejectedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      rejectionReason?: string | null;
+      rejectionCount: number;
+    },
+  ): Promise<void> {
+    const html = this.generateComplianceRejectedEmailHTML(
+      recipientName,
+      complianceData,
+    );
+    const text = this.generateComplianceRejectedEmailText(
+      recipientName,
+      complianceData,
+    );
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `⚠️ Compromiso rechazado - ${complianceData.hiringTitle}`,
+      html,
+      text,
+    });
+
+    this.logger.log(
+      `Email de compliance rechazado enviado a: ${recipientEmail}`,
+    );
+  }
+
+  private generateComplianceRejectedEmailHTML(
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      rejectionReason?: string | null;
+      rejectionCount: number;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const reasonSection = complianceData.rejectionReason
+      ? `
+      <div style="background-color: #fff3e0; padding: 15px; border-left: 4px solid #ff9800; border-radius: 5px; margin-top: 15px;">
+        <h4 style="color: #333; margin-top: 0;">📝 Motivo del rechazo:</h4>
+        <p style="color: #666; margin: 5px 0;">${complianceData.rejectionReason}</p>
+      </div>
+    `
+      : '';
+
+    const warningSection =
+      complianceData.rejectionCount > 1
+        ? `
+      <div style="background-color: #ffebee; padding: 15px; border-left: 4px solid #f44336; border-radius: 5px; margin-top: 15px;">
+        <h4 style="color: #f44336; margin-top: 0;">⚠️ Advertencia</h4>
+        <p style="color: #666; margin: 5px 0;">Este es tu rechazo número ${complianceData.rejectionCount}. 
+        Los rechazos repetidos pueden resultar en consecuencias en tu cuenta.</p>
+      </div>
+    `
+        : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #f44336;">⚠️ Compromiso Rechazado</h1>
+          </div>
+
+          <p>Hola ${recipientName},</p>
+
+          <p>Lamentablemente, el moderador ha <strong>rechazado</strong> tu cumplimiento del compromiso. 
+          Por favor, revisa el motivo y vuelve a enviar la evidencia correcta.</p>
+
+          <div style="background-color: #ffebee; padding: 15px; border-left: 4px solid #f44336; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Servicio:</strong> ${complianceData.hiringTitle}</p>
+            <p style="margin: 5px 0;"><strong>Tipo de compromiso:</strong> ${typeLabel}</p>
+            <p style="margin: 5px 0;"><strong>Estado:</strong> <span style="color: #f44336; font-weight: bold;">Rechazado</span></p>
+            <p style="margin: 5px 0;"><strong>Intentos:</strong> ${complianceData.rejectionCount}</p>
+          </div>
+
+          ${reasonSection}
+          ${warningSection}
+
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="https://conexia.com/compliances/${complianceData.complianceId}" 
+               style="display: inline-block; padding: 12px 24px; background-color: #48a6a7; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Reenviar Evidencia
+            </a>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
+            <p>Para consultas, contáctanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a></p>
+            <p>Este es un mensaje automático, por favor no respondas a este email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private generateComplianceRejectedEmailText(
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      rejectionReason?: string | null;
+      rejectionCount: number;
+    },
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const typeLabel =
+      complianceTypeLabels[complianceData.complianceType] ||
+      complianceData.complianceType;
+
+    const reason = complianceData.rejectionReason
+      ? `\n📝 MOTIVO DEL RECHAZO:\n${complianceData.rejectionReason}`
+      : '';
+
+    const warning =
+      complianceData.rejectionCount > 1
+        ? `\n⚠️ ADVERTENCIA:\nEste es tu rechazo número ${complianceData.rejectionCount}. 
+Los rechazos repetidos pueden resultar en consecuencias en tu cuenta.`
+        : '';
+
+    return `
+⚠️ COMPROMISO RECHAZADO - CONEXIA
+
+Hola ${recipientName},
+
+Lamentablemente, el moderador ha rechazado tu cumplimiento del compromiso.
+Por favor, revisa el motivo y vuelve a enviar la evidencia correcta.
+
+DETALLES:
+Servicio: ${complianceData.hiringTitle}
+Tipo de compromiso: ${typeLabel}
+Estado: RECHAZADO
+Intentos: ${complianceData.rejectionCount}
+${reason}
+${warning}
+
+Reenviar evidencia: https://conexia.com/compliances/${complianceData.complianceId}
 
 ---
 Para consultas, contáctanos en soporte@conexia.com

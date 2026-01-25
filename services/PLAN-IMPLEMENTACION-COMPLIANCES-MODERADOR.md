@@ -1,6 +1,7 @@
 # 📋 Plan de Implementación: Sistema de Compliances Definidos por Moderador
 
 ## 📖 Índice
+
 1. [Visión General](#visión-general)
 2. [Flujo Completo Paso a Paso](#flujo-completo-paso-a-paso)
 3. [Arquitectura del Sistema](#arquitectura-del-sistema)
@@ -14,17 +15,20 @@
 ## 🎯 Visión General
 
 ### Objetivo
+
 Permitir que moderadores/administradores definan explícitamente qué debe cumplir cada parte al resolver un reclamo, proporcionando control total sobre:
+
 - **Quién** debe cumplir (cliente o proveedor o ambos)
 - **Qué** debe hacer (tipo de cumplimiento)
 - **Cómo** debe hacerlo (instrucciones detalladas)
 - **Cuándo** debe completarlo (plazo en días)
 
 ### Beneficios
+
 ✅ **Flexibilidad**: Cada caso es único, el moderador decide según contexto  
 ✅ **Claridad**: Instrucciones personalizadas, no genéricas  
 ✅ **Control**: Sistema de consecuencias automáticas por incumplimiento  
-✅ **Trazabilidad**: Historial completo de cumplimientos y estados  
+✅ **Trazabilidad**: Historial completo de cumplimientos y estados
 
 ---
 
@@ -33,9 +37,11 @@ Permitir que moderadores/administradores definan explícitamente qué debe cumpl
 ### **FASE 1: Moderador Resuelve el Reclamo**
 
 #### Paso 1.1: Revisión del Reclamo
+
 ```
 GET /api/claims/:id/detail
 ```
+
 - Moderador ve toda la información del reclamo
 - Evidencias originales del claimant
 - Evidencias de subsanación (si hubo observaciones)
@@ -43,6 +49,7 @@ GET /api/claims/:id/detail
 - Historial completo de acciones
 
 **Output esperado**:
+
 ```json
 {
   "claim": {
@@ -61,7 +68,9 @@ GET /api/claims/:id/detail
 ```
 
 #### Paso 1.2: Decisión del Moderador
+
 El moderador analiza y decide:
+
 1. **¿Es válido el reclamo?**
    - ❌ **NO** → `status: 'rejected'` → Sin compliances
    - ✅ **SÍ** → `status: 'resolved'` → Continúa al paso 1.3
@@ -72,9 +81,11 @@ El moderador analiza y decide:
    - 🟡 `partial_agreement`: Ambos tienen parte de razón → Ambos cumplen
 
 #### Paso 1.3: Definición de Compliances
+
 Según la decisión, el moderador define cumplimientos:
 
 **Ejemplo A: A favor del cliente (proveedor incumplió)**
+
 ```javascript
 {
   status: 'resolved',
@@ -92,6 +103,7 @@ Según la decisión, el moderador define cumplimientos:
 ```
 
 **Ejemplo B: A favor del proveedor (cliente no pagó)**
+
 ```javascript
 {
   status: 'resolved',
@@ -109,6 +121,7 @@ Según la decisión, el moderador define cumplimientos:
 ```
 
 **Ejemplo C: Acuerdo parcial (ambos cumplen)**
+
 ```javascript
 {
   status: 'resolved',
@@ -135,12 +148,14 @@ Según la decisión, el moderador define cumplimientos:
 ```
 
 #### Paso 1.4: Envío de Resolución
+
 ```
 PATCH /api/claims/:id/resolve
 Body: { status, resolution, resolutionType, compliances }
 ```
 
 **Backend procesa**:
+
 1. ✅ Valida que el reclamo existe y está en `in_review` o `requires_staff_response`
 2. ✅ Valida que si hay compliances, el status es `resolved` (no `rejected`)
 3. ✅ Valida que los `responsibleUserId` son parte del reclamo
@@ -151,6 +166,7 @@ Body: { status, resolution, resolutionType, compliances }
 8. ✅ Envía emails a ambas partes
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -184,17 +200,21 @@ Body: { status, resolution, resolutionType, compliances }
 ### **FASE 2: Usuario Cumple con el Compliance**
 
 #### Paso 2.1: Usuario Notificado
+
 El usuario responsable recibe:
+
 1. 📧 **Email** con la resolución del reclamo
 2. 📧 **Email** con el compliance asignado y sus instrucciones
 3. 🔔 **Notificación** en la plataforma (opcional)
 
 #### Paso 2.2: Usuario Ve sus Compliances Pendientes
+
 ```
 GET /api/compliances?userId=99&status=pending
 ```
 
 **Response**:
+
 ```json
 {
   "data": [
@@ -217,16 +237,19 @@ GET /api/compliances?userId=99&status=pending
 ```
 
 #### Paso 2.3: Usuario Sube Evidencia del Cumplimiento
+
 ```
 POST /api/compliances/:id/submit
 Content-Type: multipart/form-data
 ```
 
 **Form data**:
+
 - `userResponse`: Texto explicativo (ej: "Realicé el reembolso completo")
 - `evidence`: Archivos (comprobantes, capturas, etc.) - Máximo 5 archivos
 
 **Backend procesa**:
+
 1. ✅ Valida que el usuario es el responsable del compliance
 2. ✅ Valida que el compliance está en `pending` (no finalizado)
 3. ✅ Guarda los archivos en `/uploads/compliances/`
@@ -239,6 +262,7 @@ Content-Type: multipart/form-data
 6. ✅ Notifica al moderador para revisión
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -247,9 +271,7 @@ Content-Type: multipart/form-data
     "status": "submitted",
     "submittedAt": "2026-01-25T10:00:00Z",
     "userNotes": "Realicé el reembolso completo",
-    "evidenceUrls": [
-      "/uploads/compliances/1737654000000-123456.png"
-    ]
+    "evidenceUrls": ["/uploads/compliances/1737654000000-123456.png"]
   }
 }
 ```
@@ -259,6 +281,7 @@ Content-Type: multipart/form-data
 ### **FASE 3: Moderador Revisa el Cumplimiento**
 
 #### Paso 3.1: Moderador Ve Compliances Pendientes de Revisión
+
 ```
 GET /api/compliances?status=submitted
 ```
@@ -266,17 +289,20 @@ GET /api/compliances?status=submitted
 Lista todos los compliances que usuarios han enviado evidencia y esperan revisión.
 
 #### Paso 3.2: Moderador Revisa Evidencia
+
 ```
 GET /api/compliances/:id
 ```
 
 Ve:
+
 - Instrucciones originales
 - Evidencia subida por el usuario
 - Notas del usuario
 - Fecha de envío
 
 #### Paso 3.3: Moderador Toma Decisión
+
 ```
 POST /api/compliances/:id/review
 Body: {
@@ -287,6 +313,7 @@ Body: {
 ```
 
 **Si APRUEBA**:
+
 - `status` → `approved`
 - Se cierra el compliance ✅
 - Si hay siguiente en cadena (order 1, 2...), se activa
@@ -294,6 +321,7 @@ Body: {
 - Se resetean warnings (si los había)
 
 **Si RECHAZA**:
+
 - `status` → `pending` (vuelve a pendiente)
 - `rejectionCount` incrementa
 - `deadline` se reduce un 20%
@@ -305,6 +333,7 @@ Body: {
 ### **FASE 4: Sistema de Consecuencias Automáticas**
 
 #### Cron Job: Verificación Diaria (02:00 AM)
+
 ```typescript
 @Cron(CronExpression.EVERY_6_HOURS)
 async checkOverdueCompliances()
@@ -313,6 +342,7 @@ async checkOverdueCompliances()
 **Busca compliances vencidos** (`deadline < now` y status = `pending`/`submitted`):
 
 ##### Nivel 1: OVERDUE (Primera vez vencido)
+
 - `status` → `overdue`
 - `warningLevel` → 1
 - `extendedDeadline` → deadline actual + 50%
@@ -320,6 +350,7 @@ async checkOverdueCompliances()
 - 📧 Email al moderador: "Usuario X incumplió deadline"
 
 ##### Nivel 2: WARNING (Segunda vez vencido)
+
 - `status` → `warning`
 - `warningLevel` → 2
 - `finalDeadline` → extendedDeadline + 25%
@@ -328,6 +359,7 @@ async checkOverdueCompliances()
 - 📧 Email al moderador: "Usuario X en advertencia 2"
 
 ##### Nivel 3: ESCALATED (Tercera vez vencido)
+
 - `status` → `escalated`
 - `warningLevel` → 3
 - 🔴 **Ban permanente del usuario**
@@ -340,6 +372,7 @@ async checkOverdueCompliances()
 ## 🏗️ Arquitectura del Sistema
 
 ### Diagrama de Flujo
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    MODERADOR RESUELVE                       │
@@ -415,7 +448,9 @@ async checkOverdueCompliances()
 ## 🔧 Cambios Requeridos
 
 ### ✅ Cambio 1: DTOs
+
 **Archivos**:
+
 - `api-gateway/src/service-hirings/dto/resolve-claim.dto.ts`
 - `services/src/service-hirings/dto/resolve-claim.dto.ts`
 
@@ -424,9 +459,11 @@ async checkOverdueCompliances()
 ---
 
 ### ✅ Cambio 2: ResolveClaimUseCase
+
 **Archivo**: `services/src/service-hirings/services/use-cases/resolve-claim.use-case.ts`
 
 **Acciones**:
+
 1. Descomentar import `CreateComplianceUseCase`
 2. Inyectar en constructor
 3. Agregar método `validateComplianceResponsibles()`
@@ -437,6 +474,7 @@ async checkOverdueCompliances()
 ---
 
 ### ✅ Cambio 3: Gateway Controller
+
 **Archivo**: `api-gateway/src/service-hirings/claims.controller.ts`
 
 **Acción**: Actualizar endpoint `/claims/:id/resolve` para recibir nuevo DTO
@@ -444,6 +482,7 @@ async checkOverdueCompliances()
 ---
 
 ### ✅ Cambio 4: Module Configuration
+
 **Archivo**: `services/src/service-hirings/service-hirings.module.ts`
 
 **Acción**: Verificar que `CreateComplianceUseCase` esté en providers (ya debe estar)
@@ -451,9 +490,11 @@ async checkOverdueCompliances()
 ---
 
 ### ✅ Cambio 5: Emails
+
 **Archivo**: `services/src/common/services/email.service.ts`
 
 **Acciones**:
+
 1. Agregar método `sendComplianceCreatedEmail()`
 2. Agregar método `sendComplianceSubmittedEmail()`
 3. Agregar método `sendComplianceApprovedEmail()`
@@ -465,17 +506,20 @@ async checkOverdueCompliances()
 ## 📋 Implementación Detallada
 
 ### Prioridad Alta (Crítico)
+
 1. ✅ **DTOs**: Agregar soporte para compliances en resolución
 2. ✅ **ResolveClaimUseCase**: Lógica de creación de compliances
 3. ✅ **Validaciones**: Verificar que responsables son parte del claim
 4. ✅ **Response**: Devolver compliances creados
 
 ### Prioridad Media (Importante)
+
 5. ⚠️ **Emails**: Notificaciones de compliance creado
 6. ⚠️ **Emails**: Notificaciones de compliance cumplido
 7. ⚠️ **Module**: Verificar providers registrados
 
 ### Prioridad Baja (Opcional)
+
 8. 📝 **Frontend Guide**: Documentar cómo frontend debe enviar compliances
 9. 📝 **Postman Collection**: Ejemplos de requests
 10. 🧪 **Tests**: Unit tests para validaciones
@@ -485,6 +529,7 @@ async checkOverdueCompliances()
 ## 🧪 Testing y Validación
 
 ### Test Case 1: Resolución con Compliance Simple
+
 ```
 POST /api/claims/:id/resolve
 {
@@ -507,6 +552,7 @@ Expect:
 ```
 
 ### Test Case 2: Resolución con Múltiples Compliances
+
 ```
 POST /api/claims/:id/resolve
 {
@@ -525,6 +571,7 @@ Expect:
 ```
 
 ### Test Case 3: Validación de Responsable Inválido
+
 ```
 POST /api/claims/:id/resolve
 {
@@ -539,6 +586,7 @@ Expect:
 ```
 
 ### Test Case 4: Rechazo sin Compliances
+
 ```
 POST /api/claims/:id/resolve
 {
@@ -558,6 +606,7 @@ Expect:
 ## 📅 Cronograma
 
 ### Sprint 1 (Día 1-2)
+
 - ✅ Actualizar DTOs
 - ✅ Modificar ResolveClaimUseCase
 - ✅ Agregar validaciones
@@ -565,11 +614,13 @@ Expect:
 - ✅ Testing básico
 
 ### Sprint 2 (Día 3-4)
+
 - 📧 Implementar emails de compliance
 - 🧪 Testing completo
 - 📝 Documentación para frontend
 
 ### Sprint 3 (Día 5)
+
 - 🚀 Deploy a staging
 - ✅ Validación con casos reales
 - 📝 Guía de uso para moderadores
@@ -579,6 +630,7 @@ Expect:
 ## ✅ Checklist de Implementación
 
 ### Backend
+
 - [ ] DTO `CreateComplianceItemDto` creado
 - [ ] `ResolveClaimDto` actualizado con array `compliances`
 - [ ] `ResolveClaimUseCase.validateComplianceResponsibles()` implementado
@@ -589,6 +641,7 @@ Expect:
 - [ ] Emails de compliance implementados
 
 ### Testing
+
 - [ ] Test: Resolución con 1 compliance
 - [ ] Test: Resolución con múltiples compliances
 - [ ] Test: Validación de responsable inválido
@@ -598,6 +651,7 @@ Expect:
 - [ ] Test: Sistema de consecuencias (overdue)
 
 ### Documentación
+
 - [ ] Frontend guide actualizada
 - [ ] Postman collection con ejemplos
 - [ ] README actualizado
@@ -607,28 +661,32 @@ Expect:
 ## 🎯 Resultados Esperados
 
 ### Para Moderadores
+
 ✅ Control total sobre compliances  
 ✅ Instrucciones personalizadas por caso  
 ✅ Flexibilidad en plazos y tipos  
-✅ Visibilidad de cumplimientos pendientes  
+✅ Visibilidad de cumplimientos pendientes
 
 ### Para Usuarios
+
 ✅ Claridad sobre qué deben hacer  
 ✅ Proceso simple de subida de evidencia  
 ✅ Feedback inmediato de moderadores  
-✅ Sistema justo de consecuencias progresivas  
+✅ Sistema justo de consecuencias progresivas
 
 ### Para el Sistema
+
 ✅ Automatización de consecuencias  
 ✅ Trazabilidad completa  
 ✅ Reducción de carga manual  
-✅ Mejora en tiempos de resolución  
+✅ Mejora en tiempos de resolución
 
 ---
 
 ## 📞 Soporte y Dudas
 
 Para cualquier duda sobre la implementación, revisar:
+
 - `SISTEMA-COMPLIANCE-IMPLEMENTACION-COMPLETA.md`
 - `FRONTEND-GUIA-COMPLIANCES.md`
 - `FLUJO-COMPLETO-RECLAMOS-CUMPLIMIENTO.md`

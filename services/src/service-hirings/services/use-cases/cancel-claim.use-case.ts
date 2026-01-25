@@ -4,8 +4,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersClientService } from '../../../common/services/users-client.service';
 import { EmailService } from '../../../common/services/email.service';
+import { UsersClientService } from '../../../common/services/users-client.service';
 import { ClaimStatus } from '../../enums/claim.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
@@ -22,12 +22,16 @@ export class CancelClaimUseCase {
   async execute(params: { claimId: string; userId: number }) {
     const claim = await this.claimRepository.findById(params.claimId);
     if (!claim) {
-      throw new NotFoundException(`Reclamo con ID ${params.claimId} no encontrado`);
+      throw new NotFoundException(
+        `Reclamo con ID ${params.claimId} no encontrado`,
+      );
     }
 
     // Solo el denunciante puede cancelar.
     if (Number(claim.claimantUserId) !== Number(params.userId)) {
-      throw new UnauthorizedException('Solo el denunciante puede cancelar el reclamo');
+      throw new UnauthorizedException(
+        'Solo el denunciante puede cancelar el reclamo',
+      );
     }
 
     // No permitir cancelar reclamos cerrados.
@@ -118,9 +122,7 @@ export class CancelClaimUseCase {
       const claimantEmail = claimant?.email;
       const respondentEmail = respondent?.email;
       const claimantName =
-        claimant?.profile?.firstName ||
-        claimant?.profile?.name ||
-        'Usuario';
+        claimant?.profile?.firstName || claimant?.profile?.name || 'Usuario';
       const respondentName =
         respondent?.profile?.firstName ||
         respondent?.profile?.name ||

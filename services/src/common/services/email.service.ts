@@ -56,6 +56,7 @@ export abstract class EmailService {
       resolution: string;
       resolutionType?: string | null;
     },
+    compliances?: any[],
   ): Promise<void>;
 
   /**
@@ -121,5 +122,52 @@ export abstract class EmailService {
       deadline: Date;
       originalDeadlineDays: number;
     }>,
+  ): Promise<void>;
+
+  /**
+   * Envía un email cuando el usuario envía evidencia de cumplimiento
+   */
+  abstract sendComplianceSubmittedEmail(
+    moderatorEmail: string,
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      userNotes?: string | null;
+      evidenceUrls?: string[] | null;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email cuando el moderador aprueba un compliance
+   */
+  abstract sendComplianceApprovedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      moderatorNotes?: string | null;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email cuando el moderador rechaza un compliance
+   */
+  abstract sendComplianceRejectedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      rejectionReason?: string | null;
+      rejectionCount: number;
+    },
   ): Promise<void>;
 }

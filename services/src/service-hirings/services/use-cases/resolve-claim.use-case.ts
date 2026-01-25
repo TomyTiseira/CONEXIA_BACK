@@ -6,8 +6,8 @@ import {
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ResolveClaimDto } from '../../dto/resolve-claim.dto';
-import { Claim } from '../../entities/claim.entity';
 import { ClaimCompliance } from '../../entities/claim-compliance.entity';
+import { Claim } from '../../entities/claim.entity';
 import { ClaimStatus } from '../../enums/claim.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
@@ -91,7 +91,11 @@ export class ResolveClaimUseCase {
 
     // 6. Crear compliances si fueron proporcionados
     const createdCompliances: ClaimCompliance[] = [];
-    if (compliances && compliances.length > 0 && status === ClaimStatus.RESOLVED) {
+    if (
+      compliances &&
+      compliances.length > 0 &&
+      status === ClaimStatus.RESOLVED
+    ) {
       for (const complianceData of compliances) {
         try {
           const compliance = await this.createComplianceUseCase.execute({
@@ -245,46 +249,36 @@ export class ResolveClaimUseCase {
 
       // Enviar email al cliente
       if (client?.email) {
+        // Filtrar compliances asignados al cliente
+        const clientCompliances = compliances.filter(
+          (c) => Number(c.responsibleUserId) === hiring.userId,
+        );
+
         await this.emailService.sendClaimResolvedEmail(
           client.email,
           clientName,
           claimData,
+          clientCompliances,
         );
 
-        // Si tiene compliances asignados, enviar email adicional
-        const clientCompliances = compliances.filter(
-          (c) => c.responsibleUserId === String(hiring.userId),
-        );
-        if (clientCompliances.length > 0) {
-          await this.emailService.sendComplianceCreatedEmail(
-            client.email,
-            clientName,
-            claimData,
-            clientCompliances,
-          );
-        }
+        // Ya no enviamos email adicional, todo va en sendClaimResolvedEmail
       }
 
       // Enviar email al proveedor
       if (provider?.email) {
+        // Filtrar compliances asignados al proveedor
+        const providerCompliances = compliances.filter(
+          (c) => Number(c.responsibleUserId) === hiring.service.userId,
+        );
+
         await this.emailService.sendClaimResolvedEmail(
           provider.email,
           providerName,
           claimData,
+          providerCompliances,
         );
 
-        // Si tiene compliances asignados, enviar email adicional
-        const providerCompliances = compliances.filter(
-          (c) => c.responsibleUserId === String(hiring.service.userId),
-        );
-        if (providerCompliances.length > 0) {
-          await this.emailService.sendComplianceCreatedEmail(
-            provider.email,
-            providerName,
-            claimData,
-            providerCompliances,
-          );
-        }
+        // Ya no enviamos email adicional, todo va en sendClaimResolvedEmail
       }
     } catch (error) {
       console.error(

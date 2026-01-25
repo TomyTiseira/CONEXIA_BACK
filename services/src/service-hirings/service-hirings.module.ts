@@ -36,6 +36,7 @@ import { ServiceHiringValidationService } from './services/service-hiring-valida
 import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
 import { AddObservationsUseCase } from './services/use-cases/add-observations.use-case';
+import { CancelClaimUseCase } from './services/use-cases/cancel-claim.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
 import { CheckOverdueCompliancesUseCase } from './services/use-cases/compliance/check-overdue-compliances.use-case';
 import { CreateComplianceUseCase } from './services/use-cases/compliance/create-compliance.use-case';
@@ -44,7 +45,6 @@ import { PeerReviewComplianceUseCase } from './services/use-cases/compliance/pee
 import { SubmitComplianceByClaimUseCase } from './services/use-cases/compliance/submit-compliance-by-claim.use-case';
 import { SubmitComplianceUseCase } from './services/use-cases/compliance/submit-compliance.use-case';
 import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
-import { CancelClaimUseCase } from './services/use-cases/cancel-claim.use-case';
 import { CreateClaimUseCase } from './services/use-cases/create-claim.use-case';
 import { CreateDeliveryUseCase } from './services/use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './services/use-cases/create-quotation-with-deliverables.use-case';

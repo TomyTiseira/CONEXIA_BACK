@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsEnum,
   IsInt,
@@ -12,7 +14,6 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ClaimResolutionType, ClaimStatus } from '../enums/claim.enum';
 import { ComplianceType } from '../enums/compliance.enum';
 
@@ -88,7 +89,7 @@ export class ResolveClaimDto {
   @IsArray({ message: 'compliances debe ser un array' })
   @ValidateNested({ each: true })
   @Type(() => CreateComplianceItemDto)
-  @Max(5, {
+  @ArrayMaxSize(5, {
     message: 'No se pueden asignar más de 5 compliances por resolución',
   })
   compliances?: CreateComplianceItemDto[];

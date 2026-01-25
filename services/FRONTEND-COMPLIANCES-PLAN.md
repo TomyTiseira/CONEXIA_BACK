@@ -1,6 +1,7 @@
 # 📱 Plan de Implementación Frontend: Visualización y Gestión de Compliances
 
 ## 📋 Índice
+
 1. [Visión General](#visión-general)
 2. [Datos del Backend](#datos-del-backend)
 3. [Modificaciones en Tablas](#modificaciones-en-tablas)
@@ -15,6 +16,7 @@
 ## 🎯 Visión General
 
 ### Objetivos
+
 - ✅ **Tablas**: Mostrar indicador visual cuando claim tiene compliances
 - ✅ **Detalle**: Sección dedicada para listar compliances del claim
 - ✅ **Acciones**: Permitir subir evidencia de cumplimiento
@@ -26,9 +28,11 @@
 ## 📦 Datos del Backend
 
 ### 1. Lista de Reclamos (Admin)
+
 **Endpoint**: `GET /api/claims`
 
 **Campo nuevo a usar**: `compliance`
+
 ```json
 {
   "claim": {
@@ -49,9 +53,11 @@
 ---
 
 ### 2. Mis Reclamos (Usuario)
+
 **Endpoint**: `GET /api/claims/my-claims`
 
 **Campo nuevo a usar**: `compliance`
+
 ```json
 {
   "id": "abc-123",
@@ -68,9 +74,11 @@
 ---
 
 ### 3. Detalle del Reclamo
+
 **Endpoint**: `GET /api/claims/:id/detail`
 
 **Campo nuevo a usar**: `compliances` (array)
+
 ```json
 {
   "claim": {
@@ -106,6 +114,7 @@
 **Cambio en columna "Estado"**:
 
 Actualmente solo muestra el badge del claim status. Necesitamos agregar:
+
 - Badge del claim status (resolved, rejected, etc.)
 - **Nuevo**: Badge de compliance si existe
 
@@ -120,7 +129,7 @@ Actualmente solo muestra el badge del claim status. Necesitamos agregar:
   <div className="flex flex-col gap-1">
     <ClaimStatusBadge status={claim.status} />
     {claimData.compliance && (
-      <ComplianceStatusBadge 
+      <ComplianceStatusBadge
         status={claimData.compliance.status}
         complianceType={claimData.compliance.complianceType}
       />
@@ -148,7 +157,7 @@ Actualmente solo muestra el badge del claim status. Necesitamos agregar:
 <tbody>
   <td className="px-6 py-4 whitespace-nowrap">
     {claimData.compliance ? (
-      <ComplianceStatusBadge 
+      <ComplianceStatusBadge
         status={claimData.compliance.status}
         complianceType={claimData.compliance.complianceType}
       />
@@ -206,39 +215,49 @@ Actualmente solo muestra el badge del claim status. Necesitamos agregar:
 Después de mostrar la resolución del claim, agregar sección de compliances:
 
 ```jsx
-{/* Sección de Resolución (existente) */}
-{claim.resolution && (
-  <div className="bg-blue-50 p-4 rounded-lg">
-    <h4 className="font-semibold text-blue-900 mb-2">Resolución del Moderador</h4>
-    <p className="text-sm text-blue-800">{claim.resolution}</p>
-  </div>
-)}
-
-{/* NUEVA SECCIÓN: Compromisos */}
-{compliances && compliances.length > 0 && (
-  <div className="mt-6">
-    <div className="flex items-center justify-between mb-4">
-      <h4 className="text-lg font-bold text-gray-900">
-        Compromisos Asignados ({compliances.length})
+{
+  /* Sección de Resolución (existente) */
+}
+{
+  claim.resolution && (
+    <div className="bg-blue-50 p-4 rounded-lg">
+      <h4 className="font-semibold text-blue-900 mb-2">
+        Resolución del Moderador
       </h4>
-      <span className="text-xs text-gray-500">
-        {compliances.filter(c => c.status === 'pending').length} pendientes
-      </span>
+      <p className="text-sm text-blue-800">{claim.resolution}</p>
     </div>
+  );
+}
 
-    <div className="space-y-4">
-      {compliances.map((compliance, index) => (
-        <ComplianceCard
-          key={compliance.id}
-          compliance={compliance}
-          claimData={claimData}
-          onUploadEvidence={() => handleOpenUploadModal(compliance)}
-          canUpload={canUserUploadEvidence(compliance)}
-        />
-      ))}
+{
+  /* NUEVA SECCIÓN: Compromisos */
+}
+{
+  compliances && compliances.length > 0 && (
+    <div className="mt-6">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-lg font-bold text-gray-900">
+          Compromisos Asignados ({compliances.length})
+        </h4>
+        <span className="text-xs text-gray-500">
+          {compliances.filter((c) => c.status === 'pending').length} pendientes
+        </span>
+      </div>
+
+      <div className="space-y-4">
+        {compliances.map((compliance, index) => (
+          <ComplianceCard
+            key={compliance.id}
+            compliance={compliance}
+            claimData={claimData}
+            onUploadEvidence={() => handleOpenUploadModal(compliance)}
+            canUpload={canUserUploadEvidence(compliance)}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-)}
+  );
+}
 ```
 
 ---
@@ -284,10 +303,13 @@ const COMPLIANCE_STATUS_CONFIG = {
 };
 
 export const ComplianceStatusBadge = ({ status, complianceType }) => {
-  const config = COMPLIANCE_STATUS_CONFIG[status] || COMPLIANCE_STATUS_CONFIG.pending;
-  
+  const config =
+    COMPLIANCE_STATUS_CONFIG[status] || COMPLIANCE_STATUS_CONFIG.pending;
+
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}>
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}
+    >
       <span>{config.icon}</span>
       <span>{config.label}</span>
     </span>
@@ -302,16 +324,29 @@ export const ComplianceStatusBadge = ({ status, complianceType }) => {
 **Archivo**: `components/claims/ComplianceCard.jsx`
 
 ```jsx
-import { FaUpload, FaCheckCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import {
+  FaUpload,
+  FaCheckCircle,
+  FaClock,
+  FaExclamationTriangle,
+} from 'react-icons/fa';
 import { ComplianceStatusBadge } from './ComplianceStatusBadge';
 
-export const ComplianceCard = ({ compliance, claimData, onUploadEvidence, canUpload }) => {
-  const isResponsible = compliance.responsibleUserId === String(claimData.currentUserId);
+export const ComplianceCard = ({
+  compliance,
+  claimData,
+  onUploadEvidence,
+  canUpload,
+}) => {
+  const isResponsible =
+    compliance.responsibleUserId === String(claimData.currentUserId);
   const daysRemaining = calculateDaysRemaining(compliance.deadline);
   const isUrgent = daysRemaining <= 2 && compliance.status === 'pending';
 
   return (
-    <div className={`border rounded-lg p-4 ${isUrgent ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}>
+    <div
+      className={`border rounded-lg p-4 ${isUrgent ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -334,13 +369,17 @@ export const ComplianceCard = ({ compliance, claimData, onUploadEvidence, canUpl
       </div>
 
       {/* Deadline */}
-      <div className={`flex items-center gap-2 mb-3 ${isUrgent ? 'text-red-700' : 'text-gray-600'}`}>
+      <div
+        className={`flex items-center gap-2 mb-3 ${isUrgent ? 'text-red-700' : 'text-gray-600'}`}
+      >
         <FaClock size={14} />
         <span className="text-sm font-medium">
           Plazo: {formatDate(compliance.deadline)}
         </span>
         {daysRemaining >= 0 && (
-          <span className={`text-xs ${isUrgent ? 'text-red-600' : 'text-gray-500'}`}>
+          <span
+            className={`text-xs ${isUrgent ? 'text-red-600' : 'text-gray-500'}`}
+          >
             ({daysRemaining} {daysRemaining === 1 ? 'día' : 'días'} restantes)
           </span>
         )}
@@ -353,14 +392,20 @@ export const ComplianceCard = ({ compliance, claimData, onUploadEvidence, canUpl
 
       {/* Instrucciones */}
       <div className="bg-gray-50 p-3 rounded-md mb-3">
-        <p className="text-xs font-semibold text-gray-700 mb-1">Instrucciones del Moderador:</p>
-        <p className="text-sm text-gray-800">{compliance.moderatorInstructions}</p>
+        <p className="text-xs font-semibold text-gray-700 mb-1">
+          Instrucciones del Moderador:
+        </p>
+        <p className="text-sm text-gray-800">
+          {compliance.moderatorInstructions}
+        </p>
       </div>
 
       {/* Evidencia Subida (si existe) */}
       {compliance.evidenceUrls && compliance.evidenceUrls.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-semibold text-gray-700 mb-2">Evidencia enviada:</p>
+          <p className="text-xs font-semibold text-gray-700 mb-2">
+            Evidencia enviada:
+          </p>
           <div className="flex flex-wrap gap-2">
             {compliance.evidenceUrls.map((url, idx) => (
               <a
@@ -375,7 +420,9 @@ export const ComplianceCard = ({ compliance, claimData, onUploadEvidence, canUpl
             ))}
           </div>
           {compliance.userNotes && (
-            <p className="text-sm text-gray-600 mt-2 italic">"{compliance.userNotes}"</p>
+            <p className="text-sm text-gray-600 mt-2 italic">
+              "{compliance.userNotes}"
+            </p>
           )}
         </div>
       )}
@@ -464,7 +511,12 @@ import { useState } from 'react';
 import { FaTimes, FaUpload, FaTrash } from 'react-icons/fa';
 import { uploadComplianceEvidence } from '@/services/api/claims';
 
-export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, onSuccess }) => {
+export const UploadComplianceEvidenceModal = ({
+  compliance,
+  claimData,
+  onClose,
+  onSuccess,
+}) => {
   const [files, setFiles] = useState([]);
   const [userResponse, setUserResponse] = useState('');
   const [loading, setLoading] = useState(false);
@@ -475,13 +527,13 @@ export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, 
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    
+
     if (files.length + selectedFiles.length > MAX_FILES) {
       setError(`Máximo ${MAX_FILES} archivos permitidos`);
       return;
     }
 
-    const oversized = selectedFiles.filter(f => f.size > MAX_FILE_SIZE);
+    const oversized = selectedFiles.filter((f) => f.size > MAX_FILE_SIZE);
     if (oversized.length > 0) {
       setError('Algunos archivos exceden el tamaño máximo de 10MB');
       return;
@@ -497,7 +549,7 @@ export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (files.length === 0) {
       setError('Debes subir al menos 1 archivo como evidencia');
       return;
@@ -519,8 +571,10 @@ export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, 
       formData.append('userResponse', userResponse);
 
       await uploadComplianceEvidence(compliance.id, formData);
-      
-      onSuccess('Evidencia enviada exitosamente. El moderador la revisará pronto.');
+
+      onSuccess(
+        'Evidencia enviada exitosamente. El moderador la revisará pronto.',
+      );
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Error al enviar la evidencia');
@@ -583,7 +637,7 @@ export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, 
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Archivos de evidencia *
             </label>
-            
+
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
               <input
                 type="file"
@@ -673,6 +727,7 @@ export const UploadComplianceEvidenceModal = ({ compliance, claimData, onClose, 
 ## 🌐 Endpoints a Consumir
 
 ### 1. Listar Compliances de un Claim
+
 ```javascript
 // Ya viene en el detalle del claim
 GET /api/claims/:id/detail
@@ -687,6 +742,7 @@ Response:
 ---
 
 ### 2. Subir Evidencia de Compliance
+
 ```javascript
 POST /api/compliances/:complianceId/submit
 Content-Type: multipart/form-data
@@ -711,6 +767,7 @@ Response:
 ```
 
 **Implementación en services/api/claims.js**:
+
 ```javascript
 export const uploadComplianceEvidence = async (complianceId, formData) => {
   const response = await api.post(
@@ -720,7 +777,7 @@ export const uploadComplianceEvidence = async (complianceId, formData) => {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   );
   return response.data;
 };
@@ -729,6 +786,7 @@ export const uploadComplianceEvidence = async (complianceId, formData) => {
 ---
 
 ### 3. Ver Detalle de un Compliance (Opcional)
+
 ```javascript
 GET /api/compliances/:complianceId
 
@@ -858,11 +916,13 @@ const COMPLIANCE_COLORS = {
 ### Responsive
 
 **Desktop**:
+
 - Tabla completa con columna de compliance
 - Modal de detalle ancho (max-w-4xl)
 - Cards de compliance lado a lado (si hay múltiples)
 
 **Mobile**:
+
 - Cards apiladas
 - Badge de compliance debajo del estado del claim
 - Modal de detalle ocupa pantalla completa
@@ -873,18 +933,21 @@ const COMPLIANCE_COLORS = {
 ## 📝 Checklist de Implementación
 
 ### Fase 1: Visualización Básica
+
 - [ ] Crear `ComplianceStatusBadge.jsx`
 - [ ] Modificar `AdminClaimsTable` para mostrar compliance
 - [ ] Modificar `MyClaimsPage` tabla para mostrar compliance
 - [ ] Probar con datos mock
 
 ### Fase 2: Detalle del Compliance
+
 - [ ] Crear `ComplianceCard.jsx`
 - [ ] Modificar `ClaimDetailModal` para mostrar sección de compliances
 - [ ] Agregar lógica de permisos (canUserUploadEvidence)
 - [ ] Probar con datos reales del backend
 
 ### Fase 3: Subir Evidencia
+
 - [ ] Crear `UploadComplianceEvidenceModal.jsx`
 - [ ] Implementar `uploadComplianceEvidence` en api service
 - [ ] Conectar modal con flujo de detalle
@@ -892,6 +955,7 @@ const COMPLIANCE_COLORS = {
 - [ ] Toast de éxito/error
 
 ### Fase 4: Pulido y Testing
+
 - [ ] Responsive design (mobile + desktop)
 - [ ] Loading states
 - [ ] Error handling
@@ -903,17 +967,20 @@ const COMPLIANCE_COLORS = {
 ## 🚀 Notas Finales
 
 ### Prioridades
+
 1. **Alta**: ComplianceStatusBadge + visualización en tablas
 2. **Alta**: ComplianceCard + sección en detalle
 3. **Media**: UploadComplianceEvidenceModal
 4. **Baja**: Animaciones y transiciones
 
 ### Performance
+
 - Lazy load de modales (React.lazy + Suspense)
 - Debounce en búsquedas de compliance
 - Optimistic UI updates al subir evidencia
 
 ### Accesibilidad
+
 - ARIA labels en botones de acción
 - Focus trap en modales
 - Keyboard navigation (ESC para cerrar)

@@ -179,9 +179,7 @@ export class ClaimRepository {
             actionStatuses: COMPLIANCE_ACTION_REQUIRED_STATUSES,
           },
         );
-      } else if (
-        statusFilter === VIRTUAL_CLAIM_STATUSES.REVIEWING_COMPLIANCE
-      ) {
+      } else if (statusFilter === VIRTUAL_CLAIM_STATUSES.REVIEWING_COMPLIANCE) {
         qb.andWhere(
           `EXISTS (
             SELECT 1
@@ -293,7 +291,9 @@ export class ClaimRepository {
     } = filters;
 
     const statusFilter =
-      status !== undefined && status !== null ? String(status).trim() : undefined;
+      status !== undefined && status !== null
+        ? String(status).trim()
+        : undefined;
 
     const queryBuilder = this.repository
       .createQueryBuilder('claim')
@@ -343,7 +343,9 @@ export class ClaimRepository {
           },
         );
       } else {
-        queryBuilder.andWhere('claim.status = :status', { status: statusFilter });
+        queryBuilder.andWhere('claim.status = :status', {
+          status: statusFilter,
+        });
       }
     }
     if (claimantRole) {
