@@ -57,6 +57,22 @@ export class PostulationStatusService {
   }
 
   /**
+   * Obtiene el estado pendiente de evaluación
+   * @returns Estado pendiente de evaluación de postulación
+   */
+  async getPendingEvaluationStatus(): Promise<PostulationStatus> {
+    return this.getByCode(PostulationStatusCode.PENDING_EVALUATION);
+  }
+
+  /**
+   * Obtiene el estado de evaluación expirada
+   * @returns Estado de evaluación expirada de postulación
+   */
+  async getEvaluationExpiredStatus(): Promise<PostulationStatus> {
+    return this.getByCode(PostulationStatusCode.EVALUATION_EXPIRED);
+  }
+
+  /**
    * Valida si un estado existe y está activo
    * @param code - Código del estado a validar
    * @returns true si el estado existe y está activo

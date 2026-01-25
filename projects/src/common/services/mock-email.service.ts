@@ -99,6 +99,19 @@ export class MockEmailService extends EmailService {
     });
   }
 
+  async sendEvaluationExpiredEmail(
+    email: string,
+    userName: string,
+    projectTitle: string,
+  ): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Tu plazo de evaluación ha expirado - Conexia',
+      html: this.generateEvaluationExpiredEmailHTML(userName, projectTitle),
+      text: this.generateEvaluationExpiredEmailText(userName, projectTitle),
+    });
+  }
+
   protected async sendEmail(options: EmailOptions): Promise<void> {
     this.logger.log(`[MOCK EMAIL] Email would be sent to ${options.to}`);
     this.logger.log(`[MOCK EMAIL] Subject: ${options.subject}`);

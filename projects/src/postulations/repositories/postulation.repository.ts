@@ -69,19 +69,23 @@ export class PostulationRepository {
   }
 
   async findAndCountWithFilters(
-    whereClause: { projectId: number; statusId?: number },
+    whereClause: { projectId: number; statusId?: number; roleId?: number },
     page: number = 1,
     limit: number = 10,
   ): Promise<[Postulation[], number]> {
     const skip = (page - 1) * limit;
 
     // Construir el where clause dinámicamente
-    const where: { projectId: number; statusId?: number } = {
+    const where: { projectId: number; statusId?: number; roleId?: number } = {
       projectId: whereClause.projectId,
     };
 
     if (whereClause.statusId) {
       where.statusId = whereClause.statusId;
+    }
+
+    if (whereClause.roleId) {
+      where.roleId = whereClause.roleId;
     }
 
     // Obtener postulaciones con ordenamiento especial: estado activo primero, luego por fecha

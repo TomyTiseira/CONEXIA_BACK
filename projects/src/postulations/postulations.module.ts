@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
 import { ProjectsModule } from '../projects/projects.module';
@@ -11,6 +12,7 @@ import { ProjectRole } from '../projects/entities/project-role.entity';
 import { PostulationStatusRepository } from './repositories/postulation-status.repository';
 import { PostulationRepository } from './repositories/postulation.repository';
 import { PostulationOperationsService } from './services/postulation-operations.service';
+import { PostulationSchedulerService } from './services/postulation-scheduler.service';
 import { PostulationStatusService } from './services/postulation-status.service';
 import { PostulationTransformService } from './services/postulation-transform.service';
 import { PostulationValidationService } from './services/postulation-validation.service';
@@ -40,9 +42,16 @@ import { SubmitEvaluationUseCase } from './services/use-cases/submit-evaluation.
     PostulationValidationService,
     PostulationOperationsService,
     PostulationTransformService,
+    PostulationSchedulerService,
   ],
   imports: [
-  TypeOrmModule.forFeature([Postulation, PostulationStatus, PostulationAnswer, ProjectRole]),
+    ScheduleModule.forRoot(),
+    TypeOrmModule.forFeature([
+      Postulation,
+      PostulationStatus,
+      PostulationAnswer,
+      ProjectRole,
+    ]),
     SharedModule,
     CommonModule,
     forwardRef(() => ProjectsModule),

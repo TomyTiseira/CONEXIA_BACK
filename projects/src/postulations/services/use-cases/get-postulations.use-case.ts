@@ -21,7 +21,7 @@ export class GetPostulationsUseCase {
     getPostulationsDto: GetPostulationsDto,
     currentUserId: number,
   ): Promise<GetPostulationsResponseDto> {
-    const { projectId, statusId, page = 1, limit = 10 } = getPostulationsDto;
+    const { projectId, statusId, roleId, page = 1, limit = 10 } = getPostulationsDto;
 
     // Verificar que el usuario sea el dueño del proyecto
     const project = await this.projectsService.getProjectById({
@@ -43,6 +43,10 @@ export class GetPostulationsUseCase {
       whereClause.statusId = statusId;
     }
 
+    if (roleId) {
+      whereClause.roleId = roleId;
+    }
+
     // Obtener postulaciones con paginación y ordenamiento especial
     const [postulations, total] =
       await this.postulationRepository.findAndCountWithFilters(
@@ -58,8 +62,15 @@ export class GetPostulationsUseCase {
     const transformedPostulations =
       this.postulationTransformService.transformManyToResponseDto(postulations);
 
+    // Mapear los roles del proyecto
+    const roles = (project.roles || []).map((role) => ({
+      id: role.id,
+      title: role.title,
+    }));
+
     return {
       postulations: transformedPostulations,
+      roles,
       pagination,
     };
   }
