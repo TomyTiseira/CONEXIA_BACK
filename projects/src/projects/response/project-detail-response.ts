@@ -44,6 +44,8 @@ export interface ProjectDetailResponse {
   endDate?: Date;
   isOwner: boolean;
   approvedApplications: number; // Cantidad de postulaciones aprobadas para el proyecto
+  postulationsCount: number; // Cantidad total de postulaciones del proyecto
+  rolesCount: number; // Cantidad de roles que tiene el proyecto
   hasReported: boolean; // Indica si el usuario actual ya reportó este proyecto
   userPostulationStatus: string | null; // Estado de la postulación del usuario actual (ACTIVE, ACCEPTED, REJECTED, etc.) o null si no ha aplicado
   userEvaluationDeadline: Date | null; // Fecha límite para completar la evaluación técnica (solo si está en PENDING_EVALUATION)
