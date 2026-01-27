@@ -22,6 +22,8 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - NODE_ENV=${NODE_ENV}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   users:
     build: ./users
@@ -73,9 +75,10 @@ services:
       -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${USERS_DB_USER} -d ${USERS_DB_NAME}"]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   projects:
     build: ./projects
@@ -124,9 +127,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${PROJECTS_DB_USER} -d ${PROJECTS_DB_NAME}",
         ]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   communities:
     build: ./communities
@@ -176,9 +180,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${COMMUNITIES_DB_USER} -d ${COMMUNITIES_DB_NAME}",
         ]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   services:
     build: ./services
@@ -208,6 +213,8 @@ services:
       - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
       - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
       - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   services-db:
     build:
@@ -234,9 +241,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${SERVICES_DB_USER} -d ${SERVICES_DB_NAME}",
         ]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   nexo:
     build: ./nexo
@@ -275,9 +283,10 @@ services:
       -c log_timezone='America/Argentina/Buenos_Aires'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${NEXO_DB_USER} -d ${NEXO_DB_NAME}"]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   memberships:
     build: ./memberships
@@ -330,9 +339,10 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${MEMBERSHIPS_DB_USER} -d ${MEMBERSHIPS_DB_NAME}",
         ]
+      start_period: 60s
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
   # Configurado para fallar silenciosamente si el endpoint ya existe
