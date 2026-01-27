@@ -1,19 +1,13 @@
 services:
   nats-server:
     image: nats:2.10.25-alpine3.21
-    ports:
-      - "4222:4222"
-      - "8222:8222"
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.prod
     ports:
       - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
-    volumes:
-      - ./api-gateway/src:/src/app/src
-      - ./api-gateway/uploads:/src/app/uploads
-      - ./api-gateway/uploads/cv:/src/app/uploads/cv
-    command: npm run start:dev
     depends_on:
       - nats-server
     environment:
@@ -22,15 +16,11 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - NODE_ENV=${NODE_ENV}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   users:
-    build: ./users
-    volumes:
-      - ./users/src:/src/app/src
-      - ./api-gateway/uploads:/src/app/uploads
-    command: npm run start:dev
+    build:
+      context: ./users
+      dockerfile: Dockerfile.prod
     depends_on:
       users-db:
         condition: service_healthy
@@ -54,8 +44,6 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   users-db:
     build:
@@ -84,10 +72,9 @@ services:
       retries: 20
 
   projects:
-    build: ./projects
-    volumes:
-      - ./projects/src:/src/app/src
-    command: npm run start:dev
+    build: 
+      context: ./projects
+      dockerfile: Dockerfile.prod
     depends_on:
       projects-db:
         condition: service_healthy
@@ -105,8 +92,6 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   projects-db:
     build:
@@ -139,10 +124,9 @@ services:
       retries: 20
 
   communities:
-    build: ./communities
-    volumes:
-      - ./communities/src:/src/app/src
-    command: npm run start:dev
+    build:
+      context: ./communities
+      dockerfile: Dockerfile.prod
     depends_on:
       communities-db:
         condition: service_healthy
@@ -161,8 +145,6 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   communities-db:
     build:
@@ -195,10 +177,9 @@ services:
       retries: 20
 
   services:
-    build: ./services
-    volumes:
-      - ./services/src:/src/app/src
-    command: npm run start:dev
+    build: 
+      context: ./services
+      dockerfile: Dockerfile.prod
     depends_on:
       services-db:
         condition: service_healthy
@@ -223,8 +204,6 @@ services:
       - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
       - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
       - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   services-db:
     build:
@@ -257,10 +236,9 @@ services:
       retries: 20
 
   nexo:
-    build: ./nexo
-    volumes:
-      - ./nexo/src:/src/app/src
-    command: npm run start:dev
+    build: 
+      context: ./nexo
+      dockerfile: Dockerfile.prod
     depends_on:
       nexo-db:
         condition: service_healthy
@@ -272,8 +250,6 @@ services:
       - DB_PASSWORD=${NEXO_DB_PASSWORD}
       - DB_DATABASE=${NEXO_DB_NAME}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   nexo-db:
     build:
@@ -302,10 +278,9 @@ services:
       retries: 20
 
   memberships:
-    build: ./memberships
-    volumes:
-      - ./memberships/src:/src/app/src
-    command: npm run start:dev
+    build: 
+      context: ./memberships
+      dockerfile: Dockerfile.prod
     depends_on:
       memberships-db:
         condition: service_healthy
@@ -327,8 +302,6 @@ services:
       - MERCADOPAGO_BACK_URL=${MERCADOPAGO_BACK_URL}
       - MERCADOPAGO_NOTIFICATION_URL=${MERCADOPAGO_NOTIFICATION_URL}
       - MERCADOPAGO_CURRENCY_ID=${MERCADOPAGO_CURRENCY_ID:-ARS}
-      - CHOKIDAR_USEPOLLING=true
-      - CHOKIDAR_INTERVAL=300
 
   memberships-db:
     build:
