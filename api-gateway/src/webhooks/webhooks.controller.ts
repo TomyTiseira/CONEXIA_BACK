@@ -8,6 +8,8 @@ import {
   Query,
   Req,
   Res,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import * as crypto from 'crypto';
@@ -20,20 +22,23 @@ interface MercadoPagoWebhookQuery {
   type?: string;
   id?: string;
   topic?: string;
+  [key: string]: any; // Permitir campos adicionales
 }
 
 export interface MercadoPagoWebhookDto {
-  action: string;
-  api_version: string;
-  data: {
+  action?: string;
+  api_version?: string;
+  data?: {
     id: string;
+    [key: string]: any; // Permitir campos adicionales en data
   };
-  date_created: string;
-  id: string;
-  live_mode: boolean;
-  type: string;
-  user_id: number;
+  date_created?: string;
+  id?: string;
+  live_mode?: boolean;
+  type?: string;
+  user_id?: number;
   topic?: string;
+  [key: string]: any; // Permitir campos adicionales en el body
 }
 
 @Controller('webhooks')
@@ -52,6 +57,13 @@ export class WebhooksController {
   }
 
   @Post('mercadopago')
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: false, // No eliminar campos no declarados
+      forbidNonWhitelisted: false, // No rechazar campos adicionales
+    }),
+  )
   handleMercadoPagoWebhook(
     @Query() query: MercadoPagoWebhookQuery,
     @Body() body: MercadoPagoWebhookDto,
@@ -60,6 +72,9 @@ export class WebhooksController {
     @Res() res: Response,
   ) {
     try {
+      // Agregar header para omitir página de verificación de ngrok
+      res.setHeader('ngrok-skip-browser-warning', 'true');
+
       console.log('🔔 MercadoPago Webhook received:', {
         query,
         body,
@@ -104,7 +119,7 @@ export class WebhooksController {
 
       // 2. Detectar tipo de webhook basado en el ID recibido
       const webhookId = query['data.id'] || body.data?.id || query.id;
-      const webhookType = query.type || body.type || query.topic;
+      const webhookType = query.type || body.type || query.topic || body.topic;
 
       console.log('🔍 Analyzing webhook:', {
         webhookId,
@@ -118,11 +133,14 @@ export class WebhooksController {
       });
 
       console.log('🎯 WEBHOOK TYPE DETECTION:', {
-        isPayment: webhookType === 'payment',
+        webhookType,
+        'webhookType === payment': webhookType === 'payment',
+        'typeof webhookType': typeof webhookType,
         isSubscriptionAuthorizedPayment:
           webhookType === 'subscription_authorized_payment',
         isSubscriptionPreapproval: webhookType === 'subscription_preapproval',
         isPreapproval: webhookType === 'preapproval',
+        isMerchantOrder: webhookType === 'merchant_order',
         isPlanSuscripciones:
           webhookType === 'subscription' ||
           webhookType === 'plan' ||
@@ -130,8 +148,30 @@ export class WebhooksController {
           String(webhookType).includes('preapproval'),
       });
 
+      // Ignorar webhooks de merchant_order (no son pagos reales)
+      if (webhookType === 'merchant_order') {
+        console.log(
+          '🚫 Ignoring merchant_order webhook - not a payment:',
+          webhookId,
+        );
+        return res.status(200).json({
+          status: 'ok',
+          message: 'Merchant order webhook acknowledged but not processed',
+        });
+      }
+
       // 3. Procesar webhooks de PAGOS (ID numérico simple)
-      if (webhookType === 'payment' && webhookId && !webhookId.includes('-')) {
+      const isPaymentWebhook = webhookType === 'payment';
+      const isSimplePaymentId = webhookId && !webhookId.includes('-');
+
+      console.log('🔎 Payment webhook validation:', {
+        isPaymentWebhook,
+        isSimplePaymentId,
+        webhookId,
+        willProcess: isPaymentWebhook && isSimplePaymentId,
+      });
+
+      if (isPaymentWebhook && isSimplePaymentId) {
         console.log('💰 Processing PAYMENT webhook:', {
           paymentId: webhookId,
           action: body.action,
@@ -276,14 +316,79 @@ export class WebhooksController {
 
         console.log('📤 Preference webhook sent to services microservice');
       } else {
-        console.log(
-          'ℹ️ Webhook ignored - not a recognized payment/preference update:',
+        console.error(
+          '⚠️ Webhook ignored - not a recognized payment/preference update:',
           {
             type: webhookType,
             id: webhookId,
             action: body.action,
+            'query.type': query.type,
+            'body.type': body?.type,
+            'query.topic': query.topic,
+            'body.topic': body?.topic,
+            'query[data.id]': query['data.id'],
+            'body.data.id': body?.data?.id,
+            'query.id': query.id,
+            fullQuery: JSON.stringify(query),
+            fullBody: JSON.stringify(body),
           },
         );
+
+        // 🔥 FALLBACK: Intentar detectar si hay un ID de pago válido de todas formas
+        // PERO ignorar merchant_orders que ya fueron filtrados arriba
+        const possiblePaymentId = webhookId || query.id || body.id;
+        if (
+          possiblePaymentId &&
+          /^\d+$/.test(String(possiblePaymentId)) &&
+          webhookType !== 'merchant_order'
+        ) {
+          console.log(
+            '🔄 FALLBACK: Detected numeric ID, attempting to process as payment:',
+            possiblePaymentId,
+          );
+
+          // Enviar a microservicio de servicios
+          this.client
+            .send('process_payment_webhook', {
+              paymentId: String(possiblePaymentId),
+              action: body.action,
+              webhookData: body,
+            })
+            .subscribe({
+              next: (result) =>
+                console.log(
+                  '✅ Fallback payment webhook processed by services microservice:',
+                  result,
+                ),
+              error: (error) =>
+                console.error(
+                  '❌ Error processing fallback payment webhook in services:',
+                  error,
+                ),
+            });
+
+          // Enviar a microservicio de memberships (procesará si es suscripción)
+          this.client
+            .send('processSubscriptionPaymentWebhook', {
+              paymentId: parseInt(String(possiblePaymentId), 10),
+            })
+            .subscribe({
+              next: (result) =>
+                console.log(
+                  '✅ Fallback payment webhook processed by memberships microservice:',
+                  result,
+                ),
+              error: (error) =>
+                console.error(
+                  '❌ Error processing fallback payment webhook in memberships:',
+                  error,
+                ),
+            });
+
+          console.log(
+            '📤 Fallback payment webhook sent to both services and memberships microservices',
+          );
+        }
       }
 
       // 4. Responder 200 OK inmediatamente
