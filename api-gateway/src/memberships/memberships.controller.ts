@@ -79,7 +79,7 @@ export class MembershipsController {
   }
 
   @Get('plans/:id')
-  @AuthRoles([ROLES.ADMIN, ROLES.USER])
+  @AuthRoles([ROLES.ADMIN, ROLES.USER, ROLES.MODERATOR])
   getPlanById(
     @Param('id') id: string,
     @Query('includeInactive') includeInactive?: string,
