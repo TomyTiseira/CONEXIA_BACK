@@ -27,8 +27,25 @@ export class ProcessPreapprovalWebhookUseCase {
 
       // Obtener información del preapproval desde MercadoPago
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const preapprovalData: any =
-        await this.mercadoPagoService.getSubscription(preapprovalId);
+      let preapprovalData: any;
+      try {
+        preapprovalData =
+          await this.mercadoPagoService.getSubscription(preapprovalId);
+      } catch (error) {
+        // Si el preapproval no es válido para nuestro callerId, significa que es de otra cuenta
+        if (error.message?.includes('not valid for callerId')) {
+          this.logger.warn(
+            `⚠️ Preapproval ${preapprovalId} no pertenece a nuestras credenciales - ignorando webhook`,
+          );
+          return {
+            success: true,
+            message: 'Preapproval no pertenece a esta cuenta - ignorado',
+            subscriptionId: 0,
+          };
+        }
+        // Si es otro error, lo re-lanzamos
+        throw error;
+      }
 
       this.logger.log(
         `📋 Preapproval data: ${JSON.stringify(preapprovalData)}`,
