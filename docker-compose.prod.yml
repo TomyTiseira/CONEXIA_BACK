@@ -22,15 +22,10 @@ services:
       context: ./users
       dockerfile: Dockerfile.prod
     depends_on:
-      users-db:
-        condition: service_healthy
+      - nats-server
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - DB_HOST=users-db
-      - DB_PORT=${USERS_DB_PORT}
-      - DB_USERNAME=${USERS_DB_USER}
-      - DB_PASSWORD=${USERS_DB_PASSWORD}
-      - DB_DATABASE=${USERS_DB_NAME}
+      - DATABASE_URL=${USERS_DB_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURE=${SMTP_SECURE}
@@ -52,9 +47,7 @@ services:
     ports:
       - "${USERS_DB_PORT}:${USERS_DB_PORT}"
     environment:
-      - POSTGRES_USER=${USERS_DB_USER}
-      - POSTGRES_PASSWORD=${USERS_DB_PASSWORD}
-      - POSTGRES_DB=${USERS_DB_NAME}
+      - DATABASE_URL=${USERS_DB_URL}
     volumes:
       - ./users/postgres-data:/var/lib/postgresql/data
       - ./users/postgres-init:/docker-entrypoint-initdb.d
@@ -72,7 +65,7 @@ services:
       retries: 20
 
   projects:
-    build: 
+    build:
       context: ./projects
       dockerfile: Dockerfile.prod
     depends_on:
@@ -177,7 +170,7 @@ services:
       retries: 20
 
   services:
-    build: 
+    build:
       context: ./services
       dockerfile: Dockerfile.prod
     depends_on:
@@ -236,7 +229,7 @@ services:
       retries: 20
 
   nexo:
-    build: 
+    build:
       context: ./nexo
       dockerfile: Dockerfile.prod
     depends_on:
@@ -278,7 +271,7 @@ services:
       retries: 20
 
   memberships:
-    build: 
+    build:
       context: ./memberships
       dockerfile: Dockerfile.prod
     depends_on:

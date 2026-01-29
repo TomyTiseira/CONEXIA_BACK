@@ -13,8 +13,6 @@ async function bootstrap() {
   const logger = new Logger('ApiGateway');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  //const app = await NestFactory.create(AppModule);
-
   // Configurar como microservicio híbrido (HTTP + NATS)
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.NATS,
