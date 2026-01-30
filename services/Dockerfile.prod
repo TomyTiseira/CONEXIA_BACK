@@ -25,11 +25,15 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./dist
 
+# Copiar entrypoint de producción
+COPY entrypoint.prod.sh /usr/src/app/entrypoint.prod.sh
+RUN chmod +x /usr/src/app/entrypoint.prod.sh
+
 ENV NODE_ENV=production
 
 USER node
 
 EXPOSE 8080
 
-CMD [ "node", "dist/main.js" ]
+CMD ["/usr/src/app/entrypoint.prod.sh"]
 

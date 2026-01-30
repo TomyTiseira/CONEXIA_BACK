@@ -1,14 +1,21 @@
+import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Bank } from '../shared/entities/bank.entity';
 import { DigitalPlatform } from '../shared/entities/digital-platform.entity';
 
+dotenv.config();
+
 const dataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_DATABASE || 'users_db',
+  ...(process.env.DATABASE_URL
+    ? { url: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_DATABASE || 'users_db',
+      }),
   entities: [Bank, DigitalPlatform],
   synchronize: true,
 });

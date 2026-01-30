@@ -40,30 +40,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
-  users-db:
-    build:
-      context: ./users
-      dockerfile: Dockerfile.postgres
-    ports:
-      - "${USERS_DB_PORT}:${USERS_DB_PORT}"
-    environment:
-      - DATABASE_URL=${USERS_DB_URL}
-    volumes:
-      - ./users/postgres-data:/var/lib/postgresql/data
-      - ./users/postgres-init:/docker-entrypoint-initdb.d
-    command: >
-      postgres
-      -c listen_addresses='*'
-      -c max_connections=100
-      -c timezone='America/Argentina/Buenos_Aires'
-      -c log_timezone='America/Argentina/Buenos_Aires'
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${USERS_DB_USER} -d ${USERS_DB_NAME}"]
-      start_period: 60s
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
   projects:
     build:
       context: ./projects
@@ -174,15 +150,10 @@ services:
       context: ./services
       dockerfile: Dockerfile.prod
     depends_on:
-      services-db:
-        condition: service_healthy
+      - nats-server
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - DB_HOST=services-db
-      - DB_PORT=5432
-      - DB_USERNAME=${SERVICES_DB_USER}
-      - DB_PASSWORD=${SERVICES_DB_PASSWORD}
-      - DB_DATABASE=${SERVICES_DB_NAME}
+      - DATABASE_URL=${SERVICES_DB_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURE=${SMTP_SECURE}
@@ -197,36 +168,6 @@ services:
       - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
       - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
       - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
-
-  services-db:
-    build:
-      context: ./services
-      dockerfile: Dockerfile.postgres
-    ports:
-      - "${SERVICES_DB_PORT}:5432"
-    environment:
-      - POSTGRES_USER=${SERVICES_DB_USER}
-      - POSTGRES_PASSWORD=${SERVICES_DB_PASSWORD}
-      - POSTGRES_DB=${SERVICES_DB_NAME}
-    volumes:
-      - ./services/postgres-data:/var/lib/postgresql/data
-      - ./services/postgres-init:/docker-entrypoint-initdb.d
-    command: >
-      postgres
-      -c listen_addresses='*'
-      -c max_connections=100
-      -c timezone='America/Argentina/Buenos_Aires'
-      -c log_timezone='America/Argentina/Buenos_Aires'
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${SERVICES_DB_USER} -d ${SERVICES_DB_NAME}",
-        ]
-      start_period: 60s
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
   nexo:
     build:
