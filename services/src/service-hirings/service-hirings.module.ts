@@ -9,6 +9,7 @@ import { ComplianceController } from './controllers/compliance.controller';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
 import { ClaimCompliance } from './entities/claim-compliance.entity';
 import { Claim } from './entities/claim.entity';
+import { ComplianceSubmission } from './entities/compliance-submission.entity';
 import { Deliverable } from './entities/deliverable.entity';
 import { DeliveryAttachment } from './entities/delivery-attachment.entity';
 import { DeliverySubmission } from './entities/delivery-submission.entity';
@@ -18,6 +19,7 @@ import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
 import { ClaimComplianceRepository } from './repositories/claim-compliance.repository';
 import { ClaimRepository } from './repositories/claim.repository';
+import { ComplianceSubmissionRepository } from './repositories/compliance-submission.repository';
 import { DeliverableRepository } from './repositories/deliverable.repository';
 import { DeliveryAttachmentRepository } from './repositories/delivery-attachment.repository';
 import { DeliverySubmissionRepository } from './repositories/delivery-submission.repository';
@@ -117,6 +119,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ServiceHiringRepository,
     ClaimRepository,
     ClaimComplianceRepository,
+    ComplianceSubmissionRepository,
     ServiceHiringStatusRepository,
     PaymentRepository,
     PaymentModalityRepository,
@@ -144,6 +147,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
       DeliveryAttachment,
       Claim,
       ClaimCompliance,
+      ComplianceSubmission,
     ]),
     ScheduleModule.forRoot(),
     CommonModule,

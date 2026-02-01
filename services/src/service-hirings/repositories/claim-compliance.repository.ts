@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, IsNull, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { ClaimCompliance } from '../entities/claim-compliance.entity';
 import {
   ComplianceRequirement,
@@ -7,18 +8,30 @@ import {
 } from '../enums/compliance.enum';
 
 @Injectable()
-export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
-  constructor(private dataSource: DataSource) {
-    super(ClaimCompliance, dataSource.createEntityManager());
-  }
+export class ClaimComplianceRepository {
+  constructor(
+    @InjectRepository(ClaimCompliance)
+    private readonly repository: Repository<ClaimCompliance>,
+  ) {}
 
   /**
    * Encuentra compliances por claim ID
    */
   async findByClaimId(claimId: string): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: { claimId },
+      relations: ['submissions'],
       order: { orderNumber: 'ASC', createdAt: 'ASC' },
+    });
+  }
+
+  /**
+   * Encuentra un compliance por su ID
+   */
+  async findById(id: string): Promise<ClaimCompliance | null> {
+    return this.repository.findOne({
+      where: { id },
+      relations: ['submissions'],
     });
   }
 
@@ -27,8 +40,9 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    */
   async findByClaimIds(claimIds: string[]): Promise<ClaimCompliance[]> {
     if (!claimIds.length) return [];
-    return this.find({
+    return this.repository.find({
       where: { claimId: In(claimIds) },
+      relations: ['submissions'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -37,7 +51,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra compliances por usuario responsable
    */
   async findByResponsibleUser(userId: string): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: { responsibleUserId: userId },
       order: { deadline: 'ASC' },
     });
@@ -47,7 +61,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra compliances pendientes de un usuario
    */
   async findPendingByUser(userId: string): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: {
         responsibleUserId: userId,
         status: In([
@@ -66,9 +80,15 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
   async findOverdue(): Promise<ClaimCompliance[]> {
     const now = new Date();
 
-    return this.createQueryBuilder('compliance')
+    return this.repository
+      .createQueryBuilder('compliance')
       .where('compliance.status IN (:...statuses)', {
-        statuses: [ComplianceStatus.PENDING, ComplianceStatus.SUBMITTED],
+        statuses: [
+          ComplianceStatus.PENDING,
+          ComplianceStatus.SUBMITTED,
+          ComplianceStatus.OVERDUE,
+          ComplianceStatus.WARNING,
+        ],
       })
       .andWhere('compliance.appealed = false')
       .andWhere(
@@ -84,7 +104,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra compliances que necesitan revisión del moderador
    */
   async findPendingModeratorReview(): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: {
         status: In([
           ComplianceStatus.SUBMITTED,
@@ -100,7 +120,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra compliances que pueden ser revisados por peer
    */
   async findPendingPeerReview(claimId: string): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: {
         claimId,
         status: ComplianceStatus.SUBMITTED,
@@ -126,7 +146,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra el siguiente compliance en la cadena (si es secuencial)
    */
   async findNextInChain(complianceId: string): Promise<ClaimCompliance | null> {
-    return this.findOne({
+    return this.repository.findOne({
       where: {
         dependsOn: complianceId,
       },
@@ -137,7 +157,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Encuentra compliances paralelos de un claim
    */
   async findParallelCompliances(claimId: string): Promise<ClaimCompliance[]> {
-    return this.find({
+    return this.repository.find({
       where: {
         claimId,
         requirement: ComplianceRequirement.PARALLEL,
@@ -149,7 +169,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
    * Cuenta compliances por estado
    */
   async countByStatus(status: ComplianceStatus): Promise<number> {
-    return this.count({ where: { status } });
+    return this.repository.count({ where: { status } });
   }
 
   /**
@@ -162,7 +182,7 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
     averageCompletionDays: number;
     complianceRate: number;
   }> {
-    const compliances = await this.find({
+    const compliances = await this.repository.find({
       where: { responsibleUserId: userId },
     });
 
@@ -214,7 +234,8 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    return this.createQueryBuilder('compliance')
+    return this.repository
+      .createQueryBuilder('compliance')
       .where('compliance.status = :status', {
         status: ComplianceStatus.PENDING,
       })
@@ -224,5 +245,28 @@ export class ClaimComplianceRepository extends Repository<ClaimCompliance> {
       })
       .orderBy('compliance.deadline', 'ASC')
       .getMany();
+  }
+
+  /**
+   * Wrapper methods for direct Repository access (used by use cases)
+   */
+  async save(compliance: ClaimCompliance): Promise<ClaimCompliance> {
+    return this.repository.save(compliance);
+  }
+
+  async findOne(options: any): Promise<ClaimCompliance | null> {
+    return this.repository.findOne(options);
+  }
+
+  async find(options: any): Promise<ClaimCompliance[]> {
+    return this.repository.find(options);
+  }
+
+  async count(options?: any): Promise<number> {
+    return this.repository.count(options);
+  }
+
+  create(data: Partial<ClaimCompliance>): ClaimCompliance {
+    return this.repository.create(data);
   }
 }

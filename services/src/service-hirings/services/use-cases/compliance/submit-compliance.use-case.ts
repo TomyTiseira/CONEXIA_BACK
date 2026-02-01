@@ -11,6 +11,7 @@ import { ClaimCompliance } from '../../../entities/claim-compliance.entity';
 import { ComplianceStatus } from '../../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../../repositories/claim.repository';
+import { ComplianceSubmissionRepository } from '../../../repositories/compliance-submission.repository';
 
 /**
  * Use case para que un usuario envíe evidencias de cumplimiento
@@ -19,6 +20,7 @@ import { ClaimRepository } from '../../../repositories/claim.repository';
 export class SubmitComplianceUseCase {
   constructor(
     private readonly complianceRepository: ClaimComplianceRepository,
+    private readonly submissionRepository: ComplianceSubmissionRepository,
     private readonly claimRepository: ClaimRepository,
     private readonly emailService: EmailService,
     private readonly usersClientService: UsersClientService,
@@ -57,17 +59,35 @@ export class SubmitComplianceUseCase {
       );
     }
 
+    // VALIDAR QUE PUEDE SUBIR EVIDENCIA (permitir hasta 5 días vencido)
+    if (!compliance.canStillSubmit()) {
+      throw new BadRequestException(
+        'El plazo para subir evidencia ha expirado (máximo 5 días después del vencimiento)',
+      );
+    }
+
     // 4. Validar archivos si se requieren
-    if (compliance.requiresFiles && (!files || files.length === 0)) {
+    // Cuando viene de submit-compliance-by-claim, evidenceUrls ya contiene las rutas
+    // Cuando viene directo con files, files tiene los objetos de Multer
+    const hasEvidence =
+      (dto.evidenceUrls && dto.evidenceUrls.length > 0) ||
+      (files && files.length > 0);
+
+    if (compliance.requiresFiles && !hasEvidence) {
       throw new BadRequestException(
         'Este cumplimiento requiere archivos adjuntos',
       );
     }
 
-    // 5. Guardar URLs de evidencias (si hay archivos)
+    // 5. Guardar URLs de evidencias
     let evidenceUrls: string[] = [];
-    if (files && files.length > 0) {
-      // TODO: Implementar subida de archivos a storage
+
+    // Si ya vienen evidenceUrls procesadas (desde API Gateway), usarlas
+    if (dto.evidenceUrls && dto.evidenceUrls.length > 0) {
+      evidenceUrls = dto.evidenceUrls;
+    }
+    // Si vienen archivos sin procesar, generar rutas (modo directo)
+    else if (files && files.length > 0) {
       evidenceUrls = files.map(
         (file, index) =>
           `/uploads/compliances/${compliance.id}/${Date.now()}_${index}_${file.originalname}`,
@@ -80,31 +100,105 @@ export class SubmitComplianceUseCase {
     compliance.evidenceUrls = evidenceUrls.length > 0 ? evidenceUrls : null;
     compliance.userNotes = dto.userNotes || null;
 
+    // 7. Crear registro en la tabla de submissions para historial
+    await this.submissionRepository.createSubmission({
+      complianceId: compliance.id,
+      attemptNumber: compliance.currentAttempt,
+      evidenceUrls: evidenceUrls.length > 0 ? evidenceUrls : [],
+      userNotes: dto.userNotes || null,
+      submittedAt: new Date(),
+    });
+
     await this.complianceRepository.save(compliance);
 
     console.log(
-      `[SubmitComplianceUseCase] Compliance ${compliance.id} enviado por usuario ${dto.userId}`,
+      `[SubmitCompliance] Compliance ${compliance.id} enviado por usuario ${dto.userId} (Intento ${compliance.currentAttempt}/${compliance.maxAttempts})`,
     );
 
-    // Enviar email al moderador asignado
+    // Enviar emails de notificación
     try {
       const claim = compliance.claim;
-      const moderatorId = claim.assignedModeratorId;
+      const hiringTitle = claim.hiring?.service?.title || 'Servicio sin título';
 
+      // Obtener datos del usuario que envió la evidencia
+      const responsibleUser =
+        await this.usersClientService.getUserByIdWithRelations(
+          Number(dto.userId),
+        );
+      const responsibleFirstName =
+        responsibleUser?.profile?.firstName ||
+        responsibleUser?.profile?.name ||
+        'Usuario';
+      const responsibleLastName = responsibleUser?.profile?.lastName || '';
+      const responsibleUserName =
+        `${responsibleFirstName} ${responsibleLastName}`.trim();
+
+      // Email a la otra parte (cliente o proveedor, según quien NO sea el responsable)
+      // userId en ServiceHiring es el cliente
+      // service.userId es el proveedor
+      const clientUserId = claim.hiring.userId;
+      const providerUserId = claim.hiring.service?.userId;
+
+      const otherPartyUserId =
+        compliance.responsibleUserId === clientUserId.toString()
+          ? providerUserId
+          : clientUserId;
+
+      const otherPartyUser =
+        await this.usersClientService.getUserByIdWithRelations(
+          otherPartyUserId,
+        );
+
+      if (otherPartyUser) {
+        const otherPartyFirstName =
+          otherPartyUser.profile?.firstName ||
+          otherPartyUser.profile?.name ||
+          'Usuario';
+        const otherPartyLastName = otherPartyUser.profile?.lastName || '';
+        const otherPartyName =
+          `${otherPartyFirstName} ${otherPartyLastName}`.trim();
+
+        await this.emailService.sendComplianceEvidenceUploadedEmail(
+          otherPartyUser.email,
+          otherPartyName,
+          responsibleUserName,
+          false, // No es el usuario responsable
+          {
+            complianceId: compliance.id,
+            complianceType: compliance.complianceType,
+            claimId: compliance.claimId,
+            hiringTitle,
+            userNotes: compliance.userNotes,
+            attemptNumber: compliance.currentAttempt,
+          },
+        );
+      }
+
+      // Email al usuario que envió la evidencia (confirmación)
+      if (responsibleUser) {
+        await this.emailService.sendComplianceEvidenceUploadedEmail(
+          responsibleUser.email,
+          responsibleUserName,
+          responsibleUserName,
+          true, // Es el usuario responsable
+          {
+            complianceId: compliance.id,
+            complianceType: compliance.complianceType,
+            claimId: compliance.claimId,
+            hiringTitle,
+            userNotes: compliance.userNotes,
+            attemptNumber: compliance.currentAttempt,
+          },
+        );
+      }
+
+      // Email al moderador asignado
+      const moderatorId = claim.assignedModeratorId;
       if (moderatorId) {
         const moderator =
           await this.usersClientService.getUserByIdWithRelations(moderatorId);
-        const responsibleUser =
-          await this.usersClientService.getUserByIdWithRelations(
-            Number(dto.userId),
-          );
 
-        if (moderator && responsibleUser) {
-          const responsibleUserName =
-            responsibleUser.profile?.firstName ||
-            responsibleUser.profile?.name ||
-            'Usuario';
-
+        if (moderator) {
           await this.emailService.sendComplianceSubmittedEmail(
             moderator.email,
             responsibleUserName,
@@ -112,8 +206,7 @@ export class SubmitComplianceUseCase {
               complianceId: compliance.id,
               complianceType: compliance.complianceType,
               claimId: compliance.claimId,
-              hiringTitle:
-                claim.hiring?.service?.title || 'Servicio sin título',
+              hiringTitle,
               userNotes: compliance.userNotes,
               evidenceUrls: compliance.evidenceUrls,
             },

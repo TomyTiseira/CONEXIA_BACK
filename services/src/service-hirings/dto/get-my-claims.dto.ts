@@ -17,6 +17,10 @@ export class GetMyClaimsDto {
   status?: string;
 
   @IsOptional()
+  @IsString()
+  claimId?: string;
+
+  @IsOptional()
   @IsIn(['claimant', 'respondent', 'all'])
   role?: 'claimant' | 'respondent' | 'all' = 'all';
 

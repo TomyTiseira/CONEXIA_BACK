@@ -249,36 +249,24 @@ export class ResolveClaimUseCase {
 
       // Enviar email al cliente
       if (client?.email) {
-        // Filtrar compliances asignados al cliente
-        const clientCompliances = compliances.filter(
-          (c) => Number(c.responsibleUserId) === hiring.userId,
-        );
-
         await this.emailService.sendClaimResolvedEmail(
           client.email,
           clientName,
+          hiring.userId, // ID del destinatario (cliente)
           claimData,
-          clientCompliances,
+          compliances, // Enviar TODOS los compromisos
         );
-
-        // Ya no enviamos email adicional, todo va en sendClaimResolvedEmail
       }
 
       // Enviar email al proveedor
       if (provider?.email) {
-        // Filtrar compliances asignados al proveedor
-        const providerCompliances = compliances.filter(
-          (c) => Number(c.responsibleUserId) === hiring.service.userId,
-        );
-
         await this.emailService.sendClaimResolvedEmail(
           provider.email,
           providerName,
+          hiring.service.userId, // ID del destinatario (proveedor)
           claimData,
-          providerCompliances,
+          compliances, // Enviar TODOS los compromisos
         );
-
-        // Ya no enviamos email adicional, todo va en sendClaimResolvedEmail
       }
     } catch (error) {
       console.error(

@@ -110,13 +110,13 @@ export class GetClaimsUseCase {
       }
       const otherUser = otherUserId ? usersMap.get(otherUserId) : null;
 
-      // Resolver (moderador/admin) - enviar id + emailPrefix
+      // Resolver (moderador/admin) - enviar id + email completo
       let resolvedByUser: any = null;
-      let resolvedByEmailPrefix: string | null = null;
+      let resolvedByEmail: string | null = null;
       if (claim.resolvedBy) {
         resolvedByUser = usersMap.get(claim.resolvedBy) || null;
         if (resolvedByUser?.email) {
-          resolvedByEmailPrefix = resolvedByUser.email.split('@')[0] || null;
+          resolvedByEmail = resolvedByUser.email;
         }
       }
 
@@ -141,11 +141,10 @@ export class GetClaimsUseCase {
         availableActions.push('resolve_claim');
       }
 
-      // Cumplimientos
+      // Cumplimientos (solo si pasaron por peer review)
       if (
         pendingCompliance &&
         [
-          ComplianceStatus.SUBMITTED,
           ComplianceStatus.PEER_APPROVED,
           ComplianceStatus.PEER_OBJECTED,
           ComplianceStatus.IN_REVIEW,
@@ -154,23 +153,96 @@ export class GetClaimsUseCase {
         availableActions.push('review_compliance');
       }
 
-      // Mapear todos los compliances con información completa
-      const compliancesData = claimCompliances.map((compliance) => ({
-        id: compliance.id,
-        claimId: compliance.claimId,
-        responsibleUserId: compliance.responsibleUserId,
-        complianceType: compliance.complianceType,
-        status: compliance.status,
-        moderatorInstructions: compliance.moderatorInstructions,
-        deadline: compliance.deadline,
-        evidenceUrls: compliance.evidenceUrls || [],
-        userNotes: compliance.userNotes,
-        moderatorNotes: compliance.moderatorNotes,
-        rejectionReason: compliance.rejectionReason,
-        rejectionCount: compliance.rejectionCount || 0,
-        createdAt: compliance.createdAt,
-        updatedAt: compliance.updatedAt,
-      }));
+      // Mapear todos los compliances con información completa y sus acciones (para moderadores)
+      const compliancesData = claimCompliances.map((compliance) => {
+        const complianceActions: string[] = ['view_detail'];
+
+        // Moderadores pueden revisar compliances que pasaron por peer review o están en revisión
+        if (
+          [
+            ComplianceStatus.PEER_APPROVED,
+            ComplianceStatus.PEER_OBJECTED,
+            ComplianceStatus.IN_REVIEW,
+          ].includes(compliance.status)
+        ) {
+          complianceActions.push('review_compliance');
+        }
+
+        const timeRemaining = compliance.getTimeRemaining();
+        const daysOverdue = compliance.getDaysOverdue();
+        const overdueStatus = compliance.getOverdueStatus();
+        const canStillSubmit = compliance.canStillSubmit();
+
+        return {
+          id: compliance.id,
+          claimId: compliance.claimId,
+          responsibleUserId: compliance.responsibleUserId,
+          complianceType: compliance.complianceType,
+          status: compliance.status,
+          moderatorInstructions: compliance.moderatorInstructions,
+          deadline: compliance.deadline,
+          evidenceUrls: compliance.evidenceUrls || [],
+          userNotes: compliance.userNotes,
+          submittedAt: compliance.submittedAt,
+
+          // Peer review fields
+          peerReviewedBy: compliance.peerReviewedBy,
+          peerApproved: compliance.peerApproved,
+          peerReviewReason: compliance.peerReviewReason,
+          peerReviewedAt: compliance.peerReviewedAt,
+
+          // Moderator review fields
+          reviewedBy: compliance.reviewedBy,
+          reviewedAt: compliance.reviewedAt,
+          moderatorNotes: compliance.moderatorNotes,
+          rejectionReason: compliance.rejectionReason,
+
+          // Tracking fields
+          currentAttempt: compliance.currentAttempt || 1,
+          maxAttempts: compliance.maxAttempts || 3,
+          rejectionCount: compliance.rejectionCount || 0,
+          warningLevel: compliance.warningLevel || 0,
+          hasActiveWarning: compliance.hasActiveWarning || false,
+          suspensionTriggered: compliance.suspensionTriggered || false,
+          banTriggered: compliance.banTriggered || false,
+
+          // NUEVOS CAMPOS - Estado de vencimiento
+          daysOverdue,
+          overdueStatus,
+          canStillSubmit,
+          timeRemaining: {
+            days: timeRemaining.days,
+            hours: timeRemaining.hours,
+            totalHours: timeRemaining.totalHours,
+            isOverdue: timeRemaining.isOverdue,
+          },
+
+          // Submission history
+          submissions: (compliance.submissions || []).map((sub) => ({
+            id: sub.id,
+            attemptNumber: sub.attemptNumber,
+            status: sub.status,
+            evidenceUrls: sub.evidenceUrls || [],
+            userNotes: sub.userNotes,
+            submittedAt: sub.submittedAt,
+            peerReviewedBy: sub.peerReviewedBy,
+            peerApproved: sub.peerApproved,
+            peerReviewReason: sub.peerReviewReason,
+            peerReviewedAt: sub.peerReviewedAt,
+            reviewedBy: sub.reviewedBy,
+            reviewedAt: sub.reviewedAt,
+            moderatorDecision: sub.moderatorDecision,
+            moderatorNotes: sub.moderatorNotes,
+            rejectionReason: sub.rejectionReason,
+            createdAt: sub.createdAt,
+            updatedAt: sub.updatedAt,
+          })),
+
+          createdAt: compliance.createdAt,
+          updatedAt: compliance.updatedAt,
+          availableActions: complianceActions,
+        };
+      });
 
       return {
         claim: {
@@ -234,7 +306,7 @@ export class GetClaimsUseCase {
         availableActions,
         resolvedBy: {
           id: resolvedByUser?.id ?? null,
-          emailPrefix: resolvedByEmailPrefix,
+          email: resolvedByEmail,
         },
       };
     });

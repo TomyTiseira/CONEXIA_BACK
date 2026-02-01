@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ClaimCompliance } from '../entities/claim-compliance.entity';
 import { ClaimComplianceRepository } from '../repositories/claim-compliance.repository';
+import { CheckOverdueCompliancesUseCase } from '../services/use-cases/compliance/check-overdue-compliances.use-case';
 import { CreateComplianceUseCase } from '../services/use-cases/compliance/create-compliance.use-case';
 import { ModeratorReviewComplianceUseCase } from '../services/use-cases/compliance/moderator-review-compliance.use-case';
 import { PeerReviewComplianceUseCase } from '../services/use-cases/compliance/peer-review-compliance.use-case';
@@ -20,6 +21,7 @@ export class ComplianceController {
     private readonly peerReviewUseCase: PeerReviewComplianceUseCase,
     private readonly moderatorReviewUseCase: ModeratorReviewComplianceUseCase,
     private readonly complianceRepository: ClaimComplianceRepository,
+    private readonly checkOverdueCompliancesUseCase: CheckOverdueCompliancesUseCase,
   ) {}
 
   /**
@@ -38,15 +40,22 @@ export class ComplianceController {
     try {
       // Aplicar filtros
       if (claimId) {
-        compliances = await this.complianceRepository.findByClaimId(claimId);
+        compliances = await this.complianceRepository.find({
+          where: { claimId },
+          relations: ['submissions'],
+          order: { orderNumber: 'ASC', createdAt: 'ASC' },
+        });
         total = compliances.length;
       } else if (userId && status) {
         // Parsear status (puede venir como "pending,submitted")
         const statusArray =
           typeof status === 'string' ? status.split(',') : [status];
 
-        const allCompliances =
-          await this.complianceRepository.findByResponsibleUser(userId);
+        const allCompliances = await this.complianceRepository.find({
+          where: { responsibleUserId: userId },
+          relations: ['submissions'],
+          order: { deadline: 'ASC' },
+        });
         compliances = allCompliances.filter((c) =>
           statusArray.includes(c.status),
         );
@@ -55,13 +64,29 @@ export class ComplianceController {
         // Paginación
         compliances = compliances.slice((page - 1) * limit, page * limit);
       } else if (userId) {
-        compliances = await this.complianceRepository.findPendingByUser(userId);
+        compliances = await this.complianceRepository.find({
+          where: { responsibleUserId: userId },
+          relations: ['submissions'],
+          order: { deadline: 'ASC' },
+        });
         total = compliances.length;
       } else if (onlyOverdue) {
         compliances = await this.complianceRepository.findOverdue();
+        // Cargar submissions manualmente para cada compliance
+        for (const c of compliances) {
+          await this.complianceRepository
+            .findOne({
+              where: { id: c.id },
+              relations: ['submissions'],
+            })
+            .then((loaded) => {
+              if (loaded) c.submissions = loaded.submissions;
+            });
+        }
         total = compliances.length;
       } else {
         compliances = await this.complianceRepository.find({
+          relations: ['submissions'],
           order: { deadline: 'ASC' },
           skip: (page - 1) * limit,
           take: limit,
@@ -87,7 +112,7 @@ export class ComplianceController {
     try {
       const compliance = await this.complianceRepository.findOne({
         where: { id: payload.id },
-        relations: ['claim'],
+        relations: ['claim', 'submissions'],
       });
 
       if (!compliance) {
@@ -120,7 +145,7 @@ export class ComplianceController {
   }
 
   /**
-   * Usuario envía evidencia de cumplimiento identificando por claimId
+   * Usuario envía evidencia de cumplimiento específico
    * Pattern: submitComplianceByClaim
    */
   @MessagePattern('submitComplianceByClaim')
@@ -128,6 +153,7 @@ export class ComplianceController {
     @Payload()
     payload: {
       claimId: string;
+      complianceId: string;
       userId: string;
       userNotes?: string;
       evidenceUrls?: string[];
@@ -136,6 +162,7 @@ export class ComplianceController {
     try {
       const result = await this.submitComplianceByClaimUseCase.execute({
         claimId: payload.claimId,
+        complianceId: payload.complianceId,
         userId: payload.userId,
         userNotes: payload.userNotes,
         evidenceUrls: payload.evidenceUrls,
@@ -209,6 +236,11 @@ export class ComplianceController {
    * Helper para mapear entidad a DTO
    */
   private mapToDto(compliance: ClaimCompliance) {
+    const timeRemaining = compliance.getTimeRemaining();
+    const daysOverdue = compliance.getDaysOverdue();
+    const overdueStatus = compliance.getOverdueStatus();
+    const canStillSubmit = compliance.canStillSubmit();
+
     return {
       id: compliance.id,
       claimId: compliance.claimId,
@@ -219,13 +251,14 @@ export class ComplianceController {
       extendedDeadline: compliance.extendedDeadline,
       finalDeadline: compliance.finalDeadline,
       originalDeadlineDays: compliance.originalDeadlineDays,
+      currentAttempt: compliance.currentAttempt,
       moderatorInstructions: compliance.moderatorInstructions,
       evidenceUrls: compliance.evidenceUrls,
       userNotes: compliance.userNotes,
       submittedAt: compliance.submittedAt,
       peerReviewedBy: compliance.peerReviewedBy,
       peerApproved: compliance.peerApproved,
-      peerObjection: compliance.peerObjection,
+      peerReviewReason: compliance.peerReviewReason,
       peerReviewedAt: compliance.peerReviewedAt,
       reviewedBy: compliance.reviewedBy,
       reviewedAt: compliance.reviewedAt,
@@ -243,8 +276,90 @@ export class ComplianceController {
       autoApproved: compliance.autoApproved,
       requiresFiles: compliance.requiresFiles,
       isOverdue: compliance.isOverdue(),
+
+      // NUEVOS CAMPOS PARA FRONTEND - ESTADO DE VENCIMIENTO
+      daysOverdue, // Número de días vencido (0 si no está vencido)
+      overdueStatus, // NOT_OVERDUE | FIRST_WARNING | SUSPENDED | BANNED
+      canStillSubmit, // Si aún puede subir evidencia (hasta 5 días vencido)
+      timeRemaining: {
+        days: timeRemaining.days,
+        hours: timeRemaining.hours,
+        totalHours: timeRemaining.totalHours,
+        isOverdue: timeRemaining.isOverdue,
+      },
+
+      // HISTORIAL COMPLETO DE INTENTOS
+      submissions: compliance.submissions
+        ? compliance.submissions.map((sub) => ({
+            id: sub.id,
+            attemptNumber: sub.attemptNumber,
+            status: sub.status,
+            evidenceUrls: sub.evidenceUrls,
+            userNotes: sub.userNotes,
+            submittedAt: sub.submittedAt,
+            peerReviewedBy: sub.peerReviewedBy,
+            peerApproved: sub.peerApproved,
+            peerReviewReason: sub.peerReviewReason,
+            peerReviewedAt: sub.peerReviewedAt,
+            reviewedBy: sub.reviewedBy,
+            reviewedAt: sub.reviewedAt,
+            moderatorDecision: sub.moderatorDecision,
+            moderatorNotes: sub.moderatorNotes,
+            rejectionReason: sub.rejectionReason,
+            createdAt: sub.createdAt,
+            updatedAt: sub.updatedAt,
+          }))
+        : [],
       createdAt: compliance.createdAt,
       updatedAt: compliance.updatedAt,
     };
+  }
+
+  /**
+   * Ejecutar manualmente el cron job de compliances vencidos (para testing)
+   * Pattern: runOverdueCompliancesJob
+   */
+  @MessagePattern('runOverdueCompliancesJob')
+  async runOverdueCompliancesJob() {
+    try {
+      console.log(
+        '[ComplianceController] Ejecutando manualmente verificación de compliances vencidos...',
+      );
+      await this.checkOverdueCompliancesUseCase.checkOverdueCompliances();
+      return {
+        success: true,
+        message: 'Verificación de compliances vencidos ejecutada exitosamente',
+      };
+    } catch (error) {
+      console.error(
+        '[ComplianceController] Error ejecutando job de compliances vencidos:',
+        error,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Ejecutar manualmente el envío de recordatorios de plazos (para testing)
+   * Pattern: runDeadlineRemindersJob
+   */
+  @MessagePattern('runDeadlineRemindersJob')
+  async runDeadlineRemindersJob() {
+    try {
+      console.log(
+        '[ComplianceController] Ejecutando manualmente envío de recordatorios de plazos...',
+      );
+      await this.checkOverdueCompliancesUseCase.sendDeadlineReminders();
+      return {
+        success: true,
+        message: 'Recordatorios de plazos enviados exitosamente',
+      };
+    } catch (error) {
+      console.error(
+        '[ComplianceController] Error ejecutando job de recordatorios:',
+        error,
+      );
+      throw error;
+    }
   }
 }

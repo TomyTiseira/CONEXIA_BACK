@@ -72,10 +72,6 @@ export class GetMyClaimsUseCase {
         null;
       const otherLastName =
         otherUser?.profile?.lastName || otherUser?.profile?.last_name || null;
-      const otherName =
-        otherFirstName && otherLastName
-          ? `${otherFirstName} ${otherLastName}`
-          : otherFirstName || null;
 
       const claimCompliances = compliancesByClaim.get(claim.id) || [];
       // pick first compliance that is not approved (or first)
@@ -91,23 +87,105 @@ export class GetMyClaimsUseCase {
         ? Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
         : null;
 
-      // Mapear todos los compliances con información completa
-      const compliancesData = claimCompliances.map((compliance) => ({
-        id: compliance.id,
-        claimId: compliance.claimId,
-        responsibleUserId: compliance.responsibleUserId,
-        complianceType: compliance.complianceType,
-        status: compliance.status,
-        moderatorInstructions: compliance.moderatorInstructions,
-        deadline: compliance.deadline,
-        evidenceUrls: compliance.evidenceUrls || [],
-        userNotes: compliance.userNotes,
-        moderatorNotes: compliance.moderatorNotes,
-        rejectionReason: compliance.rejectionReason,
-        rejectionCount: compliance.rejectionCount || 0,
-        createdAt: compliance.createdAt,
-        updatedAt: compliance.updatedAt,
-      }));
+      // Mapear todos los compliances con información completa y sus acciones disponibles
+      const compliancesData = claimCompliances.map((compliance) => {
+        const complianceActions: string[] = ['view_detail'];
+        const isResponsible =
+          compliance.responsibleUserId?.toString() === userId.toString();
+        const isOtherParty =
+          !isResponsible &&
+          (userRole === 'claimant' || userRole === 'respondent');
+
+        // Acciones para el responsable del compliance
+        if (isResponsible) {
+          if (
+            [
+              ComplianceStatus.PENDING,
+              ComplianceStatus.OVERDUE,
+              ComplianceStatus.WARNING,
+              ComplianceStatus.ESCALATED,
+              ComplianceStatus.REQUIRES_ADJUSTMENT,
+            ].includes(compliance.status)
+          ) {
+            complianceActions.push('submit_evidence');
+          }
+        }
+
+        // Acciones para la otra parte (peer review)
+        // PEER REVIEW ES OBLIGATORIO - solo si está submitted y NO revisado aún
+        if (
+          isOtherParty &&
+          compliance.status === ComplianceStatus.SUBMITTED &&
+          !compliance.peerReviewedBy
+        ) {
+          complianceActions.push('peer_approve');
+          complianceActions.push('peer_object');
+        }
+
+        const timeRemaining = compliance.getTimeRemaining();
+        const daysOverdue = compliance.getDaysOverdue();
+        const overdueStatus = compliance.getOverdueStatus();
+        const canStillSubmit = compliance.canStillSubmit();
+
+        return {
+          id: compliance.id,
+          claimId: compliance.claimId,
+          responsibleUserId: compliance.responsibleUserId,
+          complianceType: compliance.complianceType,
+          status: compliance.status,
+          moderatorInstructions: compliance.moderatorInstructions,
+          deadline: compliance.deadline,
+          evidenceUrls: compliance.evidenceUrls || [],
+          userNotes: compliance.userNotes,
+          submittedAt: compliance.submittedAt,
+
+          // Peer review fields
+          peerReviewedBy: compliance.peerReviewedBy,
+          peerApproved: compliance.peerApproved,
+          peerReviewReason: compliance.peerReviewReason,
+          peerReviewedAt: compliance.peerReviewedAt,
+
+          // Moderator review fields
+          reviewedBy: compliance.reviewedBy,
+          reviewedAt: compliance.reviewedAt,
+          moderatorNotes: compliance.moderatorNotes,
+          rejectionReason: compliance.rejectionReason,
+
+          // Tracking fields
+          currentAttempt: compliance.currentAttempt || 1,
+          maxAttempts: compliance.maxAttempts || 3,
+          rejectionCount: compliance.rejectionCount || 0,
+          warningLevel: compliance.warningLevel || 0,
+          hasActiveWarning: compliance.hasActiveWarning || false,
+
+          // HISTORIAL COMPLETO DE INTENTOS
+          submissions: compliance.submissions
+            ? compliance.submissions.map((sub) => ({
+                id: sub.id,
+                attemptNumber: sub.attemptNumber,
+                status: sub.status,
+                evidenceUrls: sub.evidenceUrls,
+                userNotes: sub.userNotes,
+                submittedAt: sub.submittedAt,
+                peerReviewedBy: sub.peerReviewedBy,
+                peerApproved: sub.peerApproved,
+                peerReviewReason: sub.peerReviewReason,
+                peerReviewedAt: sub.peerReviewedAt,
+                reviewedBy: sub.reviewedBy,
+                reviewedAt: sub.reviewedAt,
+                moderatorDecision: sub.moderatorDecision,
+                moderatorNotes: sub.moderatorNotes,
+                rejectionReason: sub.rejectionReason,
+                createdAt: sub.createdAt,
+                updatedAt: sub.updatedAt,
+              }))
+            : [],
+
+          createdAt: compliance.createdAt,
+          updatedAt: compliance.updatedAt,
+          availableActions: complianceActions,
+        };
+      });
 
       const availableActions: string[] = ['view_detail'];
       if (userRole === 'respondent' && claim.status === 'open') {
@@ -116,12 +194,24 @@ export class GetMyClaimsUseCase {
       if (userRole === 'claimant' && claim.status === 'pending_clarification') {
         availableActions.push('submit_clarification');
       }
-      if (
-        pendingCompliance &&
-        pendingCompliance.responsibleUserId?.toString() === userId.toString()
-      ) {
-        availableActions.push('upload_compliance');
+
+      // Verificar si el usuario tiene CUALQUIER compliance pendiente donde es responsable
+      const hasPendingCompliances = claimCompliances.some(
+        (c) =>
+          c.responsibleUserId?.toString() === userId.toString() &&
+          [
+            ComplianceStatus.PENDING,
+            ComplianceStatus.OVERDUE,
+            ComplianceStatus.WARNING,
+            ComplianceStatus.ESCALATED,
+            ComplianceStatus.REQUIRES_ADJUSTMENT,
+          ].includes(c.status),
+      );
+
+      if (hasPendingCompliances) {
+        availableActions.push('submit_compliance_evidence');
       }
+
       if (userRole === 'claimant' && claim.status === 'resolved') {
         availableActions.push('create_review');
       }
@@ -148,7 +238,8 @@ export class GetMyClaimsUseCase {
         otherUser: otherUserId
           ? {
               id: otherUserId,
-              name: otherName,
+              name: otherFirstName,
+              lastName: otherLastName,
               username:
                 otherUser?.username || otherUser?.profile?.username || null,
               profilePicture:

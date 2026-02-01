@@ -37,6 +37,10 @@ export class GetClaimsDto {
   searchTerm?: string; // Buscar por ID del reclamo o nombre del reclamante
 
   @IsOptional()
+  @IsString()
+  claimId?: string; // Filtrar por ID específico de reclamo
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

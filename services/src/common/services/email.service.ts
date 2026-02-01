@@ -49,6 +49,7 @@ export abstract class EmailService {
   abstract sendClaimResolvedEmail(
     recipientEmail: string,
     recipientName: string,
+    recipientUserId: number,
     claimData: {
       claimId: string;
       hiringTitle: string;
@@ -167,7 +168,183 @@ export abstract class EmailService {
       claimId: string;
       hiringTitle: string;
       rejectionReason?: string | null;
+      moderatorNotes?: string | null;
       rejectionCount: number;
+      attemptsLeft?: number;
+      newDeadline?: string;
+      isSecondRejection?: boolean;
+      complianceLabel?: string;
+      isOtherPartyEmail?: boolean;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email a ambas partes cuando se sube evidencia de cumplimiento
+   */
+  abstract sendComplianceEvidenceUploadedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    uploaderName: string,
+    isResponsibleUser: boolean,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      userNotes?: string | null;
+      attemptNumber: number;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email cuando la otra parte aprueba el compliance (peer review)
+   */
+  abstract sendCompliancePeerApprovedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    peerReviewerName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      peerReviewReason?: string | null;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email cuando la otra parte rechaza el compliance (peer review)
+   */
+  abstract sendCompliancePeerRejectedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    peerReviewerName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      peerReviewReason?: string | null;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía un email al moderador cuando se realiza una peer review (pre-aprobación o objeción)
+   */
+  abstract sendPeerReviewToModeratorEmail(
+    moderatorEmail: string,
+    responsibleUserName: string,
+    peerReviewerName: string,
+    peerReviewStatus: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      peerReviewReason?: string | null;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía advertencia cuando faltan menos de 24 horas para el deadline
+   */
+  abstract sendComplianceDeadlineWarningEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      deadline: Date;
+      hoursRemaining: number;
+      moderatorInstructions: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía email cuando el deadline ha pasado (período de gracia)
+   */
+  abstract sendComplianceOverdueEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      originalDeadline: Date;
+      extendedDeadline: Date;
+      daysExtended: number;
+      moderatorInstructions: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía email crítico cuando está en WARNING (segunda extensión)
+   */
+  abstract sendComplianceWarningEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      finalDeadline: Date;
+      moderatorInstructions: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Envía email cuando se escala a administradores (preparación para sanción)
+   */
+  abstract sendComplianceEscalatedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      moderatorInstructions: string;
+      deadline: Date;
+      extendedDeadline?: Date;
+      finalDeadline?: Date;
+    },
+  ): Promise<void>;
+
+  /**
+   * Notifica al moderador sobre compliance escalado
+   */
+  abstract sendModeratorEscalationNotification(
+    moderatorEmail: string,
+    moderatorName: string,
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      warningLevel: number;
+      moderatorInstructions: string;
+    },
+  ): Promise<void>;
+
+  /**
+   * Notifica a la otra parte sobre el incumplimiento
+   */
+  abstract sendComplianceNonComplianceNotification(
+    recipientEmail: string,
+    recipientName: string,
+    responsibleUserName: string,
+    complianceData: {
+      complianceId: string;
+      complianceType: string;
+      claimId: string;
+      hiringTitle: string;
+      warningLevel: number;
+      moderatorInstructions?: string;
     },
   ): Promise<void>;
 }

@@ -51,6 +51,10 @@ export class GetClaimsDto {
   searchTerm?: string;
 
   @IsOptional()
+  @IsString()
+  claimId?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
