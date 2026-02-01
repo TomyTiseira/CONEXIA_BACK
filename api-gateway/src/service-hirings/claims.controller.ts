@@ -46,6 +46,7 @@ export class ClaimsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: string,
+    @Query('claimId') claimId?: string,
     @Query('role') role?: 'claimant' | 'respondent' | 'all',
     @Query('sortBy') sortBy?: 'createdAt' | 'updatedAt',
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
@@ -54,6 +55,7 @@ export class ClaimsController {
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 12,
       status,
+      claimId,
       role: role || 'all',
       sortBy: sortBy || 'updatedAt',
       sortOrder: sortOrder || 'desc',
@@ -279,13 +281,13 @@ export class ClaimsController {
   }
 
   /**
-   * POST /claims/:id/compliance/submit
-   * Subir cumplimiento asociado a un reclamo (resuelve compliance internamente)
+   * POST /claims/:claimId/compliance/:complianceId/submit
+   * Subir cumplimiento específico asociado a un reclamo
    */
-  @Post(':id/compliance/submit')
+  @Post(':claimId/compliance/:complianceId/submit')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'evidenceFiles', maxCount: 5 }], {
+    FileFieldsInterceptor([{ name: 'evidence', maxCount: 5 }], {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'compliances'),
         filename: (req, file, cb) => {
@@ -320,17 +322,19 @@ export class ClaimsController {
   )
   submitComplianceByClaim(
     @User() user: AuthenticatedUser,
-    @Param('id') id: string,
+    @Param('claimId') claimId: string,
+    @Param('complianceId') complianceId: string,
     @Body('description') description: string,
-    @UploadedFiles() files?: { evidenceFiles?: Express.Multer.File[] },
+    @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
   ) {
-    const evidenceUrls = (files?.evidenceFiles || []).map(
+    const evidenceUrls = (files?.evidence || []).map(
       (file) => `/uploads/compliances/${file.filename}`,
     );
 
     return this.client
       .send('submitComplianceByClaim', {
-        claimId: id,
+        claimId,
+        complianceId,
         userId: String(user.id),
         userNotes: description || null,
         evidenceUrls: evidenceUrls.length ? evidenceUrls : null,
@@ -513,5 +517,39 @@ export class ClaimsController {
           throw new RpcException(error);
         }),
       );
+  }
+
+  /**
+   * POST /claims/test/run-overdue-job
+   * Ejecutar manualmente el job de compliances vencidos (solo para testing/moderadores)
+   */
+  @Post('test/run-overdue-job')
+  @AuthRoles([ROLES.MODERATOR, ROLES.ADMIN])
+  runOverdueCompliancesJob(@User() user: AuthenticatedUser) {
+    console.log(
+      `[ClaimsController] Usuario ${user.id} ejecutando job de compliances vencidos`,
+    );
+    return this.client.send('runOverdueCompliancesJob', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  /**
+   * POST /claims/test/run-deadline-reminders
+   * Ejecutar manualmente el envío de recordatorios de plazos (solo para testing/moderadores)
+   */
+  @Post('test/run-deadline-reminders')
+  @AuthRoles([ROLES.MODERATOR, ROLES.ADMIN])
+  runDeadlineRemindersJob(@User() user: AuthenticatedUser) {
+    console.log(
+      `[ClaimsController] Usuario ${user.id} ejecutando job de recordatorios de plazos`,
+    );
+    return this.client.send('runDeadlineRemindersJob', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
   }
 }

@@ -134,4 +134,45 @@ export class UsersClientService {
       return { isBanned: false, isSuspended: false };
     }
   }
+
+  /**
+   * Suspende un usuario por violación de compliance
+   */
+  async suspendUserForComplianceViolation(data: {
+    userId: number;
+    complianceId: string;
+    reason: string;
+    days: number;
+    moderatorId: string;
+  }): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.client.send('moderation.suspend_for_compliance', data),
+      );
+      console.log(`[UsersClient] Usuario ${data.userId} suspendido por violación de compliance ${data.complianceId}`);
+    } catch (error) {
+      console.error('Error suspending user for compliance violation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Banea un usuario por violación de compliance
+   */
+  async banUserForComplianceViolation(data: {
+    userId: number;
+    complianceId: string;
+    reason: string;
+    moderatorId: string;
+  }): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.client.send('moderation.ban_for_compliance', data),
+      );
+      console.log(`[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`);
+    } catch (error) {
+      console.error('Error banning user for compliance violation:', error);
+      throw error;
+    }
+  }
 }

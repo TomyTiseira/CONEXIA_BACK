@@ -25,9 +25,14 @@ async function bootstrap() {
       END $$;
     `);
 
-    console.log('✅ Claim clarification-evidence migration completed successfully');
+    console.log(
+      '✅ Claim clarification-evidence migration completed successfully',
+    );
   } catch (error) {
-    console.error('❌ Error running claim clarification-evidence migration:', error);
+    console.error(
+      '❌ Error running claim clarification-evidence migration:',
+      error,
+    );
     throw error;
   } finally {
     await app.close();

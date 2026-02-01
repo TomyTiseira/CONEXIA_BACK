@@ -17,6 +17,10 @@ npx ts-node src/scripts/migrate-requoting-fields.ts
 npx ts-node src/scripts/migrate-claim-assigned-moderator-fields.ts
 npx ts-node src/scripts/migrate-claim-statuses-requires-response-and-cancelled.ts
 npx ts-node src/scripts/migrate-claim-clarification-evidence-urls.ts
+npx ts-node src/scripts/migrate-add-compliance-types.ts
+npx ts-node src/scripts/migrate-rename-peer-objection.ts
+npx ts-node src/scripts/migrate-create-compliance-submissions.ts
+npx ts-node src/scripts/migrate-add-compliance-tracking.ts
 
 # Ejecutar seeds
 echo "Ejecutando seeds..."

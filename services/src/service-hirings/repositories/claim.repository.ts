@@ -95,23 +95,25 @@ export class ClaimRepository {
   }
 
   getOtherUserIdForClaim(claim: Claim, userId: number): number | null {
-    const role = this.getUserRoleForClaim(claim, userId);
-    if (!role) return null;
-
+    const normalizedUserId = Number(userId);
     const hiring = (claim as any).hiring;
     if (!hiring) return null;
 
-    if (role === 'claimant') {
-      if (claim.claimantRole === 'client') {
-        return hiring.service?.userId || null;
-      }
-      if (claim.claimantRole === 'provider') {
-        return hiring.userId || null;
-      }
+    const clientId = Number(hiring.userId);
+    const providerId = Number(hiring.service?.userId);
+
+    // Si el usuario actual es el cliente, el otro es el proveedor
+    if (clientId === normalizedUserId) {
+      return providerId || null;
     }
 
-    // role === 'respondent' => other is claimant
-    return claim.claimantUserId;
+    // Si el usuario actual es el proveedor, el otro es el cliente
+    if (providerId === normalizedUserId) {
+      return clientId || null;
+    }
+
+    // Si no es ni cliente ni proveedor, no debería tener acceso
+    return null;
   }
 
   async findMyClaims(
@@ -136,6 +138,11 @@ export class ClaimRepository {
       )`,
       { userId },
     );
+
+    // Filtro por claimId específico
+    if (filters.claimId) {
+      qb.andWhere('claim.id = :claimId', { claimId: filters.claimId });
+    }
 
     const statusFilter =
       filters.status !== undefined && filters.status !== null
@@ -179,9 +186,7 @@ export class ClaimRepository {
             actionStatuses: COMPLIANCE_ACTION_REQUIRED_STATUSES,
           },
         );
-      } else if (
-        statusFilter === VIRTUAL_CLAIM_STATUSES.REVIEWING_COMPLIANCE
-      ) {
+      } else if (statusFilter === VIRTUAL_CLAIM_STATUSES.REVIEWING_COMPLIANCE) {
         qb.andWhere(
           `EXISTS (
             SELECT 1
@@ -280,6 +285,7 @@ export class ClaimRepository {
     status?: string;
     claimantRole?: ClaimRole;
     searchTerm?: string;
+    claimId?: string;
     page?: number;
     limit?: number;
   }): Promise<{ claims: Claim[]; total: number }> {
@@ -288,12 +294,15 @@ export class ClaimRepository {
       status,
       claimantRole,
       searchTerm,
+      claimId,
       page = 1,
       limit = 10,
     } = filters;
 
     const statusFilter =
-      status !== undefined && status !== null ? String(status).trim() : undefined;
+      status !== undefined && status !== null
+        ? String(status).trim()
+        : undefined;
 
     const queryBuilder = this.repository
       .createQueryBuilder('claim')
@@ -304,6 +313,9 @@ export class ClaimRepository {
     // Filtros básicos
     if (hiringId) {
       queryBuilder.andWhere('claim.hiringId = :hiringId', { hiringId });
+    }
+    if (claimId) {
+      queryBuilder.andWhere('claim.id = :claimId', { claimId });
     }
     if (statusFilter) {
       if (statusFilter === VIRTUAL_CLAIM_STATUSES.REQUIRES_RESPONSE) {
@@ -343,7 +355,9 @@ export class ClaimRepository {
           },
         );
       } else {
-        queryBuilder.andWhere('claim.status = :status', { status: statusFilter });
+        queryBuilder.andWhere('claim.status = :status', {
+          status: statusFilter,
+        });
       }
     }
     if (claimantRole) {

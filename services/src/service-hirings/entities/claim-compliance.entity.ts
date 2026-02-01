@@ -4,6 +4,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -13,6 +14,7 @@ import {
   ComplianceType,
 } from '../enums/compliance.enum';
 import { Claim } from './claim.entity';
+import { ComplianceSubmission } from './compliance-submission.entity';
 
 /**
  * Entidad que representa un cumplimiento requerido después de resolver un reclamo.
@@ -36,6 +38,10 @@ export class ClaimCompliance {
   @ManyToOne(() => Claim, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'claim_id' })
   claim: Claim;
+
+  // ============ HISTORIAL DE SUBMISSIONS ============
+  @OneToMany(() => ComplianceSubmission, (submission) => submission.compliance)
+  submissions: ComplianceSubmission[];
 
   // ============ RESPONSABLE ============
   /**
@@ -131,10 +137,11 @@ export class ClaimCompliance {
   peerApproved: boolean | null;
 
   /**
-   * Razón de la objeción (si peerApproved = false)
+   * Comentario o razón del peer al pre-aprobar o pre-rechazar
+   * Sirve tanto para aprobación como para rechazo
    */
-  @Column({ name: 'peer_objection', type: 'text', nullable: true })
-  peerObjection: string | null;
+  @Column({ name: 'peer_review_reason', type: 'text', nullable: true })
+  peerReviewReason: string | null;
 
   /**
    * Fecha de la revisión peer
@@ -179,13 +186,50 @@ export class ClaimCompliance {
   @Column({ name: 'rejection_count', type: 'int', default: 0 })
   rejectionCount: number;
 
+  // ============ TRACKING DE INTENTOS ============
+  /**
+   * Intento actual (1, 2, 3...)
+   */
+  @Column({ name: 'current_attempt', type: 'int', default: 1 })
+  currentAttempt: number;
+
+  /**
+   * Máximo de intentos permitidos
+   */
+  @Column({ name: 'max_attempts', type: 'int', default: 3 })
+  maxAttempts: number;
+
   // ============ SISTEMA DE CONSECUENCIAS ============
   /**
    * Nivel de advertencia
-   * 0 = OK, 1 = overdue, 2 = warning (suspendido), 3 = escalated (pre-ban)
+   * 0 = OK, 1 = Primera advertencia (1 rechazo), 2 = Suspensión (2 rechazos), 3 = Ban (3 rechazos)
    */
   @Column({ name: 'warning_level', type: 'int', default: 0 })
   warningLevel: number;
+
+  /**
+   * Si tiene una advertencia activa
+   */
+  @Column({ name: 'has_active_warning', type: 'boolean', default: false })
+  hasActiveWarning: boolean;
+
+  /**
+   * Fecha en que se envió la advertencia
+   */
+  @Column({ name: 'warning_sent_at', type: 'timestamp', nullable: true })
+  warningSentAt: Date | null;
+
+  /**
+   * Si se disparó suspensión automática
+   */
+  @Column({ name: 'suspension_triggered', type: 'boolean', default: false })
+  suspensionTriggered: boolean;
+
+  /**
+   * Si se disparó ban automático
+   */
+  @Column({ name: 'ban_triggered', type: 'boolean', default: false })
+  banTriggered: boolean;
 
   /**
    * Si el usuario apeló antes del ban
@@ -265,6 +309,86 @@ export class ClaimCompliance {
   updatedAt: Date;
 
   // ============ MÉTODOS HELPER ============
+
+  /**
+   * Calcula los días vencidos desde el deadline original
+   * Retorna 0 si no está vencido
+   */
+  getDaysOverdue(): number {
+    const now = new Date();
+    if (now <= this.deadline) {
+      return 0;
+    }
+    const diff = now.getTime() - this.deadline.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Calcula el estado de vencimiento actual
+   * - NOT_OVERDUE: Dentro del plazo
+   * - FIRST_WARNING: 0-2 días vencido (grace period de 3 días)
+   * - SUSPENDED: 3-4 días vencido (suspensión + 2 días adicionales)
+   * - BANNED: 5+ días vencido (baneo permanente)
+   */
+  getOverdueStatus(): string {
+    const daysOverdue = this.getDaysOverdue();
+
+    if (daysOverdue === 0) return 'NOT_OVERDUE';
+    if (daysOverdue >= 1 && daysOverdue < 3) return 'FIRST_WARNING';
+    if (daysOverdue >= 3 && daysOverdue < 5) return 'SUSPENDED';
+    return 'BANNED';
+  }
+
+  /**
+   * Verifica si aún puede subir evidencia
+   * Permitido hasta 5 días después de vencido el plazo original
+   */
+  canStillSubmit(): boolean {
+    // Si está aprobado o rechazado, no puede subir más
+    if (this.isFinal()) {
+      return false;
+    }
+
+    const daysOverdue = this.getDaysOverdue();
+    // Permitir subir hasta 5 días después de vencido
+    return daysOverdue < 5;
+  }
+
+  /**
+   * Calcula el tiempo restante para el deadline actual
+   * Retorna objeto con días, horas y si está vencido
+   */
+  getTimeRemaining(): {
+    days: number;
+    hours: number;
+    isOverdue: boolean;
+    totalHours: number;
+  } {
+    const now = new Date();
+    const currentDeadline = this.getCurrentDeadline();
+    const diff = currentDeadline.getTime() - now.getTime();
+
+    if (diff < 0) {
+      // Vencido
+      return {
+        days: 0,
+        hours: 0,
+        isOverdue: true,
+        totalHours: 0,
+      };
+    }
+
+    const totalHours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    return {
+      days,
+      hours,
+      isOverdue: false,
+      totalHours,
+    };
+  }
 
   /**
    * Verifica si el plazo actual está vencido

@@ -11,6 +11,7 @@ import { SeedService } from './seed/seed.service';
 import {
   Claim,
   ClaimCompliance,
+  ComplianceSubmission,
   Deliverable,
   DeliveryAttachment,
   DeliverySubmission,
@@ -55,6 +56,7 @@ import { ServicesModule } from './services/services.module';
         DeliveryAttachment,
         Claim,
         ClaimCompliance,
+        ComplianceSubmission,
       ],
       synchronize: true,
     }),
