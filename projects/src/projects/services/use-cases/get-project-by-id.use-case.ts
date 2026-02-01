@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
-    ProjectAlreadyDeletedException,
-    ProjectNotFoundException,
-    UserNotFoundException,
+  ProjectAlreadyDeletedException,
+  ProjectNotFoundException,
+  UserNotFoundException,
 } from '../../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import {
-    createSkillsMap,
-    transformProjectToDetailResponse
+  createSkillsMap,
+  transformProjectToDetailResponse,
 } from '../../../common/utils/project-detail-transform.utils';
 import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { ReportRepository } from '../../../reports/repositories/report.repository';
@@ -95,14 +95,23 @@ export class GetProjectByIdUseCase {
         1,
       );
 
+    // Obtener cantidad total de postulaciones del proyecto
+    const postulationsCount = await this.postulationRepository.countByProjectId(
+      project.id,
+    );
+
+    // Calcular cantidad de roles del proyecto
+    const rolesCount = project.roles?.length || 0;
+
     // Buscar la postulación del usuario actual si existe
     let userPostulationStatus: string | null = null;
     let userEvaluationDeadline: Date | null = null;
     if (data.currentUserId && project.userId !== data.currentUserId) {
-      const userPostulation = await this.postulationRepository.findByProjectAndUser(
-        project.id,
-        data.currentUserId,
-      );
+      const userPostulation =
+        await this.postulationRepository.findByProjectAndUser(
+          project.id,
+          data.currentUserId,
+        );
       if (userPostulation) {
         userPostulationStatus = userPostulation.status?.code || null;
         userEvaluationDeadline = userPostulation.evaluationDeadline || null;
@@ -119,6 +128,8 @@ export class GetProjectByIdUseCase {
       approvedCount,
       userPostulationStatus,
       userEvaluationDeadline,
+      postulationsCount,
+      rolesCount,
     );
 
     // Verificar el estado de cuenta del dueño del proyecto
@@ -130,7 +141,11 @@ export class GetProjectByIdUseCase {
     response.hasReported = hasReported;
 
     // Agregar información del estado de cuenta del owner
-    response.ownerAccountStatus = ownerStatus.isBanned ? 'banned' : ownerStatus.isSuspended ? 'suspended' : 'active';
+    response.ownerAccountStatus = ownerStatus.isBanned
+      ? 'banned'
+      : ownerStatus.isSuspended
+        ? 'suspended'
+        : 'active';
     response.ownerIsSuspended = ownerStatus.isSuspended;
     response.ownerIsBanned = ownerStatus.isBanned;
     response.ownerSuspensionExpiresAt = ownerStatus.suspensionExpiresAt;

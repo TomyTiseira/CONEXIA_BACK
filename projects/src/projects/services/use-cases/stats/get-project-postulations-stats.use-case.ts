@@ -81,7 +81,7 @@ export class GetProjectPostulationsStatsUseCase {
 
     // Inicializar todos los roles con conteo 0
     roles.forEach((role) => {
-      roleMap.set(role.id, { name: role.name, count: 0 });
+      roleMap.set(role.id, { name: role.title, count: 0 });
     });
 
     // Contar postulaciones por rol
@@ -115,7 +115,7 @@ export class GetProjectPostulationsStatsUseCase {
 
       const stat: RoleEvaluationStatsDto = {
         roleId: role.id,
-        roleName: role.name,
+        roleName: role.title,
         totalPostulations: rolePostulations.length,
         hasQuestionsWithCorrectAnswer: false,
         hasEvaluationFile: role.evaluations && role.evaluations.length > 0,

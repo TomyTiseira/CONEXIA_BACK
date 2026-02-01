@@ -27,6 +27,8 @@ export function transformProjectToDetailResponse(
   approvedApplications: number = 0,
   userPostulationStatus: string | null = null,
   userEvaluationDeadline: Date | null = null,
+  postulationsCount: number = 0,
+  rolesCount: number = 0,
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
@@ -34,7 +36,10 @@ export function transformProjectToDetailResponse(
   // Map roles into the detailed shape
   const roles = (project.roles || []).map((role) => {
     const roleSkills =
-      role.roleSkills?.map((rs) => ({ id: rs.skillId, name: skillsMap.get(rs.skillId) })) || [];
+      role.roleSkills?.map((rs) => ({
+        id: rs.skillId,
+        name: skillsMap.get(rs.skillId),
+      })) || [];
 
     // Map questions with options
     const questions = (role.questions || []).map((question) => ({
@@ -66,8 +71,12 @@ export function transformProjectToDetailResponse(
       title: role.title,
       description: role.description,
       applicationTypes: role.applicationTypes || [],
-      contractType: role.contractType ? { id: role.contractType.id, name: role.contractType.name } : null,
-      collaborationType: role.collaborationType ? { id: role.collaborationType.id, name: role.collaborationType.name } : null,
+      contractType: role.contractType
+        ? { id: role.contractType.id, name: role.contractType.name }
+        : null,
+      collaborationType: role.collaborationType
+        ? { id: role.collaborationType.id, name: role.collaborationType.name }
+        : null,
       maxCollaborators: role.maxCollaborators ?? null,
       skills: roleSkills,
       questions: questions.length > 0 ? questions : undefined,
@@ -81,7 +90,9 @@ export function transformProjectToDetailResponse(
     description: project.description,
     image: project.image,
     location,
-    owner: ownerData.profile ? ownerData.profile.name + ' ' + ownerData.profile.lastName : '',
+    owner: ownerData.profile
+      ? ownerData.profile.name + ' ' + ownerData.profile.lastName
+      : '',
     ownerId,
     ownerImage: ownerData.profile?.profilePicture,
     roles: roles.length > 0 ? roles : undefined,
@@ -93,6 +104,8 @@ export function transformProjectToDetailResponse(
     endDate: project.endDate,
     isOwner: project.userId === currentUserId,
     approvedApplications,
+    postulationsCount,
+    rolesCount,
     hasReported: false, // El use case lo sobrescribirá con el valor correcto
     userPostulationStatus,
     userEvaluationDeadline,
@@ -118,7 +131,8 @@ export function getProjectSkillNames(
   skillsMap: Map<number, string>,
 ): string[] {
   const names =
-    project.roles
-      ?.flatMap((role) => role.roleSkills?.map((rs) => skillsMap.get(rs.skillId)) || []) || [];
+    project.roles?.flatMap(
+      (role) => role.roleSkills?.map((rs) => skillsMap.get(rs.skillId)) || [],
+    ) || [];
   return names.filter((name): name is string => typeof name === 'string');
 }
