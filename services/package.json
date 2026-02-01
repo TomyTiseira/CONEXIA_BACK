@@ -20,6 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate:delivery-payment-fields": "ts-node -r tsconfig-paths/register src/scripts/migrate-delivery-payment-fields.ts",
     "migrate:requoting-fields": "ts-node -r tsconfig-paths/register src/scripts/migrate-requoting-fields.ts",
+    "migrate:claim-assigned-moderator-fields": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-assigned-moderator-fields.ts",
+    "migrate:claim-statuses": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-statuses-requires-response-and-cancelled.ts",
+    "migrate:claim-clarification-evidence": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-clarification-evidence-urls.ts",
     "seed:service-categories": "ts-node -r tsconfig-paths/register src/scripts/seed-service-categories.ts",
     "seed:service-hiring-statuses": "ts-node -r tsconfig-paths/register src/scripts/seed-service-hiring-statuses.ts"
   },
@@ -29,6 +32,7 @@
     "@nestjs/mapped-types": "^2.0.0",
     "@nestjs/microservices": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^4.1.2",
     "@nestjs/typeorm": "^10.0.0",
     "@types/nodemailer": "^7.0.2",
     "class-transformer": "^0.5.1",

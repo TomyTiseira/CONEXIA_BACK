@@ -1,17 +1,19 @@
 import {
-    BadRequestException,
-    Injectable,
-    NotFoundException,
+  BadRequestException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ResolveClaimDto } from '../../dto/resolve-claim.dto';
 import { Claim } from '../../entities/claim.entity';
+import { ClaimCompliance } from '../../entities/claim-compliance.entity';
 import { ClaimStatus } from '../../enums/claim.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
 import { ServiceHiringStatusRepository } from '../../repositories/service-hiring-status.repository';
 import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
+import { CreateComplianceUseCase } from './compliance/create-compliance.use-case';
 
 @Injectable()
 export class ResolveClaimUseCase {
@@ -21,15 +23,21 @@ export class ResolveClaimUseCase {
     private readonly hiringStatusRepository: ServiceHiringStatusRepository,
     private readonly emailService: EmailService,
     private readonly usersClient: UsersClientService,
+    private readonly createComplianceUseCase: CreateComplianceUseCase,
   ) {}
 
   async execute(
     claimId: string,
     resolvedBy: number,
     resolveDto: ResolveClaimDto,
-  ): Promise<Claim> {
-    const { status, resolution, resolutionType, partialAgreementDetails } =
-      resolveDto;
+  ): Promise<{ claim: Claim; compliances: ClaimCompliance[] }> {
+    const {
+      status,
+      resolution,
+      resolutionType,
+      partialAgreementDetails,
+      compliances,
+    } = resolveDto;
 
     // 1. Verificar que el claim existe
     const claim = await this.claimRepository.findById(claimId);
@@ -37,18 +45,30 @@ export class ResolveClaimUseCase {
       throw new NotFoundException(`Reclamo con ID ${claimId} no encontrado`);
     }
 
-    // 2. Verificar que el claim está en estado OPEN, IN_REVIEW o PENDING_CLARIFICATION
+    // 2. Reglas de flujo: primero debe estar en IN_REVIEW o esperando respuesta del staff
     if (
-      claim.status !== ClaimStatus.OPEN &&
       claim.status !== ClaimStatus.IN_REVIEW &&
-      claim.status !== ClaimStatus.PENDING_CLARIFICATION
+      claim.status !== ClaimStatus.REQUIRES_STAFF_RESPONSE
     ) {
       throw new BadRequestException(
-        `El reclamo ya fue ${claim.status === ClaimStatus.RESOLVED ? 'resuelto' : 'rechazado'}`,
+        'El reclamo debe estar "en revisión" o "requiere respuesta" para poder resolverlo o rechazarlo',
       );
     }
 
-    // 3. Resolver el reclamo
+    // 3. Validar compliances si se proporcionaron
+    if (compliances && compliances.length > 0) {
+      // Solo se pueden crear compliances si el status es 'resolved'
+      if (status === ClaimStatus.REJECTED) {
+        throw new BadRequestException(
+          'No se pueden asignar compliances a un reclamo rechazado',
+        );
+      }
+
+      // Validar que los usuarios responsables son parte del reclamo
+      await this.validateComplianceResponsibles(claim, compliances);
+    }
+
+    // 4. Resolver el reclamo
     const updatedClaim = await this.claimRepository.resolve(
       claimId,
       status,
@@ -62,22 +82,75 @@ export class ResolveClaimUseCase {
       throw new Error('Error al resolver el reclamo');
     }
 
-    // 4. Determinar el estado final del hiring según el tipo de resolución
+    // 5. Determinar el estado final del hiring según el tipo de resolución
     await this.updateHiringStatusByResolution(
       claim.hiringId,
       status,
       resolutionType,
     );
 
-    // 5. Enviar notificaciones por email
-    await this.sendResolutionNotifications(updatedClaim);
+    // 6. Crear compliances si fueron proporcionados
+    const createdCompliances: ClaimCompliance[] = [];
+    if (compliances && compliances.length > 0 && status === ClaimStatus.RESOLVED) {
+      for (const complianceData of compliances) {
+        try {
+          const compliance = await this.createComplianceUseCase.execute({
+            claimId: updatedClaim.id,
+            responsibleUserId: complianceData.responsibleUserId,
+            complianceType: complianceData.complianceType,
+            moderatorInstructions: complianceData.instructions,
+            deadlineDays: complianceData.deadlineDays,
+            order: complianceData.order,
+          });
+          createdCompliances.push(compliance);
+        } catch (error) {
+          console.error(
+            `[ResolveClaimUseCase] Error al crear compliance para usuario ${complianceData.responsibleUserId}:`,
+            error,
+          );
+          // Continuamos con los demás compliances aunque uno falle
+        }
+      }
+    }
 
-    return updatedClaim;
+    // 7. Enviar notificaciones por email
+    await this.sendResolutionNotifications(updatedClaim, createdCompliances);
+
+    return {
+      claim: updatedClaim,
+      compliances: createdCompliances,
+    };
   }
 
   /**
-   * Actualiza el estado del hiring según el tipo de resolución del reclamo
+   * Valida que los usuarios responsables de los compliances sean parte del reclamo
    */
+  private async validateComplianceResponsibles(
+    claim: Claim,
+    compliances: Array<{ responsibleUserId: number }>,
+  ): Promise<void> {
+    // Obtener el hiring para conocer el userId (cliente)
+    const hiring = await this.hiringRepository.findById(claim.hiringId);
+    if (!hiring) {
+      throw new NotFoundException(
+        `Contratación con ID ${claim.hiringId} no encontrada`,
+      );
+    }
+
+    const clientId = hiring.userId;
+    const providerId = hiring.service.userId;
+
+    // Validar cada responsable
+    for (const compliance of compliances) {
+      const userId = compliance.responsibleUserId;
+      if (userId !== clientId && userId !== providerId) {
+        throw new BadRequestException(
+          `El usuario ${userId} no es parte del reclamo. Solo pueden ser asignados el cliente (${clientId}) o el proveedor (${providerId})`,
+        );
+      }
+    }
+  }
+
   private async updateHiringStatusByResolution(
     hiringId: number,
     claimStatus: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
@@ -132,7 +205,10 @@ export class ResolveClaimUseCase {
   /**
    * Envía notificaciones de email al cliente y proveedor sobre la resolución
    */
-  private async sendResolutionNotifications(claim: Claim): Promise<void> {
+  private async sendResolutionNotifications(
+    claim: Claim,
+    compliances: ClaimCompliance[] = [],
+  ): Promise<void> {
     try {
       // Obtener el hiring con la relación service
       const hiring = await this.hiringRepository.findById(claim.hiringId);
@@ -144,7 +220,9 @@ export class ResolveClaimUseCase {
       }
 
       // Obtener información del cliente (con profile)
-      const client = await this.usersClient.getUserByIdWithRelations(hiring.userId);
+      const client = await this.usersClient.getUserByIdWithRelations(
+        hiring.userId,
+      );
       const clientName = client?.profile
         ? `${client.profile.name} ${client.profile.lastName}`.trim()
         : 'Cliente';
@@ -172,6 +250,19 @@ export class ResolveClaimUseCase {
           clientName,
           claimData,
         );
+
+        // Si tiene compliances asignados, enviar email adicional
+        const clientCompliances = compliances.filter(
+          (c) => c.responsibleUserId === String(hiring.userId),
+        );
+        if (clientCompliances.length > 0) {
+          await this.emailService.sendComplianceCreatedEmail(
+            client.email,
+            clientName,
+            claimData,
+            clientCompliances,
+          );
+        }
       }
 
       // Enviar email al proveedor
@@ -181,6 +272,19 @@ export class ResolveClaimUseCase {
           providerName,
           claimData,
         );
+
+        // Si tiene compliances asignados, enviar email adicional
+        const providerCompliances = compliances.filter(
+          (c) => c.responsibleUserId === String(hiring.service.userId),
+        );
+        if (providerCompliances.length > 0) {
+          await this.emailService.sendComplianceCreatedEmail(
+            provider.email,
+            providerName,
+            claimData,
+            providerCompliances,
+          );
+        }
       }
     } catch (error) {
       console.error(
@@ -194,7 +298,11 @@ export class ResolveClaimUseCase {
   /**
    * Permite a un moderador marcar un reclamo como "en revisión"
    */
-  async markAsInReview(claimId: string): Promise<Claim> {
+  async markAsInReview(
+    claimId: string,
+    moderatorId: number,
+    moderatorEmail: string | null,
+  ): Promise<Claim> {
     const claim = await this.claimRepository.findById(claimId);
     if (!claim) {
       throw new NotFoundException(`Reclamo con ID ${claimId} no encontrado`);
@@ -206,14 +314,24 @@ export class ResolveClaimUseCase {
       );
     }
 
+    // 1) siempre marcar status
     const updated = await this.claimRepository.update(claimId, {
       status: ClaimStatus.IN_REVIEW,
     });
 
-    if (!updated) {
+    // 2) asignar moderador solo si aún no existe
+    await this.claimRepository.assignModeratorIfEmpty(
+      claimId,
+      moderatorId,
+      moderatorEmail,
+    );
+
+    const refreshed = await this.claimRepository.findById(claimId);
+
+    if (!updated || !refreshed) {
       throw new Error('Error al actualizar el reclamo');
     }
 
-    return updated;
+    return refreshed;
   }
 }

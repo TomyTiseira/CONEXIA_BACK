@@ -33,13 +33,13 @@ export class AddObservationsUseCase {
       throw new NotFoundException(`Reclamo con ID ${claimId} no encontrado`);
     }
 
-    // 2. Verificar que el claim está en estado OPEN o IN_REVIEW
+    // 2. Reglas de flujo: debe estar en revisión o esperando respuesta del staff
     if (
-      claim.status !== ClaimStatus.OPEN &&
-      claim.status !== ClaimStatus.IN_REVIEW
+      claim.status !== ClaimStatus.IN_REVIEW &&
+      claim.status !== ClaimStatus.REQUIRES_STAFF_RESPONSE
     ) {
       throw new BadRequestException(
-        `Solo se pueden agregar observaciones a reclamos en estado OPEN o IN_REVIEW`,
+        'El reclamo debe estar "en revisión" o "requiere respuesta" para poder agregar observaciones',
       );
     }
 

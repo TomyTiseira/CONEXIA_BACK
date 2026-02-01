@@ -1,3 +1,4 @@
+export * from './claim-compliance.entity';
 export * from './claim.entity';
 export * from './deliverable.entity';
 export * from './delivery-attachment.entity';

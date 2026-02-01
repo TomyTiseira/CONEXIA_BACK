@@ -3,6 +3,7 @@ import { UserNotFoundException } from '../../../common/exceptions/project.except
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { transformProjectsWithOwners } from '../../../common/utils/project-transform.utils';
+import { PostulationRepository } from '../../../postulations/repositories/postulation.repository';
 import { ReportRepository } from '../../../reports/repositories/report.repository';
 import { GetProjectsByUserDto } from '../../dtos/get-projects-by-user.dto';
 import { ProjectRepository } from '../../repositories/project.repository';
@@ -14,6 +15,8 @@ export class GetProjectsByUserUseCase {
     private readonly usersClientService: UsersClientService,
     @Inject(forwardRef(() => ReportRepository))
     private readonly reportRepository: ReportRepository,
+    @Inject(forwardRef(() => PostulationRepository))
+    private readonly postulationRepository: PostulationRepository,
   ) {}
 
   async execute(data: GetProjectsByUserDto) {
@@ -90,10 +93,29 @@ export class GetProjectsByUserUseCase {
       skillsMap,
     );
 
-    // Agregar el campo hasReported a cada proyecto
+    // Obtener conteo de postulaciones para cada proyecto
+    const postulationsCountMap = new Map<number, number>();
+    await Promise.all(
+      projects.map(async (project) => {
+        const count = await this.postulationRepository.countByProjectId(
+          project.id,
+        );
+        postulationsCountMap.set(project.id, count);
+      }),
+    );
+
+    // Crear mapa de rolesCount para cada proyecto
+    const rolesCountMap = new Map<number, number>();
+    projects.forEach((project) => {
+      rolesCountMap.set(project.id, project.roles?.length || 0);
+    });
+
+    // Agregar los campos hasReported, postulationsCount y rolesCount a cada proyecto
     const projectsWithReportStatus = transformedProjects.map((project) => ({
       ...project,
       hasReported: hasReportedMap.get(project.id) ?? false,
+      postulationsCount: postulationsCountMap.get(project.id) ?? 0,
+      rolesCount: rolesCountMap.get(project.id) ?? 0,
     }));
 
     // Calcular información de paginación usando la función común

@@ -12,5 +12,9 @@ export class UpdateClaimDto {
   clarificationResponse?: string;
 
   @IsOptional()
-  evidenceUrls?: string[]; // Se llenará con los archivos subidos
+  clarificationEvidenceUrls?: string[]; // Evidencias subidas al subsanar
+
+  // Backward-compatible: algunos clientes viejos pueden seguir mandando evidenceUrls
+  @IsOptional()
+  evidenceUrls?: string[];
 }

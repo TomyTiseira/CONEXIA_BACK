@@ -81,6 +81,58 @@ export class SeedService implements OnModuleInit {
         code: ServiceHiringStatusCode.EXPIRED,
         description: 'Cotización vencida por tiempo límite',
       },
+      {
+        name: 'Entregado',
+        code: ServiceHiringStatusCode.DELIVERED,
+        description:
+          'Servicio o entregable entregado, esperando revisión del cliente',
+      },
+      {
+        name: 'Revisión Solicitada',
+        code: ServiceHiringStatusCode.REVISION_REQUESTED,
+        description:
+          'Cliente solicitó cambios en una o más entregas del servicio',
+      },
+      {
+        name: 'En Reclamo',
+        code: ServiceHiringStatusCode.IN_CLAIM,
+        description:
+          'Servicio tiene un reclamo activo. Todas las acciones están suspendidas hasta que se resuelva',
+      },
+      {
+        name: 'Re-cotizando',
+        code: ServiceHiringStatusCode.REQUOTING,
+        description:
+          'El cliente ha solicitado una actualización de la cotización vencida',
+      },
+      {
+        name: 'Cancelado por reclamo',
+        code: ServiceHiringStatusCode.CANCELLED_BY_CLAIM,
+        description:
+          'Contratación cancelada por reclamo resuelto a favor del cliente',
+      },
+      {
+        name: 'Finalizado por reclamo',
+        code: ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+        description:
+          'Contratación finalizada por reclamo resuelto a favor del proveedor',
+      },
+      {
+        name: 'Finalizado con acuerdo',
+        code: ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+        description: 'Contratación finalizada con acuerdo parcial tras reclamo',
+      },
+      {
+        name: 'Terminado por Moderación',
+        code: ServiceHiringStatusCode.TERMINATED_BY_MODERATION,
+        description:
+          'Servicio terminado porque el proveedor o cliente fue baneado permanentemente',
+      },
+      {
+        name: 'Finalizado por Moderación',
+        code: ServiceHiringStatusCode.FINISHED_BY_MODERATION,
+        description: 'Servicio finalizado por decisión de moderación',
+      },
     ];
 
     let createdCount = 0;

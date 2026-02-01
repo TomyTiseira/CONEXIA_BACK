@@ -789,5 +789,202 @@ Para consultas sobre pagos pendientes o asistencia general, contáctanos en sopo
 Este es un mensaje automático, por favor no respondas a este email.
     `;
   }
-}
 
+  /**
+   * Envía un email cuando se asignan compliances al resolver un reclamo
+   */
+  async sendComplianceCreatedEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      status: 'resolved' | 'rejected';
+      resolution: string;
+      resolutionType?: string | null;
+    },
+    compliances: Array<{
+      id: string;
+      complianceType: string;
+      moderatorInstructions: string;
+      deadline: Date;
+      originalDeadlineDays: number;
+    }>,
+  ): Promise<void> {
+    const html = this.generateComplianceCreatedEmailHTML(
+      recipientName,
+      claimData,
+      compliances,
+    );
+    const text = this.generateComplianceCreatedEmailText(
+      recipientName,
+      claimData,
+      compliances,
+    );
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `📋 Se te han asignado compromisos - ${claimData.hiringTitle}`,
+      html,
+      text,
+    });
+
+    this.logger.log(
+      `Email de compliances asignados enviado a: ${recipientEmail} (${compliances.length} compliance(s))`,
+    );
+  }
+
+  private generateComplianceCreatedEmailHTML(
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      resolution: string;
+    },
+    compliances: Array<{
+      id: string;
+      complianceType: string;
+      moderatorInstructions: string;
+      deadline: Date;
+      originalDeadlineDays: number;
+    }>,
+  ): string {
+    const complianceTypeLabels: Record<string, string> = {
+      full_refund: 'Reembolso Total',
+      partial_refund: 'Reembolso Parcial',
+      payment_required: 'Pago Requerido',
+      work_completion: 'Completar Trabajo',
+      work_revision: 'Revisión de Trabajo',
+      apology_required: 'Disculpa Requerida',
+      service_discount: 'Descuento en Servicio',
+      penalty_fee: 'Tarifa de Penalización',
+      account_restriction: 'Restricción de Cuenta',
+      confirmation_only: 'Solo Confirmación',
+      other: 'Otro',
+    };
+
+    const compliancesHTML = compliances
+      .map((c, index) => {
+        const typeLabel = complianceTypeLabels[c.complianceType] || c.complianceType;
+        const deadlineStr = new Date(c.deadline).toLocaleDateString('es-AR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        return `
+        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #48a6a7; border-radius: 5px; margin-bottom: 15px;">
+          <h4 style="color: #333; margin-top: 0;">Compromiso ${index + 1}: ${typeLabel}</h4>
+          <p style="margin: 5px 0; color: #666;"><strong>Plazo:</strong> ${c.originalDeadlineDays} día(s) - Vence el ${deadlineStr}</p>
+          <p style="margin: 5px 0; color: #666;"><strong>ID:</strong> ${c.id}</p>
+          <div style="background-color: white; padding: 10px; border-radius: 3px; margin-top: 10px;">
+            <strong style="color: #333;">Instrucciones:</strong>
+            <p style="color: #666; margin: 10px 0 0 0;">${c.moderatorInstructions}</p>
+          </div>
+        </div>
+        `;
+      })
+      .join('');
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; padding: 20px; background-color: #48a6a7; border-radius: 5px; margin-bottom: 20px;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">📋 Compromisos Asignados</h1>
+          </div>
+          
+          <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+          
+          <p style="color: #666; font-size: 14px;">
+            Como parte de la resolución del reclamo sobre <strong>"${claimData.hiringTitle}"</strong>, 
+            se te han asignado <strong>${compliances.length}</strong> compromiso(s) a cumplir.
+          </p>
+
+          <div style="background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="color: #333; margin: 0;"><strong>Resolución del Moderador:</strong></p>
+            <p style="color: #666; margin: 10px 0 0 0; font-style: italic;">${claimData.resolution}</p>
+          </div>
+
+          <h3 style="color: #333; margin-top: 30px;">Tus Compromisos:</h3>
+          ${compliancesHTML}
+
+          <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; border-radius: 5px; margin-top: 20px;">
+            <p style="margin: 0; color: #856404;"><strong>⚠️ Importante:</strong></p>
+            <ul style="color: #856404; margin: 10px 0; padding-left: 20px;">
+              <li>Debes cumplir con cada compromiso dentro del plazo establecido</li>
+              <li>Sube la evidencia del cumplimiento en tu panel de Compliances</li>
+              <li>Un moderador revisará y aprobará tu cumplimiento</li>
+              <li>El incumplimiento puede resultar en consecuencias en tu cuenta</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://conexia.com/compliances" style="display: inline-block; padding: 12px 30px; background-color: #48a6a7; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Ver Mis Compromisos
+            </a>
+          </div>
+
+          <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            Para consultas, contáctanos en soporte@conexia.com<br>
+            Este es un mensaje automático, por favor no respondas a este email.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateComplianceCreatedEmailText(
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      resolution: string;
+    },
+    compliances: Array<{
+      id: string;
+      complianceType: string;
+      moderatorInstructions: string;
+      deadline: Date;
+      originalDeadlineDays: number;
+    }>,
+  ): string {
+    const compliancesList = compliances
+      .map((c, index) => {
+        const deadlineStr = new Date(c.deadline).toLocaleDateString('es-AR');
+        return `
+${index + 1}. ${c.complianceType.toUpperCase()}
+   Plazo: ${c.originalDeadlineDays} día(s) - Vence: ${deadlineStr}
+   ID: ${c.id}
+   Instrucciones: ${c.moderatorInstructions}
+`;
+      })
+      .join('\n');
+
+    return `
+📋 COMPROMISOS ASIGNADOS - CONEXIA
+
+Hola ${recipientName},
+
+Como parte de la resolución del reclamo sobre "${claimData.hiringTitle}", 
+se te han asignado ${compliances.length} compromiso(s) a cumplir.
+
+RESOLUCIÓN DEL MODERADOR:
+${claimData.resolution}
+
+TUS COMPROMISOS:
+${compliancesList}
+
+⚠️ IMPORTANTE:
+- Debes cumplir con cada compromiso dentro del plazo establecido
+- Sube la evidencia del cumplimiento en tu panel de Compliances
+- Un moderador revisará y aprobará tu cumplimiento
+- El incumplimiento puede resultar en consecuencias en tu cuenta
+
+Ver mis compromisos: https://conexia.com/compliances
+
+---
+Para consultas, contáctanos en soporte@conexia.com
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+}
