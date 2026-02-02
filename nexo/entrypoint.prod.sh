@@ -12,10 +12,7 @@ sleep 15
 
 # Ejecutar seeds (compilados en dist/)
 echo "Ejecutando seeds..."
-node dist/scripts/seed-roles.js || echo "seed-roles fallÃ³ o ya ejecutado"
-node dist/scripts/seed-document-types.js || echo "seed-document-types fallÃ³ o ya ejecutado"
-node dist/scripts/seed-localities.js || echo "seed-localities fallÃ³ o ya ejecutado"
-node dist/scripts/seed-banks-and-platforms.js || echo "seed-banks-and-platforms fallÃ³ o ya ejecutado"
+node dist/scripts/seed-nexo-questions.js || echo "seed-nexo-questions fallÃ³ o ya ejecutado"
 
 echo "Seeds completados!"
 
