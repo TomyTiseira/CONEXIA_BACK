@@ -70,8 +70,14 @@ export class UsersController {
     );
   }
   @Get()
-  getUsers(@Query() getUsersDto: GetUsersDto) {
-    return this.client.send('getUsers', getUsersDto).pipe(
+  @AutoRefreshAuth()
+  getUsers(@Query() getUsersDto: GetUsersDto, @User() user?: AuthenticatedUser) {
+    // Incluir el userId actual si está autenticado para excluirlo de los resultados
+    const payload = {
+      ...getUsersDto,
+      currentUserId: user?.id || undefined,
+    };
+    return this.client.send('getUsers', payload).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),

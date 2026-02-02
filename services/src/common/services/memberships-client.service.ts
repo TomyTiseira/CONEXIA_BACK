@@ -29,12 +29,13 @@ export class MembershipsClientService {
    */
   async getUserBenefitValue(userId: number, benefitKey: string): Promise<any> {
     try {
-      const plan = await this.getUserPlan(userId);
-      if (!plan || !plan.benefits) {
+      const response = await this.getUserPlan(userId);
+      if (!response || !response.plan) {
         return null;
       }
 
-      const benefit = plan.benefits.find((b: any) => b.key === benefitKey);
+      const plan = response.plan;
+      const benefit = plan.benefits?.find((b: any) => b.key === benefitKey);
       return benefit?.value ?? null;
     } catch (error) {
       console.error(

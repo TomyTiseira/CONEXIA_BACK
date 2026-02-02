@@ -29,11 +29,11 @@ export class SearchUsersPaginatedUseCase {
   ) {}
 
   async execute(searchParams: SearchUsersDto): Promise<SearchUsersResult> {
-    const { search, page = 1, limit = 10 } = searchParams;
+    const { search, page = 1, limit = 10, currentUserId } = searchParams;
 
     // Obtener TODOS los usuarios que coinciden con la búsqueda (sin paginación inicial)
     const { users: allUsers, total } =
-      await this.userRepository.searchUsersPaginated(search || '', 10000, 0);
+      await this.userRepository.searchUsersPaginated(search || '', 10000, 0, currentUserId);
 
     // Obtener search_visibility de todos los usuarios desde memberships
     const userIds = allUsers.map((user) => user.id);

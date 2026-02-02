@@ -18,4 +18,9 @@ export class SearchUsersDto {
   @Min(1)
   @Max(100)
   limit?: number = 10;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  currentUserId?: number;
 }
