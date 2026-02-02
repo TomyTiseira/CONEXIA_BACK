@@ -79,8 +79,11 @@ export class GetProjectsUseCase {
     // Obtener todas las skill IDs de todos los proyectos (desde roles)
     const allSkillIds = [
       ...new Set(
-        projects.flatMap((project) =>
-          project.roles?.flatMap((role) => role.roleSkills?.map((rs) => rs.skillId) || []) || [],
+        projects.flatMap(
+          (project) =>
+            project.roles?.flatMap(
+              (role) => role.roleSkills?.map((rs) => rs.skillId) || [],
+            ) || [],
         ),
       ),
     ];
@@ -169,7 +172,8 @@ export class GetProjectsUseCase {
     // Transformar los proyectos usando la función común
     // Obtener mapas de contract y collaboration types como fallback en caso de que las relaciones no vengan pobladas
     const contractTypes = await this.projectRepository.findAllContractTypes();
-    const collaborationTypes = await this.projectRepository.findAllCollaborationTypes();
+    const collaborationTypes =
+      await this.projectRepository.findAllCollaborationTypes();
     const contractTypeMap = new Map(contractTypes.map((c) => [c.id, c.name]));
     const collaborationTypeMap = new Map(
       collaborationTypes.map((c) => [c.id, c.name]),

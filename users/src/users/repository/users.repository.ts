@@ -161,6 +161,7 @@ export class UserRepository {
     searchTerm: string,
     limit: number,
     offset: number,
+    excludeUserId?: number,
   ): Promise<{ users: User[]; total: number }> {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('user')
@@ -172,6 +173,11 @@ export class UserRepository {
         "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
         { searchTerm: `%${searchTerm}%` },
       );
+    }
+
+    // Excluir al usuario actual si se proporciona
+    if (excludeUserId) {
+      queryBuilder.andWhere('user.id != :excludeUserId', { excludeUserId });
     }
 
     // Obtener el total de registros
