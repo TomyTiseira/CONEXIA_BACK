@@ -16,6 +16,7 @@ export enum DeliverableStatus {
   APPROVED = 'approved',
   REVISION_REQUESTED = 'revision_requested', // Cliente solicita revisión del entregable
   REJECTED = 'rejected',
+  CANCELLED_BY_MODERATION = 'cancelled_by_moderation', // Cancelado por moderación (usuario baneado)
 }
 
 @Entity('deliverables')
@@ -53,6 +54,12 @@ export class Deliverable {
 
   @Column({ type: 'timestamp', nullable: true })
   approvedAt: Date;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  moderationReason: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledByModerationAt: Date;
 
   @ManyToOne(() => ServiceHiring, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hiring_id' })

@@ -15,6 +15,7 @@ import { MessageRepository } from '../repositories/message.repository';
 import {
   AcceptConnectionUseCase,
   DeleteConnectionRequestUseCase,
+  DeleteUserConnectionsOnBanUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
@@ -38,6 +39,7 @@ export class ContactsService {
     private readonly getSentConnectionRequestsUseCase: GetSentConnectionRequestsUseCase,
     private readonly acceptConnectionUseCase: AcceptConnectionUseCase,
     private readonly deleteConnectionRequestUseCase: DeleteConnectionRequestUseCase,
+    private readonly deleteUserConnectionsOnBanUseCase: DeleteUserConnectionsOnBanUseCase,
     private readonly getFriendsUseCase: GetFriendsUseCase,
     private readonly getConnectionStatusUseCase: GetConnectionStatusUseCase,
     private readonly getConnectionInfoUseCase: GetConnectionInfoUseCase,
@@ -133,5 +135,12 @@ export class ContactsService {
     data: DeleteConnectionRequestDto,
   ) {
     return this.deleteConnectionRequestUseCase.execute(currentUserId, data);
+  }
+
+  /**
+   * Elimina todas las conexiones de un usuario cuando es baneado
+   */
+  async deleteAllUserConnectionsOnBan(userId: number): Promise<number> {
+    return this.deleteUserConnectionsOnBanUseCase.execute(userId);
   }
 }

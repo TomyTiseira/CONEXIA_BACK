@@ -58,4 +58,51 @@ export class DeliverableRepository {
   async deleteByHiringId(hiringId: number): Promise<void> {
     await this.repository.delete({ hiringId });
   }
+
+  /**
+   * Cancela todos los deliverables de una contratación por moderación
+   */
+  async cancelByModeration(hiringId: number, reason: string): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(Deliverable)
+      .set({
+        status: 'cancelled_by_moderation' as any,
+        moderationReason: reason,
+        cancelledByModerationAt: new Date(),
+      })
+      .where('hiring_id = :hiringId', { hiringId })
+      .andWhere('status NOT IN (:...finalStatuses)', {
+        finalStatuses: ['approved', 'rejected', 'cancelled_by_moderation'],
+      })
+      .execute();
+
+    return result.affected || 0;
+  }
+
+  /**
+   * Cancela todos los deliverables de múltiples contrataciones por moderación
+   */
+  async cancelMultipleByModeration(
+    hiringIds: number[],
+    reason: string,
+  ): Promise<number> {
+    if (hiringIds.length === 0) return 0;
+
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(Deliverable)
+      .set({
+        status: 'cancelled_by_moderation' as any,
+        moderationReason: reason,
+        cancelledByModerationAt: new Date(),
+      })
+      .where('hiring_id IN (:...hiringIds)', { hiringIds })
+      .andWhere('status NOT IN (:...finalStatuses)', {
+        finalStatuses: ['approved', 'rejected', 'cancelled_by_moderation'],
+      })
+      .execute();
+
+    return result.affected || 0;
+  }
 }

@@ -7,11 +7,11 @@ import { EmailService } from 'src/common/services/email.service';
 import { AccountStatus, User } from 'src/shared/entities/user.entity';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { NATS_SERVICE } from '../config';
-import { ModerationAction } from '../entities/moderation-action.entity';
 import {
-  SuspendForComplianceDto,
   BanForComplianceDto,
+  SuspendForComplianceDto,
 } from '../dto/compliance-violation.dto';
+import { ModerationAction } from '../entities/moderation-action.entity';
 
 @Injectable()
 export class BanManagementService {
@@ -310,6 +310,11 @@ export class BanManagementService {
 
   /**
    * Notifica a microservicios sobre el baneo
+   * Este evento dispara las siguientes acciones en otros microservicios:
+   * - services: actualiza ownerModerationStatus a 'banned', oculta servicios
+   * - projects: actualiza ownerModerationStatus a 'banned', oculta proyectos
+   * - communities: actualiza ownerModerationStatus a 'banned', oculta publicaciones
+   * - communities/contacts: elimina todas las conexiones (amigos) del usuario baneado
    */
   private async notifyBan(userId: number, reason?: string): Promise<void> {
     try {
@@ -468,7 +473,9 @@ export class BanManagementService {
     }
 
     if (user.accountStatus === AccountStatus.BANNED) {
-      this.logger.warn(`Usuario ${dto.userId} ya está baneado, no se puede suspender`);
+      this.logger.warn(
+        `Usuario ${dto.userId} ya está baneado, no se puede suspender`,
+      );
       return;
     }
 
