@@ -62,15 +62,10 @@ services:
       context: ./communities
       dockerfile: Dockerfile.prod
     depends_on:
-      communities-db:
-        condition: service_healthy
+      - nats-server
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - DB_HOST=communities-db
-      - DB_PORT=5432
-      - DB_USERNAME=${COMMUNITIES_DB_USER}
-      - DB_PASSWORD=${COMMUNITIES_DB_PASSWORD}
-      - DB_DATABASE=${COMMUNITIES_DB_NAME}
+      - DATABASE_URL=${COMMUNITIES_DB_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURE=${SMTP_SECURE}
@@ -79,36 +74,6 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-
-  communities-db:
-    build:
-      context: ./communities
-      dockerfile: Dockerfile.postgres
-    ports:
-      - "${COMMUNITIES_DB_PORT}:5432"
-    environment:
-      - POSTGRES_USER=${COMMUNITIES_DB_USER}
-      - POSTGRES_PASSWORD=${COMMUNITIES_DB_PASSWORD}
-      - POSTGRES_DB=${COMMUNITIES_DB_NAME}
-    volumes:
-      - ./communities/postgres-data:/var/lib/postgresql/data
-      - ./communities/postgres-init:/docker-entrypoint-initdb.d
-    command: >
-      postgres
-      -c listen_addresses='*'
-      -c max_connections=100
-      -c timezone='America/Argentina/Buenos_Aires'
-      -c log_timezone='America/Argentina/Buenos_Aires'
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${COMMUNITIES_DB_USER} -d ${COMMUNITIES_DB_NAME}",
-        ]
-      start_period: 60s
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
   services:
     build:
