@@ -146,15 +146,10 @@ services:
       context: ./memberships
       dockerfile: Dockerfile.prod
     depends_on:
-      memberships-db:
-        condition: service_healthy
+      - nats-server
     environment:
       - NATS_SERVERS=nats://nats-server:4222
-      - DB_HOST=memberships-db
-      - DB_PORT=5432
-      - DB_USERNAME=${MEMBERSHIPS_DB_USER}
-      - DB_PASSWORD=${MEMBERSHIPS_DB_PASSWORD}
-      - DB_DATABASE=${MEMBERSHIPS_DB_NAME}
+      - DATABASE_URL=${MEMBERSHIPS_DB_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURE=${SMTP_SECURE}
@@ -166,36 +161,6 @@ services:
       - MERCADOPAGO_BACK_URL=${MERCADOPAGO_BACK_URL}
       - MERCADOPAGO_NOTIFICATION_URL=${MERCADOPAGO_NOTIFICATION_URL}
       - MERCADOPAGO_CURRENCY_ID=${MERCADOPAGO_CURRENCY_ID:-ARS}
-
-  memberships-db:
-    build:
-      context: ./memberships
-      dockerfile: Dockerfile.postgres
-    ports:
-      - "${MEMBERSHIPS_DB_PORT}:5432"
-    environment:
-      - POSTGRES_USER=${MEMBERSHIPS_DB_USER}
-      - POSTGRES_PASSWORD=${MEMBERSHIPS_DB_PASSWORD}
-      - POSTGRES_DB=${MEMBERSHIPS_DB_NAME}
-    volumes:
-      - ./memberships/postgres-data:/var/lib/postgresql/data
-      - ./memberships/postgres-init:/docker-entrypoint-initdb.d
-    command: >
-      postgres
-      -c listen_addresses='*'
-      -c max_connections=100
-      -c timezone='America/Argentina/Buenos_Aires'
-      -c log_timezone='America/Argentina/Buenos_Aires'
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${MEMBERSHIPS_DB_USER} -d ${MEMBERSHIPS_DB_NAME}",
-        ]
-      start_period: 60s
-      interval: 5s
-      timeout: 5s
-      retries: 20
 
   # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
   # Configurado para fallar silenciosamente si el endpoint ya existe
