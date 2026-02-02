@@ -1,5 +1,5 @@
-import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { DataSource } from 'typeorm';
 
 dotenv.config();
 
@@ -24,7 +24,9 @@ async function migrate() {
     console.log('========================================\n');
 
     // Step 1: Fix admins and moderators (should have NULL)
-    console.log('Step 1: Setting isProfileComplete = NULL for admins and moderators...');
+    console.log(
+      'Step 1: Setting isProfileComplete = NULL for admins and moderators...',
+    );
     const adminModeratorResult = await dataSource.query(`
       UPDATE users u
       SET is_profile_complete = NULL
@@ -36,7 +38,9 @@ async function migrate() {
     console.log(`✅ ${adminModeratorResult[1]} admins and moderators fixed.\n`);
 
     // Step 2: Fix regular users with complete profiles (should have true)
-    console.log('Step 2: Setting isProfileComplete = true for users with complete profiles...');
+    console.log(
+      'Step 2: Setting isProfileComplete = true for users with complete profiles...',
+    );
     const completeProfilesResult = await dataSource.query(`
       UPDATE users u
       SET is_profile_complete = true
@@ -58,10 +62,14 @@ async function migrate() {
         )
         AND u.is_profile_complete != true
     `);
-    console.log(`✅ ${completeProfilesResult[1]} users with complete profiles fixed.\n`);
+    console.log(
+      `✅ ${completeProfilesResult[1]} users with complete profiles fixed.\n`,
+    );
 
     // Step 3: Fix regular users with incomplete profiles (should have false)
-    console.log('Step 3: Setting isProfileComplete = false for users with incomplete profiles...');
+    console.log(
+      'Step 3: Setting isProfileComplete = false for users with incomplete profiles...',
+    );
     const incompleteProfilesResult = await dataSource.query(`
       UPDATE users u
       SET is_profile_complete = false
@@ -85,7 +93,9 @@ async function migrate() {
         )
         AND u.is_profile_complete != false
     `);
-    console.log(`✅ ${incompleteProfilesResult[1]} users with incomplete profiles fixed.\n`);
+    console.log(
+      `✅ ${incompleteProfilesResult[1]} users with incomplete profiles fixed.\n`,
+    );
 
     // Step 4: Verify results
     console.log('Step 4: Verifying results...');
