@@ -10,6 +10,10 @@ APP_PID=$!
 echo "Esperando que TypeORM cree las tablas..."
 sleep 15
 
+# Ejecutar migraciones
+echo "Ejecutando migraciones de base de datos..."
+npx ts-node src/scripts/migrate-fix-admin-moderator-profile-complete.ts
+
 # Ejecutar seeds
 echo "Ejecutando seeds..."
 npm run seed:roles
