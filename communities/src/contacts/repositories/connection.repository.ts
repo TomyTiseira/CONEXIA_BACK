@@ -127,4 +127,28 @@ export class ConnectionRepository {
       ],
     });
   }
+
+  /**
+   * Elimina todas las conexiones (enviadas y recibidas) de un usuario
+   * Se usa cuando un usuario es baneado
+   */
+  async deleteAllUserConnections(userId: number): Promise<number> {
+    const result = await this.connectionRepository
+      .createQueryBuilder()
+      .delete()
+      .from(Connection)
+      .where('senderId = :userId OR receiverId = :userId', { userId })
+      .execute();
+
+    return result.affected || 0;
+  }
+
+  /**
+   * Cuenta todas las conexiones de un usuario (para auditoría)
+   */
+  async countUserConnections(userId: number): Promise<number> {
+    return this.connectionRepository.count({
+      where: [{ senderId: userId }, { receiverId: userId }],
+    });
+  }
 }

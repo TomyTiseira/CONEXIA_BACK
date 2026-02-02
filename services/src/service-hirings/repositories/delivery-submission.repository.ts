@@ -65,4 +65,51 @@ export class DeliverySubmissionRepository {
       order: { createdAt: 'DESC' },
     });
   }
+
+  /**
+   * Cancela todas las entregas de una contratación por moderación
+   */
+  async cancelByModeration(hiringId: number, reason: string): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(DeliverySubmission)
+      .set({
+        status: 'cancelled_by_moderation' as any,
+        moderationReason: reason,
+        cancelledByModerationAt: new Date(),
+      })
+      .where('hiring_id = :hiringId', { hiringId })
+      .andWhere('status NOT IN (:...finalStatuses)', {
+        finalStatuses: ['approved', 'cancelled_by_moderation'],
+      })
+      .execute();
+
+    return result.affected || 0;
+  }
+
+  /**
+   * Cancela todas las entregas de múltiples contrataciones por moderación
+   */
+  async cancelMultipleByModeration(
+    hiringIds: number[],
+    reason: string,
+  ): Promise<number> {
+    if (hiringIds.length === 0) return 0;
+
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(DeliverySubmission)
+      .set({
+        status: 'cancelled_by_moderation' as any,
+        moderationReason: reason,
+        cancelledByModerationAt: new Date(),
+      })
+      .where('hiring_id IN (:...hiringIds)', { hiringIds })
+      .andWhere('status NOT IN (:...finalStatuses)', {
+        finalStatuses: ['approved', 'cancelled_by_moderation'],
+      })
+      .execute();
+
+    return result.affected || 0;
+  }
 }

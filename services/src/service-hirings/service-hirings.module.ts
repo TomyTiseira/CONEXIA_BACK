@@ -158,6 +158,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ServiceHiringsService,
     ServiceHiringRepository,
     DeliverableRepository,
+    DeliverySubmissionRepository,
   ],
 })
 export class ServiceHiringsModule {}

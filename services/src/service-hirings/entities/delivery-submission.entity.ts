@@ -23,6 +23,7 @@ export enum DeliveryStatus {
   PENDING_PAYMENT = 'pending_payment', // Aprobada pero esperando confirmación de pago
   APPROVED = 'approved', // Aprobada Y pagada
   REVISION_REQUESTED = 'revision_requested', // Cliente solicita revisión
+  CANCELLED_BY_MODERATION = 'cancelled_by_moderation', // Cancelado por moderación (usuario baneado)
 }
 
 @Entity('delivery_submissions')
@@ -76,6 +77,12 @@ export class DeliverySubmission {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   mercadoPagoPaymentId: string; // ID del payment/preference en MercadoPago para rastrear
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  moderationReason: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledByModerationAt: Date;
 
   @ManyToOne(() => ServiceHiring, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hiring_id' })

@@ -4,6 +4,8 @@ import { IsNull, Repository } from 'typeorm';
 import { ServiceHiringStatus } from '../../service-hirings/entities/service-hiring-status.entity';
 import { ServiceHiring } from '../../service-hirings/entities/service-hiring.entity';
 import { ServiceHiringStatusCode } from '../../service-hirings/enums/service-hiring-status.enum';
+import { DeliverableRepository } from '../../service-hirings/repositories/deliverable.repository';
+import { DeliverySubmissionRepository } from '../../service-hirings/repositories/delivery-submission.repository';
 import { Service } from '../../services/entities/service.entity';
 import { EmailService } from './email.service';
 import { UsersClientService } from './users-client.service';
@@ -19,6 +21,8 @@ export class ModerationListenerService {
     private readonly serviceHiringRepository: Repository<ServiceHiring>,
     @InjectRepository(ServiceHiringStatus)
     private readonly serviceHiringStatusRepository: Repository<ServiceHiringStatus>,
+    private readonly deliverableRepository: DeliverableRepository,
+    private readonly deliverySubmissionRepository: DeliverySubmissionRepository,
     private readonly emailService: EmailService,
     private readonly usersClientService: UsersClientService,
   ) {}
@@ -32,15 +36,73 @@ export class ModerationListenerService {
     try {
       // 1. Actualizar ownerModerationStatus y ocultar servicios
       const hiddenServices = await this.hideUserServices(userId, 'banned');
-      this.logger.log(`${hiddenServices} servicios marcados como owner baneado (userId=${userId})`);
+      this.logger.log(
+        `${hiddenServices} servicios marcados como owner baneado (userId=${userId})`,
+      );
 
-      // 2. Terminar servicios activos donde el usuario es proveedor
+      // 2. Obtener IDs de contrataciones activas ANTES de terminarlas (como proveedor)
+      const activeHiringsAsProvider =
+        await this.getActiveHiringIdsAsProvider(userId);
+
+      // 3. Cancelar deliverables de contrataciones activas como proveedor
+      if (activeHiringsAsProvider.length > 0) {
+        const cancelledDeliverables = await this.cancelDeliverablesForHirings(
+          activeHiringsAsProvider,
+          'Proveedor baneado por violaciones graves de las políticas',
+        );
+        this.logger.log(
+          `${cancelledDeliverables} entregables cancelados (usuario como proveedor)`,
+        );
+
+        // 4. Cancelar delivery submissions de contrataciones activas como proveedor
+        const cancelledSubmissions =
+          await this.cancelDeliverySubmissionsForHirings(
+            activeHiringsAsProvider,
+            'Proveedor baneado por violaciones graves de las políticas',
+          );
+        this.logger.log(
+          `${cancelledSubmissions} entregas canceladas (usuario como proveedor)`,
+        );
+      }
+
+      // 5. Obtener IDs de contrataciones activas como cliente
+      const activeHiringsAsClient =
+        await this.getActiveHiringIdsAsClient(userId);
+
+      // 6. Cancelar deliverables de contrataciones activas como cliente
+      if (activeHiringsAsClient.length > 0) {
+        const cancelledDeliverablesClient =
+          await this.cancelDeliverablesForHirings(
+            activeHiringsAsClient,
+            'Cliente baneado por violaciones graves de las políticas',
+          );
+        this.logger.log(
+          `${cancelledDeliverablesClient} entregables cancelados (usuario como cliente)`,
+        );
+
+        // 7. Cancelar delivery submissions de contrataciones activas como cliente
+        const cancelledSubmissionsClient =
+          await this.cancelDeliverySubmissionsForHirings(
+            activeHiringsAsClient,
+            'Cliente baneado por violaciones graves de las políticas',
+          );
+        this.logger.log(
+          `${cancelledSubmissionsClient} entregas canceladas (usuario como cliente)`,
+        );
+      }
+
+      // 8. Terminar contrataciones donde usuario es proveedor
       const terminatedAsProvider = await this.terminateActiveHirings(userId);
-      this.logger.log(`${terminatedAsProvider} contrataciones terminadas donde usuario es proveedor`);
+      this.logger.log(
+        `${terminatedAsProvider} contrataciones terminadas donde usuario es proveedor`,
+      );
 
-      // 3. Terminar servicios activos donde el usuario es cliente
-      const terminatedAsClient = await this.terminateActiveHiringsAsClient(userId);
-      this.logger.log(`${terminatedAsClient} contrataciones terminadas donde usuario es cliente`);
+      // 9. Terminar contrataciones donde usuario es cliente
+      const terminatedAsClient =
+        await this.terminateActiveHiringsAsClient(userId);
+      this.logger.log(
+        `${terminatedAsClient} contrataciones terminadas donde usuario es cliente`,
+      );
 
       this.logger.log(`Baneo completado para usuario ${userId}`);
     } catch (error) {
@@ -58,13 +120,18 @@ export class ModerationListenerService {
     try {
       // 1. Actualizar ownerModerationStatus (servicios quedan activos pero con flag)
       const updatedServices = await this.markUserServicesAsSuspended(userId);
-      this.logger.log(`${updatedServices} servicios marcados como owner suspendido (userId=${userId})`);
+      this.logger.log(
+        `${updatedServices} servicios marcados como owner suspendido (userId=${userId})`,
+      );
 
       // Los servicios en curso se mantienen activos para que pueda completarlos
 
       this.logger.log(`Suspensión procesada para usuario ${userId}`);
     } catch (error) {
-      this.logger.error(`Error procesando suspensión de usuario ${userId}:`, error);
+      this.logger.error(
+        `Error procesando suspensión de usuario ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -78,11 +145,16 @@ export class ModerationListenerService {
     try {
       // 1. Limpiar ownerModerationStatus y restaurar visibilidad
       const restoredServices = await this.restoreUserServices(userId);
-      this.logger.log(`${restoredServices} servicios restaurados para usuario ${userId}`);
+      this.logger.log(
+        `${restoredServices} servicios restaurados para usuario ${userId}`,
+      );
 
       this.logger.log(`Reactivación completada para usuario ${userId}`);
     } catch (error) {
-      this.logger.error(`Error procesando reactivación de usuario ${userId}:`, error);
+      this.logger.error(
+        `Error procesando reactivación de usuario ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -90,7 +162,10 @@ export class ModerationListenerService {
   /**
    * Marca servicios con ownerModerationStatus cuando el owner es baneado
    */
-  private async hideUserServices(userId: number, moderationStatus: 'banned'): Promise<number> {
+  private async hideUserServices(
+    userId: number,
+    moderationStatus: 'banned',
+  ): Promise<number> {
     const result = await this.serviceRepository.update(
       {
         userId,
@@ -151,6 +226,130 @@ export class ModerationListenerService {
   }
 
   /**
+   * Obtiene los IDs de contrataciones activas donde el usuario es proveedor
+   */
+  private async getActiveHiringIdsAsProvider(
+    userId: number,
+  ): Promise<number[]> {
+    // Obtener todos los servicios del proveedor
+    const providerServices = await this.serviceRepository.find({
+      where: { userId },
+      select: ['id'],
+    });
+
+    if (providerServices.length === 0) {
+      return [];
+    }
+
+    const serviceIds = providerServices.map((s) => s.id);
+
+    // Estados finalizados que NO deben procesarse
+    const finalStatusCodes = [
+      ServiceHiringStatusCode.COMPLETED,
+      ServiceHiringStatusCode.CANCELLED,
+      ServiceHiringStatusCode.REJECTED,
+      ServiceHiringStatusCode.EXPIRED,
+      ServiceHiringStatusCode.CANCELLED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+      ServiceHiringStatusCode.TERMINATED_BY_MODERATION,
+      ServiceHiringStatusCode.FINISHED_BY_MODERATION,
+    ];
+
+    const finalStatuses = await this.serviceHiringStatusRepository.find({
+      where: finalStatusCodes.map((code) => ({ code })),
+    });
+
+    const finalStatusIds = finalStatuses.map((s) => s.id);
+
+    // Obtener IDs de contrataciones activas
+    const activeHirings = await this.serviceHiringRepository
+      .createQueryBuilder('hiring')
+      .select('hiring.id')
+      .where('hiring.service_id IN (:...serviceIds)', { serviceIds })
+      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', {
+        finalStatusIds,
+      })
+      .getMany();
+
+    return activeHirings.map((h) => h.id);
+  }
+
+  /**
+   * Obtiene los IDs de contrataciones activas donde el usuario es cliente
+   */
+  private async getActiveHiringIdsAsClient(userId: number): Promise<number[]> {
+    const finalStatusCodes = [
+      ServiceHiringStatusCode.COMPLETED,
+      ServiceHiringStatusCode.CANCELLED,
+      ServiceHiringStatusCode.REJECTED,
+      ServiceHiringStatusCode.EXPIRED,
+      ServiceHiringStatusCode.CANCELLED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
+      ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
+      ServiceHiringStatusCode.TERMINATED_BY_MODERATION,
+      ServiceHiringStatusCode.FINISHED_BY_MODERATION,
+    ];
+
+    const finalStatuses = await this.serviceHiringStatusRepository.find({
+      where: finalStatusCodes.map((code) => ({ code })),
+    });
+
+    const finalStatusIds = finalStatuses.map((s) => s.id);
+
+    const activeHirings = await this.serviceHiringRepository
+      .createQueryBuilder('hiring')
+      .select('hiring.id')
+      .where('hiring.user_id = :userId', { userId })
+      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', {
+        finalStatusIds,
+      })
+      .getMany();
+
+    return activeHirings.map((h) => h.id);
+  }
+
+  /**
+   * Cancela todos los deliverables de las contrataciones especificadas
+   */
+  private async cancelDeliverablesForHirings(
+    hiringIds: number[],
+    reason: string,
+  ): Promise<number> {
+    if (hiringIds.length === 0) return 0;
+
+    try {
+      return await this.deliverableRepository.cancelMultipleByModeration(
+        hiringIds,
+        reason,
+      );
+    } catch (error) {
+      this.logger.error('Error al cancelar deliverables:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Cancela todas las delivery submissions de las contrataciones especificadas
+   */
+  private async cancelDeliverySubmissionsForHirings(
+    hiringIds: number[],
+    reason: string,
+  ): Promise<number> {
+    if (hiringIds.length === 0) return 0;
+
+    try {
+      return await this.deliverySubmissionRepository.cancelMultipleByModeration(
+        hiringIds,
+        reason,
+      );
+    } catch (error) {
+      this.logger.error('Error al cancelar delivery submissions:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Termina TODAS las contrataciones donde el usuario es proveedor (no solo activas)
    * Según user story: TODAS deben pasar a terminated_by_moderation al banear
    */
@@ -161,7 +360,9 @@ export class ModerationListenerService {
     });
 
     if (!terminatedStatus) {
-      this.logger.error('Estado "terminated_by_moderation" no encontrado en la base de datos');
+      this.logger.error(
+        'Estado "terminated_by_moderation" no encontrado en la base de datos',
+      );
       return 0;
     }
 
@@ -201,7 +402,9 @@ export class ModerationListenerService {
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.service', 'service')
       .where('hiring.service_id IN (:...serviceIds)', { serviceIds })
-      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', { finalStatusIds })
+      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', {
+        finalStatusIds,
+      })
       .getMany();
 
     if (activeHirings.length === 0) {
@@ -215,7 +418,8 @@ export class ModerationListenerService {
       .set({
         statusId: terminatedStatus.id,
         terminatedByModeration: true,
-        terminatedReason: 'El proveedor fue baneado por violaciones graves de las políticas',
+        terminatedReason:
+          'El proveedor fue baneado por violaciones graves de las políticas',
         terminatedAt: new Date(),
       })
       .where('service_id IN (:...serviceIds)', { serviceIds })
@@ -223,7 +427,8 @@ export class ModerationListenerService {
       .execute();
 
     // Obtener información del proveedor baneado
-    const bannedProvider = await this.usersClientService.getUserByIdWithRelations(userId);
+    const bannedProvider =
+      await this.usersClientService.getUserByIdWithRelations(userId);
     const providerName = bannedProvider?.profile
       ? `${bannedProvider.profile.name} ${bannedProvider.profile.lastName}`.trim()
       : 'Proveedor';
@@ -231,7 +436,9 @@ export class ModerationListenerService {
     // Enviar emails a los clientes afectados
     for (const hiring of activeHirings) {
       try {
-        const client = await this.usersClientService.getUserByIdWithRelations(hiring.userId);
+        const client = await this.usersClientService.getUserByIdWithRelations(
+          hiring.userId,
+        );
         if (client?.email) {
           const clientName = client?.profile
             ? `${client.profile.name} ${client.profile.lastName}`.trim()
@@ -244,14 +451,20 @@ export class ModerationListenerService {
               hiringId: hiring.id,
               serviceTitle: hiring.service?.title || 'Sin título',
               providerName,
-              reason: 'El proveedor ha sido suspendido permanentemente por infracciones graves a las políticas de la plataforma.',
+              reason:
+                'El proveedor ha sido suspendido permanentemente por infracciones graves a las políticas de la plataforma.',
             },
           );
 
-          this.logger.log(`Email de servicio terminado enviado al cliente ${client.email} (hiring #${hiring.id})`);
+          this.logger.log(
+            `Email de servicio terminado enviado al cliente ${client.email} (hiring #${hiring.id})`,
+          );
         }
       } catch (error) {
-        this.logger.error(`Error enviando email para hiring ${hiring.id}:`, error);
+        this.logger.error(
+          `Error enviando email para hiring ${hiring.id}:`,
+          error,
+        );
       }
     }
 
@@ -262,13 +475,17 @@ export class ModerationListenerService {
    * Termina TODAS las contrataciones donde el usuario es CLIENTE (no solo activas)
    * Según user story: TODAS deben pasar a terminated_by_moderation al banear
    */
-  private async terminateActiveHiringsAsClient(userId: number): Promise<number> {
+  private async terminateActiveHiringsAsClient(
+    userId: number,
+  ): Promise<number> {
     const terminatedStatus = await this.serviceHiringStatusRepository.findOne({
       where: { code: ServiceHiringStatusCode.TERMINATED_BY_MODERATION },
     });
 
     if (!terminatedStatus) {
-      this.logger.error('Estado "terminated_by_moderation" no encontrado en la base de datos');
+      this.logger.error(
+        'Estado "terminated_by_moderation" no encontrado en la base de datos',
+      );
       return 0;
     }
 
@@ -296,7 +513,9 @@ export class ModerationListenerService {
       .createQueryBuilder('hiring')
       .leftJoinAndSelect('hiring.service', 'service')
       .where('hiring.user_id = :userId', { userId })
-      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', { finalStatusIds })
+      .andWhere('hiring.status_id NOT IN (:...finalStatusIds)', {
+        finalStatusIds,
+      })
       .getMany();
 
     if (activeHirings.length === 0) {
@@ -310,7 +529,8 @@ export class ModerationListenerService {
       .set({
         statusId: terminatedStatus.id,
         terminatedByModeration: true,
-        terminatedReason: 'El cliente fue baneado por violaciones graves de las políticas',
+        terminatedReason:
+          'El cliente fue baneado por violaciones graves de las políticas',
         terminatedAt: new Date(),
       })
       .where('user_id = :userId', { userId })
@@ -318,7 +538,8 @@ export class ModerationListenerService {
       .execute();
 
     // Obtener información del cliente baneado
-    const bannedClient = await this.usersClientService.getUserByIdWithRelations(userId);
+    const bannedClient =
+      await this.usersClientService.getUserByIdWithRelations(userId);
     const clientName = bannedClient?.profile
       ? `${bannedClient.profile.name} ${bannedClient.profile.lastName}`.trim()
       : 'Cliente';
@@ -327,7 +548,9 @@ export class ModerationListenerService {
     for (const hiring of activeHirings) {
       try {
         // Obtener información del proveedor (owner del servicio)
-        const provider = await this.usersClientService.getUserByIdWithRelations(hiring.service.userId);
+        const provider = await this.usersClientService.getUserByIdWithRelations(
+          hiring.service.userId,
+        );
         if (provider?.email) {
           const providerName = provider?.profile
             ? `${provider.profile.name} ${provider.profile.lastName}`.trim()
@@ -340,14 +563,20 @@ export class ModerationListenerService {
               hiringId: hiring.id,
               serviceTitle: hiring.service?.title || 'Sin título',
               clientName,
-              reason: 'El cliente ha sido suspendido permanentemente por infracciones graves a las políticas de la plataforma.',
+              reason:
+                'El cliente ha sido suspendido permanentemente por infracciones graves a las políticas de la plataforma.',
             },
           );
 
-          this.logger.log(`Email enviado al proveedor ${provider.email} sobre hiring #${hiring.id} (cliente baneado)`);
+          this.logger.log(
+            `Email enviado al proveedor ${provider.email} sobre hiring #${hiring.id} (cliente baneado)`,
+          );
         }
       } catch (error) {
-        this.logger.error(`Error enviando email para hiring ${hiring.id}:`, error);
+        this.logger.error(
+          `Error enviando email para hiring ${hiring.id}:`,
+          error,
+        );
       }
     }
 
@@ -395,7 +624,9 @@ export class ModerationListenerService {
       .leftJoinAndSelect('hiring.service', 'service')
       .leftJoinAndSelect('hiring.status', 'status')
       .where('hiring.service_id IN (:...serviceIds)', { serviceIds })
-      .andWhere('hiring.status_id IN (:...activeStatusIds)', { activeStatusIds })
+      .andWhere('hiring.status_id IN (:...activeStatusIds)', {
+        activeStatusIds,
+      })
       .select([
         'hiring.id',
         'hiring.userId',
