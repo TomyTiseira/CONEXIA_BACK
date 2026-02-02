@@ -3,51 +3,54 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateNexoDto } from './dto/create-nexo.dto';
 import { UpdateNexoDto } from './dto/update-nexo.dto';
-import { Nexo } from './entities/nexo.entity';
+import { FaqEmbedding } from './entities/faq-embedding.entity';
 
 @Injectable()
 export class NexoService {
   constructor(
-    @InjectRepository(Nexo)
-    private readonly nexoRepository: Repository<Nexo>,
+    @InjectRepository(FaqEmbedding)
+    private readonly faqRepository: Repository<FaqEmbedding>,
   ) {}
 
-  async create(createNexoDto: CreateNexoDto): Promise<Nexo> {
-    const nexo = this.nexoRepository.create({
+  async create(createNexoDto: CreateNexoDto): Promise<FaqEmbedding> {
+    const faq = this.faqRepository.create({
       ...createNexoDto,
       createdAt: new Date(),
     });
-    return await this.nexoRepository.save(nexo);
+    return await this.faqRepository.save(faq);
   }
 
-  async findAll(): Promise<Nexo[]> {
-    return await this.nexoRepository.find();
+  async findAll(): Promise<FaqEmbedding[]> {
+    return await this.faqRepository.find();
   }
 
-  async findOne(id: string): Promise<Nexo> {
-    const nexo = await this.nexoRepository.findOne({ where: { id } });
-    if (!nexo) {
-      throw new NotFoundException(`Nexo with ID ${id} not found`);
+  async findOne(id: string): Promise<FaqEmbedding> {
+    const faq = await this.faqRepository.findOne({ where: { id } });
+    if (!faq) {
+      throw new NotFoundException(`FAQ with ID ${id} not found`);
     }
-    return nexo;
+    return faq;
   }
 
-  async update(id: string, updateNexoDto: UpdateNexoDto): Promise<Nexo> {
-    const nexo = await this.findOne(id);
-    Object.assign(nexo, updateNexoDto, { updatedAt: new Date() });
-    return await this.nexoRepository.save(nexo);
+  async update(
+    id: string,
+    updateNexoDto: UpdateNexoDto,
+  ): Promise<FaqEmbedding> {
+    const faq = await this.findOne(id);
+    Object.assign(faq, updateNexoDto, { updatedAt: new Date() });
+    return await this.faqRepository.save(faq);
   }
 
   async remove(id: string): Promise<void> {
-    const nexo = await this.findOne(id);
-    await this.nexoRepository.remove(nexo);
+    const faq = await this.findOne(id);
+    await this.faqRepository.remove(faq);
   }
 
-  async search(query: string): Promise<Nexo[]> {
-    return await this.nexoRepository
-      .createQueryBuilder('nexo')
-      .where('nexo.question ILIKE :query', { query: `%${query}%` })
-      .orWhere('nexo.answer ILIKE :query', { query: `%${query}%` })
+  async search(query: string): Promise<FaqEmbedding[]> {
+    return await this.faqRepository
+      .createQueryBuilder('faq')
+      .where('faq.question ILIKE :query', { query: `%${query}%` })
+      .orWhere('faq.answer ILIKE :query', { query: `%${query}%` })
       .getMany();
   }
 }

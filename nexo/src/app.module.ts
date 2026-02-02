@@ -4,7 +4,6 @@ import { envs } from './config';
 import { Conversation } from './nexo/entities/conversation.entity';
 import { FaqEmbedding } from './nexo/entities/faq-embedding.entity';
 import { Message } from './nexo/entities/message.entity';
-import { Nexo } from './nexo/entities/nexo.entity';
 import { NexoModule } from './nexo/nexo.module';
 
 @Module({
@@ -20,7 +19,7 @@ import { NexoModule } from './nexo/nexo.module';
             password: envs.dbPassword,
             database: envs.dbDatabase,
           }),
-      entities: [Nexo, FaqEmbedding, Conversation, Message],
+      entities: [FaqEmbedding, Conversation, Message],
       synchronize: true,
     }),
     NexoModule,

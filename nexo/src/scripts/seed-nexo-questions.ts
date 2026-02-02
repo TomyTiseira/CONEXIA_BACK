@@ -3,18 +3,21 @@ import OpenAI from 'openai';
 import { DataSource } from 'typeorm';
 import { envs } from '../config';
 import { FaqEmbedding } from '../nexo/entities/faq-embedding.entity';
-import { Nexo } from '../nexo/entities/nexo.entity';
 
 dotenv.config();
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: envs.dbHost,
-  port: parseInt(envs.dbPort, 10),
-  username: envs.dbUsername,
-  password: envs.dbPassword,
-  database: envs.dbDatabase,
-  entities: [Nexo, FaqEmbedding],
+  ...(envs.databaseUrl
+    ? { url: envs.databaseUrl, ssl: { rejectUnauthorized: true } }
+    : {
+        host: envs.dbHost,
+        port: parseInt(envs.dbPort, 10),
+        username: envs.dbUsername,
+        password: envs.dbPassword,
+        database: envs.dbDatabase,
+      }),
+  entities: [FaqEmbedding],
   synchronize: false,
   logging: false,
 });
@@ -273,125 +276,83 @@ const questions = [
 
 async function seedQuestions() {
   await AppDataSource.initialize();
-  const nexoRepo = AppDataSource.getRepository(Nexo);
   const faqRepo = AppDataSource.getRepository(FaqEmbedding);
 
   let count = 0;
   let embeddingCount = 0;
 
   for (const qa of questions) {
-    // Verificar si ya existe en Nexo
-    const existsNexo = await nexoRepo.findOne({
+    // Verificar si ya existe
+    const existsFaq = await faqRepo.findOne({
       where: { question: qa.question },
     });
 
-    if (existsNexo) {
+    if (existsFaq) {
       console.log(
         `⏭️  Pregunta '${qa.question.substring(0, 50)}...' ya existe.`,
       );
-
-      // Verificar si tiene embedding
-      const existsFaq = await faqRepo.findOne({ where: { id: existsNexo.id } });
-      if (!existsFaq) {
-        // Crear entrada en FaqEmbedding
-        const faqEmbedding = faqRepo.create({
-          id: existsNexo.id,
-          question: existsNexo.question,
-          answer: existsNexo.answer,
-          embedding: null,
-          createdAt: existsNexo.createdAt,
-          updatedAt: existsNexo.updatedAt,
-        });
-        await faqRepo.save(faqEmbedding);
-        console.log(
-          `✓ FAQ entry created for existing: ${qa.question.substring(0, 50)}...`,
-        );
-        count++;
-      }
       continue;
     }
 
-    // Crear en Nexo
-    const nexo = nexoRepo.create(qa);
-    await nexoRepo.save(nexo);
-    console.log(`✓ Pregunta '${qa.question.substring(0, 50)}...' creada.`);
-    count++;
-
-    // Generar embedding inmediatamente
+    // Generar embedding
+    let embedding: number[] | null = null;
     try {
       const response = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: qa.question,
       });
-
-      const embedding = response.data[0].embedding;
-
-      // Crear en FaqEmbedding con embedding
-      const faqEmbedding = faqRepo.create({
-        id: nexo.id,
-        question: qa.question,
-        answer: qa.answer,
-        embedding: embedding,
-        createdAt: nexo.createdAt,
-        updatedAt: new Date(),
-      });
-      await faqRepo.save(faqEmbedding);
-      console.log(
-        `✓ Embedding generado para: ${qa.question.substring(0, 50)}...`,
-      );
+      embedding = response.data[0].embedding;
       embeddingCount++;
-
-      // Rate limiting - esperar 100ms entre requests
+      // Rate limiting
       await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
       console.error(`Error generando embedding para: ${qa.question}`, error);
-
-      // Si falla el embedding, crear sin embedding
-      const faqEmbedding = faqRepo.create({
-        id: nexo.id,
-        question: qa.question,
-        answer: qa.answer,
-        embedding: null,
-        createdAt: nexo.createdAt,
-        updatedAt: nexo.updatedAt,
-      });
-      await faqRepo.save(faqEmbedding);
     }
+
+    // Crear FAQ con embedding
+    const faq = faqRepo.create({
+      ...qa,
+      embedding,
+      createdAt: new Date(),
+    });
+    await faqRepo.save(faq);
+    console.log(`✓ Pregunta '${qa.question.substring(0, 50)}...' creada.`);
+    count++;
   }
 
   console.log(`\nSe crearon ${count} preguntas.`);
-  console.log(`\nGenerando embeddings para todas las FAQs...`);
 
-  // Generar embeddings para todas las FAQs sin embedding
+  // Generar embeddings para FAQs sin embedding
   const faqsWithoutEmbeddings = await faqRepo
     .createQueryBuilder('faq')
     .where('faq.embedding IS NULL')
     .getMany();
 
-  console.log(
-    `Encontradas ${faqsWithoutEmbeddings.length} FAQs sin embedding\n`,
-  );
+  if (faqsWithoutEmbeddings.length > 0) {
+    console.log(
+      `\nGenerando embeddings para ${faqsWithoutEmbeddings.length} FAQs...`,
+    );
 
-  for (const faq of faqsWithoutEmbeddings) {
-    try {
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: faq.question,
-      });
+    for (const faq of faqsWithoutEmbeddings) {
+      try {
+        const response = await openai.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: faq.question,
+        });
 
-      faq.embedding = response.data[0].embedding;
-      faq.updatedAt = new Date();
+        faq.embedding = response.data[0].embedding;
+        faq.updatedAt = new Date();
 
-      await faqRepo.save(faq);
-      embeddingCount++;
-      console.log(
-        `✓ Embedding generado (${embeddingCount}/${faqsWithoutEmbeddings.length}): ${faq.question.substring(0, 50)}...`,
-      );
+        await faqRepo.save(faq);
+        embeddingCount++;
+        console.log(
+          `✓ Embedding generado: ${faq.question.substring(0, 50)}...`,
+        );
 
-      // Rate limiting - esperar 100ms entre requests
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-      console.error(`Error generando embedding para FAQ ${faq.id}:`, error);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`Error generando embedding para FAQ ${faq.id}:`, error);
+      }
     }
   }
 
