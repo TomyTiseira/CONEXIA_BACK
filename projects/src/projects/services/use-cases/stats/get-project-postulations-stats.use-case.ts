@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { UsersClientService } from '../../../../common/services/users-client.service';
 import { PostulationRepository } from '../../../../postulations/repositories/postulation.repository';
 import {
   OpenAnswerDto,
@@ -20,6 +21,7 @@ export class GetProjectPostulationsStatsUseCase {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly postulationRepository: PostulationRepository,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async execute(
@@ -63,6 +65,9 @@ export class GetProjectPostulationsStatsUseCase {
       project.roles,
       postulations,
     );
+
+    // Obtener información de usuarios para los resultados de evaluación
+    await this.enrichEvaluationResultsWithUserNames(evaluationStatsByRole);
 
     return {
       projectId: project.id,
@@ -287,5 +292,55 @@ export class GetProjectPostulationsStatsUseCase {
     }
 
     return openAnswers;
+  }
+
+  /**
+   * Enriquece los resultados de evaluación con los nombres de usuario
+   */
+  private async enrichEvaluationResultsWithUserNames(
+    evaluationStatsByRole: RoleEvaluationStatsDto[],
+  ): Promise<void> {
+    // Recopilar todos los userIds únicos de los resultados de evaluación
+    const userIds = new Set<number>();
+
+    for (const stat of evaluationStatsByRole) {
+      if (stat.evaluationResults) {
+        for (const result of stat.evaluationResults) {
+          userIds.add(result.userId);
+        }
+      }
+    }
+
+    // Si no hay usuarios, retornar
+    if (userIds.size === 0) {
+      return;
+    }
+
+    // Obtener información de todos los usuarios en una sola llamada
+    const users = await this.usersClientService.getUsersByIds(
+      Array.from(userIds),
+    );
+
+    // Crear un mapa de userId -> userName para acceso rápido
+    const userMap = new Map<number, string>();
+    for (const user of users) {
+      if (user && user.id) {
+        // Los nombres están en el objeto profile anidado
+        const firstName = user.profile?.name || '';
+        const lastName = user.profile?.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        userMap.set(user.id, fullName || `Usuario #${user.id}`);
+      }
+    }
+
+    // Asignar los nombres de usuario a los resultados
+    for (const stat of evaluationStatsByRole) {
+      if (stat.evaluationResults) {
+        for (const result of stat.evaluationResults) {
+          result.userName =
+            userMap.get(result.userId) || `Usuario #${result.userId}`;
+        }
+      }
+    }
   }
 }
