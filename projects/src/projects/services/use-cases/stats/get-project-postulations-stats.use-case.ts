@@ -227,11 +227,18 @@ export class GetProjectPostulationsStatsUseCase {
     const distribution: QuestionAnswerDistributionDto[] = [];
 
     for (const question of questions) {
-      const optionCounts = new Map<number, { text: string; count: number }>();
+      const optionCounts = new Map<
+        number,
+        { text: string; count: number; isCorrect?: boolean }
+      >();
 
       // Inicializar contadores para cada opción
       question.options?.forEach((option: any) => {
-        optionCounts.set(option.id, { text: option.optionText, count: 0 });
+        optionCounts.set(option.id, {
+          text: option.optionText,
+          count: 0,
+          isCorrect: option.isCorrect || false,
+        });
       });
 
       // Contar respuestas
@@ -245,7 +252,7 @@ export class GetProjectPostulationsStatsUseCase {
         }
       }
 
-      // Convertir a DTO
+      // ✅ CAMBIO: Siempre incluir la pregunta, incluso sin respuestas (count = 0)
       distribution.push({
         questionId: question.id,
         questionText: question.questionText,
@@ -253,6 +260,7 @@ export class GetProjectPostulationsStatsUseCase {
           optionId,
           optionText: data.text,
           count: data.count,
+          isCorrect: data.isCorrect,
         })),
       });
     }
@@ -282,13 +290,12 @@ export class GetProjectPostulationsStatsUseCase {
         }
       }
 
-      if (answers.length > 0) {
-        openAnswers.push({
-          questionId: question.id,
-          questionText: question.questionText,
-          answers,
-        });
-      }
+      // ✅ CAMBIO: Incluir TODAS las preguntas, incluso sin respuestas
+      openAnswers.push({
+        questionId: question.id,
+        questionText: question.questionText,
+        answers,
+      });
     }
 
     return openAnswers;
@@ -300,13 +307,22 @@ export class GetProjectPostulationsStatsUseCase {
   private async enrichEvaluationResultsWithUserNames(
     evaluationStatsByRole: RoleEvaluationStatsDto[],
   ): Promise<void> {
-    // Recopilar todos los userIds únicos de los resultados de evaluación
+    // Recopilar todos los userIds únicos de los resultados de evaluación y respuestas abiertas
     const userIds = new Set<number>();
 
     for (const stat of evaluationStatsByRole) {
       if (stat.evaluationResults) {
         for (const result of stat.evaluationResults) {
           userIds.add(result.userId);
+        }
+      }
+
+      // ✅ NUEVO: Recopilar userIds de respuestas abiertas
+      if (stat.openAnswers) {
+        for (const openAnswer of stat.openAnswers) {
+          for (const answer of openAnswer.answers) {
+            userIds.add(answer.userId);
+          }
         }
       }
     }
@@ -339,6 +355,16 @@ export class GetProjectPostulationsStatsUseCase {
         for (const result of stat.evaluationResults) {
           result.userName =
             userMap.get(result.userId) || `Usuario #${result.userId}`;
+        }
+      }
+
+      // ✅ NUEVO: Asignar nombres de usuario a respuestas abiertas
+      if (stat.openAnswers) {
+        for (const openAnswer of stat.openAnswers) {
+          for (const answer of openAnswer.answers) {
+            answer.userName =
+              userMap.get(answer.userId) || `Usuario #${answer.userId}`;
+          }
         }
       }
     }

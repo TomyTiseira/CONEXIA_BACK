@@ -33,7 +33,12 @@ export class SearchUsersPaginatedUseCase {
 
     // Obtener TODOS los usuarios que coinciden con la búsqueda (sin paginación inicial)
     const { users: allUsers, total } =
-      await this.userRepository.searchUsersPaginated(search || '', 10000, 0, currentUserId);
+      await this.userRepository.searchUsersPaginated(
+        search || '',
+        10000,
+        0,
+        currentUserId,
+      );
 
     // Obtener search_visibility de todos los usuarios desde memberships
     const userIds = allUsers.map((user) => user.id);
@@ -50,8 +55,8 @@ export class SearchUsersPaginatedUseCase {
     const offset = (page - 1) * limit;
     const paginatedUsers = sortedUsers.slice(offset, offset + limit);
 
-    // Calcular información de paginación
-    const pagination = calculatePagination(total, { page, limit });
+    // Calcular información de paginación usando el total real de usuarios ordenados
+    const pagination = calculatePagination(sortedUsers.length, { page, limit });
 
     // Mapear usuarios al formato de respuesta
     const mappedUsers = paginatedUsers.map((user) => ({
