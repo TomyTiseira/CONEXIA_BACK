@@ -32,7 +32,7 @@ export class SearchUsersPaginatedUseCase {
     const { search, page = 1, limit = 10, currentUserId } = searchParams;
 
     // Obtener TODOS los usuarios que coinciden con la búsqueda (sin paginación inicial)
-    const { users: allUsers, total } =
+    const { users: allUsers } =
       await this.userRepository.searchUsersPaginated(
         search || '',
         10000,
