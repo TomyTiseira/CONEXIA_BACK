@@ -15,15 +15,21 @@ export class ReportsByStatusDto {
 export class ReportsByTypeDto {
   type: string;
   count: number;
+  active: number;
+  resolved: number;
 }
 
 export class ReportsByReasonDto {
   reason: string;
   count: number;
+  active: number;
+  resolved: number;
 }
 
 export class ReportsMetricsDto {
   totalReports: number;
+  activeReports: number;
+  resolvedReports: number;
   byStatus: ReportsByStatusDto[];
   byType: ReportsByTypeDto[];
   byReason: ReportsByReasonDto[];

@@ -141,10 +141,10 @@ export class PublicationReportsService {
   async getActiveReports() {
     const reports =
       await this.publicationReportRepository.findActiveReportsWithPublications();
-    
+
     // Filtrar reportes huérfanos (publicación eliminada)
     return reports
-      .filter(report => report.publication != null)
+      .filter((report) => report.publication != null)
       .map((report) => ({
         id: report.id,
         reporterId: report.reporterId,
@@ -159,6 +159,20 @@ export class PublicationReportsService {
         resourceTitle: null,
         resourceDescription: report.publication.description || null,
       }));
+  }
+
+  /**
+   * Obtiene TODOS los reportes (activos e inactivos)
+   * Para métricas del dashboard de moderación
+   */
+  async getAllReportsForMetrics() {
+    const reports = await this.publicationReportRepository.find({
+      select: ['id', 'reason', 'isActive', 'createdAt'],
+    });
+    return reports.map((report) => ({
+      reason: report.reason,
+      isActive: report.isActive,
+    }));
   }
 
   /**

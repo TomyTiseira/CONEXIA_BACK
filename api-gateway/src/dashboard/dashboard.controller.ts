@@ -386,6 +386,8 @@ export class DashboardController {
     lines.push('REPORTES');
     lines.push('Categoría,Valor');
     lines.push(`Total de reportes,${metrics.reports.totalReports}`);
+    lines.push(`Reportes activos,${metrics.reports.activeReports}`);
+    lines.push(`Reportes resueltos,${metrics.reports.resolvedReports}`);
     lines.push('');
 
     // Reportes por estado
@@ -398,17 +400,17 @@ export class DashboardController {
 
     // Reportes por tipo
     lines.push('REPORTES POR TIPO');
-    lines.push('Tipo,Cantidad');
+    lines.push('Tipo,Total,Activos,Resueltos');
     metrics.reports.byType.forEach((type: any) => {
-      lines.push(`${type.type},${type.count}`);
+      lines.push(`${type.type},${type.count},${type.active},${type.resolved}`);
     });
     lines.push('');
 
     // Reportes por motivo
     lines.push('REPORTES POR MOTIVO');
-    lines.push('Motivo,Cantidad');
+    lines.push('Motivo,Total,Activos,Resueltos');
     metrics.reports.byReason.forEach((reason: any) => {
-      lines.push(`${reason.reason},${reason.count}`);
+      lines.push(`${reason.reason},${reason.count},${reason.active},${reason.resolved}`);
     });
     lines.push('');
 

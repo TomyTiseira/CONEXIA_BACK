@@ -153,6 +153,16 @@ export class PublicationReportsController {
     }
   }
 
+  @MessagePattern('getAllPublicationReports')
+  async getAllPublicationReports() {
+    try {
+      return await this.publicationReportsService.getAllReportsForMetrics();
+    } catch (error) {
+      console.error('Error getting all publication reports:', error);
+      throw error;
+    }
+  }
+
   @MessagePattern('softDeleteOldPublicationReports')
   async softDeleteOldPublicationReports(@Payload() data: { oneYearAgo: Date }) {
     try {
