@@ -20,15 +20,18 @@ export class OnboardingJwtStrategy extends PassportStrategy(
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: any) => {
+        (request: {
+          cookies?: { onboarding_token?: string };
+          headers?: { cookie?: string };
+        }) => {
           const fromParsedCookies = request?.cookies?.onboarding_token;
           if (fromParsedCookies) return fromParsedCookies;
 
           const rawCookie: string | undefined = request?.headers?.cookie;
-          if (!rawCookie) return undefined;
+          if (!rawCookie) return null;
 
           const match = rawCookie.match(/(?:^|;\s*)onboarding_token=([^;]+)/);
-          return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+          return match?.[1] ? decodeURIComponent(match[1]) : null;
         },
       ]),
       ignoreExpiration: false,

@@ -14,7 +14,8 @@ export class OnboardingOrSessionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const req: any = context.switchToHttp().getRequest();
     const hasOnboardingCookie = Boolean(
       req?.cookies?.onboarding_token ||
         (typeof req?.headers?.cookie === 'string' &&
@@ -24,11 +25,9 @@ export class OnboardingOrSessionGuard implements CanActivate {
     // Si el onboarding_token existe, NO enmascarar errores cayendo a sesión.
     // (Si está expirado/invalid, queremos ver ese error y no el de sesión.)
     if (hasOnboardingCookie) {
-      const onboarding = await this.onboardingGuard.canActivate(context);
-      return onboarding as boolean;
+      return (await this.onboardingGuard.canActivate(context)) as boolean;
     }
 
-    const session = await this.sessionGuard.canActivate(context);
-    return session as boolean;
+    return await this.sessionGuard.canActivate(context);
   }
 }
