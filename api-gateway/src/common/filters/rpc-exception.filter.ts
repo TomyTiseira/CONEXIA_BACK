@@ -32,10 +32,15 @@ export class RpcExceptionFilter implements ExceptionFilter {
         errors?: any[];
       };
 
+      // Asegurar que statusCode sea un número válido
+      const rawStatusCode = errorObj.statusCode || errorObj.status;
       const statusCode =
-        errorObj.statusCode ||
-        errorObj.status ||
-        HttpStatus.INTERNAL_SERVER_ERROR;
+        typeof rawStatusCode === 'number' &&
+        Number.isInteger(rawStatusCode) &&
+        rawStatusCode >= 100 &&
+        rawStatusCode < 600
+          ? rawStatusCode
+          : HttpStatus.INTERNAL_SERVER_ERROR;
       const errorName = errorObj.error || errorObj.code || 'Error';
 
       const responseBody: any = {
