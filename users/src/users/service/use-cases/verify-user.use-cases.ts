@@ -26,7 +26,7 @@ export class VerifyUserUseCase {
     verificationCode: string,
   ): Promise<{
     user: User;
-    data: { accessToken: string; refreshToken: string; expiresIn: number };
+    data: { onboardingToken: string; expiresIn: number };
   }> {
     // Validar que el usuario exista
     const user = await this.userBaseService.validateUserExists(email);
@@ -120,24 +120,22 @@ export class VerifyUserUseCase {
         throw new Error('Failed to update user with profile');
       }
 
-      const token = this.tokenService.createLoginResponse(
+      const onboardingToken = this.tokenService.generateOnboardingToken(
         finalUser.id,
         finalUser.email,
         finalUser.roleId,
         finalUser.profileId,
         isProfileComplete, // null para admin/moderador, false para usuario general
-        new Date(), // lastActivityAt
-      ) as { accessToken: string; refreshToken: string; expiresIn: number };
+      );
 
       const response: {
         user: User;
-        data: { accessToken: string; refreshToken: string; expiresIn: number };
+        data: { onboardingToken: string; expiresIn: number };
       } = {
         user: finalUser as User,
         data: {
-          accessToken: token.accessToken,
-          refreshToken: token.refreshToken,
-          expiresIn: token.expiresIn,
+          onboardingToken,
+          expiresIn: 10 * 60,
         },
       };
 

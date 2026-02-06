@@ -1,6 +1,7 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ActiveAccountGuard } from '../guards/active-account.guard';
 import { AutoRefreshJwtGuard } from '../guards/auto-refresh-jwt.guard';
+import { ProfileCompleteGuard } from '../guards/profile-complete.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { Roles } from './roles.decorator';
 
@@ -39,6 +40,11 @@ export function RequiresActiveAccount(
 ) {
   return applyDecorators(
     Roles(roles, requireAll),
-    UseGuards(AutoRefreshJwtGuard, RoleGuard, ActiveAccountGuard),
+    UseGuards(
+      AutoRefreshJwtGuard,
+      RoleGuard,
+      ProfileCompleteGuard,
+      ActiveAccountGuard,
+    ),
   );
 }

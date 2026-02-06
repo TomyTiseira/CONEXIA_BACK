@@ -55,6 +55,27 @@ export class TokenService {
     });
   }
 
+  generateOnboardingToken(
+    userId: number,
+    email: string,
+    roleId: number,
+    profileId: number,
+    isProfileComplete: boolean | null,
+  ): string {
+    const payload = {
+      sub: userId,
+      email,
+      roleId,
+      profileId,
+      isProfileComplete,
+      type: 'onboarding' as const,
+    };
+
+    return this.jwtService.sign(payload, {
+      expiresIn: '10m',
+    });
+  }
+
   verifyToken(token: string): JwtPayload {
     return this.jwtService.verify(token);
   }

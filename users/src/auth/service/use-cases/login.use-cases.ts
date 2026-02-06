@@ -59,14 +59,40 @@ export class LoginUseCase {
     // Actualizar última actividad en login
     await this.authRepository.updateLastActivity(user.id);
 
-    // Generar tokens usando el servicio especializado
+    // Si el perfil NO está completo, no creamos sesión real.
+    // Emitimos un onboarding_token corto para permitir únicamente completar el perfil.
+    // Nota: para roles internos (admin/moderador) `isProfileComplete` puede ser null (no aplica).
+    if (user.isProfileComplete === false) {
+      const onboardingToken = this.tokenService.generateOnboardingToken(
+        user.id,
+        user.email,
+        user.roleId,
+        user.profileId,
+        user.isProfileComplete,
+      );
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          roleId: user.roleId,
+          profileId: user.profileId,
+          isProfileComplete: user.isProfileComplete,
+        },
+        onboardingToken,
+        expiresIn: 10 * 60,
+        next: 'PROFILE_REQUIRED',
+      };
+    }
+
+    // Generar sesión normal (perfil completo)
     return this.tokenService.createLoginResponse(
       user.id,
       user.email,
       user.roleId,
       user.profileId,
       user.isProfileComplete,
-      new Date(), // lastActivityAt actualizado
+      new Date(),
     );
   }
 }

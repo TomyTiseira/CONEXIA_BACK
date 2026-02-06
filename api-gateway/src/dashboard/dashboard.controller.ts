@@ -410,7 +410,9 @@ export class DashboardController {
     lines.push('REPORTES POR MOTIVO');
     lines.push('Motivo,Total,Activos,Resueltos');
     metrics.reports.byReason.forEach((reason: any) => {
-      lines.push(`${reason.reason},${reason.count},${reason.active},${reason.resolved}`);
+      lines.push(
+        `${reason.reason},${reason.count},${reason.active},${reason.resolved}`,
+      );
     });
     lines.push('');
 

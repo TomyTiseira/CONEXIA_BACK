@@ -12,6 +12,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ClaimResolutionType, ClaimStatus } from '../enums/claim.enum';
@@ -77,12 +78,13 @@ export class ResolveClaimDto {
   })
   status: ClaimStatus.RESOLVED | ClaimStatus.REJECTED;
 
+  @ValidateIf((dto: ResolveClaimDto) => dto.status === ClaimStatus.RESOLVED)
   @IsNotEmpty({ message: 'El tipo de resolución es obligatorio' })
   @IsEnum(ClaimResolutionType, {
     message:
       'El tipo de resolución debe ser "client_favor", "provider_favor" o "partial_agreement"',
   })
-  resolutionType: ClaimResolutionType;
+  resolutionType?: ClaimResolutionType;
 
   @IsNotEmpty({ message: 'La resolución es obligatoria' })
   @IsString()

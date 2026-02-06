@@ -20,6 +20,7 @@ export enum ClaimStatus {
   RESOLVED = 'resolved', // Resuelto favorablemente
   REJECTED = 'rejected', // Rechazado (reclamo infundado)
   CANCELLED = 'cancelled', // Cancelado por el denunciante (cierre sin resolución)
+  FINISHED_BY_MODERATION = 'finished_by_moderation', // Cerrado por moderación (ej: una de las partes fue baneada)
 }
 
 // Tipo de resolución (determina el estado final del hiring)

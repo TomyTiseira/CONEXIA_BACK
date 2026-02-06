@@ -79,6 +79,9 @@ export enum ComplianceStatus {
 
   /** Escalado a admin (Nivel 3) - Pre-ban */
   ESCALATED = 'escalated',
+
+  /** Cerrado por moderación (ej: una de las partes fue baneada) */
+  FINISHED_BY_MODERATION = 'finished_by_moderation',
 }
 
 /**

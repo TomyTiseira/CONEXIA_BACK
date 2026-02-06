@@ -68,6 +68,8 @@ import { ServicesModule } from './services/services.module';
       DeliveryAttachment,
       Service,
       ServiceHiring,
+      Claim,
+      ClaimCompliance,
     ]),
     CommonModule,
     ServicesModule,

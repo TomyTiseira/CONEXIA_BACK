@@ -21,6 +21,7 @@ export interface ServiceHiringResponse {
   userId: number;
   name?: string;
   lastName?: string;
+  profileImage?: string | null;
   description: string;
   quotedPrice?: number;
   estimatedHours?: number;
@@ -127,6 +128,7 @@ export class ServiceHiringTransformService {
       userId: hiring.userId,
       name: user?.profile?.name,
       lastName: user?.profile?.lastName,
+      profileImage: user?.profile?.profilePicture || null,
       description: hiring.description,
       quotedPrice: hiring.quotedPrice,
       estimatedHours: hiring.estimatedHours,

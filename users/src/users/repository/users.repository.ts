@@ -143,10 +143,12 @@ export class UserRepository {
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
       .where('user.deletedAt IS NULL') // ✅ Excluir usuarios eliminados
-      .andWhere('user.accountStatus = :activeStatus', { activeStatus: 'active' }) // ✅ Solo usuarios activos
+      .andWhere('user.accountStatus = :activeStatus', {
+        activeStatus: 'active',
+      }) // ✅ Solo usuarios activos
       .andWhere(
-        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)', 
-        { now: new Date() }
+        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)',
+        { now: new Date() },
       ) // ✅ Excluir suspensiones temporales activas
       .andWhere(
         "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
@@ -173,10 +175,12 @@ export class UserRepository {
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
       .where('user.deletedAt IS NULL') // Excluir usuarios eliminados
-      .andWhere('user.accountStatus = :activeStatus', { activeStatus: 'active' }) // ✅ Solo usuarios activos (no baneados ni suspendidos)
+      .andWhere('user.accountStatus = :activeStatus', {
+        activeStatus: 'active',
+      }) // ✅ Solo usuarios activos (no baneados ni suspendidos)
       .andWhere(
-        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)', 
-        { now: new Date() }
+        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)',
+        { now: new Date() },
       ); // ✅ Excluir suspensiones temporales activas
 
     if (searchTerm) {

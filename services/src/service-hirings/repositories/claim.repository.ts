@@ -417,13 +417,13 @@ export class ClaimRepository {
     status: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
     resolution: string,
     resolvedBy: number,
-    resolutionType?: string,
+    resolutionType?: string | null,
     partialAgreementDetails?: string,
   ): Promise<Claim | null> {
     await this.repository.update(id, {
       status,
       resolution,
-      resolutionType: resolutionType as any,
+      resolutionType: (resolutionType ?? null) as any,
       resolvedBy,
       resolvedAt: new Date(),
       ...(partialAgreementDetails && { partialAgreementDetails }),

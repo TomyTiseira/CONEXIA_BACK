@@ -1,5 +1,6 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { AutoRefreshJwtGuard } from '../guards/auto-refresh-jwt.guard';
+import { ProfileCompleteGuard } from '../guards/profile-complete.guard';
 
 /**
  * Decorador que aplica el AutoRefreshJwtGuard
@@ -13,4 +14,4 @@ import { AutoRefreshJwtGuard } from '../guards/auto-refresh-jwt.guard';
  * }
  */
 export const AutoRefreshAuth = () =>
-  applyDecorators(UseGuards(AutoRefreshJwtGuard));
+  applyDecorators(UseGuards(AutoRefreshJwtGuard, ProfileCompleteGuard));
