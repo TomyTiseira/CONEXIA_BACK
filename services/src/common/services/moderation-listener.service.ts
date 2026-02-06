@@ -140,7 +140,7 @@ export class ModerationListenerService {
       .createQueryBuilder('claim')
       .leftJoinAndSelect('claim.hiring', 'hiring')
       .leftJoinAndSelect('hiring.service', 'service')
-      .andWhere(
+      .where(
         `(
           claim.claimantUserId = :userId
           OR claim.defendantUserId = :userId

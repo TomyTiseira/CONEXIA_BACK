@@ -8,6 +8,7 @@ import { AutoRefreshJwtGuard } from './guards/auto-refresh-jwt.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OnboardingJwtGuard } from './guards/onboarding-jwt.guard';
 import { OnboardingOrSessionGuard } from './guards/onboarding-or-session.guard';
+import { ProfileCompleteGuard } from './guards/profile-complete.guard';
 import { RoleGuard } from './guards/role.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { OnboardingJwtStrategy } from './strategies/onboarding-jwt.strategy';
@@ -29,6 +30,7 @@ import { OnboardingJwtStrategy } from './strategies/onboarding-jwt.strategy';
     AutoRefreshJwtGuard,
     OnboardingJwtGuard,
     OnboardingOrSessionGuard,
+    ProfileCompleteGuard,
     RoleGuard,
   ],
   exports: [
@@ -36,6 +38,7 @@ import { OnboardingJwtStrategy } from './strategies/onboarding-jwt.strategy';
     AutoRefreshJwtGuard,
     OnboardingJwtGuard,
     OnboardingOrSessionGuard,
+    ProfileCompleteGuard,
     RoleGuard,
   ],
 })
