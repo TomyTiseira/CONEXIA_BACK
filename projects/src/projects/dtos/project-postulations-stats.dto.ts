@@ -24,6 +24,7 @@ export class OpenAnswerDto {
   answers: {
     postulationId: number;
     userId: number;
+    userName?: string;
     answerText: string;
   }[];
 }
