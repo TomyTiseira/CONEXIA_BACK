@@ -86,7 +86,9 @@ export class ResolveClaimDto {
   })
   status: ClaimResolutionStatus;
 
-  @ValidateIf((dto: ResolveClaimDto) => dto.status === ClaimResolutionStatus.RESOLVED)
+  @ValidateIf(
+    (dto: ResolveClaimDto) => dto.status === ClaimResolutionStatus.RESOLVED,
+  )
   @IsNotEmpty({ message: 'El tipo de resolución es obligatorio' })
   @IsEnum(ClaimResolutionType, {
     message:

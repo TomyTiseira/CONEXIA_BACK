@@ -27,9 +27,7 @@ export class OnboardingJwtStrategy extends PassportStrategy(
           const rawCookie: string | undefined = request?.headers?.cookie;
           if (!rawCookie) return undefined;
 
-          const match = rawCookie.match(
-            /(?:^|;\s*)onboarding_token=([^;]+)/,
-          );
+          const match = rawCookie.match(/(?:^|;\s*)onboarding_token=([^;]+)/);
           return match?.[1] ? decodeURIComponent(match[1]) : undefined;
         },
       ]),

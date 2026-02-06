@@ -40,6 +40,11 @@ export function RequiresActiveAccount(
 ) {
   return applyDecorators(
     Roles(roles, requireAll),
-    UseGuards(AutoRefreshJwtGuard, RoleGuard, ProfileCompleteGuard, ActiveAccountGuard),
+    UseGuards(
+      AutoRefreshJwtGuard,
+      RoleGuard,
+      ProfileCompleteGuard,
+      ActiveAccountGuard,
+    ),
   );
 }

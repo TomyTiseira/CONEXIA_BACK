@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UserRepository } from '../../../users/repository/users.repository';
 import { RefreshTokenDto } from '../../dto/refresh-token.dto';
 import { RefreshTokenResponse } from '../../interfaces/auth.interface';
 import { TokenService } from '../token.service';
-import { UserRepository } from '../../../users/repository/users.repository';
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -11,7 +11,9 @@ export class RefreshTokenUseCase {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponse> {
+  async execute(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<RefreshTokenResponse> {
     try {
       // Verificar el refresh token
       const payload = this.tokenService.verifyToken(

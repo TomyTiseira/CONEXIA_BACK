@@ -55,9 +55,7 @@ export class AuthController {
   }
 
   @MessagePattern('exchangeOnboardingToken')
-  async exchangeOnboardingToken(
-    @Payload() data: { onboardingToken: string },
-  ) {
+  async exchangeOnboardingToken(@Payload() data: { onboardingToken: string }) {
     const result = await this.authService.exchangeOnboardingToken(
       data.onboardingToken,
     );

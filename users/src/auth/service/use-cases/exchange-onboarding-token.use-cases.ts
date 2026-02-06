@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { TokenService } from '../token.service';
 import { UserRepository } from '../../../users/repository/users.repository';
 import { AuthRepository } from '../../repository/auth.repository';
+import { TokenService } from '../token.service';
 
 @Injectable()
 export class ExchangeOnboardingTokenUseCase {

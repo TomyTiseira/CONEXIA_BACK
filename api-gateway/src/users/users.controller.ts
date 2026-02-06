@@ -74,7 +74,10 @@ export class UsersController {
   }
   @Get()
   @AutoRefreshAuth()
-  getUsers(@Query() getUsersDto: GetUsersDto, @User() user?: AuthenticatedUser) {
+  getUsers(
+    @Query() getUsersDto: GetUsersDto,
+    @User() user?: AuthenticatedUser,
+  ) {
     // Incluir el userId actual si está autenticado para excluirlo de los resultados
     const payload = {
       ...getUsersDto,
@@ -117,8 +120,14 @@ export class UsersController {
       };
 
       // Asegurar que NO quede sesión activa al verificar el email
-      res.clearCookie('access_token', { ...jwtConfig.cookieOptions, maxAge: 0 });
-      res.clearCookie('refresh_token', { ...jwtConfig.cookieOptions, maxAge: 0 });
+      res.clearCookie('access_token', {
+        ...jwtConfig.cookieOptions,
+        maxAge: 0,
+      });
+      res.clearCookie('refresh_token', {
+        ...jwtConfig.cookieOptions,
+        maxAge: 0,
+      });
 
       // Cookie temporal solo para onboarding (crear perfil)
       res.cookie('onboarding_token', result.data.onboardingToken, {

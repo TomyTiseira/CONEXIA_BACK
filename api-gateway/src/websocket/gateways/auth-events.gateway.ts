@@ -124,7 +124,9 @@ export class AuthEventsGateway
 
       const pending = this.pendingAccountNotifications.get(userId);
       if (pending) {
-        this.server.to(`user-${userId}`).emit('account-status-changed', pending);
+        this.server
+          .to(`user-${userId}`)
+          .emit('account-status-changed', pending);
         this.pendingAccountNotifications.delete(userId);
         this.logger.warn(
           `📤 Notificación pendiente enviada a usuario ${userId} al reconectar`,
