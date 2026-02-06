@@ -117,4 +117,25 @@ export class MembershipsController {
       data.preapprovalId,
     );
   }
+
+  @MessagePattern('cancelSubscription')
+  cancelSubscription(
+    @Payload()
+    data: {
+      userId: number;
+      userEmail: string;
+      reason?: string;
+    },
+  ) {
+    return this.membershipsService.cancelSubscription(
+      data.userId,
+      data.userEmail,
+      { reason: data.reason },
+    );
+  }
+
+  @MessagePattern('processPendingCancellations')
+  processPendingCancellations() {
+    return this.membershipsService.processPendingCancellations();
+  }
 }

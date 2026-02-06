@@ -185,4 +185,32 @@ export class MembershipsController {
       }),
     );
   }
+
+  @Post('me/subscription/cancel')
+  @AuthRoles([ROLES.USER])
+  cancelSubscription(
+    @Body() body: { reason?: string },
+    @User() user: AuthenticatedUser,
+  ) {
+    const payload = {
+      userId: user.id,
+      userEmail: user.email,
+      reason: body.reason,
+    };
+    return this.client.send('cancelSubscription', payload).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
+
+  @Post('admin/process-pending-cancellations')
+  @AuthRoles([ROLES.ADMIN])
+  processPendingCancellations() {
+    return this.client.send('processPendingCancellations', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }
