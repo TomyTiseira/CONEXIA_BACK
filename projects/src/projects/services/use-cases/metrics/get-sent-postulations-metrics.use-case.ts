@@ -23,10 +23,15 @@ export class GetSentPostulationsMetricsUseCase {
         aceptada: 0,
         rechazada: 0,
         cancelada: 0,
+        cancelada_moderacion: 0,
       };
 
       sentPostulations.forEach((postulation) => {
-        const statusCode = postulation.status?.code as string;
+        let statusCode = postulation.status?.code as string;
+        // Mapear código de DB a formato en español
+        if (statusCode === 'cancelled_by_moderation') {
+          statusCode = 'cancelada_moderacion';
+        }
         if (statusCode && statusCode in byStatus) {
           byStatus[statusCode as keyof PostulationStatusBreakdown]++;
         }
@@ -53,6 +58,7 @@ export class GetSentPostulationsMetricsUseCase {
       aceptada: 0,
       rechazada: 0,
       cancelada: 0,
+      cancelada_moderacion: 0,
     };
   }
 }
