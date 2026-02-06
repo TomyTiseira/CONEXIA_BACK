@@ -9,6 +9,7 @@ import {
 } from '../interfaces/auth.interface';
 import { ForgotPasswordUseCase } from './use-cases/forgot-password.use-cases';
 import { LoginUseCase } from './use-cases/login.use-cases';
+import { ExchangeOnboardingTokenUseCase } from './use-cases/exchange-onboarding-token.use-cases';
 import { RefreshTokenUseCase } from './use-cases/refresh-token.use-cases';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-cases';
 import { VerifyCodeResetUseCase } from './use-cases/verify-code-reset.use-cases';
@@ -18,6 +19,7 @@ export class AuthService {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly refreshTokenUseCase: RefreshTokenUseCase,
+    private readonly exchangeOnboardingTokenUseCase: ExchangeOnboardingTokenUseCase,
     private readonly forgotPasswordUseCase: ForgotPasswordUseCase,
     private readonly verifyCodeResetUseCase: VerifyCodeResetUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
@@ -27,8 +29,12 @@ export class AuthService {
     return this.loginUseCase.execute(loginData);
   }
 
-  refreshToken(refreshTokenDto: RefreshTokenDto): RefreshTokenResponse {
+  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponse> {
     return this.refreshTokenUseCase.execute(refreshTokenDto);
+  }
+
+  async exchangeOnboardingToken(onboardingToken: string): Promise<LoginResponse> {
+    return this.exchangeOnboardingTokenUseCase.execute(onboardingToken);
   }
 
   async forgotPassword(email: string): Promise<void> {

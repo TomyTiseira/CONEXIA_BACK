@@ -32,7 +32,49 @@ export class AuthController {
         ),
       )) as LoginResponse;
 
-      // Configurar cookies
+      // Si el perfil está incompleto, el microservicio devuelve onboardingToken.
+      // En ese caso NO se crea sesión real (access/refresh), solo cookie temporal de onboarding.
+      if (result.data.onboardingToken) {
+        res.clearCookie('access_token', {
+          ...jwtConfig.cookieOptions,
+          maxAge: 0,
+        });
+        res.clearCookie('refresh_token', {
+          ...jwtConfig.cookieOptions,
+          maxAge: 0,
+        });
+
+        res.cookie('onboarding_token', result.data.onboardingToken, {
+          ...jwtConfig.cookieOptions,
+          maxAge: result.data.expiresIn * 1000,
+        });
+
+        res.json({
+          success: true,
+          message: result.message,
+          data: {
+            user: result.data.user,
+            expiresIn: result.data.expiresIn,
+            next: 'PROFILE_REQUIRED',
+          },
+        });
+        return;
+      }
+
+      // Login normal (perfil completo) => sesión real.
+      if (!result.data.accessToken || !result.data.refreshToken) {
+        throw new RpcException({
+          statusCode: 500,
+          message: 'Invalid login response from auth service',
+        });
+      }
+
+      // Limpiar onboarding si existía de antes
+      res.clearCookie('onboarding_token', {
+        ...jwtConfig.cookieOptions,
+        maxAge: 0,
+      });
+
       res.cookie('access_token', result.data.accessToken, {
         ...jwtConfig.cookieOptions,
         maxAge: result.data.expiresIn * 1000,
@@ -40,10 +82,9 @@ export class AuthController {
 
       res.cookie('refresh_token', result.data.refreshToken, {
         ...jwtConfig.cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      // Enviar respuesta sin tokens en el body
       res.json({
         success: true,
         message: result.message,
@@ -187,6 +228,10 @@ export class AuthController {
       maxAge: 0,
     });
     res.clearCookie('refresh_token', {
+      ...jwtConfig.cookieOptions,
+      maxAge: 0,
+    });
+    res.clearCookie('onboarding_token', {
       ...jwtConfig.cookieOptions,
       maxAge: 0,
     });

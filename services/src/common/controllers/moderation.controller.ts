@@ -14,7 +14,7 @@ export class ModerationController {
   @EventPattern('user.banned')
   async handleUserBanned(@Payload() data: { userId: number; bannedAt: Date; reason: string }): Promise<void> {
     this.logger.log(`Evento recibido: usuario ${data.userId} baneado`);
-    await this.moderationListenerService.handleUserBanned(data.userId);
+    await this.moderationListenerService.handleUserBanned(data.userId, data.reason);
   }
 
   /**

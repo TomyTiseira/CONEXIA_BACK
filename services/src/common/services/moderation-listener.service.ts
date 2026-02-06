@@ -1,8 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
+import { ClaimCompliance } from '../../service-hirings/entities/claim-compliance.entity';
+import { Claim } from '../../service-hirings/entities/claim.entity';
 import { ServiceHiringStatus } from '../../service-hirings/entities/service-hiring-status.entity';
 import { ServiceHiring } from '../../service-hirings/entities/service-hiring.entity';
+import { ClaimStatus } from '../../service-hirings/enums/claim.enum';
+import { ComplianceStatus } from '../../service-hirings/enums/compliance.enum';
 import { ServiceHiringStatusCode } from '../../service-hirings/enums/service-hiring-status.enum';
 import { DeliverableRepository } from '../../service-hirings/repositories/deliverable.repository';
 import { DeliverySubmissionRepository } from '../../service-hirings/repositories/delivery-submission.repository';
@@ -21,6 +25,10 @@ export class ModerationListenerService {
     private readonly serviceHiringRepository: Repository<ServiceHiring>,
     @InjectRepository(ServiceHiringStatus)
     private readonly serviceHiringStatusRepository: Repository<ServiceHiringStatus>,
+    @InjectRepository(Claim)
+    private readonly claimRepository: Repository<Claim>,
+    @InjectRepository(ClaimCompliance)
+    private readonly claimComplianceRepository: Repository<ClaimCompliance>,
     private readonly deliverableRepository: DeliverableRepository,
     private readonly deliverySubmissionRepository: DeliverySubmissionRepository,
     private readonly emailService: EmailService,
@@ -30,7 +38,7 @@ export class ModerationListenerService {
   /**
    * Maneja el evento cuando un usuario es baneado
    */
-  async handleUserBanned(userId: number): Promise<void> {
+  async handleUserBanned(userId: number, reason?: string): Promise<void> {
     this.logger.log(`Procesando baneo de usuario ${userId}`);
 
     try {
@@ -104,11 +112,137 @@ export class ModerationListenerService {
         `${terminatedAsClient} contrataciones terminadas donde usuario es cliente`,
       );
 
+      // 10. Finalizar reclamos y compromisos activos por moderación
+      const finalized = await this.finalizeClaimsAndCompliancesByModeration(
+        userId,
+        reason,
+      );
+      this.logger.log(
+        `${finalized.claimsFinalized} reclamos finalizados por moderación y ${finalized.compliancesFinalized} compromisos finalizados (userId=${userId})`,
+      );
+
       this.logger.log(`Baneo completado para usuario ${userId}`);
     } catch (error) {
       this.logger.error(`Error procesando baneo de usuario ${userId}:`, error);
       throw error;
     }
+  }
+
+  private async finalizeClaimsAndCompliancesByModeration(
+    bannedUserId: number,
+    banReason?: string,
+  ): Promise<{ claimsFinalized: number; compliancesFinalized: number }> {
+    const reason =
+      (banReason || '').trim() ||
+      'El usuario fue suspendido permanentemente por infracciones graves a las políticas de la plataforma.';
+
+    const claims = await this.claimRepository
+      .createQueryBuilder('claim')
+      .leftJoinAndSelect('claim.hiring', 'hiring')
+      .leftJoinAndSelect('hiring.service', 'service')
+      .andWhere(
+        `(
+          claim.claimantUserId = :userId
+          OR claim.defendantUserId = :userId
+          OR (claim.claimantRole = 'client' AND service.userId = :userId)
+          OR (claim.claimantRole = 'provider' AND hiring.userId = :userId)
+        )`,
+        { userId: bannedUserId },
+      )
+      .getMany();
+
+    if (claims.length === 0) {
+      return { claimsFinalized: 0, compliancesFinalized: 0 };
+    }
+
+    const frontendUrl = (process.env.FRONTEND_URL || '').trim() || null;
+
+    let claimsFinalized = 0;
+    let compliancesFinalized = 0;
+
+    for (const claim of claims) {
+      try {
+        const isClaimTerminal = [
+          ClaimStatus.RESOLVED,
+          ClaimStatus.REJECTED,
+          ClaimStatus.CANCELLED,
+          ClaimStatus.FINISHED_BY_MODERATION,
+        ].includes(claim.status);
+
+        if (!isClaimTerminal) {
+          await this.claimRepository.update({ id: claim.id }, {
+            status: ClaimStatus.FINISHED_BY_MODERATION,
+            closedAt: new Date(),
+            finalOutcome: 'finished_by_moderation_user_banned',
+            resolution: `Finalizado por moderación: ${reason}`,
+          } as any);
+          claimsFinalized += 1;
+        }
+
+        const complianceUpdateResult = await this.claimComplianceRepository
+          .createQueryBuilder()
+          .update(ClaimCompliance)
+          .set({
+            status: ComplianceStatus.FINISHED_BY_MODERATION,
+            reviewedAt: new Date(),
+            moderatorNotes: `Finalizado por moderación: ${reason}`,
+          } as any)
+          .where('claim_id = :claimId', { claimId: claim.id })
+          .andWhere('status NOT IN (:...terminalStatuses)', {
+            terminalStatuses: [
+              ComplianceStatus.APPROVED,
+              ComplianceStatus.REJECTED,
+              ComplianceStatus.FINISHED_BY_MODERATION,
+            ],
+          })
+          .execute();
+
+        compliancesFinalized += complianceUpdateResult.affected || 0;
+
+        // Notify the other party (non-banned)
+        const hiring: any = (claim as any).hiring;
+        if (!hiring || !hiring.service) continue;
+
+        const clientId = Number(hiring.userId);
+        const providerId = Number(hiring.service.userId);
+
+        const otherUserId =
+          Number(bannedUserId) === clientId
+            ? providerId
+            : Number(bannedUserId) === providerId
+              ? clientId
+              : null;
+
+        if (!otherUserId) continue;
+
+        const otherUser =
+          await this.usersClientService.getUserByIdWithRelations(otherUserId);
+
+        if (!otherUser?.email) continue;
+
+        const otherUserName = otherUser?.profile
+          ? `${otherUser.profile.name} ${otherUser.profile.lastName}`.trim()
+          : 'Usuario';
+
+        await this.emailService.sendClaimFinishedByModerationEmail(
+          otherUser.email,
+          otherUserName,
+          {
+            claimId: claim.id,
+            hiringTitle: hiring.service.title || 'Servicio',
+            reason,
+            frontendUrl,
+          },
+        );
+      } catch (error) {
+        this.logger.error(
+          `Error finalizando reclamo/compromisos por moderación (claimId=${claim.id}):`,
+          error,
+        );
+      }
+    }
+
+    return { claimsFinalized, compliancesFinalized };
   }
 
   /**

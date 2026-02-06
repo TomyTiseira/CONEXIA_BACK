@@ -68,13 +68,19 @@ export class ResolveClaimUseCase {
       await this.validateComplianceResponsibles(claim, compliances);
     }
 
+    if (status === ClaimStatus.RESOLVED && !resolutionType) {
+      throw new BadRequestException(
+        'El tipo de resolución es obligatorio para resolver un reclamo',
+      );
+    }
+
     // 4. Resolver el reclamo
     const updatedClaim = await this.claimRepository.resolve(
       claimId,
       status,
       resolution,
       resolvedBy,
-      resolutionType,
+      status === ClaimStatus.RESOLVED ? resolutionType : null,
       partialAgreementDetails,
     );
 
@@ -86,7 +92,7 @@ export class ResolveClaimUseCase {
     await this.updateHiringStatusByResolution(
       claim.hiringId,
       status,
-      resolutionType,
+      status === ClaimStatus.RESOLVED ? (resolutionType as string) : null,
     );
 
     // 6. Crear compliances si fueron proporcionados
@@ -158,7 +164,7 @@ export class ResolveClaimUseCase {
   private async updateHiringStatusByResolution(
     hiringId: number,
     claimStatus: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
-    resolutionType: string,
+    resolutionType: string | null,
   ): Promise<void> {
     // Si el reclamo fue rechazado, restaurar al estado anterior
     if (claimStatus === ClaimStatus.REJECTED) {
@@ -179,6 +185,13 @@ export class ResolveClaimUseCase {
       provider_favor: ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
       partial_agreement: ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
     };
+
+    if (!resolutionType) {
+      console.warn(
+        '[ResolveClaimUseCase] No se proporcionó resolutionType para un reclamo resuelto',
+      );
+      return;
+    }
 
     const targetStatusCode = statusCodeMap[resolutionType];
 

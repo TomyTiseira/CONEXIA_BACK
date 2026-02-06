@@ -272,7 +272,6 @@ export class ProjectsController {
   }
 
   @Get('skills/rubro/:rubroId')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
   getSkillsByRubro(@Param('rubroId') rubroId: number) {
     return this.client.send('getSkillsByRubro', { rubroId }).pipe(
       catchError((error) => {
@@ -282,7 +281,6 @@ export class ProjectsController {
   }
 
   @Get('rubros')
-  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR, ROLES.USER])
   getRubros() {
     return this.client.send('getRubros', {}).pipe(
       catchError((error) => {

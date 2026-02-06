@@ -15,6 +15,19 @@ export class AuthController {
   async login(@Payload() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
 
+    if ('onboardingToken' in result && result.onboardingToken) {
+      return {
+        success: true,
+        message: 'Login successful',
+        data: {
+          user: result.user,
+          onboardingToken: result.onboardingToken,
+          expiresIn: result.expiresIn,
+          next: result.next,
+        },
+      };
+    }
+
     return {
       success: true,
       message: 'Login successful',
@@ -28,14 +41,34 @@ export class AuthController {
   }
 
   @MessagePattern('refreshToken')
-  refreshToken(@Payload() refreshTokenDto: RefreshTokenDto) {
-    const result = this.authService.refreshToken(refreshTokenDto);
+  async refreshToken(@Payload() refreshTokenDto: RefreshTokenDto) {
+    const result = await this.authService.refreshToken(refreshTokenDto);
 
     return {
       success: true,
       message: 'Token refreshed successfully',
       data: {
         accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+      },
+    };
+  }
+
+  @MessagePattern('exchangeOnboardingToken')
+  async exchangeOnboardingToken(
+    @Payload() data: { onboardingToken: string },
+  ) {
+    const result = await this.authService.exchangeOnboardingToken(
+      data.onboardingToken,
+    );
+
+    return {
+      success: true,
+      message: 'Session created successfully',
+      data: {
+        user: result.user,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         expiresIn: result.expiresIn,
       },
     };
