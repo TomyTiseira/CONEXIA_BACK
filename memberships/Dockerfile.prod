@@ -36,4 +36,3 @@ USER node
 EXPOSE 8080
 
 CMD ["/usr/src/app/entrypoint.prod.sh"]
-
