@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: users
+  name: users
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: users
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/users
+          name: users
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: DATABASE_URL
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_SECURE
+              value: "false"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: SMTP_PASS
+            - name: EMAIL_FROM
+              value: "jalyn.mclaughlin63@ethereal.email"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: JWT_SECRET
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: ENCRYPTION_KEY
+            - name: ALGORITHM
+              value: "aes-256-cbc"
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: AWS_REGION
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: OPENAI_API_KEY
+          resources: {}
+status: {}
