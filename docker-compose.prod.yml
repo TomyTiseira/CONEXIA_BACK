@@ -3,6 +3,7 @@ services:
     image: nats:2.10.25-alpine3.21
 
   api-gateway:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/api-gateway
     build:
       context: ./api-gateway
       dockerfile: Dockerfile.prod
@@ -18,6 +19,7 @@ services:
       - NODE_ENV=${NODE_ENV}
 
   users:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/users
     build:
       context: ./users
       dockerfile: Dockerfile.prod
@@ -41,6 +43,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   projects:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/projects
     build:
       context: ./projects
       dockerfile: Dockerfile.prod
@@ -58,6 +61,7 @@ services:
       - FRONTEND_URL=${FRONTEND_URL}
 
   communities:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/communities
     build:
       context: ./communities
       dockerfile: Dockerfile.prod
@@ -76,6 +80,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   services:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/services
     build:
       context: ./services
       dockerfile: Dockerfile.prod
@@ -100,6 +105,7 @@ services:
       - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
 
   nexo:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo
     build:
       context: ./nexo
       dockerfile: Dockerfile.prod
@@ -111,6 +117,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
   memberships:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/memberships
     build:
       context: ./memberships
       dockerfile: Dockerfile.prod
