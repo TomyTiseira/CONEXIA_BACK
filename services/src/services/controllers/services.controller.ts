@@ -5,7 +5,7 @@ import {
   GetServiceByIdDto,
   GetServicesByUserDto,
   GetServicesDto,
-  ServiceMetricsDto
+  ServiceMetricsDto,
 } from '../dto';
 import { ServiceMetricsService } from '../services/service-metrics.service';
 import { ServicesService } from '../services/services.service';
