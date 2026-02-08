@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   ForbiddenException,
   Injectable,
@@ -15,6 +14,7 @@ import {
   RoleEvaluationStatsDto,
 } from '../../../dtos/project-postulations-stats.dto';
 import { ProjectRepository } from '../../../repositories/project.repository';
+import { PostulationStatusCode } from 'src/postulations/enums/postulation-status.enum';
 
 @Injectable()
 export class GetProjectPostulationsStatsUseCase {
@@ -48,7 +48,7 @@ export class GetProjectPostulationsStatsUseCase {
 
     // Filtrar postulaciones canceladas
     const postulations = allPostulations.filter(
-      (p) => p.status?.code !== 'cancelada',
+      (p) => p.status?.code !== PostulationStatusCode.CANCELLED,
     );
 
     // Calcular total de postulaciones

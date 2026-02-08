@@ -1,15 +1,15 @@
 import { Type } from 'class-transformer';
 import {
-    IsArray,
-    IsBoolean,
-    IsDateString,
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsString,
-    MaxLength,
-    Min,
-    ValidateNested,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateDeliverableDto {

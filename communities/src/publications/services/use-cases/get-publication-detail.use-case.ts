@@ -78,10 +78,11 @@ export class GetPublicationDetailUseCase {
     // Verificar si el usuario actual ya reportó esta publicación
     let hasReported = false;
     if (currentUserId && currentUserId !== publicationWithDetails.userId) {
-      const report = await this.publicationReportRepository.findByPublicationAndReporter(
-        publicationWithDetails.id,
-        currentUserId,
-      );
+      const report =
+        await this.publicationReportRepository.findByPublicationAndReporter(
+          publicationWithDetails.id,
+          currentUserId,
+        );
       hasReported = report !== null;
     }
 

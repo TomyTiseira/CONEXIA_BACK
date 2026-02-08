@@ -5,7 +5,9 @@ export async function addComplianceTrackingFields(dataSource: DataSource) {
   await queryRunner.connect();
 
   try {
-    console.log('[Migration] Iniciando migración: agregar campos de tracking a claim_compliances');
+    console.log(
+      '[Migration] Iniciando migración: agregar campos de tracking a claim_compliances',
+    );
 
     // Verificar si la columna 'current_attempt' ya existe
     const currentAttemptExists = await queryRunner.query(`

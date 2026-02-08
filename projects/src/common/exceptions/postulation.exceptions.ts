@@ -253,7 +253,11 @@ export class EvaluationDeadlineExpiredException extends RpcException {
 }
 
 export class InvalidPostulationStateException extends RpcException {
-  constructor(postulationId: number, expectedState: string, currentState: string) {
+  constructor(
+    postulationId: number,
+    expectedState: string,
+    currentState: string,
+  ) {
     super({
       status: 400,
       message: `Postulation ${postulationId} is in ${currentState} state, expected ${expectedState}`,

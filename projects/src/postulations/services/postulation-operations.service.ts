@@ -48,7 +48,10 @@ export class PostulationOperationsService {
     };
 
     // Si vienen respuestas, usar createWithAnswers para guardar todo en una transacción
-    if (createPostulationDto.answers && createPostulationDto.answers.length > 0) {
+    if (
+      createPostulationDto.answers &&
+      createPostulationDto.answers.length > 0
+    ) {
       return await this.postulationRepository.createWithAnswers(
         postulationData,
         createPostulationDto.answers,

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { GetServiceHiringsDto } from '../dto';
 import { ServiceHiring } from '../entities/service-hiring.entity';
+import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 
 @Injectable()
 export class ServiceHiringRepository {
@@ -29,7 +30,7 @@ export class ServiceHiringRepository {
     });
 
     // Si el hiring está en estado 'in_claim', cargar el claim activo
-    if (hiring && hiring.status?.code === 'in_claim') {
+    if (hiring && hiring.status?.code === ServiceHiringStatusCode.IN_CLAIM) {
       const qb = this.repository
         .createQueryBuilder('hiring')
         .leftJoinAndSelect(

@@ -3,10 +3,10 @@ import { ServiceReview } from '../../service-reviews/entities/service-review.ent
 import { ServiceReviewRepository } from '../../service-reviews/repositories/service-review.repository';
 import { ServiceReviewReportReason } from '../enums/service-review-report-reason.enum';
 import {
-    CannotReportOwnReviewException,
-    InvalidServiceReviewReportReasonException,
-    ServiceReviewAlreadyReportedException,
-    ServiceReviewNotFoundForReportException,
+  CannotReportOwnReviewException,
+  InvalidServiceReviewReportReasonException,
+  ServiceReviewAlreadyReportedException,
+  ServiceReviewNotFoundForReportException,
 } from '../exceptions/service-review-report.exceptions';
 import { ServiceReviewReportRepository } from '../repositories/service-review-report.repository';
 

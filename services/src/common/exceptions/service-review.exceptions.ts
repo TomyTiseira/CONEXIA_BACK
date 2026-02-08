@@ -172,7 +172,8 @@ export class ReviewHasAssociatedReportsException extends RpcException {
   constructor() {
     super({
       status: 409,
-      message: 'Cannot delete review because it has associated reports. Please contact support.',
+      message:
+        'Cannot delete review because it has associated reports. Please contact support.',
       error: 'Foreign Key Constraint Violation',
     });
   }

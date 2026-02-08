@@ -53,7 +53,7 @@ export class ProcessPaymentWebhookUseCase {
         });
 
         // Investigar el problema de pagos fantasma
-        await this.debugPaymentCreationIssue(paymentId);
+        this.debugPaymentCreationIssue(paymentId);
 
         // Ejecutar diagnóstico específico para pagos fantasma
         // Phantom payment diagnostics - using test vendor credentials should resolve this
@@ -64,7 +64,7 @@ export class ProcessPaymentWebhookUseCase {
       }
 
       // Buscar el pago en nuestra base de datos usando múltiples estrategias
-      let payment = await this.findPaymentForWebhook(paymentId, mpPayment);
+      const payment = await this.findPaymentForWebhook(paymentId, mpPayment);
 
       if (!payment) {
         console.error(
@@ -151,7 +151,9 @@ export class ProcessPaymentWebhookUseCase {
       if (payment.paymentType === 'deliverable') {
         const pendingDeliverables =
           hiring.deliverables?.filter(
-            (d) => d.status !== 'approved' && d.status !== 'rejected',
+            (d) =>
+              d.status !== DeliverableStatus.APPROVED &&
+              d.status !== DeliverableStatus.REJECTED,
           ).length || 0;
 
         if (pendingDeliverables > 0) {
@@ -354,7 +356,7 @@ export class ProcessPaymentWebhookUseCase {
     }
   }
 
-  private async debugPaymentCreationIssue(paymentId: string): Promise<void> {
+  private debugPaymentCreationIssue(paymentId: string): void {
     console.log('� Investigating payment creation issue...');
 
     try {

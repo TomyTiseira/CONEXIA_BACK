@@ -92,7 +92,7 @@ export class ServiceMetricsService {
 
     // Métricas adicionales para BASIC y PREMIUM
     const totalRevenueGenerated = this.calculateRevenue(hirings);
-    const serviceRevenueBreakdown = await this.calculateRevenueByService(
+    const serviceRevenueBreakdown = this.calculateRevenueByService(
       hirings,
       publishedServices,
     );
@@ -154,17 +154,15 @@ export class ServiceMetricsService {
    * Solo cuenta servicios en estado COMPLETED (sin reclamos)
    * Cada hiring (solicitud) se cuenta una sola vez, independiente de cuántos entregables tenga
    */
-  private async calculateRevenueByService(
+  private calculateRevenueByService(
     hirings: ServiceHiring[],
     publishedServices: Service[],
-  ): Promise<
-    Array<{
-      serviceId: number;
-      serviceTitle: string;
-      totalRevenue: number;
-      timesCompleted: number;
-    }>
-  > {
+  ): Array<{
+    serviceId: number;
+    serviceTitle: string;
+    totalRevenue: number;
+    timesCompleted: number;
+  }> {
     // Filtrar solo hirings completados
     const completedHirings = hirings.filter(
       (h) => h.status?.code === ServiceHiringStatusCode.COMPLETED,
@@ -217,7 +215,7 @@ export class ServiceMetricsService {
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   }
 
-  /* 
+  /*
    * COMPLETADOS: solo completed (sin reclamos)
    * CANCELADOS: cancelled, cancelled_by_claim, rejected
    * CON RECLAMOS: completed_by_claim, completed_with_agreement, cancelled_by_claim

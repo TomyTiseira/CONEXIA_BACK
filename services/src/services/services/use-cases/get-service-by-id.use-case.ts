@@ -97,10 +97,11 @@ export class GetServiceByIdUseCase {
     // Verificar si el usuario actual ya reportó este servicio
     let hasReported = false;
     if (data.currentUserId && data.currentUserId !== service.userId) {
-      const existingReport = await this.serviceReportRepository.findByServiceAndReporter(
-        service.id,
-        data.currentUserId,
-      );
+      const existingReport =
+        await this.serviceReportRepository.findByServiceAndReporter(
+          service.id,
+          data.currentUserId,
+        );
       hasReported = existingReport !== null;
     }
 
@@ -110,7 +111,11 @@ export class GetServiceByIdUseCase {
       serviceHiring,
       deliverables,
       hasReported,
-      ownerAccountStatus: ownerStatus.isBanned ? 'banned' : ownerStatus.isSuspended ? 'suspended' : 'active',
+      ownerAccountStatus: ownerStatus.isBanned
+        ? 'banned'
+        : ownerStatus.isSuspended
+          ? 'suspended'
+          : 'active',
       ownerIsSuspended: ownerStatus.isSuspended,
       ownerIsBanned: ownerStatus.isBanned,
       ownerSuspensionExpiresAt: ownerStatus.suspensionExpiresAt,

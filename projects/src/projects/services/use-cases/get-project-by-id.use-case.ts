@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   ProjectAlreadyDeletedException,

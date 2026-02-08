@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
-    PaginationInfo,
-    calculatePagination,
+  PaginationInfo,
+  calculatePagination,
 } from '../../common/utils/pagination.utils';
 import { ServiceReviewRepository } from '../../service-reviews/repositories/service-review.repository';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
 import {
-    DeliverableResponseDto,
-    GetServiceHiringsDto,
-    PaymentModalityResponseDto,
+  DeliverableResponseDto,
+  GetServiceHiringsDto,
+  PaymentModalityResponseDto,
 } from '../dto';
 import { Deliverable } from '../entities/deliverable.entity';
 import { ServiceHiring } from '../entities/service-hiring.entity';
@@ -109,15 +109,16 @@ export class ServiceHiringTransformService {
       ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
       ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
     ];
-    const isReviewable = reviewableStatuses.includes(hiring.status.code as ServiceHiringStatusCode);
-    
+    const isReviewable = reviewableStatuses.includes(hiring.status.code);
+
     let hasReview: boolean | undefined = undefined;
     if (isReviewable) {
       // Usar mapa precargado o consultar individualmente
       if (reviewsMap !== undefined) {
         hasReview = reviewsMap.get(hiring.id) || false;
       } else {
-        const existingReview = await this.serviceReviewRepository.findByHiringId(hiring.id);
+        const existingReview =
+          await this.serviceReviewRepository.findByHiringId(hiring.id);
         hasReview = existingReview !== null;
       }
     }
@@ -245,7 +246,8 @@ export class ServiceHiringTransformService {
     const hiringIds = hirings.map((h) => h.id);
 
     // Cargar deliverables
-    const allDeliverables = await this.deliverableRepository.findByHiringIds(hiringIds);
+    const allDeliverables =
+      await this.deliverableRepository.findByHiringIds(hiringIds);
 
     // Agrupar deliverables por hiringId
     const deliverablesMap = new Map<number, Deliverable[]>();
@@ -262,14 +264,15 @@ export class ServiceHiringTransformService {
       ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
     ];
     const reviewableHiringIds = hirings
-      .filter((h) => reviewableStatuses.includes(h.status.code as ServiceHiringStatusCode))
+      .filter((h) => reviewableStatuses.includes(h.status.code))
       .map((h) => h.id);
 
     // Cargar reseñas en batch para hirings completables
     const reviewsMap = new Map<number, boolean>();
     if (reviewableHiringIds.length > 0) {
       const reviewsPromises = reviewableHiringIds.map(async (hiringId) => {
-        const review = await this.serviceReviewRepository.findByHiringId(hiringId);
+        const review =
+          await this.serviceReviewRepository.findByHiringId(hiringId);
         return { hiringId, hasReview: review !== null };
       });
       const reviewsResults = await Promise.all(reviewsPromises);

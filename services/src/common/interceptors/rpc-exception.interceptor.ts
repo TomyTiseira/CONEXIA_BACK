@@ -23,13 +23,19 @@ export class RpcExceptionInterceptor implements NestInterceptor {
         if (error instanceof HttpException) {
           const response = error.getResponse();
           const status = error.getStatus();
-          
+
           return throwError(
             () =>
               new RpcException({
                 statusCode: status,
-                message: typeof response === 'string' ? response : (response as any).message || error.message,
-                error: typeof response === 'object' && 'error' in response ? (response as any).error : error.name,
+                message:
+                  typeof response === 'string'
+                    ? response
+                    : (response as any).message || error.message,
+                error:
+                  typeof response === 'object' && 'error' in response
+                    ? (response as any).error
+                    : error.name,
               }),
           );
         }

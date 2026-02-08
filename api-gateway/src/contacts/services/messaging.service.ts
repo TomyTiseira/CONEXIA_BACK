@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { join } from 'path';

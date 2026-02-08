@@ -59,10 +59,11 @@ export class GetPublicationCommentsUseCase {
         if (data.currentUserId === comment.userId) {
           return { commentId: comment.id, hasReported: false };
         }
-        const report = await this.commentReportRepository.findByCommentAndReporter(
-          comment.id,
-          data.currentUserId!,
-        );
+        const report =
+          await this.commentReportRepository.findByCommentAndReporter(
+            comment.id,
+            data.currentUserId!,
+          );
         return { commentId: comment.id, hasReported: report !== null };
       });
       const results = await Promise.all(reportPromises);

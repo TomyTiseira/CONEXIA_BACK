@@ -37,8 +37,7 @@ export class CreateClaimDto {
   )
   @IsString()
   @IsNotEmpty({
-    message:
-      'El campo "otherReason" es requerido cuando el motivo es "Otro"',
+    message: 'El campo "otherReason" es requerido cuando el motivo es "Otro"',
   })
   @MaxLength(30, {
     message: 'El motivo especificado no puede exceder 30 caracteres',

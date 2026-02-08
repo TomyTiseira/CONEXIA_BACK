@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import {
   EvaluationDeadlineExpiredException,
@@ -23,7 +22,9 @@ export class SubmitEvaluationUseCase {
     private readonly postulationValidationService: PostulationValidationService,
   ) {}
 
-  async execute(submitEvaluationDto: SubmitEvaluationDto): Promise<Postulation> {
+  async execute(
+    submitEvaluationDto: SubmitEvaluationDto,
+  ): Promise<Postulation> {
     // 1. Validar que la postulación existe
     const postulation = await this.postulationRepository.findByIdWithState(
       submitEvaluationDto.postulationId,
@@ -41,9 +42,10 @@ export class SubmitEvaluationUseCase {
     }
 
     // 3. Validar que la postulación está en estado PENDING_EVALUATION
-    const pendingEvaluationStatus = await this.postulationStatusService.getByCode(
-      PostulationStatusCode.PENDING_EVALUATION,
-    );
+    const pendingEvaluationStatus =
+      await this.postulationStatusService.getByCode(
+        PostulationStatusCode.PENDING_EVALUATION,
+      );
     if (postulation.statusId !== pendingEvaluationStatus.id) {
       throw new InvalidPostulationStateException(
         submitEvaluationDto.postulationId,
@@ -77,7 +79,9 @@ export class SubmitEvaluationUseCase {
       !submitEvaluationDto.evaluationLink &&
       !submitEvaluationDto.evaluationDescription
     ) {
-      throw new MissingEvaluationSubmissionException(submitEvaluationDto.postulationId);
+      throw new MissingEvaluationSubmissionException(
+        submitEvaluationDto.postulationId,
+      );
     }
 
     // 6. Validar tamaño del archivo de evaluación si viene
@@ -90,14 +94,16 @@ export class SubmitEvaluationUseCase {
 
     // 7. Actualizar la postulación con los datos de la evaluación
     try {
-      const activeStatus = await this.postulationStatusService.getActiveStatus();
+      const activeStatus =
+        await this.postulationStatusService.getActiveStatus();
 
       const updateData: Partial<Postulation> = {
         statusId: activeStatus.id,
         evaluationSubmissionUrl: submitEvaluationDto.evaluationFileUrl,
         evaluationSubmissionFilename: submitEvaluationDto.evaluationFilename,
         evaluationSubmissionSize: submitEvaluationDto.evaluationFileSize,
-        evaluationSubmissionMimetype: submitEvaluationDto.evaluationFileMimetype,
+        evaluationSubmissionMimetype:
+          submitEvaluationDto.evaluationFileMimetype,
         evaluationLink: submitEvaluationDto.evaluationLink,
         evaluationDescription: submitEvaluationDto.evaluationDescription,
         evaluationSubmittedAt: new Date(),

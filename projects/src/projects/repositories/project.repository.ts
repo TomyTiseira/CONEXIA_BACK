@@ -237,7 +237,7 @@ export class ProjectRepository {
               isCorrect:
                 typeof opt === 'object' && opt.isCorrect ? true : false,
             }));
-            await this.roleQuestionOptionRepository.save(options as any);
+            await this.roleQuestionOptionRepository.save(options);
           }
         }
       }
@@ -262,7 +262,7 @@ export class ProjectRepository {
           roleId: savedRole.id,
           skillId,
         }));
-        await this.roleSkillRepository.save(roleSkills as any);
+        await this.roleSkillRepository.save(roleSkills);
       }
     }
   }
@@ -298,7 +298,10 @@ export class ProjectRepository {
       .addSelect('project.createdAt', 'createdAt')
       .distinct(true)
       .where('project.deletedAt IS NULL')
-      .andWhere('(project.suspendedByModeration IS NULL OR project.suspendedByModeration = :suspended)', { suspended: false });
+      .andWhere(
+        '(project.suspendedByModeration IS NULL OR project.suspendedByModeration = :suspended)',
+        { suspended: false },
+      );
 
     if (filters.search) {
       idQueryBuilder.andWhere('project.title ILIKE :search', {

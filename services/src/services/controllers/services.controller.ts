@@ -18,7 +18,7 @@ export class ServicesController {
   ) {}
 
   @MessagePattern('ping')
-  async ping() {
+  ping() {
     return {
       message: 'Services microservice is running',
       timestamp: new Date(),

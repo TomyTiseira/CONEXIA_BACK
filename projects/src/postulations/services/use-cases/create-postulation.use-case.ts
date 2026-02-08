@@ -1,15 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import {
-    AlreadyAppliedToRoleException,
-    InvalidApplicationTypesException,
-    InvalidUserRoleException,
-    MissingRequiredAnswersException,
-    RoleMaxCollaboratorsReachedException,
-    RoleNotAcceptingApplicationsException,
-    RoleNotBelongToProjectException,
-    RoleNotFoundException,
+  AlreadyAppliedToRoleException,
+  InvalidApplicationTypesException,
+  InvalidUserRoleException,
+  MissingRequiredAnswersException,
+  RoleMaxCollaboratorsReachedException,
+  RoleNotAcceptingApplicationsException,
+  RoleNotBelongToProjectException,
+  RoleNotFoundException,
 } from '../../../common/exceptions/postulation.exceptions';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ApplicationType } from '../../../projects/dtos/publish-project.dto';
@@ -121,7 +120,11 @@ export class CreatePostulationUseCase {
     const isPartnerRole = role.title.toLowerCase() === 'socio';
 
     // Validar que los campos de inversor solo se envíen para roles de inversor
-    if (!isInvestorRole && (createPostulationDto.investorAmount || createPostulationDto.investorMessage)) {
+    if (
+      !isInvestorRole &&
+      (createPostulationDto.investorAmount ||
+        createPostulationDto.investorMessage)
+    ) {
       throw new InvalidApplicationTypesException(
         createPostulationDto.roleId,
         'Investor fields can only be provided when applying to an Investor role',
@@ -144,7 +147,10 @@ export class CreatePostulationUseCase {
           'Investor message is required for Investor role',
         );
       }
-      if (!createPostulationDto.investorAmount || createPostulationDto.investorAmount <= 0) {
+      if (
+        !createPostulationDto.investorAmount ||
+        createPostulationDto.investorAmount <= 0
+      ) {
         throw new InvalidApplicationTypesException(
           createPostulationDto.roleId,
           'Valid investment amount is required for Investor role',
@@ -202,7 +208,9 @@ export class CreatePostulationUseCase {
           !createPostulationDto.answers ||
           createPostulationDto.answers.length === 0
         ) {
-          throw new MissingRequiredAnswersException(createPostulationDto.roleId);
+          throw new MissingRequiredAnswersException(
+            createPostulationDto.roleId,
+          );
         }
 
         // Validar que todas las preguntas tienen respuesta
@@ -213,7 +221,9 @@ export class CreatePostulationUseCase {
           (q) => !answeredQuestionIds.has(q.id),
         );
         if (missingAnswers) {
-          throw new MissingRequiredAnswersException(createPostulationDto.roleId);
+          throw new MissingRequiredAnswersException(
+            createPostulationDto.roleId,
+          );
         }
       }
     }
@@ -249,30 +259,34 @@ export class CreatePostulationUseCase {
 
     // Si vienen respuestas, crear con answers en una transacción
     let createdPostulation: Postulation;
-    if (createPostulationDto.answers && createPostulationDto.answers.length > 0) {
+    if (
+      createPostulationDto.answers &&
+      createPostulationDto.answers.length > 0
+    ) {
       createdPostulation = await this.postulationRepository.createWithAnswers(
         postulationData,
         createPostulationDto.answers,
       );
     } else {
-      createdPostulation = await this.postulationRepository.create(postulationData);
+      createdPostulation =
+        await this.postulationRepository.create(postulationData);
     }
 
     // 12. Si hay evaluación, calcular y actualizar el deadline usando el createdAt real
     if (hasEvaluation) {
       const evaluation = role.evaluations?.[0];
       const evaluationDays = evaluation?.days || 10;
-      
+
       // Calcular deadline desde el createdAt de la postulación
       const evaluationDeadline = new Date(createdPostulation.createdAt);
       evaluationDeadline.setDate(evaluationDeadline.getDate() + evaluationDays);
-      
+
       // Actualizar la postulación con el deadline correcto
       const updatedPostulation = await this.postulationRepository.update(
         createdPostulation.id,
-        { evaluationDeadline }
+        { evaluationDeadline },
       );
-      
+
       return updatedPostulation || createdPostulation;
     }
 
@@ -286,8 +300,7 @@ export class CreatePostulationUseCase {
   private async validateUserRole(currentUserId: number): Promise<void> {
     try {
       const user = await this.usersClientService.getUserById(currentUserId);
-      const userRole =
-        await this.usersClientService.getUserRole(currentUserId);
+      const userRole = await this.usersClientService.getUserRole(currentUserId);
 
       if (!user || !userRole || userRole.name !== 'user') {
         throw new InvalidUserRoleException(currentUserId);

@@ -24,7 +24,8 @@ export class InvalidServiceReviewReportReasonException extends RpcException {
   constructor() {
     super({
       statusCode: 400,
-      message: 'You must provide a description when selecting "Other" as reason',
+      message:
+        'You must provide a description when selecting "Other" as reason',
       error: 'Invalid Service Review Report Reason',
     });
   }
@@ -54,7 +55,9 @@ export class ServiceReviewReportInternalServerErrorException extends RpcExceptio
   constructor(message: string) {
     super({
       statusCode: 500,
-      message: message || 'Internal server error occurred while processing service review report',
+      message:
+        message ||
+        'Internal server error occurred while processing service review report',
       error: 'Internal Server Error',
     });
   }
