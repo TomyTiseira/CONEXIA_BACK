@@ -6,9 +6,9 @@ steps:
         '-t',
         'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/communities',
         '-f',
-        'Dockerfile.prod',
+        'communities/Dockerfile.prod',
         '--platform=linux/amd64',
-        '.',
+        'communities',
       ]
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -16,3 +16,6 @@ steps:
         'push',
         'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/communities',
       ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
