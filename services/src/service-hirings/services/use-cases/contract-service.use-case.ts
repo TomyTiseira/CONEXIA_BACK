@@ -26,7 +26,7 @@ export class ContractServiceUseCase {
     contractDto: ContractServiceDto,
   ): Promise<ContractServiceResponseDto> {
     // Validar precondiciones
-    const { user, hiring } =
+    const { hiring } =
       await this.validationService.validateUserCanContractService(
         userId,
         hiringId,

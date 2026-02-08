@@ -112,7 +112,6 @@ export class GetUserPlanUseCase {
     userId: number,
   ): Promise<{ createdAt: Date } | null> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const user = await this.client.send('findUserById', userId).toPromise();
       return user && user.createdAt
         ? { createdAt: new Date(user.createdAt) }

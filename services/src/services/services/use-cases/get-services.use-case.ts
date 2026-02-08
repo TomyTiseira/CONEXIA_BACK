@@ -44,7 +44,9 @@ export class GetServicesUseCase {
     );
 
     // 3. Obtener search_visibility de los dueños de los servicios
-    const activeServiceOwnerIds = [...new Set(activeOwnerServices.map((s) => s.userId))];
+    const activeServiceOwnerIds = [
+      ...new Set(activeOwnerServices.map((s) => s.userId)),
+    ];
     const visibilityMap =
       await this.membershipsClientService.getUsersSearchVisibility(
         activeServiceOwnerIds,

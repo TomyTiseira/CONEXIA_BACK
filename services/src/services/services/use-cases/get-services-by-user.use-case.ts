@@ -54,9 +54,7 @@ export class GetServicesByUserUseCase {
     if (serviceIds.length > 0) {
       const reviewsPromises = serviceIds.map(async (serviceId) => {
         const stats =
-          await this.serviceReviewRepository.getServiceAverageRating(
-            serviceId,
-          );
+          await this.serviceReviewRepository.getServiceAverageRating(serviceId);
         return {
           serviceId,
           averageRating: stats.average,

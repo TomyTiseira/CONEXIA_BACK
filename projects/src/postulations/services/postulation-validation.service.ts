@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
-    PostulationNotActiveException,
-    PostulationNotFoundException,
-    PostulationNotPendingException,
-    ProjectEndedException,
-    ProjectMaxCollaboratorsReachedException,
-    ProjectNotActiveException,
-    ProjectOwnerCannotApplyException,
-    RoleNotBelongToProjectException,
-    UserAlreadyAppliedException,
-    UserNotActiveException,
-    UserNotPostulationOwnerException,
-    UserNotProjectOwnerException,
+  PostulationNotActiveException,
+  PostulationNotFoundException,
+  PostulationNotPendingException,
+  ProjectEndedException,
+  ProjectMaxCollaboratorsReachedException,
+  ProjectNotActiveException,
+  ProjectOwnerCannotApplyException,
+  RoleNotBelongToProjectException,
+  UserAlreadyAppliedException,
+  UserNotActiveException,
+  UserNotPostulationOwnerException,
+  UserNotProjectOwnerException,
 } from '../../common/exceptions/postulation.exceptions';
 import { ProjectNotFoundException } from '../../common/exceptions/project.exceptions';
 import { UsersClientService } from '../../common/services/users-client.service';
@@ -101,16 +101,18 @@ export class PostulationValidationService {
    * @param projectId - ID del proyecto
    * @param userId - ID del usuario
    */
-  async validateUserNotAlreadyApplied(roleId: number, userId: number): Promise<void> {
-    const existingPostulation = await this.postulationRepository.findByRoleAndUser(
-      roleId,
-      userId,
-    );
+  async validateUserNotAlreadyApplied(
+    roleId: number,
+    userId: number,
+  ): Promise<void> {
+    const existingPostulation =
+      await this.postulationRepository.findByRoleAndUser(roleId, userId);
 
     if (existingPostulation) {
       // Solo bloquear si la postulación está en estado activo, aceptada o rechazada
       // Permitir nueva postulación si la anterior fue cancelada
-      const cancelledStatus = await this.postulationStatusService.getCancelledStatus();
+      const cancelledStatus =
+        await this.postulationStatusService.getCancelledStatus();
 
       if (existingPostulation.statusId !== cancelledStatus.id) {
         throw new UserAlreadyAppliedException(roleId, userId);
@@ -175,7 +177,8 @@ export class PostulationValidationService {
     if (!role) return;
     const max = role.maxCollaborators || 0;
     if (!max || max <= 0) return;
-    const acceptedCount = await this.postulationRepository.countAcceptedByRole(roleId);
+    const acceptedCount =
+      await this.postulationRepository.countAcceptedByRole(roleId);
     if (acceptedCount >= max) {
       throw new ProjectMaxCollaboratorsReachedException(roleId);
     }
@@ -209,7 +212,6 @@ export class PostulationValidationService {
    * @param userId - ID del usuario
    */
   async validateUserIsActive(userId: number): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user = await this.usersClientService.getUserById(userId);
     // Verifica que el usuario exista y que NO esté eliminado
     if (!user || user.deletedAt) {

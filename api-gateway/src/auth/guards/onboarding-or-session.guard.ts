@@ -14,7 +14,6 @@ export class OnboardingOrSessionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const req: any = context.switchToHttp().getRequest();
     const hasOnboardingCookie = Boolean(
       req?.cookies?.onboarding_token ||

@@ -479,7 +479,7 @@ export class UsersController {
     };
 
     // 1) Crear perfil
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const profile: any = await firstValueFrom(
       this.client.send('createProfile', payload).pipe(
         catchError((error) => {

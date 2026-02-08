@@ -26,4 +26,3 @@ export class MembreshipBadRequestException extends RpcException {
     });
   }
 }
-

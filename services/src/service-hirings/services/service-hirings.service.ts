@@ -43,6 +43,7 @@ import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
 import { RetryPaymentUseCase } from './use-cases/retry-payment.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
+import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 
 @Injectable()
 export class ServiceHiringsService {
@@ -248,7 +249,7 @@ export class ServiceHiringsService {
     return this.processPaymentWebhookUseCase.execute(paymentId);
   }
 
-  async processPreferenceWebhook(preferenceId: string): Promise<void> {
+  processPreferenceWebhook(preferenceId: string): void {
     console.log('📋 Processing preference webhook:', { preferenceId });
     console.log(
       'ℹ️ With test vendor credentials, preference webhooks should work correctly',
@@ -349,7 +350,8 @@ export class ServiceHiringsService {
       );
 
     // Si el hiring está completado, quitar watermark de todas las entregas (ya pagó el 100%)
-    const hiringIsCompleted = hiring.status.code === 'completed';
+    const hiringIsCompleted =
+      hiring.status.code === ServiceHiringStatusCode.COMPLETED;
 
     // ⚠️ CRÍTICO: Usar BASE_URL del entorno para URLs completas
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';

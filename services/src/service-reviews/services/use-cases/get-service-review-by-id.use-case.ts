@@ -15,7 +15,7 @@ export class GetServiceReviewByIdUseCase {
     const review = await this.reviewRepository.findOneById(reviewId);
 
     if (!review) {
-     throw new ServiceReviewNotFoundException(reviewId);
+      throw new ServiceReviewNotFoundException(reviewId);
     }
 
     // Obtener información del reviewer

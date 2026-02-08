@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InternalServerErrorException } from '../../../common/exceptions/connections.exceptions';
 import { UsersService } from '../../../common/services/users.service';

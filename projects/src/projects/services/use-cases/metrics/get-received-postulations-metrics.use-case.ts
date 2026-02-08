@@ -27,7 +27,7 @@ export class GetReceivedPostulationsMetricsUseCase {
       }
 
       // Obtener todas las postulaciones recibidas en los proyectos del usuario
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       const receivedPostulations =
         await this.postulationRepository.findByProjectIds(projectIds);
 
@@ -54,7 +54,6 @@ export class GetReceivedPostulationsMetricsUseCase {
       });
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         total: receivedPostulations.length,
         byStatus,
       };

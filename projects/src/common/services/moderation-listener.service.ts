@@ -35,15 +35,23 @@ export class ModerationListenerService {
     try {
       // 1. Marcar proyectos con ownerModerationStatus='banned'
       const bannedProjects = await this.markUserProjectsAsBanned(userId);
-      this.logger.log(`${bannedProjects} proyectos marcados como owner baneado (userId=${userId})`);
+      this.logger.log(
+        `${bannedProjects} proyectos marcados como owner baneado (userId=${userId})`,
+      );
 
       // 2. Cancelar postulaciones A proyectos del usuario (como owner) - NUEVO
-      const cancelledPostulationsToProjects = await this.cancelPostulationsToUserProjects(userId);
-      this.logger.log(`${cancelledPostulationsToProjects} postulaciones canceladas en proyectos del usuario (owner)`);
+      const cancelledPostulationsToProjects =
+        await this.cancelPostulationsToUserProjects(userId);
+      this.logger.log(
+        `${cancelledPostulationsToProjects} postulaciones canceladas en proyectos del usuario (owner)`,
+      );
 
       // 3. Cancelar TODAS las postulaciones DEL usuario (como postulante)
-      const cancelledUserPostulations = await this.cancelAllUserPostulations(userId);
-      this.logger.log(`${cancelledUserPostulations} postulaciones canceladas del usuario (postulante)`);
+      const cancelledUserPostulations =
+        await this.cancelAllUserPostulations(userId);
+      this.logger.log(
+        `${cancelledUserPostulations} postulaciones canceladas del usuario (postulante)`,
+      );
 
       this.logger.log(`Baneo completado para usuario ${userId}`);
     } catch (error) {
@@ -61,12 +69,17 @@ export class ModerationListenerService {
     try {
       // Marcar proyectos con ownerModerationStatus='suspended' (sin cambiar estado)
       const suspendedProjects = await this.markUserProjectsAsSuspended(userId);
-      this.logger.log(`${suspendedProjects} proyectos marcados como owner suspendido (userId=${userId})`);
-      
+      this.logger.log(
+        `${suspendedProjects} proyectos marcados como owner suspendido (userId=${userId})`,
+      );
+
       // Los proyectos permanecen activos, el usuario puede cumplir compromisos existentes
       this.logger.log(`Suspensión procesada para usuario ${userId}`);
     } catch (error) {
-      this.logger.error(`Error procesando suspensión de usuario ${userId}:`, error);
+      this.logger.error(
+        `Error procesando suspensión de usuario ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -80,11 +93,16 @@ export class ModerationListenerService {
     try {
       // 1. Restaurar proyectos suspendidos
       const restoredProjects = await this.restoreUserProjects(userId);
-      this.logger.log(`${restoredProjects} proyectos restaurados para usuario ${userId}`);
+      this.logger.log(
+        `${restoredProjects} proyectos restaurados para usuario ${userId}`,
+      );
 
       this.logger.log(`Reactivación completada para usuario ${userId}`);
     } catch (error) {
-      this.logger.error(`Error procesando reactivación de usuario ${userId}:`, error);
+      this.logger.error(
+        `Error procesando reactivación de usuario ${userId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -132,7 +150,10 @@ export class ModerationListenerService {
   /**
    * Suspende todos los proyectos activos de un usuario (método legacy, ya no usado)
    */
-  private async suspendUserProjects(userId: number, reason?: string): Promise<number> {
+  private async suspendUserProjects(
+    userId: number,
+    reason?: string,
+  ): Promise<number> {
     // Obtener proyectos del usuario CON postulaciones antes de suspender
     const userProjects = await this.projectRepository
       .createQueryBuilder('project')
@@ -171,7 +192,7 @@ export class ModerationListenerService {
     const allPostulationIds: number[] = [];
     for (const project of userProjects) {
       if (project.postulations && project.postulations.length > 0) {
-        allPostulationIds.push(...project.postulations.map(p => p.id));
+        allPostulationIds.push(...project.postulations.map((p) => p.id));
       }
     }
 
@@ -183,22 +204,25 @@ export class ModerationListenerService {
           statusId: cancelledStatus.id,
           cancelledByModeration: true,
           moderationCancelledAt: new Date(),
-          moderationCancelReason: reason || 'El propietario del proyecto ha sido suspendido por infracciones graves',
+          moderationCancelReason:
+            reason ||
+            'El propietario del proyecto ha sido suspendido por infracciones graves',
         })
-        .where('id IN (:...postulationIds)', { postulationIds: allPostulationIds })
+        .where('id IN (:...postulationIds)', {
+          postulationIds: allPostulationIds,
+        })
         .execute();
 
-      this.logger.log(`${allPostulationIds.length} postulaciones canceladas de proyectos del usuario ${userId}`);
+      this.logger.log(
+        `${allPostulationIds.length} postulaciones canceladas de proyectos del usuario ${userId}`,
+      );
     }
 
     // Obtener información del owner baneado
     try {
-      const bannedUser = await firstValueFrom(
+      await firstValueFrom(
         this.usersClient.send('findUserByIdWithRelations', { id: userId }),
       );
-      const ownerName = bannedUser?.profile
-        ? `${bannedUser.profile.name} ${bannedUser.profile.lastName}`.trim()
-        : 'Propietario del proyecto';
 
       // Notificar a todos los postulantes de cada proyecto
       for (const project of userProjects) {
@@ -206,7 +230,9 @@ export class ModerationListenerService {
           try {
             // Obtener información del postulante
             const postulantUser = await firstValueFrom(
-              this.usersClient.send('findUserByIdWithRelations', { id: postulation.userId }),
+              this.usersClient.send('findUserByIdWithRelations', {
+                id: postulation.userId,
+              }),
             );
 
             if (postulantUser?.email) {
@@ -214,7 +240,8 @@ export class ModerationListenerService {
                 ? `${postulantUser.profile.name} ${postulantUser.profile.lastName}`.trim()
                 : 'Usuario';
 
-              const wasAccepted = postulation.status?.code === PostulationStatusCode.ACCEPTED;
+              const wasAccepted =
+                postulation.status?.code === PostulationStatusCode.ACCEPTED;
 
               await this.emailService.sendProjectOwnerBannedEmail(
                 postulantUser.email,
@@ -223,19 +250,29 @@ export class ModerationListenerService {
                   projectTitle: project.title,
                   projectId: project.id,
                   wasAccepted,
-                  reason: reason || 'El propietario del proyecto ha sido suspendido por infracciones graves.',
+                  reason:
+                    reason ||
+                    'El propietario del proyecto ha sido suspendido por infracciones graves.',
                 },
               );
 
-              this.logger.log(`Email enviado a postulante ${postulantUser.email} sobre proyecto #${project.id}`);
+              this.logger.log(
+                `Email enviado a postulante ${postulantUser.email} sobre proyecto #${project.id}`,
+              );
             }
           } catch (error) {
-            this.logger.error(`Error enviando email a postulante ${postulation.userId}:`, error);
+            this.logger.error(
+              `Error enviando email a postulante ${postulation.userId}:`,
+              error,
+            );
           }
         }
       }
     } catch (error) {
-      this.logger.error('Error obteniendo información del owner baneado:', error);
+      this.logger.error(
+        'Error obteniendo información del owner baneado:',
+        error,
+      );
     }
 
     return result.affected || 0;
@@ -268,19 +305,23 @@ export class ModerationListenerService {
    * Cancela TODAS las postulaciones A proyectos del usuario (cuando el owner es baneado)
    * Notifica a los postulantes que su postulación fue cancelada porque el owner fue baneado
    */
-  private async cancelPostulationsToUserProjects(userId: number): Promise<number> {
+  private async cancelPostulationsToUserProjects(
+    userId: number,
+  ): Promise<number> {
     const cancelledStatus = await this.postulationStatusRepository.findOne({
       where: { code: PostulationStatusCode.CANCELLED_BY_MODERATION },
     });
 
     if (!cancelledStatus) {
-      this.logger.error('Estado "cancelled_by_moderation" no encontrado en la base de datos');
+      this.logger.error(
+        'Estado "cancelled_by_moderation" no encontrado en la base de datos',
+      );
       return 0;
     }
 
     // Obtener todos los proyectos del usuario
     const userProjects = await this.projectRepository.find({
-      where: { 
+      where: {
         userId,
         deletedAt: IsNull(),
       },
@@ -313,7 +354,9 @@ export class ModerationListenerService {
       .leftJoinAndSelect('postulation.project', 'project')
       .leftJoinAndSelect('postulation.status', 'status')
       .where('postulation.project_id IN (:...projectIds)', { projectIds })
-      .andWhere('postulation.status_id NOT IN (:...finalStatusIds)', { finalStatusIds })
+      .andWhere('postulation.status_id NOT IN (:...finalStatusIds)', {
+        finalStatusIds,
+      })
       .getMany();
 
     if (activePostulations.length === 0) {
@@ -328,7 +371,8 @@ export class ModerationListenerService {
         statusId: cancelledStatus.id,
         cancelledByModeration: true,
         moderationCancelledAt: new Date(),
-        moderationCancelReason: 'El propietario del proyecto ha sido suspendido por infracciones graves',
+        moderationCancelReason:
+          'El propietario del proyecto ha sido suspendido por infracciones graves',
       })
       .where('project_id IN (:...projectIds)', { projectIds })
       .andWhere('status_id NOT IN (:...finalStatusIds)', { finalStatusIds })
@@ -336,18 +380,17 @@ export class ModerationListenerService {
 
     // Obtener información del owner baneado
     try {
-      const bannedOwner = await firstValueFrom(
+      await firstValueFrom(
         this.usersClient.send('findUserByIdWithRelations', { id: userId }),
       );
-      const ownerName = bannedOwner?.profile
-        ? `${bannedOwner.profile.name} ${bannedOwner.profile.lastName}`.trim()
-        : 'Propietario del proyecto';
 
       // Enviar emails a todos los postulantes afectados
       for (const postulation of activePostulations) {
         try {
           const applicant = await firstValueFrom(
-            this.usersClient.send('findUserByIdWithRelations', { id: postulation.userId }),
+            this.usersClient.send('findUserByIdWithRelations', {
+              id: postulation.userId,
+            }),
           );
 
           if (applicant?.email) {
@@ -356,7 +399,8 @@ export class ModerationListenerService {
               : 'Usuario';
 
             const projectTitle = postulation.project?.title || 'Sin título';
-            const wasAccepted = postulation.status?.code === PostulationStatusCode.ACCEPTED;
+            const wasAccepted =
+              postulation.status?.code === PostulationStatusCode.ACCEPTED;
 
             await this.emailService.sendProjectOwnerBannedEmail(
               applicant.email,
@@ -365,20 +409,28 @@ export class ModerationListenerService {
                 projectTitle,
                 projectId: postulation.project.id,
                 wasAccepted,
-                reason: wasAccepted 
+                reason: wasAccepted
                   ? `Tu colaboración en el proyecto "${projectTitle}" ha sido cancelada porque el propietario fue suspendido permanentemente.`
                   : `Tu postulación al proyecto "${projectTitle}" ha sido cancelada porque el propietario fue suspendido permanentemente.`,
               },
             );
 
-            this.logger.log(`Email enviado al postulante ${applicant.email} (postulación ${postulation.id})`);
+            this.logger.log(
+              `Email enviado al postulante ${applicant.email} (postulación ${postulation.id})`,
+            );
           }
         } catch (error) {
-          this.logger.error(`Error enviando email para postulación ${postulation.id}:`, error);
+          this.logger.error(
+            `Error enviando email para postulación ${postulation.id}:`,
+            error,
+          );
         }
       }
     } catch (error) {
-      this.logger.error('Error obteniendo información del owner baneado:', error);
+      this.logger.error(
+        'Error obteniendo información del owner baneado:',
+        error,
+      );
     }
 
     return result.affected || 0;
@@ -393,7 +445,9 @@ export class ModerationListenerService {
     });
 
     if (!cancelledStatus) {
-      this.logger.error('Estado "cancelled_by_moderation" no encontrado en la base de datos');
+      this.logger.error(
+        'Estado "cancelled_by_moderation" no encontrado en la base de datos',
+      );
       return 0;
     }
 
@@ -415,7 +469,9 @@ export class ModerationListenerService {
       .leftJoinAndSelect('postulation.project', 'project')
       .leftJoinAndSelect('postulation.status', 'status')
       .where('postulation.user_id = :userId', { userId })
-      .andWhere('postulation.status_id IN (:...activeStatusIds)', { activeStatusIds })
+      .andWhere('postulation.status_id IN (:...activeStatusIds)', {
+        activeStatusIds,
+      })
       .getMany();
 
     // Cancelar todas las postulaciones activas
@@ -447,7 +503,9 @@ export class ModerationListenerService {
         try {
           // Obtener información del owner del proyecto
           const ownerUser = await firstValueFrom(
-            this.usersClient.send('findUserByIdWithRelations', { id: postulation.project.userId }),
+            this.usersClient.send('findUserByIdWithRelations', {
+              id: postulation.project.userId,
+            }),
           );
 
           if (ownerUser?.email) {
@@ -455,7 +513,8 @@ export class ModerationListenerService {
               ? `${ownerUser.profile.name} ${ownerUser.profile.lastName}`.trim()
               : 'Usuario';
 
-            const wasAccepted = postulation.status?.code === PostulationStatusCode.ACCEPTED;
+            const wasAccepted =
+              postulation.status?.code === PostulationStatusCode.ACCEPTED;
 
             await this.emailService.sendPostulantBannedEmail(
               ownerUser.email,
@@ -465,18 +524,27 @@ export class ModerationListenerService {
                 projectTitle: postulation.project.title,
                 projectId: postulation.project.id,
                 wasAccepted,
-                reason: 'El postulante ha sido suspendido por infracciones graves a las políticas de la plataforma.',
+                reason:
+                  'El postulante ha sido suspendido por infracciones graves a las políticas de la plataforma.',
               },
             );
 
-            this.logger.log(`Email enviado al owner ${ownerUser.email} sobre postulación #${postulation.id}`);
+            this.logger.log(
+              `Email enviado al owner ${ownerUser.email} sobre postulación #${postulation.id}`,
+            );
           }
         } catch (error) {
-          this.logger.error(`Error enviando email al owner del proyecto ${postulation.project.id}:`, error);
+          this.logger.error(
+            `Error enviando email al owner del proyecto ${postulation.project.id}:`,
+            error,
+          );
         }
       }
     } catch (error) {
-      this.logger.error('Error obteniendo información del postulante baneado:', error);
+      this.logger.error(
+        'Error obteniendo información del postulante baneado:',
+        error,
+      );
     }
 
     return result.affected || 0;
@@ -491,12 +559,17 @@ export class ModerationListenerService {
     });
 
     if (!cancelledStatus) {
-      this.logger.error('Estado "cancelled_by_suspension" no encontrado en la base de datos');
+      this.logger.error(
+        'Estado "cancelled_by_suspension" no encontrado en la base de datos',
+      );
       return 0;
     }
 
     // Obtener postulaciones ANTES de cancelarlas
-    const pendingStatusCodes = [PostulationStatusCode.ACTIVE, PostulationStatusCode.PENDING_EVALUATION];
+    const pendingStatusCodes = [
+      PostulationStatusCode.ACTIVE,
+      PostulationStatusCode.PENDING_EVALUATION,
+    ];
 
     const pendingStatuses = await this.postulationStatusRepository.find({
       where: pendingStatusCodes.map((code) => ({ code })),
@@ -508,7 +581,9 @@ export class ModerationListenerService {
       .createQueryBuilder('postulation')
       .leftJoinAndSelect('postulation.project', 'project')
       .where('postulation.user_id = :userId', { userId })
-      .andWhere('postulation.status_id IN (:...pendingStatusIds)', { pendingStatusIds })
+      .andWhere('postulation.status_id IN (:...pendingStatusIds)', {
+        pendingStatusIds,
+      })
       .getMany();
 
     // Solo cancelar postulaciones PENDIENTES (no las aceptadas)
@@ -519,7 +594,8 @@ export class ModerationListenerService {
         statusId: cancelledStatus.id,
         cancelledByModeration: true,
         moderationCancelledAt: new Date(),
-        moderationCancelReason: 'Postulación cancelada - Usuario en suspensión temporal',
+        moderationCancelReason:
+          'Postulación cancelada - Usuario en suspensión temporal',
       })
       .where('user_id = :userId', { userId })
       .andWhere('status_id IN (:...pendingStatusIds)', { pendingStatusIds })
@@ -537,7 +613,9 @@ export class ModerationListenerService {
       for (const postulation of pendingPostulations) {
         try {
           const ownerUser = await firstValueFrom(
-            this.usersClient.send('findUserByIdWithRelations', { id: postulation.project.userId }),
+            this.usersClient.send('findUserByIdWithRelations', {
+              id: postulation.project.userId,
+            }),
           );
 
           if (ownerUser?.email) {
@@ -557,14 +635,22 @@ export class ModerationListenerService {
               },
             );
 
-            this.logger.log(`Email de suspensión enviado al owner ${ownerUser.email} (postulación #${postulation.id})`);
+            this.logger.log(
+              `Email de suspensión enviado al owner ${ownerUser.email} (postulación #${postulation.id})`,
+            );
           }
         } catch (error) {
-          this.logger.error(`Error enviando email al owner del proyecto ${postulation.project.id}:`, error);
+          this.logger.error(
+            `Error enviando email al owner del proyecto ${postulation.project.id}:`,
+            error,
+          );
         }
       }
     } catch (error) {
-      this.logger.error('Error obteniendo información del postulante suspendido:', error);
+      this.logger.error(
+        'Error obteniendo información del postulante suspendido:',
+        error,
+      );
     }
 
     return result.affected || 0;
@@ -618,10 +704,18 @@ export class ModerationListenerService {
       .leftJoinAndSelect('postulation.project', 'project')
       .leftJoinAndSelect('postulation.status', 'status')
       .where('postulation.user_id = :userId', { userId })
-      .andWhere('postulation.status_id = :statusId', { statusId: acceptedStatus.id })
+      .andWhere('postulation.status_id = :statusId', {
+        statusId: acceptedStatus.id,
+      })
       .andWhere('project.isActive = :isActive', { isActive: true })
       .andWhere('project.deletedAt IS NULL')
-      .select(['postulation.id', 'project.id', 'project.title', 'status.id', 'status.name'])
+      .select([
+        'postulation.id',
+        'project.id',
+        'project.title',
+        'status.id',
+        'status.name',
+      ])
       .getMany();
 
     return {

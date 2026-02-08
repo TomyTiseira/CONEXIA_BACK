@@ -1432,18 +1432,6 @@ Este es un mensaje automático, por favor no respondas a este email.
       complianceTypeLabels[complianceData.complianceType] ||
       complianceData.complianceType;
 
-    const evidenceSection =
-      complianceData.evidenceUrls && complianceData.evidenceUrls.length > 0
-        ? `
-      <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #48a6a7; margin: 20px 0;">
-        <h3 style="margin: 0 0 10px 0; color: #333;">Evidencia adjunta</h3>
-        <ul style="margin: 5px 0; padding-left: 20px; color: #666; font-size: 14px; line-height: 1.8;">
-          ${complianceData.evidenceUrls.map((url) => `<li><a href="${url}" style="color: #48a6a7;">${url}</a></li>`).join('')}
-        </ul>
-      </div>
-    `
-        : '';
-
     const notesSection = complianceData.userNotes
       ? `
       <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #48a6a7; margin: 20px 0;">
@@ -1940,7 +1928,6 @@ Este es un mensaje automático, por favor no respondas a este email.
     // Para segundo rechazo, construir secciones especiales
     let reasonSection = '';
     let warningSection = '';
-    let nextStepsSection = '';
 
     if (complianceData.isSecondRejection && !complianceData.isOtherPartyEmail) {
       // Email para usuario responsable en segundo rechazo
@@ -2274,11 +2261,6 @@ Este es un mensaje automático, por favor no respondas a este email.
       </div>
     `
       : '';
-
-    const attemptBadge =
-      complianceData.attemptNumber > 1
-        ? `<span style="background-color: #ff9800; color: white; padding: 4px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-left: 10px;">INTENTO ${complianceData.attemptNumber}</span>`
-        : '';
 
     if (isResponsibleUser) {
       return `

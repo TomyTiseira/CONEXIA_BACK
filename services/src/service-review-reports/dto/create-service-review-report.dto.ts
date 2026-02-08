@@ -1,10 +1,10 @@
 import {
-    IsEnum,
-    IsNotEmpty,
-    IsNumber,
-    IsString,
-    MaxLength,
-    ValidateIf,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { ServiceReviewReportReason } from '../enums/service-review-report-reason.enum';
 

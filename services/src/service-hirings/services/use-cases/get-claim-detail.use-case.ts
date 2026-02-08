@@ -3,6 +3,7 @@ import { RpcException } from '@nestjs/microservices';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../repositories/claim.repository';
+import { ComplianceStatus } from 'src/service-hirings/enums/compliance.enum';
 
 @Injectable()
 export class GetClaimDetailUseCase {
@@ -67,9 +68,6 @@ export class GetClaimDetailUseCase {
     }
 
     // Obtener compliance pendiente (primer compliance que no está aprobado)
-    const ComplianceStatus = {
-      APPROVED: 'approved',
-    };
     const pendingCompliance =
       compliances.find((c) => c.status !== ComplianceStatus.APPROVED) ||
       compliances[0] ||
@@ -147,11 +145,11 @@ export class GetClaimDetailUseCase {
         if (isResponsible) {
           if (
             [
-              'pending',
-              'overdue',
-              'warning',
-              'escalated',
-              'requires_adjustment',
+              ComplianceStatus.PENDING,
+              ComplianceStatus.OVERDUE,
+              ComplianceStatus.WARNING,
+              ComplianceStatus.ESCALATED,
+              ComplianceStatus.REQUIRES_ADJUSTMENT,
             ].includes(c.status)
           ) {
             complianceActions.push('submit_evidence');
@@ -160,7 +158,11 @@ export class GetClaimDetailUseCase {
 
         // Acciones para la otra parte (peer review)
         // PEER REVIEW ES OBLIGATORIO - solo si está submitted y NO revisado aún
-        if (isOtherParty && c.status === 'submitted' && !c.peerReviewedBy) {
+        if (
+          isOtherParty &&
+          c.status === ComplianceStatus.SUBMITTED &&
+          !c.peerReviewedBy
+        ) {
           complianceActions.push('peer_approve');
           complianceActions.push('peer_object');
         }

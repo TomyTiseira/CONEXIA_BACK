@@ -54,7 +54,9 @@ export class ServiceRepository {
       )
       .where('service.status = :status', { status: 'active' })
       .andWhere('service.deletedAt IS NULL')
-      .andWhere('service.status != :finishedByModeration', { finishedByModeration: 'finished_by_moderation' });
+      .andWhere('service.status != :finishedByModeration', {
+        finishedByModeration: 'finished_by_moderation',
+      });
 
     if (filters.search) {
       queryBuilder.andWhere(
@@ -70,9 +72,7 @@ export class ServiceRepository {
     }
 
     // Agrupar por servicio para poder aplicar HAVING con el promedio de rating
-    queryBuilder
-      .groupBy('service.id')
-      .addGroupBy('category.id');
+    queryBuilder.groupBy('service.id').addGroupBy('category.id');
 
     // Si hay filtro de calificación mínima, aplicar HAVING
     if (filters.minRating !== undefined && filters.minRating > 0) {

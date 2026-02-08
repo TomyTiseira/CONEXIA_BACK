@@ -6,7 +6,11 @@ import {
 } from '../../../common/utils/pagination.utils';
 import { ClaimResponseDto } from '../../dto/claim-response.dto';
 import { GetClaimsDto } from '../../dto/get-claims.dto';
-import { ClaimTypeLabels } from '../../enums/claim.enum';
+import {
+  ClaimRole,
+  ClaimStatus,
+  ClaimTypeLabels,
+} from '../../enums/claim.enum';
 import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../repositories/claim.repository';
@@ -42,9 +46,9 @@ export class GetClaimsUseCase {
         claims
           .filter((c) => c.hiring)
           .map((c) => {
-            if (c.claimantRole === 'client') {
+            if (c.claimantRole === ClaimRole.CLIENT) {
               return c.hiring?.service?.userId;
-            } else if (c.claimantRole === 'provider') {
+            } else if (c.claimantRole === ClaimRole.PROVIDER) {
               return c.hiring?.userId;
             }
             return null;
@@ -102,9 +106,9 @@ export class GetClaimsUseCase {
       // Identificar usuario reclamado (según el rol del reclamante)
       let otherUserId: number | null = null;
       if (claim.hiring) {
-        if (claim.claimantRole === 'client') {
+        if (claim.claimantRole === ClaimRole.CLIENT) {
           otherUserId = claim.hiring.service?.userId || null;
-        } else if (claim.claimantRole === 'provider') {
+        } else if (claim.claimantRole === ClaimRole.PROVIDER) {
           otherUserId = claim.hiring.userId || null;
         }
       }
@@ -129,14 +133,14 @@ export class GetClaimsUseCase {
       const availableActions: string[] = ['view_detail'];
 
       // Moderación
-      if (claim.status === 'open') {
+      if (claim.status === ClaimStatus.OPEN) {
         availableActions.push('mark_in_review');
       }
-      if (claim.status === 'in_review') {
+      if (claim.status === ClaimStatus.IN_REVIEW) {
         availableActions.push('add_observations');
         availableActions.push('resolve_claim');
       }
-      if (claim.status === 'requires_staff_response') {
+      if (claim.status === ClaimStatus.REQUIRES_STAFF_RESPONSE) {
         // Cuando el usuario ya subsanó, solo permitir resolver/rechazar (no más observaciones).
         availableActions.push('resolve_claim');
       }
@@ -395,11 +399,11 @@ export class GetClaimsUseCase {
 
     if (claim.hiring) {
       // Si el reclamante es cliente, el reclamado es el proveedor
-      if (claim.claimantRole === 'client') {
+      if (claim.claimantRole === ClaimRole.CLIENT) {
         claimedUserId = claim.hiring.service?.userId || null;
       }
       // Si el reclamante es proveedor, el reclamado es el cliente
-      else if (claim.claimantRole === 'provider') {
+      else if (claim.claimantRole === ClaimRole.PROVIDER) {
         claimedUserId = claim.hiring.userId || null;
       }
 

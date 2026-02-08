@@ -8,6 +8,7 @@ import { GetMyClaimsDto } from '../../dto/get-my-claims.dto';
 import { ComplianceStatus } from '../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../repositories/claim.repository';
+import { ClaimStatus } from 'src/service-hirings/enums/claim.enum';
 
 @Injectable()
 export class GetMyClaimsUseCase {
@@ -122,11 +123,6 @@ export class GetMyClaimsUseCase {
           complianceActions.push('peer_object');
         }
 
-        const timeRemaining = compliance.getTimeRemaining();
-        const daysOverdue = compliance.getDaysOverdue();
-        const overdueStatus = compliance.getOverdueStatus();
-        const canStillSubmit = compliance.canStillSubmit();
-
         return {
           id: compliance.id,
           claimId: compliance.claimId,
@@ -188,10 +184,13 @@ export class GetMyClaimsUseCase {
       });
 
       const availableActions: string[] = ['view_detail'];
-      if (userRole === 'respondent' && claim.status === 'open') {
+      if (userRole === 'respondent' && claim.status === ClaimStatus.OPEN) {
         availableActions.push('submit_observations');
       }
-      if (userRole === 'claimant' && claim.status === 'pending_clarification') {
+      if (
+        userRole === 'claimant' &&
+        claim.status === ClaimStatus.PENDING_CLARIFICATION
+      ) {
         availableActions.push('submit_clarification');
       }
 
@@ -212,7 +211,7 @@ export class GetMyClaimsUseCase {
         availableActions.push('submit_compliance_evidence');
       }
 
-      if (userRole === 'claimant' && claim.status === 'resolved') {
+      if (userRole === 'claimant' && claim.status === ClaimStatus.RESOLVED) {
         availableActions.push('create_review');
       }
 

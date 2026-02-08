@@ -1,13 +1,13 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    Index,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ProjectRole } from '../../projects/entities/project-role.entity';
 import { Project } from '../../projects/entities/project.entity';
@@ -66,7 +66,11 @@ export class Postulation {
   @Column({ name: 'evaluation_deadline', type: 'timestamp', nullable: true })
   evaluationDeadline?: Date;
 
-  @Column({ name: 'evaluation_submitted_at', type: 'timestamp', nullable: true })
+  @Column({
+    name: 'evaluation_submitted_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   evaluationSubmittedAt?: Date;
 
   @Column({ name: 'investor_amount', type: 'numeric', nullable: true })
@@ -81,7 +85,11 @@ export class Postulation {
   @Column({ name: 'cancelled_by_moderation', type: 'boolean', default: false })
   cancelledByModeration: boolean;
 
-  @Column({ name: 'moderation_cancelled_at', type: 'timestamp', nullable: true })
+  @Column({
+    name: 'moderation_cancelled_at',
+    type: 'timestamp',
+    nullable: true,
+  })
   moderationCancelledAt: Date | null;
 
   @Column({ name: 'moderation_cancel_reason', type: 'text', nullable: true })

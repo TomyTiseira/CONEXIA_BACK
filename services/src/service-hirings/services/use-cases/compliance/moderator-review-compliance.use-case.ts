@@ -386,11 +386,7 @@ export class ModeratorReviewComplianceUseCase {
     }
 
     // Notificar a la otra parte sobre el rechazo y suspensión
-    await this.notifyOtherPartyAboutRejection(
-      compliance,
-      dto,
-      'suspensión por 15 días',
-    );
+    await this.notifyOtherPartyAboutRejection(compliance);
   }
 
   /**
@@ -477,11 +473,7 @@ export class ModeratorReviewComplianceUseCase {
     }
 
     // Notificar a la otra parte sobre el rechazo y ban
-    await this.notifyOtherPartyAboutRejection(
-      compliance,
-      dto,
-      'ban permanente',
-    );
+    await this.notifyOtherPartyAboutRejection(compliance);
   }
 
   // ============ MÉTODOS DE EMAIL ============
@@ -491,8 +483,6 @@ export class ModeratorReviewComplianceUseCase {
    */
   private async notifyOtherPartyAboutRejection(
     compliance: ClaimCompliance,
-    dto: ModeratorReviewComplianceDto,
-    consequenceText: string,
   ): Promise<void> {
     try {
       const hiringTitle =
@@ -511,20 +501,10 @@ export class ModeratorReviewComplianceUseCase {
           otherPartyUserId,
         );
 
-      const responsibleUser =
-        await this.usersClientService.getUserByIdWithRelations(
-          Number(compliance.responsibleUserId),
-        );
-
       if (otherPartyUser && otherPartyUser.email) {
         const otherPartyName =
           otherPartyUser.profile?.firstName ||
           otherPartyUser.profile?.name ||
-          'Usuario';
-
-        const responsibleUserName =
-          responsibleUser?.profile?.firstName ||
-          responsibleUser?.profile?.name ||
           'Usuario';
 
         const complianceLabel = this.getComplianceTypeLabel(

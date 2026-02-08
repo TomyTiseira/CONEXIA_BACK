@@ -18,7 +18,11 @@ export class ServiceReviewReport {
   @Column({ name: 'service_review_id' })
   serviceReviewId: number;
 
-  @ManyToOne(() => ServiceReview, { eager: false, nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => ServiceReview, {
+    eager: false,
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'service_review_id' })
   serviceReview: ServiceReview;
 

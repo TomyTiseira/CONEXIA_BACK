@@ -43,7 +43,9 @@ export class GetAdminProjectMetricsUseCase {
         .innerJoin('project.postulations', 'postulation')
         .where('project.deletedAt IS NULL')
         .getRawOne();
-      const projectsWithPostulations = parseInt(projectsWithPostulationsResult?.count || '0');
+      const projectsWithPostulations = parseInt(
+        projectsWithPostulationsResult?.count || '0',
+      );
 
       // 4. Proyectos con al menos una postulación aceptada (statusId = 2 'aceptada')
       const projectsWithAcceptedResult = await this.projectRepo
@@ -53,7 +55,9 @@ export class GetAdminProjectMetricsUseCase {
         .where('project.deletedAt IS NULL')
         .andWhere('postulation.statusId = :statusId', { statusId: 2 })
         .getRawOne();
-      const projectsWithAcceptedPostulation = parseInt(projectsWithAcceptedResult?.count || '0');
+      const projectsWithAcceptedPostulation = parseInt(
+        projectsWithAcceptedResult?.count || '0',
+      );
 
       // 5. Total de postulaciones
       const totalPostulations = await this.postulationRepository.count();
