@@ -1,5 +1,6 @@
 export * from './claim-compliance.entity';
 export * from './claim.entity';
+export * from './compliance-submission.entity';
 export * from './deliverable.entity';
 export * from './delivery-attachment.entity';
 export * from './delivery-submission.entity';

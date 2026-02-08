@@ -1,5 +1,6 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { AutoRefreshJwtGuard } from '../guards/auto-refresh-jwt.guard';
+import { ProfileCompleteGuard } from '../guards/profile-complete.guard';
 import { RoleGuard } from '../guards/role.guard';
 import { Roles } from './roles.decorator';
 
@@ -24,5 +25,5 @@ import { Roles } from './roles.decorator';
 export const AuthRoles = (roles: string[], requireAll: boolean = false) =>
   applyDecorators(
     Roles(roles, requireAll),
-    UseGuards(AutoRefreshJwtGuard, RoleGuard),
+    UseGuards(AutoRefreshJwtGuard, RoleGuard, ProfileCompleteGuard),
   );

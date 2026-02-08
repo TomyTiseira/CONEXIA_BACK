@@ -9,6 +9,7 @@ import { ComplianceController } from './controllers/compliance.controller';
 import { ServiceHiringsController } from './controllers/service-hirings.controller';
 import { ClaimCompliance } from './entities/claim-compliance.entity';
 import { Claim } from './entities/claim.entity';
+import { ComplianceSubmission } from './entities/compliance-submission.entity';
 import { Deliverable } from './entities/deliverable.entity';
 import { DeliveryAttachment } from './entities/delivery-attachment.entity';
 import { DeliverySubmission } from './entities/delivery-submission.entity';
@@ -18,6 +19,7 @@ import { ServiceHiringStatus } from './entities/service-hiring-status.entity';
 import { ServiceHiring } from './entities/service-hiring.entity';
 import { ClaimComplianceRepository } from './repositories/claim-compliance.repository';
 import { ClaimRepository } from './repositories/claim.repository';
+import { ComplianceSubmissionRepository } from './repositories/compliance-submission.repository';
 import { DeliverableRepository } from './repositories/deliverable.repository';
 import { DeliveryAttachmentRepository } from './repositories/delivery-attachment.repository';
 import { DeliverySubmissionRepository } from './repositories/delivery-submission.repository';
@@ -36,6 +38,7 @@ import { ServiceHiringValidationService } from './services/service-hiring-valida
 import { ServiceHiringsService } from './services/service-hirings.service';
 import { AcceptServiceHiringUseCase } from './services/use-cases/accept-service-hiring.use-case';
 import { AddObservationsUseCase } from './services/use-cases/add-observations.use-case';
+import { CancelClaimUseCase } from './services/use-cases/cancel-claim.use-case';
 import { CancelServiceHiringUseCase } from './services/use-cases/cancel-service-hiring.use-case';
 import { CheckOverdueCompliancesUseCase } from './services/use-cases/compliance/check-overdue-compliances.use-case';
 import { CreateComplianceUseCase } from './services/use-cases/compliance/create-compliance.use-case';
@@ -44,7 +47,6 @@ import { PeerReviewComplianceUseCase } from './services/use-cases/compliance/pee
 import { SubmitComplianceByClaimUseCase } from './services/use-cases/compliance/submit-compliance-by-claim.use-case';
 import { SubmitComplianceUseCase } from './services/use-cases/compliance/submit-compliance.use-case';
 import { ContractServiceUseCase } from './services/use-cases/contract-service.use-case';
-import { CancelClaimUseCase } from './services/use-cases/cancel-claim.use-case';
 import { CreateClaimUseCase } from './services/use-cases/create-claim.use-case';
 import { CreateDeliveryUseCase } from './services/use-cases/create-delivery.use-case';
 import { CreateQuotationWithDeliverablesUseCase } from './services/use-cases/create-quotation-with-deliverables.use-case';
@@ -117,6 +119,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ServiceHiringRepository,
     ClaimRepository,
     ClaimComplianceRepository,
+    ComplianceSubmissionRepository,
     ServiceHiringStatusRepository,
     PaymentRepository,
     PaymentModalityRepository,
@@ -144,6 +147,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
       DeliveryAttachment,
       Claim,
       ClaimCompliance,
+      ComplianceSubmission,
     ]),
     ScheduleModule.forRoot(),
     CommonModule,
@@ -154,6 +158,7 @@ import { ServiceHiringStateFactory } from './states/service-hiring-state.factory
     ServiceHiringsService,
     ServiceHiringRepository,
     DeliverableRepository,
+    DeliverySubmissionRepository,
   ],
 })
 export class ServiceHiringsModule {}

@@ -29,8 +29,15 @@ export class MembershipsClientService {
    */
   async getUserBenefitValue(userId: number, benefitKey: string): Promise<any> {
     try {
-      const plan = await this.getUserPlan(userId);
-      if (!plan || !plan.benefits) {
+      const response = await this.getUserPlan(userId);
+
+      if (!response || !response.plan) {
+        return null;
+      }
+
+      const plan = response.plan;
+
+      if (!plan.benefits) {
         return null;
       }
 

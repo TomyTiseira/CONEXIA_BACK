@@ -56,7 +56,7 @@ export class UsersService {
     verificationCode: string,
   ): Promise<{
     user: User;
-    data: { accessToken: string; refreshToken: string; expiresIn: number };
+    data: { onboardingToken: string; expiresIn: number };
   }> {
     return this.verifyUserUseCase.execute(email, verificationCode);
   }

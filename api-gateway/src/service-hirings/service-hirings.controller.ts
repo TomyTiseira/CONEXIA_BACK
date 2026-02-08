@@ -9,6 +9,7 @@ import {
   Put,
   Query,
   UploadedFiles,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -20,6 +21,7 @@ import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
 import { User } from '../auth/decorators/user.decorator';
+import { RpcExceptionFilter } from '../common/filters/rpc-exception.filter';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
 import {
@@ -35,6 +37,7 @@ import {
 } from './dto';
 
 @Controller('service-hirings')
+@UseFilters(RpcExceptionFilter)
 export class ServiceHiringsController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 

@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsEnum,
   IsInt,
@@ -10,9 +12,9 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export enum ClaimResolutionStatus {
   RESOLVED = 'resolved',
@@ -29,12 +31,13 @@ export enum ComplianceType {
   FULL_REFUND = 'full_refund',
   PARTIAL_REFUND = 'partial_refund',
   PAYMENT_REQUIRED = 'payment_required',
+  PARTIAL_PAYMENT = 'partial_payment',
   WORK_COMPLETION = 'work_completion',
   WORK_REVISION = 'work_revision',
-  APOLOGY_REQUIRED = 'apology_required',
-  SERVICE_DISCOUNT = 'service_discount',
-  PENALTY_FEE = 'penalty_fee',
-  ACCOUNT_RESTRICTION = 'account_restriction',
+  FULL_REDELIVERY = 'full_redelivery',
+  CORRECTED_DELIVERY = 'corrected_delivery',
+  ADDITIONAL_DELIVERY = 'additional_delivery',
+  EVIDENCE_UPLOAD = 'evidence_upload',
   CONFIRMATION_ONLY = 'confirmation_only',
   OTHER = 'other',
 }
@@ -83,12 +86,15 @@ export class ResolveClaimDto {
   })
   status: ClaimResolutionStatus;
 
+  @ValidateIf(
+    (dto: ResolveClaimDto) => dto.status === ClaimResolutionStatus.RESOLVED,
+  )
   @IsNotEmpty({ message: 'El tipo de resolución es obligatorio' })
   @IsEnum(ClaimResolutionType, {
     message:
       'El tipo de resolución debe ser "client_favor", "provider_favor" o "partial_agreement"',
   })
-  resolutionType: ClaimResolutionType;
+  resolutionType?: ClaimResolutionType;
 
   @IsNotEmpty({ message: 'La resolución es obligatoria' })
   @IsString()
@@ -111,7 +117,7 @@ export class ResolveClaimDto {
   @IsArray({ message: 'compliances debe ser un array' })
   @ValidateNested({ each: true })
   @Type(() => CreateComplianceItemDto)
-  @Max(5, {
+  @ArrayMaxSize(5, {
     message: 'No se pueden asignar más de 5 compliances por resolución',
   })
   compliances?: CreateComplianceItemDto[];

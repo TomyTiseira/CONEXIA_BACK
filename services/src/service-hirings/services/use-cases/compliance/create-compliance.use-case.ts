@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ClaimCompliance } from '../../../entities/claim-compliance.entity';
 import {
   ComplianceRequirement,
   ComplianceStatus,
@@ -6,7 +7,6 @@ import {
 } from '../../../enums/compliance.enum';
 import { ClaimComplianceRepository } from '../../../repositories/claim-compliance.repository';
 import { ClaimRepository } from '../../../repositories/claim.repository';
-import { ClaimCompliance } from '../../../entities/claim-compliance.entity';
 
 export interface CreateComplianceDto {
   claimId: string;

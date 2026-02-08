@@ -17,10 +17,12 @@ export class SubmitComplianceByClaimUseCase {
 
   async execute(payload: {
     claimId: string;
+    complianceId: string;
     userId: string;
     userNotes?: string;
     evidenceUrls?: string[];
   }) {
+    // Validar que el claim existe
     const claim = await this.claimRepository.findById(payload.claimId);
     if (!claim) {
       throw new NotFoundException(
@@ -28,20 +30,24 @@ export class SubmitComplianceByClaimUseCase {
       );
     }
 
-    // Buscar compliance del claim cuyo responsable sea el usuario
-    const compliances = await this.complianceRepository.findByClaimId(
-      payload.claimId,
+    // Validar que el compliance existe
+    const compliance = await this.complianceRepository.findById(
+      payload.complianceId,
     );
-    const compliance = compliances.find(
-      (c) => c.responsibleUserId === payload.userId,
-    );
-
     if (!compliance) {
       throw new NotFoundException(
-        'No hay un cumplimiento asignado a este usuario para este reclamo',
+        `Cumplimiento con ID ${payload.complianceId} no encontrado`,
       );
     }
 
+    // Validar que el compliance pertenece al claim
+    if (compliance.claimId !== payload.claimId) {
+      throw new ForbiddenException(
+        'El cumplimiento no pertenece a este reclamo',
+      );
+    }
+
+    // Validar que el usuario es el responsable del compliance
     if (compliance.responsibleUserId !== payload.userId) {
       throw new ForbiddenException(
         'No autorizado para enviar evidencia de este cumplimiento',

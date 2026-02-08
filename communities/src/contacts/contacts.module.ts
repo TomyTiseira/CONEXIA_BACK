@@ -19,6 +19,7 @@ import { ContactsService } from './services/contacts.service';
 import {
   AcceptConnectionUseCase,
   DeleteConnectionRequestUseCase,
+  DeleteUserConnectionsOnBanUseCase,
   GetConnectionInfoUseCase,
   GetConnectionRequestsUseCase,
   GetConnectionStatusUseCase,
@@ -59,6 +60,7 @@ import { GetRecommendationsUseCase } from './services/use-cases/get-recommendati
     GetConnectionInfoUseCase,
     AcceptConnectionUseCase,
     DeleteConnectionRequestUseCase,
+    DeleteUserConnectionsOnBanUseCase,
     GetFriendsUseCase,
     SendMessageUseCase,
     GetConversationsUseCase,

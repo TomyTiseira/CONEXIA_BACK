@@ -59,6 +59,11 @@ export class ReportsController {
     return await this.reportsService.getActiveReports();
   }
 
+  @MessagePattern('getAllProjectReports')
+  async getAllProjectReports() {
+    return await this.reportsService.getAllReports();
+  }
+
   @MessagePattern('softDeleteOldProjectReports')
   async softDeleteOldProjectReports(@Payload() data: { oneYearAgo: Date }) {
     return await this.reportsService.softDeleteOldReports(data.oneYearAgo);

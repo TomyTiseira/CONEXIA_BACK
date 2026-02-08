@@ -2,11 +2,25 @@
  * Tipos de cumplimiento que se pueden requerir después de resolver un reclamo
  */
 export enum ComplianceType {
+  // === COMPROMISOS MONETARIOS ===
   /** Devolución completa del pago */
   FULL_REFUND = 'full_refund',
 
   /** Devolución parcial proporcional */
   PARTIAL_REFUND = 'partial_refund',
+
+  /** Cliente debe completar el pago */
+  PAYMENT_REQUIRED = 'payment_required',
+
+  /** Pago parcial acordado */
+  PARTIAL_PAYMENT = 'partial_payment',
+
+  // === COMPROMISOS DE TRABAJO ===
+  /** Completar trabajo pendiente o faltante */
+  WORK_COMPLETION = 'work_completion',
+
+  /** Revisar/corregir trabajo entregado */
+  WORK_REVISION = 'work_revision',
 
   /** Reentrega completa del trabajo desde cero */
   FULL_REDELIVERY = 'full_redelivery',
@@ -17,23 +31,16 @@ export enum ComplianceType {
   /** Entrega adicional (archivos faltantes, extras) */
   ADDITIONAL_DELIVERY = 'additional_delivery',
 
-  /** Cliente debe completar el pago */
-  PAYMENT_REQUIRED = 'payment_required',
-
-  /** Pago parcial acordado */
-  PARTIAL_PAYMENT = 'partial_payment',
-
+  // === DOCUMENTACIÓN ===
   /** Subir evidencias documentales (comprobantes, screenshots) */
   EVIDENCE_UPLOAD = 'evidence_upload',
 
+  // === FINALIZACIÓN ===
   /** Solo confirmar/aceptar (sin subir archivos) */
   CONFIRMATION_ONLY = 'confirmation_only',
 
-  /** Reembolso automático vía MercadoPago (futuro) */
-  AUTO_REFUND = 'auto_refund',
-
-  /** No requiere acción del usuario (cierre directo) */
-  NO_ACTION_REQUIRED = 'no_action_required',
+  /** Otro tipo de cumplimiento personalizado */
+  OTHER = 'other',
 }
 
 /**
@@ -72,6 +79,9 @@ export enum ComplianceStatus {
 
   /** Escalado a admin (Nivel 3) - Pre-ban */
   ESCALATED = 'escalated',
+
+  /** Cerrado por moderación (ej: una de las partes fue baneada) */
+  FINISHED_BY_MODERATION = 'finished_by_moderation',
 }
 
 /**

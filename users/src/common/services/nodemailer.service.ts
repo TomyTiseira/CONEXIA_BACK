@@ -281,7 +281,7 @@ export class NodemailerService extends EmailService {
   ): Promise<void> {
     await this.sendEmail({
       to: email,
-      subject: '⚠️ Cuenta Baneada - Conexia',
+      subject: 'Cuenta baneada - Conexia',
       html: this.generateAccountBannedEmailHTML(userName, reason),
       text: this.generateAccountBannedEmailText(userName, reason),
     });
@@ -300,7 +300,7 @@ export class NodemailerService extends EmailService {
   ): Promise<void> {
     await this.sendEmail({
       to: email,
-      subject: '⏸️ Cuenta Suspendida Temporalmente - Conexia',
+      subject: 'Cuenta suspendida temporalmente - Conexia',
       html: this.generateAccountSuspendedEmailHTML(
         userName,
         reason,
@@ -327,7 +327,7 @@ export class NodemailerService extends EmailService {
   ): Promise<void> {
     await this.sendEmail({
       to: email,
-      subject: '✅ Cuenta Reactivada - Conexia',
+      subject: 'Cuenta reactivada - Conexia',
       html: this.generateAccountReactivatedEmailHTML(userName),
       text: this.generateAccountReactivatedEmailText(userName),
     });
@@ -341,23 +341,23 @@ export class NodemailerService extends EmailService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="text-align: center; padding: 20px; background-color: #ff4953; border-radius: 5px; margin-bottom: 20px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">Cuenta Suspendida Permanentemente</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">Cuenta baneada permanentemente</h1>
           </div>
           
           <p style="color: #333; font-size: 16px;">Hola <strong>${userName}</strong>,</p>
           
           <p style="color: #666; font-size: 14px;">
-            Lamentamos informarte que tu cuenta en Conexia ha sido <strong>suspendida permanentemente</strong> 
+            Lamentamos informarte que tu cuenta en Conexia ha sido <strong>baneada permanentemente</strong> 
             debido a violaciones graves de nuestras políticas y términos de servicio.
           </p>
           
           <div style="background-color: #ffedee; padding: 20px; border-left: 4px solid #ff4953; margin: 20px 0;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">Motivo de la suspensión</h3>
+            <h3 style="margin: 0 0 10px 0; color: #333;">Motivo del baneo</h3>
             <p style="color: #bf373e; margin: 0; font-size: 14px;">${reason}</p>
           </div>
           
           <div style="background-color: #f5f6f6; padding: 20px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="margin: 0 0 15px 0; color: #333;">Consecuencias de la suspensión</h3>
+            <h3 style="margin: 0 0 15px 0; color: #333;">Consecuencias del baneo</h3>
             <ul style="margin: 0; padding-left: 20px; color: #666; font-size: 14px; line-height: 1.8;">
               <li>Tu cuenta ha sido bloqueada permanentemente</li>
               <li>Todos tus servicios activos han sido finalizados</li>
@@ -375,7 +375,7 @@ export class NodemailerService extends EmailService {
           
           <p style="color: #9fa7a7; font-size: 12px; text-align: center; margin: 0;">
             Gracias por tu comprensión.<br>
-            El equipo de Moderación de Conexia
+            El equipo de moderación de Conexia
           </p>
         </div>
       </div>
@@ -450,7 +450,7 @@ export class NodemailerService extends EmailService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
         <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="text-align: center; padding: 20px; background-color: #ff9800; border-radius: 5px; margin-bottom: 20px;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">Cuenta Suspendida Temporalmente</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">Cuenta suspendida temporalmente</h1>
           </div>
           
           <p style="color: #333; font-size: 16px;">Hola <strong>${userName}</strong>,</p>
@@ -491,7 +491,7 @@ export class NodemailerService extends EmailService {
           
           <p style="color: #9fa7a7; font-size: 12px; text-align: center; margin: 0;">
             Gracias por tu comprensión.<br>
-            El equipo de Moderación de Conexia
+            El equipo de moderación de Conexia
           </p>
         </div>
       </div>
@@ -519,7 +519,7 @@ export class NodemailerService extends EmailService {
         (commitments.collaborations as any[])?.length || 0;
 
       if (activeServices + activeProjects + activeCollaborations > 0) {
-        commitmentsText = `\n📋 Compromisos activos:\n`;
+        commitmentsText = `\nCompromisos activos:\n`;
         if (activeServices > 0)
           commitmentsText += `• ${activeServices} servicio(s) que estás prestando\n`;
         if (activeProjects > 0)

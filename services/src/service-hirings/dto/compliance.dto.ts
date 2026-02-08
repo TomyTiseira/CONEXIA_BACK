@@ -103,12 +103,12 @@ export class PeerReviewComplianceDto {
 
   @IsBoolean()
   @IsNotEmpty()
-  approved: boolean; // true = aprueba, false = objeta
+  approved: boolean; // true = pre-aprueba, false = pre-rechaza
 
   @IsString()
   @IsOptional()
-  @MaxLength(1000)
-  objection?: string; // Requerido si approved = false
+  @MaxLength(2000)
+  reason?: string; // Razón o comentario de la pre-aprobación o pre-rechazo
 }
 
 /**
@@ -194,7 +194,7 @@ export class ComplianceResponseDto {
   // Peer validation
   peerReviewedBy?: string | null;
   peerApproved?: boolean | null;
-  peerObjection?: string | null;
+  peerReviewReason?: string | null;
   peerReviewedAt?: Date | null;
 
   // Moderator review

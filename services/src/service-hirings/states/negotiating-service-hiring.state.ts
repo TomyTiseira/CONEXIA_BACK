@@ -8,7 +8,7 @@ export class NegotiatingServiceHiringState
   }
 
   canAccept(): boolean {
-    return false;
+    return true; // El cliente puede aceptar durante la negociación
   }
 
   canReject(): boolean {
@@ -30,6 +30,7 @@ export class NegotiatingServiceHiringState
   getAvailableActions(): string[] {
     const actions: string[] = [];
     if (this.canQuote()) actions.push('quote');
+    if (this.canAccept()) actions.push('accept'); // Permitir aceptar en negociación
     if (this.canReject()) actions.push('reject');
     if (this.canCancel()) actions.push('cancel');
     if (this.canEdit()) actions.push('edit');

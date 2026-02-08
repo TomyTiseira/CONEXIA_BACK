@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { UsersClientService } from '../../../../common/services/users-client.service';
 import { PostulationRepository } from '../../../../postulations/repositories/postulation.repository';
 import {
   OpenAnswerDto,
@@ -20,6 +21,7 @@ export class GetProjectPostulationsStatsUseCase {
   constructor(
     private readonly projectRepository: ProjectRepository,
     private readonly postulationRepository: PostulationRepository,
+    private readonly usersClientService: UsersClientService,
   ) {}
 
   async execute(
@@ -64,6 +66,9 @@ export class GetProjectPostulationsStatsUseCase {
       postulations,
     );
 
+    // Obtener información de usuarios para los resultados de evaluación
+    await this.enrichEvaluationResultsWithUserNames(evaluationStatsByRole);
+
     return {
       projectId: project.id,
       projectTitle: project.title,
@@ -81,7 +86,7 @@ export class GetProjectPostulationsStatsUseCase {
 
     // Inicializar todos los roles con conteo 0
     roles.forEach((role) => {
-      roleMap.set(role.id, { name: role.name, count: 0 });
+      roleMap.set(role.id, { name: role.title, count: 0 });
     });
 
     // Contar postulaciones por rol
@@ -115,7 +120,7 @@ export class GetProjectPostulationsStatsUseCase {
 
       const stat: RoleEvaluationStatsDto = {
         roleId: role.id,
-        roleName: role.name,
+        roleName: role.title,
         totalPostulations: rolePostulations.length,
         hasQuestionsWithCorrectAnswer: false,
         hasEvaluationFile: role.evaluations && role.evaluations.length > 0,
@@ -222,11 +227,18 @@ export class GetProjectPostulationsStatsUseCase {
     const distribution: QuestionAnswerDistributionDto[] = [];
 
     for (const question of questions) {
-      const optionCounts = new Map<number, { text: string; count: number }>();
+      const optionCounts = new Map<
+        number,
+        { text: string; count: number; isCorrect?: boolean }
+      >();
 
       // Inicializar contadores para cada opción
       question.options?.forEach((option: any) => {
-        optionCounts.set(option.id, { text: option.optionText, count: 0 });
+        optionCounts.set(option.id, {
+          text: option.optionText,
+          count: 0,
+          isCorrect: option.isCorrect || false,
+        });
       });
 
       // Contar respuestas
@@ -240,7 +252,7 @@ export class GetProjectPostulationsStatsUseCase {
         }
       }
 
-      // Convertir a DTO
+      // ✅ CAMBIO: Siempre incluir la pregunta, incluso sin respuestas (count = 0)
       distribution.push({
         questionId: question.id,
         questionText: question.questionText,
@@ -248,6 +260,7 @@ export class GetProjectPostulationsStatsUseCase {
           optionId,
           optionText: data.text,
           count: data.count,
+          isCorrect: data.isCorrect,
         })),
       });
     }
@@ -277,15 +290,83 @@ export class GetProjectPostulationsStatsUseCase {
         }
       }
 
-      if (answers.length > 0) {
-        openAnswers.push({
-          questionId: question.id,
-          questionText: question.questionText,
-          answers,
-        });
-      }
+      // ✅ CAMBIO: Incluir TODAS las preguntas, incluso sin respuestas
+      openAnswers.push({
+        questionId: question.id,
+        questionText: question.questionText,
+        answers,
+      });
     }
 
     return openAnswers;
+  }
+
+  /**
+   * Enriquece los resultados de evaluación con los nombres de usuario
+   */
+  private async enrichEvaluationResultsWithUserNames(
+    evaluationStatsByRole: RoleEvaluationStatsDto[],
+  ): Promise<void> {
+    // Recopilar todos los userIds únicos de los resultados de evaluación y respuestas abiertas
+    const userIds = new Set<number>();
+
+    for (const stat of evaluationStatsByRole) {
+      if (stat.evaluationResults) {
+        for (const result of stat.evaluationResults) {
+          userIds.add(result.userId);
+        }
+      }
+
+      // ✅ NUEVO: Recopilar userIds de respuestas abiertas
+      if (stat.openAnswers) {
+        for (const openAnswer of stat.openAnswers) {
+          for (const answer of openAnswer.answers) {
+            userIds.add(answer.userId);
+          }
+        }
+      }
+    }
+
+    // Si no hay usuarios, retornar
+    if (userIds.size === 0) {
+      return;
+    }
+
+    // Obtener información de todos los usuarios en una sola llamada
+    const users = await this.usersClientService.getUsersByIds(
+      Array.from(userIds),
+    );
+
+    // Crear un mapa de userId -> userName para acceso rápido
+    const userMap = new Map<number, string>();
+    for (const user of users) {
+      if (user && user.id) {
+        // Los nombres están en el objeto profile anidado
+        const firstName = user.profile?.name || '';
+        const lastName = user.profile?.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        userMap.set(user.id, fullName || `Usuario #${user.id}`);
+      }
+    }
+
+    // Asignar los nombres de usuario a los resultados
+    for (const stat of evaluationStatsByRole) {
+      if (stat.evaluationResults) {
+        for (const result of stat.evaluationResults) {
+          result.userName =
+            userMap.get(result.userId) || `Usuario #${result.userId}`;
+        }
+      }
+
+      // ✅ NUEVO: Asignar nombres de usuario a respuestas abiertas
+      if (stat.openAnswers) {
+        for (const openAnswer of stat.openAnswers) {
+          for (const answer of openAnswer.answers) {
+            answer.userName =
+              userMap.get(answer.userId) || `Usuario #${answer.userId}`;
+          }
+        }
+      }
+    }
   }
 }

@@ -7,6 +7,10 @@ import { EmailService } from 'src/common/services/email.service';
 import { AccountStatus, User } from 'src/shared/entities/user.entity';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { NATS_SERVICE } from '../config';
+import {
+  BanForComplianceDto,
+  SuspendForComplianceDto,
+} from '../dto/compliance-violation.dto';
 import { ModerationAction } from '../entities/moderation-action.entity';
 
 @Injectable()
@@ -306,6 +310,11 @@ export class BanManagementService {
 
   /**
    * Notifica a microservicios sobre el baneo
+   * Este evento dispara las siguientes acciones en otros microservicios:
+   * - services: actualiza ownerModerationStatus a 'banned', oculta servicios
+   * - projects: actualiza ownerModerationStatus a 'banned', oculta proyectos
+   * - communities: actualiza ownerModerationStatus a 'banned', oculta publicaciones
+   * - communities/contacts: elimina todas las conexiones (amigos) del usuario baneado
    */
   private async notifyBan(userId: number, reason?: string): Promise<void> {
     try {
@@ -445,6 +454,159 @@ export class BanManagementService {
     // Esta lógica se maneja en el microservicio de projects
     this.logger.log(
       `Notificaciones de postulaciones canceladas delegadas a microservicio de projects`,
+    );
+  }
+
+  /**
+   * Suspende un usuario por violación de compliance
+   */
+  async suspendForComplianceViolation(
+    dto: SuspendForComplianceDto,
+  ): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: dto.userId },
+      relations: ['profile'],
+    });
+
+    if (!user) {
+      throw new Error(`Usuario ${dto.userId} no encontrado`);
+    }
+
+    if (user.accountStatus === AccountStatus.BANNED) {
+      this.logger.warn(
+        `Usuario ${dto.userId} ya está baneado, no se puede suspender`,
+      );
+      return;
+    }
+
+    if (user.accountStatus === AccountStatus.SUSPENDED) {
+      this.logger.warn(`Usuario ${dto.userId} ya está suspendido`);
+      return;
+    }
+
+    // Calcular fecha de expiración
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + dto.days);
+
+    // Obtener compromisos activos
+    const commitments = await this.checkActiveCommitments(dto.userId);
+
+    // Actualizar usuario a suspendido
+    await this.userRepository.update(dto.userId, {
+      accountStatus: AccountStatus.SUSPENDED,
+      suspendedAt: new Date(),
+      suspensionExpiresAt: expiresAt,
+      suspensionReason: dto.reason,
+      suspensionDays: dto.days,
+      suspendedBy: Number(dto.moderatorId),
+    });
+
+    // Registrar en auditoría
+    await this.moderationActionRepository.save({
+      userId: dto.userId,
+      actionType: 'suspended',
+      moderatorId: Number(dto.moderatorId),
+      reason: dto.reason,
+      analysisId: null, // No viene de análisis de reportes
+      metadata: {
+        source: 'compliance_violation',
+        compliance_id: dto.complianceId,
+        commitments_at_time: {
+          services: commitments.services.length,
+          own_projects: commitments.ownProjects.length,
+          collaborations: commitments.collaborations.length,
+        },
+        suspension_days: dto.days,
+        suspension_expires_at: expiresAt.toISOString(),
+      },
+    });
+
+    // Notificar a microservicios
+    await this.notifySuspension(dto.userId, dto.reason, expiresAt);
+
+    // Ocultar contenido públicamente
+    await this.hideUserContent(dto.userId);
+
+    // Enviar email al usuario suspendido
+    await this.emailService.sendAccountSuspendedEmail(
+      user.email,
+      user.profile?.name || 'Usuario',
+      dto.reason,
+      dto.days,
+      expiresAt,
+      commitments,
+    );
+
+    this.logger.log(
+      `Usuario ${dto.userId} suspendido exitosamente por ${dto.days} días debido a violación de compliance ${dto.complianceId}`,
+    );
+  }
+
+  /**
+   * Banea un usuario por violación de compliance
+   */
+  async banForComplianceViolation(dto: BanForComplianceDto): Promise<void> {
+    const user = await this.userRepository.findOne({
+      where: { id: dto.userId },
+      relations: ['profile'],
+    });
+
+    if (!user) {
+      throw new Error(`Usuario ${dto.userId} no encontrado`);
+    }
+
+    if (user.accountStatus === AccountStatus.BANNED) {
+      this.logger.warn(`Usuario ${dto.userId} ya está baneado`);
+      return;
+    }
+
+    // Obtener compromisos activos
+    const commitments = await this.checkActiveCommitments(dto.userId);
+
+    // Actualizar usuario a baneado
+    await this.userRepository.update(dto.userId, {
+      accountStatus: AccountStatus.BANNED,
+      bannedAt: new Date(),
+      bannedBy: Number(dto.moderatorId),
+      banReason: dto.reason,
+    });
+
+    // Registrar en auditoría
+    await this.moderationActionRepository.save({
+      userId: dto.userId,
+      actionType: 'banned',
+      moderatorId: Number(dto.moderatorId),
+      reason: dto.reason,
+      analysisId: null, // No viene de análisis de reportes
+      metadata: {
+        source: 'compliance_violation',
+        compliance_id: dto.complianceId,
+        commitments_at_time: {
+          services: commitments.services.length,
+          own_projects: commitments.ownProjects.length,
+          collaborations: commitments.collaborations.length,
+        },
+      },
+    });
+
+    // Notificar a microservicios
+    await this.notifyBan(dto.userId, dto.reason);
+
+    // Soft-delete de contenido
+    await this.softDeleteUserContent(dto.userId);
+
+    // Enviar email al usuario baneado
+    await this.emailService.sendAccountBannedEmail(
+      user.email,
+      user.profile?.name || 'Usuario',
+      dto.reason,
+    );
+
+    // Notificar a usuarios afectados
+    this.notifyAffectedUsers();
+
+    this.logger.log(
+      `Usuario ${dto.userId} baneado exitosamente debido a violación de compliance ${dto.complianceId}`,
     );
   }
 }

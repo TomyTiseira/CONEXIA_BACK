@@ -6,8 +6,12 @@ import { NatsModule } from '../transports/nats.module';
 import { AuthController } from './auth.controller';
 import { AutoRefreshJwtGuard } from './guards/auto-refresh-jwt.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { OnboardingJwtGuard } from './guards/onboarding-jwt.guard';
+import { OnboardingOrSessionGuard } from './guards/onboarding-or-session.guard';
+import { ProfileCompleteGuard } from './guards/profile-complete.guard';
 import { RoleGuard } from './guards/role.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { OnboardingJwtStrategy } from './strategies/onboarding-jwt.strategy';
 
 @Module({
   imports: [
@@ -19,7 +23,23 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [JwtStrategy, JwtAuthGuard, AutoRefreshJwtGuard, RoleGuard],
-  exports: [JwtAuthGuard, AutoRefreshJwtGuard, RoleGuard],
+  providers: [
+    JwtStrategy,
+    OnboardingJwtStrategy,
+    JwtAuthGuard,
+    AutoRefreshJwtGuard,
+    OnboardingJwtGuard,
+    OnboardingOrSessionGuard,
+    ProfileCompleteGuard,
+    RoleGuard,
+  ],
+  exports: [
+    JwtAuthGuard,
+    AutoRefreshJwtGuard,
+    OnboardingJwtGuard,
+    OnboardingOrSessionGuard,
+    ProfileCompleteGuard,
+    RoleGuard,
+  ],
 })
 export class AuthModule {}

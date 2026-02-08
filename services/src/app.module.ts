@@ -11,6 +11,7 @@ import { SeedService } from './seed/seed.service';
 import {
   Claim,
   ClaimCompliance,
+  ComplianceSubmission,
   Deliverable,
   DeliveryAttachment,
   DeliverySubmission,
@@ -21,6 +22,7 @@ import {
 } from './service-hirings/entities';
 import { PaymentModalityRepository } from './service-hirings/repositories/payment-modality.repository';
 import { ServiceHiringStatusRepository } from './service-hirings/repositories/service-hiring-status.repository';
+import { ServiceHiringRepository } from './service-hirings/repositories/service-hiring.repository';
 import { ServiceHiringsModule } from './service-hirings/service-hirings.module';
 import { ServiceReport } from './service-reports/entities/service-report.entity';
 import { ServiceReportsModule } from './service-reports/service-reports.module';
@@ -59,6 +61,7 @@ import { ServicesModule } from './services/services.module';
         DeliveryAttachment,
         Claim,
         ClaimCompliance,
+        ComplianceSubmission,
       ],
       synchronize: true,
     }),
@@ -69,6 +72,8 @@ import { ServicesModule } from './services/services.module';
       DeliveryAttachment,
       Service,
       ServiceHiring,
+      Claim,
+      ClaimCompliance,
     ]),
     CommonModule,
     ServicesModule,
@@ -83,6 +88,7 @@ import { ServicesModule } from './services/services.module';
       provide: APP_INTERCEPTOR,
       useClass: RpcExceptionInterceptor,
     },
+    ServiceHiringRepository,
     ServiceHiringStatusRepository,
     PaymentModalityRepository,
     SeedService,

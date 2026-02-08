@@ -91,14 +91,14 @@ export class CompliancesController {
    * Usuario envía evidencia de cumplimiento
    * Acceso: Usuario responsable del compliance
    * FormData fields:
-   * - userNotes: string (opcional)
+   * - userResponse: string (opcional) - Notas del usuario
    * - evidenceUrls: string[] (opcional)
-   * - files: file[] (max 10 archivos, 10MB cada uno)
+   * - evidence: file[] (max 10 archivos, 10MB cada uno)
    */
   @Post(':id/submit')
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+    FileFieldsInterceptor([{ name: 'evidence', maxCount: 10 }], {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'compliances'),
         filename: (req, file, cb) => {
@@ -127,13 +127,13 @@ export class CompliancesController {
   )
   async submitCompliance(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body('userNotes') userNotes?: string,
+    @Body('userResponse') userResponse?: string,
     @Body('evidenceUrls') evidenceUrls?: string,
-    @UploadedFiles() files?: { files?: Express.Multer.File[] },
+    @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
     @User() user?: AuthenticatedUser,
   ) {
     // Procesar archivos subidos
-    const uploadedFiles = files?.files || [];
+    const uploadedFiles = files?.evidence || [];
     const fileUrls = uploadedFiles.map(
       (file) => `/uploads/compliances/${file.filename}`,
     );
@@ -149,7 +149,7 @@ export class CompliancesController {
     const dto = {
       complianceId: id,
       userId: user?.id != null ? String(user.id) : undefined,
-      userNotes: userNotes || null,
+      userNotes: userResponse || null,
       evidenceUrls: allEvidenceUrls.length > 0 ? allEvidenceUrls : null,
     };
 
@@ -164,7 +164,7 @@ export class CompliancesController {
 
   /**
    * POST /compliances/:id/peer-review
-   * La contraparte revisa el compliance (pre-aprobación)
+   * La contraparte revisa el compliance (pre-aprobación o pre-rechazo)
    * Acceso: Contraparte del responsable
    */
   @Post(':id/peer-review')
@@ -172,14 +172,14 @@ export class CompliancesController {
   async peerReviewCompliance(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('approved') approved: boolean,
-    @Body('objection') objection?: string,
+    @Body('reason') reason?: string,
     @User() user?: AuthenticatedUser,
   ) {
     const dto = {
       complianceId: id,
       userId: user?.id != null ? String(user.id) : undefined,
       approved,
-      objection: objection || null,
+      reason: reason || null,
     };
 
     return await firstValueFrom(
@@ -194,10 +194,10 @@ export class CompliancesController {
   /**
    * POST /compliances/:id/review
    * Moderador toma decisión final sobre el compliance
-   * Acceso: Solo moderadores
+   * Acceso: Solo moderadores y administradores
    */
   @Post(':id/review')
-  @AuthRoles([ROLES.MODERATOR])
+  @AuthRoles([ROLES.ADMIN, ROLES.MODERATOR])
   async moderatorReviewCompliance(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('decision') decision: 'approve' | 'reject' | 'adjust',

@@ -5,6 +5,7 @@ export class PostulationStatusBreakdown {
   aceptada: number;
   rechazada: number;
   cancelada: number;
+  cancelada_moderacion: number;
 }
 
 export class ReceivedPostulationsDto {

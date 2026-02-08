@@ -159,6 +159,20 @@ export class ServiceReportsService {
   }
 
   /**
+   * Obtiene TODOS los reportes (activos e inactivos) con información del servicio
+   * @returns Lista de todos los reportes con datos necesarios para métricas
+   */
+  async getAllReports() {
+    const reports = await this.serviceReportRepository['repository'].find({
+      select: ['id', 'reason', 'isActive', 'createdAt'],
+    });
+    return reports.map((report) => ({
+      reason: report.reason,
+      isActive: report.isActive,
+    }));
+  }
+
+  /**
    * Marca como inactivos reportes anteriores a una fecha
    */
   async softDeleteOldReports(oneYearAgo: Date) {

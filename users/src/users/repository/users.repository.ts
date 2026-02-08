@@ -142,7 +142,15 @@ export class UserRepository {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
-      .where(
+      .where('user.deletedAt IS NULL') // ✅ Excluir usuarios eliminados
+      .andWhere('user.accountStatus = :activeStatus', {
+        activeStatus: 'active',
+      }) // ✅ Solo usuarios activos
+      .andWhere(
+        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)',
+        { now: new Date() },
+      ) // ✅ Excluir suspensiones temporales activas
+      .andWhere(
         "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
         { searchTerm: `%${searchTerm}%` },
       );
@@ -161,17 +169,30 @@ export class UserRepository {
     searchTerm: string,
     limit: number,
     offset: number,
+    excludeUserId?: number,
   ): Promise<{ users: User[]; total: number }> {
     const queryBuilder = this.ormRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.profile', 'profile')
-      .where('user.deletedAt IS NULL'); // Excluir usuarios eliminados
+      .where('user.deletedAt IS NULL') // Excluir usuarios eliminados
+      .andWhere('user.accountStatus = :activeStatus', {
+        activeStatus: 'active',
+      }) // ✅ Solo usuarios activos (no baneados ni suspendidos)
+      .andWhere(
+        '(user.suspensionExpiresAt IS NULL OR user.suspensionExpiresAt < :now)',
+        { now: new Date() },
+      ); // ✅ Excluir suspensiones temporales activas
 
     if (searchTerm) {
       queryBuilder.andWhere(
         "(profile.name ILIKE :searchTerm OR profile.lastName ILIKE :searchTerm OR CONCAT(profile.name, ' ', profile.lastName) ILIKE :searchTerm)",
         { searchTerm: `%${searchTerm}%` },
       );
+    }
+
+    // Excluir al usuario actual si se proporciona
+    if (excludeUserId) {
+      queryBuilder.andWhere('user.id != :excludeUserId', { excludeUserId });
     }
 
     // Obtener el total de registros

@@ -15,6 +15,7 @@ export interface JwtPayload {
   email: string;
   roleId: number;
   profileId: number;
+  isProfileComplete: boolean | null;
   type: 'access' | 'refresh';
   iat?: number;
   exp?: number;
@@ -108,6 +109,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       email: payload.email,
       roleId: payload.roleId,
       profileId: payload.profileId as number | null,
+      isProfileComplete: payload.isProfileComplete,
       accountStatus: userStatus.isBanned
         ? 'banned'
         : userStatus.isSuspended

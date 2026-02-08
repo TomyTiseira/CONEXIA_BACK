@@ -1,13 +1,19 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { UserRepository } from '../../../users/repository/users.repository';
 import { RefreshTokenDto } from '../../dto/refresh-token.dto';
 import { RefreshTokenResponse } from '../../interfaces/auth.interface';
 import { TokenService } from '../token.service';
 
 @Injectable()
 export class RefreshTokenUseCase {
-  constructor(private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly userRepository: UserRepository,
+  ) {}
 
-  execute(refreshTokenDto: RefreshTokenDto): RefreshTokenResponse {
+  async execute(
+    refreshTokenDto: RefreshTokenDto,
+  ): Promise<RefreshTokenResponse> {
     try {
       // Verificar el refresh token
       const payload = this.tokenService.verifyToken(
@@ -19,13 +25,19 @@ export class RefreshTokenUseCase {
         throw new UnauthorizedException('Token inválido');
       }
 
+      // Tomar el estado actual desde DB (profileId/isProfileComplete pueden cambiar)
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('Usuario no encontrado');
+      }
+
       // Generar nuevo access token
       return this.tokenService.createRefreshResponse(
-        payload.sub,
-        payload.email,
-        payload.roleId,
-        payload.profileId,
-        payload.isProfileComplete,
+        user.id,
+        user.email,
+        user.roleId,
+        user.profileId,
+        user.isProfileComplete,
       );
     } catch (error) {
       // Log the error for debugging purposes

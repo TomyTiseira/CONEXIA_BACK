@@ -6,8 +6,8 @@ import {
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { ResolveClaimDto } from '../../dto/resolve-claim.dto';
-import { Claim } from '../../entities/claim.entity';
 import { ClaimCompliance } from '../../entities/claim-compliance.entity';
+import { Claim } from '../../entities/claim.entity';
 import { ClaimStatus } from '../../enums/claim.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
@@ -68,13 +68,19 @@ export class ResolveClaimUseCase {
       await this.validateComplianceResponsibles(claim, compliances);
     }
 
+    if (status === ClaimStatus.RESOLVED && !resolutionType) {
+      throw new BadRequestException(
+        'El tipo de resolución es obligatorio para resolver un reclamo',
+      );
+    }
+
     // 4. Resolver el reclamo
     const updatedClaim = await this.claimRepository.resolve(
       claimId,
       status,
       resolution,
       resolvedBy,
-      resolutionType,
+      status === ClaimStatus.RESOLVED ? resolutionType : null,
       partialAgreementDetails,
     );
 
@@ -86,12 +92,16 @@ export class ResolveClaimUseCase {
     await this.updateHiringStatusByResolution(
       claim.hiringId,
       status,
-      resolutionType,
+      status === ClaimStatus.RESOLVED ? (resolutionType as string) : null,
     );
 
     // 6. Crear compliances si fueron proporcionados
     const createdCompliances: ClaimCompliance[] = [];
-    if (compliances && compliances.length > 0 && status === ClaimStatus.RESOLVED) {
+    if (
+      compliances &&
+      compliances.length > 0 &&
+      status === ClaimStatus.RESOLVED
+    ) {
       for (const complianceData of compliances) {
         try {
           const compliance = await this.createComplianceUseCase.execute({
@@ -154,7 +164,7 @@ export class ResolveClaimUseCase {
   private async updateHiringStatusByResolution(
     hiringId: number,
     claimStatus: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
-    resolutionType: string,
+    resolutionType: string | null,
   ): Promise<void> {
     // Si el reclamo fue rechazado, restaurar al estado anterior
     if (claimStatus === ClaimStatus.REJECTED) {
@@ -175,6 +185,13 @@ export class ResolveClaimUseCase {
       provider_favor: ServiceHiringStatusCode.COMPLETED_BY_CLAIM,
       partial_agreement: ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
     };
+
+    if (!resolutionType) {
+      console.warn(
+        '[ResolveClaimUseCase] No se proporcionó resolutionType para un reclamo resuelto',
+      );
+      return;
+    }
 
     const targetStatusCode = statusCodeMap[resolutionType];
 
@@ -248,21 +265,10 @@ export class ResolveClaimUseCase {
         await this.emailService.sendClaimResolvedEmail(
           client.email,
           clientName,
+          hiring.userId, // ID del destinatario (cliente)
           claimData,
+          compliances, // Enviar TODOS los compromisos
         );
-
-        // Si tiene compliances asignados, enviar email adicional
-        const clientCompliances = compliances.filter(
-          (c) => c.responsibleUserId === String(hiring.userId),
-        );
-        if (clientCompliances.length > 0) {
-          await this.emailService.sendComplianceCreatedEmail(
-            client.email,
-            clientName,
-            claimData,
-            clientCompliances,
-          );
-        }
       }
 
       // Enviar email al proveedor
@@ -270,21 +276,10 @@ export class ResolveClaimUseCase {
         await this.emailService.sendClaimResolvedEmail(
           provider.email,
           providerName,
+          hiring.service.userId, // ID del destinatario (proveedor)
           claimData,
+          compliances, // Enviar TODOS los compromisos
         );
-
-        // Si tiene compliances asignados, enviar email adicional
-        const providerCompliances = compliances.filter(
-          (c) => c.responsibleUserId === String(hiring.service.userId),
-        );
-        if (providerCompliances.length > 0) {
-          await this.emailService.sendComplianceCreatedEmail(
-            provider.email,
-            providerName,
-            claimData,
-            providerCompliances,
-          );
-        }
       }
     } catch (error) {
       console.error(

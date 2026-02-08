@@ -23,6 +23,7 @@
     "migrate:claim-assigned-moderator-fields": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-assigned-moderator-fields.ts",
     "migrate:claim-statuses": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-statuses-requires-response-and-cancelled.ts",
     "migrate:claim-clarification-evidence": "ts-node -r tsconfig-paths/register src/scripts/migrate-claim-clarification-evidence-urls.ts",
+    "migrate:add-compliance-types": "ts-node -r tsconfig-paths/register src/scripts/migrate-add-compliance-types.ts",
     "seed:service-categories": "ts-node -r tsconfig-paths/register src/scripts/seed-service-categories.ts",
     "seed:service-hiring-statuses": "ts-node -r tsconfig-paths/register src/scripts/seed-service-hiring-statuses.ts"
   },

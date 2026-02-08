@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ContactsService } from '../../contacts/services/contacts.service';
 import { Publication } from '../../publications/entities/publication.entity';
 
 /**
  * Servicio que escucha eventos de moderación (baneo/suspensión/reactivación)
- * y actualiza el campo ownerModerationStatus de las publicaciones
+ * - Actualiza el campo ownerModerationStatus de las publicaciones
+ * - Elimina todas las conexiones del usuario baneado
  */
 @Injectable()
 export class ModerationListenerService {
@@ -14,17 +16,19 @@ export class ModerationListenerService {
   constructor(
     @InjectRepository(Publication)
     private readonly publicationRepository: Repository<Publication>,
+    private readonly contactsService: ContactsService,
   ) {}
 
   /**
    * Procesa el evento de usuario baneado
-   * Marca todas sus publicaciones con ownerModerationStatus = 'banned'
+   * - Marca todas sus publicaciones con ownerModerationStatus = 'banned'
+   * - Elimina todas sus conexiones (amigos, solicitudes pendientes, etc.)
    */
   async handleUserBanned(userId: number, moderationStatus: string) {
     this.logger.log(`Procesando baneo de usuario ${userId}`);
 
     try {
-      // Actualizar ownerModerationStatus de todas las publicaciones
+      // 1. Actualizar ownerModerationStatus de todas las publicaciones
       const result = await this.publicationRepository.update(
         {
           userId,
@@ -38,6 +42,22 @@ export class ModerationListenerService {
       this.logger.log(
         `${result.affected} publicaciones marcadas como owner baneado (userId=${userId})`,
       );
+
+      // 2. Eliminar todas las conexiones del usuario baneado
+      try {
+        const deletedCount =
+          await this.contactsService.deleteAllUserConnectionsOnBan(userId);
+
+        this.logger.log(
+          `Se eliminaron ${deletedCount} conexiones del usuario baneado ${userId}`,
+        );
+      } catch (connectionError) {
+        this.logger.error(
+          `Error al eliminar conexiones del usuario ${userId}:`,
+          connectionError,
+        );
+        // No lanzamos el error para que continúe el proceso de baneo
+      }
     } catch (error) {
       this.logger.error(`Error procesando baneo de usuario ${userId}:`, error);
       throw error;

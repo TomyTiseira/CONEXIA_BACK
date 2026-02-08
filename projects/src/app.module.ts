@@ -25,6 +25,7 @@ import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
 import { Rubro } from './shared/entities/rubro.entity';
 import { Skill } from './shared/entities/skill.entity';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { Skill } from './shared/entities/skill.entity';
     PostulationsModule,
     ReportsModule,
     ProjectsModule,
+    SharedModule,
   ],
   controllers: [ModerationController],
   providers: [
