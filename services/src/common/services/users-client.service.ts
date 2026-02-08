@@ -173,8 +173,6 @@ export class UsersClientService {
       );
       console.log(
         `[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`,
-      console.log(
-        `[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`,
       );
     } catch (error) {
       console.error('Error banning user for compliance violation:', error);
