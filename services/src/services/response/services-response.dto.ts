@@ -11,4 +11,4 @@ export interface GetServicesByUserResponseDto {
   pagination: PaginationInfo;
 }
 
-export interface GetServiceByIdResponseDto extends TransformedService {}
+export type GetServiceByIdResponseDto = TransformedService;

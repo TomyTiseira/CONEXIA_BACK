@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   CallHandler,
   ExecutionContext,
@@ -39,7 +38,9 @@ export class RpcExceptionInterceptor implements NestInterceptor {
           };
 
           const formatted = rawErrors.map((r: any) =>
-            r instanceof Object && 'property' in r ? formatValidationError(r as ValidationError) : r,
+            r instanceof Object && 'property' in r
+              ? formatValidationError(r as ValidationError)
+              : r,
           );
 
           return throwError(

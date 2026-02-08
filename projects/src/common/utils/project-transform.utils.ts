@@ -48,7 +48,9 @@ export function transformProjectsWithOwners(
         if (role.collaborationType && role.collaborationType.name) {
           collaborationTypesSet.add(role.collaborationType.name);
         } else if (collaborationTypeMap && (role as any).collaborationTypeId) {
-          const name = collaborationTypeMap.get((role as any).collaborationTypeId);
+          const name = collaborationTypeMap.get(
+            (role as any).collaborationTypeId,
+          );
           if (name) collaborationTypesSet.add(name);
         }
       }
@@ -68,9 +70,7 @@ export function transformProjectsWithOwners(
       // collaborationType and contractType are role-scoped and not included here
       owner: {
         id: user?.id || project.userId,
-        name: profile
-          ? `${profile.name} ${profile.lastName}`
-          : '',
+        name: profile ? `${profile.name} ${profile.lastName}` : '',
         image: profile?.profilePicture,
       },
       isOwner: currentUserId === project.userId,

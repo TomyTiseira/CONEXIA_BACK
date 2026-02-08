@@ -122,7 +122,6 @@ export class AuthEventsGateway
         `✅ Usuario ${userId} conectado exitosamente (socket: ${client.id}, total conexiones: ${userSockets?.size || 1})`,
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const pending: any = this.pendingAccountNotifications.get(userId);
       if (pending) {
         this.server

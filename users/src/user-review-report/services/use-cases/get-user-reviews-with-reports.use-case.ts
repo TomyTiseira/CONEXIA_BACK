@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { OrderByUserReviewReport } from 'src/user-review-report/enums/orderby-user-review-report.enum';
 import { UsersService } from '../../../users/service/users.service';

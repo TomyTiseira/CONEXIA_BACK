@@ -1,12 +1,12 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Service } from '../../services/entities/service.entity';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
@@ -58,11 +58,21 @@ export class ServiceHiring {
   isBusinessDays: boolean;
 
   // ✅ NUEVO: Horas aproximadas de trabajo por día
-  @Column({ name: 'hours_per_day', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({
+    name: 'hours_per_day',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+  })
   hoursPerDay: number | null;
 
   // ✅ NUEVO: Si trabaja solo días hábiles (lunes a viernes)
-  @Column({ name: 'work_on_business_days_only', type: 'boolean', default: false })
+  @Column({
+    name: 'work_on_business_days_only',
+    type: 'boolean',
+    default: false,
+  })
   workOnBusinessDaysOnly: boolean;
 
   @Column({ type: 'text', nullable: true })

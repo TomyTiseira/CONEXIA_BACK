@@ -10,20 +10,26 @@ import { ServiceReviewsService } from './services/service-reviews.service';
 
 @Controller()
 export class ServiceReviewsController {
-  constructor(
-    private readonly serviceReviewsService: ServiceReviewsService,
-  ) {}
+  constructor(private readonly serviceReviewsService: ServiceReviewsService) {}
 
   @MessagePattern('create_service_review')
   async createReview(
     @Payload() payload: { userId: number; dto: CreateServiceReviewDto },
   ) {
-    return await this.serviceReviewsService.createReview(payload.userId, payload.dto);
+    return await this.serviceReviewsService.createReview(
+      payload.userId,
+      payload.dto,
+    );
   }
 
   @MessagePattern('get_service_reviews')
   async getServiceReviews(
-    @Payload() payload: { serviceId: number; dto: GetServiceReviewsDto; userId?: number },
+    @Payload()
+    payload: {
+      serviceId: number;
+      dto: GetServiceReviewsDto;
+      userId?: number;
+    },
   ) {
     return await this.serviceReviewsService.getReviews(
       payload.serviceId,
@@ -80,10 +86,11 @@ export class ServiceReviewsController {
   }
 
   @MessagePattern('delete_service_review')
-  async deleteReview(
-    @Payload() payload: { userId: number; reviewId: number },
-  ) {
-    await this.serviceReviewsService.deleteReview(payload.userId, payload.reviewId);
+  async deleteReview(@Payload() payload: { userId: number; reviewId: number }) {
+    await this.serviceReviewsService.deleteReview(
+      payload.userId,
+      payload.reviewId,
+    );
     return { success: true };
   }
 

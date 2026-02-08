@@ -10,7 +10,10 @@ import { GetPublicationReportsUseCase } from './services/use-cases/get-publicati
 import { GetPublicationsWithReportsUseCase } from './services/use-cases/get-publications-with-reports.use-case';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PublicationReport]), forwardRef(() => PublicationsModule)],
+  imports: [
+    TypeOrmModule.forFeature([PublicationReport]),
+    forwardRef(() => PublicationsModule),
+  ],
   controllers: [PublicationReportsController],
   providers: [
     PublicationReportsService,

@@ -7,4 +7,3 @@ export * from './service-category.dto';
 export * from './service-metrics.dto';
 export * from './update-service-data.dto';
 export * from './update-service.dto';
-

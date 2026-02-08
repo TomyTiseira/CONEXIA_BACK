@@ -74,7 +74,7 @@ export class ServiceReportsService {
         page,
         limit,
       );
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener los reportes del servicio',
       );
@@ -99,7 +99,7 @@ export class ServiceReportsService {
         page,
         limit,
       );
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener los servicios con reportes',
       );
@@ -114,7 +114,7 @@ export class ServiceReportsService {
   async getReportCountByService(serviceId: number): Promise<number> {
     try {
       return this.serviceReportRepository.getReportCountByService(serviceId);
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener el conteo de reportes del servicio',
       );
@@ -128,7 +128,7 @@ export class ServiceReportsService {
   async deleteReportsByService(serviceId: number): Promise<void> {
     try {
       await this.serviceReportRepository.deleteByService(serviceId);
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al eliminar los reportes del servicio',
       );

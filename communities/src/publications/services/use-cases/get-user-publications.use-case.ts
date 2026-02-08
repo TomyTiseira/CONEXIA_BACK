@@ -45,10 +45,11 @@ export class GetUserPublicationsUseCase {
         if (data.currentUserId === pub.userId) {
           return { publicationId: pub.id, hasReported: false };
         }
-        const report = await this.publicationReportRepository.findByPublicationAndReporter(
-          pub.id,
-          data.currentUserId!,
-        );
+        const report =
+          await this.publicationReportRepository.findByPublicationAndReporter(
+            pub.id,
+            data.currentUserId!,
+          );
         return { publicationId: pub.id, hasReported: report !== null };
       });
       const results = await Promise.all(reportPromises);

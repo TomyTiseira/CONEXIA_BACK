@@ -34,7 +34,7 @@ export class DeleteServiceReviewUseCase {
 
       // Manejar error de FK constraint específicamente
       if (error.message && error.message.includes('foreign key constraint')) {
-       throw new ReviewHasAssociatedReportsException();
+        throw new ReviewHasAssociatedReportsException();
       }
 
       // Error genérico

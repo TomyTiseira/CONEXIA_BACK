@@ -230,7 +230,7 @@ export class ServiceHiringsController {
   }
 
   @MessagePattern('process_preference_webhook')
-  async processPreferenceWebhook(
+  processPreferenceWebhook(
     @Payload()
     data: {
       preferenceId: string;

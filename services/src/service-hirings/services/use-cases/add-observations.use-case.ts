@@ -69,9 +69,6 @@ export class AddObservationsUseCase {
       const claimant = await this.usersClient.getUserByIdWithRelations(
         claim.claimantUserId,
       );
-      const claimantName = claimant?.profile
-        ? `${claimant.profile.name} ${claimant.profile.lastName}`.trim()
-        : 'Usuario';
 
       // Obtener información del hiring
       const hiring = await this.hiringRepository.findById(claim.hiringId);

@@ -27,9 +27,8 @@ function IsValidDocumentNumber(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any, args: ValidationArguments) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const obj = args.object as any;
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           const documentTypeId = obj.documentTypeId;
 
           if (!value) return false;
@@ -47,9 +46,8 @@ function IsValidDocumentNumber(validationOptions?: ValidationOptions) {
           return false;
         },
         defaultMessage(args: ValidationArguments) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const obj = args.object as any;
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
           const documentTypeId = obj.documentTypeId;
 
           if (documentTypeId === 1) {

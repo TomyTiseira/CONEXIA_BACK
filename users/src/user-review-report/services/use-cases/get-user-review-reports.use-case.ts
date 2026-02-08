@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../../../users/service/users.service';
 import { GetUserReviewReportsDto } from '../../dto/get-user-review-reports.dto';

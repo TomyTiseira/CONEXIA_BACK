@@ -3,7 +3,10 @@ import { RpcException } from '@nestjs/microservices';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { calculatePagination } from '../../../common/utils/pagination.utils';
 import { GetServiceReviewReportsDto } from '../../dto/get-service-review-reports.dto';
-import { MissingServiceReviewIdException, ServiceReviewReportInternalServerErrorException } from '../../exceptions/service-review-report.exceptions';
+import {
+  MissingServiceReviewIdException,
+  ServiceReviewReportInternalServerErrorException,
+} from '../../exceptions/service-review-report.exceptions';
 import { ServiceReviewReportRepository } from '../../repositories/service-review-report.repository';
 
 export interface ServiceReviewReportResponseDto {
@@ -44,7 +47,7 @@ export class GetServiceReviewReportsUseCase {
       };
 
       // Obtener reportes de la reseña con paginación
-      const [reports, total] =
+      const [reports] =
         await this.serviceReviewReportRepository.findReportsByServiceReview(
           dto.serviceReviewId, // Ahora TypeScript sabe que no es undefined
           params.page,
@@ -70,7 +73,7 @@ export class GetServiceReviewReportsUseCase {
       // Transformar datos con información de usuarios
       // Filtrar reportes que tengan serviceReview válido (no eliminado)
       const transformedReports: ServiceReviewReportResponseDto[] = reports
-        .filter(report => report.serviceReview != null) // Filtrar reportes huérfanos
+        .filter((report) => report.serviceReview != null) // Filtrar reportes huérfanos
         .map((report) => {
           const user = usersMap.get(report.reporterId);
           return {
@@ -113,7 +116,8 @@ export class GetServiceReviewReportsUseCase {
 
       // Error genérico
       throw new ServiceReviewReportInternalServerErrorException(
-        (error && error.message) || 'Internal server error occurred while processing service review report',
+        (error && error.message) ||
+          'Internal server error occurred while processing service review report',
       );
     }
   }

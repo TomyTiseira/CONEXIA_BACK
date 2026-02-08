@@ -43,13 +43,12 @@ export class CreateServiceReviewUseCase {
       ServiceHiringStatusCode.COMPLETED_WITH_AGREEMENT,
     ];
 
-    if (!completableStates.includes(hiring.status.code as ServiceHiringStatusCode)) {
+    if (!completableStates.includes(hiring.status.code)) {
       throw new ServiceHiringNotCompletedException(hiringId);
     }
 
     // Verify no existing review
-    const existingReview =
-      await this.reviewRepository.findByHiringId(hiringId);
+    const existingReview = await this.reviewRepository.findByHiringId(hiringId);
     if (existingReview) {
       throw new ReviewAlreadyExistsException(hiringId);
     }

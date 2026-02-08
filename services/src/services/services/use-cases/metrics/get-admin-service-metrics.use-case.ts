@@ -35,8 +35,12 @@ export class GetAdminServiceMetricsUseCase {
       const sentQuotations = await this.serviceHiringRepo.count();
 
       // Obtener IDs de estados cancelado y rechazado
-      const cancelledStatusId = await this.getStatusId(ServiceHiringStatusCode.CANCELLED);
-      const rejectedStatusId = await this.getStatusId(ServiceHiringStatusCode.REJECTED);
+      const cancelledStatusId = await this.getStatusId(
+        ServiceHiringStatusCode.CANCELLED,
+      );
+      const rejectedStatusId = await this.getStatusId(
+        ServiceHiringStatusCode.REJECTED,
+      );
 
       // Solicitudes canceladas o rechazadas
       const cancelledOrRejected = await this.serviceHiringRepo.count({
@@ -65,7 +69,8 @@ export class GetAdminServiceMetricsUseCase {
         // NO incluir IN_CLAIM aquí - se cuenta por separado
       ];
 
-      const inProgressStatusIds = await this.getStatusIdsByCode(inProgressStatuses);
+      const inProgressStatusIds =
+        await this.getStatusIdsByCode(inProgressStatuses);
 
       const servicesInProgress = await this.serviceHiringRepo.count({
         where: {
@@ -74,7 +79,9 @@ export class GetAdminServiceMetricsUseCase {
       });
 
       // Servicios en reclamo (estado IN_CLAIM)
-      const inClaimStatusId = await this.getStatusId(ServiceHiringStatusCode.IN_CLAIM);
+      const inClaimStatusId = await this.getStatusId(
+        ServiceHiringStatusCode.IN_CLAIM,
+      );
       const servicesInClaim = await this.serviceHiringRepo.count({
         where: { statusId: inClaimStatusId },
       });
@@ -84,7 +91,9 @@ export class GetAdminServiceMetricsUseCase {
 
       // ClaimRate = (servicios in_claim / total servicios activos) * 100
       const claimRate =
-        totalServicesActive > 0 ? (servicesInClaim / totalServicesActive) * 100 : 0;
+        totalServicesActive > 0
+          ? (servicesInClaim / totalServicesActive) * 100
+          : 0;
 
       // 6. RESOLUCIÓN DE RECLAMOS (tabla claims)
       const totalClaims = await this.claimRepository.count();

@@ -18,22 +18,6 @@ import {
 import { ClaimResolutionType, ClaimStatus } from '../enums/claim.enum';
 import { ComplianceType } from '../enums/compliance.enum';
 
-// Lista explícita de tipos de compliance válidos
-const VALID_COMPLIANCE_TYPES = [
-  'full_refund',
-  'partial_refund',
-  'payment_required',
-  'partial_payment',
-  'work_completion',
-  'work_revision',
-  'full_redelivery',
-  'corrected_delivery',
-  'additional_delivery',
-  'evidence_upload',
-  'confirmation_only',
-  'other',
-] as const;
-
 /**
  * DTO para definir un compliance individual al resolver un reclamo
  */
