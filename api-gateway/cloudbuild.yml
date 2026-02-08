@@ -16,3 +16,6 @@ steps:
         'push',
         'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/api-gateway',
       ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
