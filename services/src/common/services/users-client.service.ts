@@ -149,7 +149,9 @@ export class UsersClientService {
       await firstValueFrom(
         this.client.send('moderation.suspend_for_compliance', data),
       );
-      console.log(`[UsersClient] Usuario ${data.userId} suspendido por violación de compliance ${data.complianceId}`);
+      console.log(
+        `[UsersClient] Usuario ${data.userId} suspendido por violación de compliance ${data.complianceId}`,
+      );
     } catch (error) {
       console.error('Error suspending user for compliance violation:', error);
       throw error;
@@ -169,7 +171,11 @@ export class UsersClientService {
       await firstValueFrom(
         this.client.send('moderation.ban_for_compliance', data),
       );
-      console.log(`[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`);
+      console.log(
+        `[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`,
+      console.log(
+        `[UsersClient] Usuario ${data.userId} baneado por violación de compliance ${data.complianceId}`,
+      );
     } catch (error) {
       console.error('Error banning user for compliance violation:', error);
       throw error;
