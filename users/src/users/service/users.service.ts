@@ -1,29 +1,189 @@
 import { Injectable } from '@nestjs/common';
+import { Locality } from '../../shared/entities/locality.entity';
+import { AccountStatus, User } from '../../shared/entities/user.entity';
+import { LocalityRepository } from '../../shared/repository/locality.repository';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserRepository } from '../repository/users.repository';
+import { CreateUserUseCase } from './use-cases/create-user.use-cases';
+import { DeleteUserUseCase } from './use-cases/delate-user.use-cases';
+import {
+  FindUserByIdIncludingDeletedUseCase,
+  FindUserByIdUseCase,
+  FindUserByIdWithRelationsUseCase,
+} from './use-cases/find-user-by-id.use-cases';
+import { FindUsersByIdsUseCase } from './use-cases/find-users-by-ids.use-cases';
+import { GetRoleByIdUseCase } from './use-cases/get-role-by-id.use-cases';
+import { GetRoleByNameUseCase } from './use-cases/get-role-by-name.use-cases';
+import { GetUserWithProfileUseCase } from './use-cases/get-user-with-profile.use-cases';
 import { PingUseCase } from './use-cases/ping';
-// import { CreateUserDto } from './dto/create-user.dto';
-// import { UpdateUserDto } from './dto/update-user.dto';
+import { ResendVerificationUseCase } from './use-cases/resend-verification.use-cases';
+import { SearchUsersPaginatedUseCase } from './use-cases/search-users-paginated.use-cases';
+import { UpdateUserUseCase } from './use-cases/update-user.use-cases';
+import { VerifyUserUseCase } from './use-cases/verify-user.use-cases';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly pingUseCase: PingUseCase) {}
+  constructor(
+    private readonly pingUseCase: PingUseCase,
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly verifyUserUseCase: VerifyUserUseCase,
+    private readonly resendVerificationUseCase: ResendVerificationUseCase,
+    private readonly deleteUserUseCase: DeleteUserUseCase,
+    private readonly updateUserUseCase: UpdateUserUseCase,
+    private readonly getRoleByIdUseCase: GetRoleByIdUseCase,
+    private readonly findUserByIdUseCase: FindUserByIdUseCase,
+    private readonly findUserByIdIncludingDeletedUseCase: FindUserByIdIncludingDeletedUseCase,
+    private readonly findUserByIdWithRelationsUseCase: FindUserByIdWithRelationsUseCase,
+    private readonly getUserWithProfileUseCase: GetUserWithProfileUseCase,
+    private readonly localityRepository: LocalityRepository,
+    private readonly findUsersByIdsUseCase: FindUsersByIdsUseCase,
+    private readonly getRoleByNameUseCase: GetRoleByNameUseCase,
+    private readonly userRepository: UserRepository,
+    private readonly searchUsersPaginatedUseCase: SearchUsersPaginatedUseCase,
+  ) {}
 
   ping() {
     return this.pingUseCase.execute();
   }
 
-  // create(createUserDto: CreateUserDto) {
-  //   return 'This action adds a new user';
-  // }
-  // findAll() {
-  //   return `This action returns all users`;
-  // }
-  // findOne(id: number) {
-  //   return `This action returns a #${id} user`;
-  // }
-  // update(id: number, updateUserDto: UpdateUserDto) {
-  //   return `This action updates a #${id} user`;
-  // }
-  // remove(id: number) {
-  //   return `This action removes a #${id} user`;
-  // }
+  async createUser(userData: CreateUserDto): Promise<User> {
+    return this.createUserUseCase.execute(userData);
+  }
+
+  async verifyUser(
+    email: string,
+    verificationCode: string,
+  ): Promise<{
+    user: User;
+    data: { onboardingToken: string; expiresIn: number };
+  }> {
+    return this.verifyUserUseCase.execute(email, verificationCode);
+  }
+
+  async resendVerification(email: string): Promise<User> {
+    return this.resendVerificationUseCase.execute(email);
+  }
+
+  async deleteUser(userId: number, reason: string): Promise<User> {
+    return this.deleteUserUseCase.execute(userId, reason);
+  }
+
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    return this.updateUserUseCase.execute(id, updateUserDto);
+  }
+
+  async getRoleById(roleId: string) {
+    return this.getRoleByIdUseCase.execute(roleId);
+  }
+
+  async getRoleByName(roleName: string) {
+    return this.getRoleByNameUseCase.execute(roleName);
+  }
+
+  async findUserById(userId: number): Promise<User | null> {
+    return this.findUserByIdUseCase.execute(userId);
+  }
+
+  async findUserByIdIncludingDeleted(userId: number): Promise<User | null> {
+    return this.findUserByIdIncludingDeletedUseCase.execute(userId);
+  }
+
+  async findUserByIdWithRelations(userId: number): Promise<User | null> {
+    return this.findUserByIdWithRelationsUseCase.execute(userId);
+  }
+
+  async getLocalities(): Promise<Locality[]> {
+    return this.localityRepository.findAll();
+  }
+
+  async validateLocalityExists(localityId: number): Promise<boolean> {
+    const locality = await this.localityRepository.findById(localityId);
+    return locality !== null;
+  }
+
+  async findUsersByIds(userIds: number[]): Promise<User[]> {
+    return this.findUsersByIdsUseCase.execute(userIds);
+  }
+
+  async getLocalityById(localityId: number): Promise<Locality | null> {
+    return this.localityRepository.findById(localityId);
+  }
+
+  async getUserWithProfile(
+    userId: number,
+  ): Promise<{ user: User; profile: any } | null> {
+    return this.getUserWithProfileUseCase.execute(userId);
+  }
+
+  async searchUsers(
+    searchTerm: string,
+    excludeUserId?: number,
+  ): Promise<
+    Array<{ id: number; name: string; lastName: string; email: string }>
+  > {
+    const users = await this.userRepository.searchUsers(
+      searchTerm,
+      excludeUserId,
+    );
+    return users.map((user) => ({
+      id: user.id,
+      name: user.profile?.name || '',
+      lastName: user.profile?.lastName || '',
+      email: user.email,
+    }));
+  }
+
+  async searchUsersPaginated(searchParams: any) {
+    return this.searchUsersPaginatedUseCase.execute(searchParams);
+  }
+
+  async getTotalGeneralUsers(): Promise<number> {
+    const USER_ROLE_ID = 2; // roleId para usuarios generales (no admins ni moderadores)
+    return this.userRepository.countByRoleId(USER_ROLE_ID);
+  }
+
+  /**
+   * Verifica el estado de la cuenta de un usuario
+   * Retorna información sobre si está baneado o suspendido
+   */
+  async checkUserAccountStatus(userId: number): Promise<{
+    isBanned: boolean;
+    isSuspended: boolean;
+    tokensInvalidatedAt?: string;
+    banReason?: string;
+    suspensionExpiresAt?: string;
+    suspensionReason?: string;
+  }> {
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      return {
+        isBanned: false,
+        isSuspended: false,
+      };
+    }
+
+    const isBanned = user.accountStatus === AccountStatus.BANNED;
+    const isSuspended = user.accountStatus === AccountStatus.SUSPENDED;
+
+    return {
+      isBanned,
+      isSuspended,
+      tokensInvalidatedAt: user.tokensInvalidatedAt
+        ? new Date(user.tokensInvalidatedAt).toISOString()
+        : undefined,
+      banReason: isBanned
+        ? user.banReason || 'Violación de políticas'
+        : undefined,
+      // Devolver fecha en formato ISO 8601 para que el API Gateway pueda parsearla correctamente
+      suspensionExpiresAt:
+        isSuspended && user.suspensionExpiresAt
+          ? new Date(user.suspensionExpiresAt).toISOString()
+          : undefined,
+      suspensionReason: isSuspended
+        ? user.suspensionReason || 'Violación temporal de políticas'
+        : undefined,
+    };
+  }
 }

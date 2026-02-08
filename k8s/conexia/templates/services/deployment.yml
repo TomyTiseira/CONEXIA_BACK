@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: services
+  name: services
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: services
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: services
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/services
+          name: services
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: DATABASE_URL
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_SECURE
+              value: "false"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: SMTP_PASS
+            - name: EMAIL_FROM
+              value: "jalyn.mclaughlin63@ethereal.email"
+            - name: FRONTEND_URL
+              value: "http://localhost:3000"
+            - name: API_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: API_BASE_URL
+            - name: MERCADOPAGO_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: MERCADOPAGO_ACCESS_TOKEN
+            - name: MERCADOPAGO_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: MERCADOPAGO_PUBLIC_KEY
+            - name: MERCADOPAGO_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: MERCADOPAGO_WEBHOOK_SECRET
+            - name: MERCADOPAGO_SELLER_COLLECTOR_ID
+              valueFrom:
+                secretKeyRef:
+                  name: services-secrets
+                  key: MERCADOPAGO_SELLER_COLLECTOR_ID
+          resources: {}
+status: {}

@@ -1,0 +1,22 @@
+FROM postgres:16.5-alpine
+
+# Instalar herramientas necesarias
+RUN apk add --no-cache dos2unix bash
+
+# Copiar scripts de inicialización
+COPY postgres-init/ /docker-entrypoint-initdb.d/
+
+# Convertir archivos a formato Unix y hacer ejecutables los scripts
+# Asegurar que todos los archivos .sh tengan permisos de ejecución
+RUN find /docker-entrypoint-initdb.d/ -name "*.sh" -exec dos2unix {} \; && \
+    find /docker-entrypoint-initdb.d/ -name "*.sh" -exec chmod +x {} \; && \
+    find /docker-entrypoint-initdb.d/ -name "*.sql" -exec dos2unix {} \;
+
+# Verificar que los scripts son ejecutables
+RUN ls -la /docker-entrypoint-initdb.d/
+
+# Configurar variables de entorno
+ENV POSTGRES_HOST_AUTH_METHOD=trust
+
+# Exponer puerto
+EXPOSE 5432 

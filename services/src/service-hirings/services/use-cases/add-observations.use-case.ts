@@ -1,0 +1,105 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EmailService } from '../../../common/services/email.service';
+import { UsersClientService } from '../../../common/services/users-client.service';
+import { AddObservationsDto } from '../../dto/add-observations.dto';
+import { Claim } from '../../entities/claim.entity';
+import { ClaimStatus } from '../../enums/claim.enum';
+import { ClaimRepository } from '../../repositories/claim.repository';
+import { ServiceHiringRepository } from '../../repositories/service-hiring.repository';
+
+@Injectable()
+export class AddObservationsUseCase {
+  constructor(
+    private readonly claimRepository: ClaimRepository,
+    private readonly hiringRepository: ServiceHiringRepository,
+    private readonly emailService: EmailService,
+    private readonly usersClient: UsersClientService,
+  ) {}
+
+  async execute(
+    claimId: string,
+    moderatorId: number,
+    dto: AddObservationsDto,
+  ): Promise<Claim> {
+    const { observations } = dto;
+
+    // 1. Verificar que el claim existe
+    const claim = await this.claimRepository.findById(claimId);
+    if (!claim) {
+      throw new NotFoundException(`Reclamo con ID ${claimId} no encontrado`);
+    }
+
+    // 2. Reglas de flujo: debe estar en revisión o esperando respuesta del staff
+    if (
+      claim.status !== ClaimStatus.IN_REVIEW &&
+      claim.status !== ClaimStatus.REQUIRES_STAFF_RESPONSE
+    ) {
+      throw new BadRequestException(
+        'El reclamo debe estar "en revisión" o "requiere respuesta" para poder agregar observaciones',
+      );
+    }
+
+    // 3. Agregar observaciones y cambiar estado a PENDING_CLARIFICATION
+    const updatedClaim = await this.claimRepository.addObservations(
+      claimId,
+      observations,
+      moderatorId,
+    );
+
+    if (!updatedClaim) {
+      throw new Error('Error al agregar observaciones al reclamo');
+    }
+
+    // 4. Enviar notificaciones por email al reclamante
+    await this.sendObservationNotifications(updatedClaim);
+
+    return updatedClaim;
+  }
+
+  /**
+   * Envía notificación de email al reclamante sobre las observaciones
+   */
+  private async sendObservationNotifications(claim: Claim): Promise<void> {
+    try {
+      // Obtener información del reclamante (con profile)
+      const claimant = await this.usersClient.getUserByIdWithRelations(
+        claim.claimantUserId,
+      );
+      const claimantName = claimant?.profile
+        ? `${claimant.profile.name} ${claimant.profile.lastName}`.trim()
+        : 'Usuario';
+
+      // Obtener información del hiring
+      const hiring = await this.hiringRepository.findById(claim.hiringId);
+      if (!hiring) {
+        console.error(
+          '[AddObservationsUseCase] No se pudo obtener el hiring para enviar notificaciones',
+        );
+        return;
+      }
+
+      if (claimant?.email) {
+        // TODO: Implementar sendClaimObservationsEmail en EmailService
+        // await this.emailService.sendClaimObservationsEmail(
+        //   claimant.email,
+        //   claimantName,
+        //   {
+        //     claimId: claim.id,
+        //     hiringTitle: hiring.service.title,
+        //     observations: claim.observations || '',
+        //   },
+        // );
+      }
+    } catch (error) {
+      console.error(
+        '[AddObservationsUseCase] Error al enviar notificaciones:',
+        error,
+      );
+      // No lanzamos error para no bloquear la adición de observaciones
+    }
+  }
+}

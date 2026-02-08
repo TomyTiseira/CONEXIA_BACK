@@ -1,0 +1,148 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TokenService } from '../../../auth/service/token.service';
+import { MockEmailService } from '../../../common/services/mock-email.service';
+import { UserBaseService } from '../../../common/services/user-base.service';
+import { ProfileRepository } from '../../../profile/repository/profile.repository';
+import { DocumentType } from '../../../shared/entities/document-type.entity';
+import { User } from '../../../shared/entities/user.entity';
+import { UserRepository } from '../../repository/users.repository';
+
+@Injectable()
+export class VerifyUserUseCase {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userBaseService: UserBaseService,
+    private readonly profileRepository: ProfileRepository,
+    private readonly emailService: MockEmailService,
+    private readonly tokenService: TokenService,
+    @InjectRepository(DocumentType)
+    private readonly documentTypeRepository: Repository<DocumentType>,
+  ) {}
+
+  async execute(
+    email: string,
+    verificationCode: string,
+  ): Promise<{
+    user: User;
+    data: { onboardingToken: string; expiresIn: number };
+  }> {
+    // Validar que el usuario exista
+    const user = await this.userBaseService.validateUserExists(email);
+
+    // Validar que el usuario no esté activo
+    this.userBaseService.validateUserNotActive(user);
+
+    // Validar el código de verificación
+    this.userBaseService.validateVerificationCode(user, verificationCode);
+
+    // Validar que el código no haya expirado
+    this.userBaseService.validateVerificationCodeNotExpired(user);
+
+    // Preparar datos para activar el usuario
+    const activationData = this.userBaseService.prepareUserForActivation();
+
+    // Actualizar usuario
+    await this.userRepository.update(user.id, {
+      isValidate: activationData.isValidate,
+    });
+
+    // Limpiar campos de verificación
+    const updatedUser = await this.userRepository.clearVerificationFields(
+      user.id,
+    );
+
+    // Validar que la activación fue exitosa
+    const validatedUser =
+      this.userBaseService.validateUserActivation(updatedUser);
+
+    try {
+      // Verificar si el usuario es admin o moderador
+      // Si es admin/moderador, NO crear perfil y asignar isProfileComplete = null
+      // Si es usuario general, crear perfil vacío y asignar isProfileComplete = false
+
+      const userRole =
+        validatedUser.role ||
+        (await this.userRepository.findById(validatedUser.id))?.role;
+      const isAdminOrModerator =
+        userRole &&
+        (userRole.name === 'admin' || userRole.name === 'moderador');
+
+      let finalUser;
+      let isProfileComplete: boolean | null;
+
+      if (isAdminOrModerator) {
+        // Admin o moderador: NO crear perfil, isProfileComplete = null
+        isProfileComplete = null;
+        finalUser = await this.userRepository.update(validatedUser.id, {
+          isProfileComplete,
+        });
+      } else {
+        // Usuario general: Crear perfil vacío, isProfileComplete = false
+        isProfileComplete = false;
+
+        // Obtener el tipo de documento "DNI" dinámicamente
+        const otherDocumentType = await this.documentTypeRepository.findOne({
+          where: { name: 'DNI' },
+        });
+
+        if (!otherDocumentType) {
+          throw new Error(
+            'No se encontró el tipo de documento "DNI" en la base de datos',
+          );
+        }
+
+        const emptyProfile = await this.profileRepository.create({
+          userId: validatedUser.id,
+          name: '',
+          lastName: '',
+          documentNumber: '',
+          documentTypeId: otherDocumentType.id,
+          profession: '',
+          phoneNumber: '',
+          country: '',
+          state: '',
+        });
+
+        finalUser = await this.userRepository.update(validatedUser.id, {
+          profileId: emptyProfile.id,
+          isProfileComplete,
+        });
+      }
+
+      // Enviar email de bienvenida después de activar la cuenta exitosamente
+      await this.emailService.sendWelcomeEmail(validatedUser.email);
+
+      // Generar token de verificación de usuario
+      // Validar que finalUser no sea nulo antes de acceder a sus propiedades
+      if (!finalUser) {
+        throw new Error('Failed to update user with profile');
+      }
+
+      const onboardingToken = this.tokenService.generateOnboardingToken(
+        finalUser.id,
+        finalUser.email,
+        finalUser.roleId,
+        finalUser.profileId,
+        isProfileComplete, // null para admin/moderador, false para usuario general
+      );
+
+      const response: {
+        user: User;
+        data: { onboardingToken: string; expiresIn: number };
+      } = {
+        user: finalUser as User,
+        data: {
+          onboardingToken,
+          expiresIn: 10 * 60,
+        },
+      };
+
+      return response;
+    } catch (error: unknown) {
+      console.error('error creating profile:', error);
+      throw error;
+    }
+  }
+}

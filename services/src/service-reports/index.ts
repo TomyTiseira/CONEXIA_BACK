@@ -1,0 +1,11 @@
+export * from './controllers/service-reports.controller';
+export * from './dtos';
+export * from './entities/service-report.entity';
+export * from './enums/service-report-reason.enum';
+export * from './repositories/service-report.repository';
+export * from './service-reports.module';
+export * from './services/service-report-validation.service';
+export * from './services/service-reports.service';
+export * from './services/use-cases/get-service-reports.use-case';
+export * from './services/use-cases/get-services-with-reports.use-case';
+

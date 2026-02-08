@@ -1,0 +1,107 @@
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { DocumentType } from '../../shared/entities/document-type.entity';
+import { ProfileSkill } from '../../shared/entities/profile-skill.entity';
+import { User } from '../../shared/entities/user.entity';
+
+@Entity('profiles')
+export class Profile {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  name: string;
+
+  @Column()
+  lastName: string;
+
+  @Column()
+  documentNumber: string;
+
+  @Column()
+  documentTypeId: number;
+
+  @ManyToOne(() => DocumentType)
+  @JoinColumn({ name: 'documentTypeId' })
+  documentType: DocumentType;
+
+  @Column({ nullable: true })
+  areaCode: string;
+
+  @Column({ nullable: true })
+  phoneNumber: string;
+
+  @Column({ nullable: true })
+  country: string;
+
+  @Column({ nullable: true })
+  state: string;
+
+  @Column()
+  profession: string;
+
+  @Column()
+  userId: number;
+
+  @OneToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column({ type: 'date', nullable: true })
+  birthDate: Date;
+
+  @Column({ type: 'varchar', nullable: true })
+  profilePicture?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  coverPicture?: string;
+
+  @OneToMany(() => ProfileSkill, (profileSkill) => profileSkill.profile)
+  profileSkills: ProfileSkill[];
+
+  @Column({ length: 500, nullable: true })
+  description: string;
+
+  @Column('simple-json', { nullable: true })
+  experience: {
+    title: string;
+    project: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+  }[];
+
+  @Column('simple-json', { nullable: true })
+  socialLinks: { platform: string; url: string }[];
+
+  @Column('simple-json', { nullable: true })
+  education: {
+    institution: string;
+    title: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+  }[];
+
+  @Column('simple-json', { nullable: true })
+  certifications: { name: string; url: string }[];
+
+  @CreateDateColumn({ type: 'timestamp' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deletedAt: Date;
+}

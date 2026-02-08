@@ -1,0 +1,41 @@
+import { Transform } from 'class-transformer';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
+
+export enum ServiceReviewReportReason {
+  OFFENSIVE_CONTENT = 'Contenido ofensivo o inapropiado',
+  SPAM = 'Spam o contenido irrelevante',
+  FAKE_REVIEW = 'Reseña falsa o fraudulenta',
+  PERSONAL_INFORMATION = 'Información personal sensible',
+  OTHER = 'Otro',
+}
+
+export class CreateServiceReviewReportDto {
+  @IsNumber()
+  @IsNotEmpty({ message: 'serviceReviewId is required' })
+  @Transform(({ value }) => Number(value))
+  serviceReviewId: number;
+
+  @IsEnum(ServiceReviewReportReason, { message: 'Invalid report reason' })
+  @IsNotEmpty({ message: 'reason is required' })
+  reason: ServiceReviewReportReason;
+
+  @ValidateIf((o) => o.reason === ServiceReviewReportReason.OTHER)
+  @IsString({ message: 'otherReason must be a string' })
+  @IsNotEmpty({ message: 'otherReason is required when reason is "Other"' })
+  @MaxLength(30, {
+    message: 'otherReason must not exceed 30 characters',
+  })
+  otherReason?: string;
+
+  @IsString({ message: 'description must be a string' })
+  @IsNotEmpty({ message: 'description is required' })
+  @MaxLength(500, { message: 'description must not exceed 500 characters' })
+  description: string;
+}

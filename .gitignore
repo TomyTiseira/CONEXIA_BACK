@@ -19,6 +19,9 @@ lerna-debug.log*
 /coverage
 /.nyc_output
 
+# Ngrok
+.ngrok2/
+
 # IDEs and editors
 /.idea
 .project
@@ -41,6 +44,7 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+.env.prod
 
 # temp directory
 .temp

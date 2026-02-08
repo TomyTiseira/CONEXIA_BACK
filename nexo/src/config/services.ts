@@ -1,0 +1,2 @@
+export const NATS_SERVICE = 'NATS_SERVICE';
+export const TOOLS_REGISTRY = 'TOOLS_REGISTRY';
