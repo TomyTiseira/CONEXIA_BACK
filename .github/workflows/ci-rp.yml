@@ -23,19 +23,69 @@ jobs:
         run: |
           echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
           echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
-          echo "USERS_DB_USER=${{ secrets.USERS_DB_USER }}" >> .env
-          echo "USERS_DB_PASSWORD=${{ secrets.USERS_DB_PASSWORD }}" >> .env
-          echo "USERS_DB_NAME=${{ secrets.USERS_DB_NAME }}" >> .env
-          echo "USERS_DB_HOST=${{ secrets.USERS_DB_HOST }}" >> .env
-          echo "USERS_DB_PORT=${{ secrets.USERS_DB_PORT }}" >> .env
+          echo "CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "NATS_SERVERS=${{ secrets.NATS_SERVERS }}" >> .env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> .env
+
+          # SMTP
           echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
           echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
           echo "SMTP_SECURE=${{ secrets.SMTP_SECURE }}" >> .env
           echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
           echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
           echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "NATS_SERVERS=${{ secrets.NATS_SERVERS }}" >> .env
+
+          # Users DB
+          echo "USERS_DB_USER=${{ secrets.USERS_DB_USER }}" >> .env
+          echo "USERS_DB_PASSWORD=${{ secrets.USERS_DB_PASSWORD }}" >> .env
+          echo "USERS_DB_NAME=${{ secrets.USERS_DB_NAME }}" >> .env
+          echo "USERS_DB_HOST=${{ secrets.USERS_DB_HOST }}" >> .env
+          echo "USERS_DB_PORT=${{ secrets.USERS_DB_PORT }}" >> .env
+          echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}" >> .env
+          echo "ALGORITHM=${{ secrets.ALGORITHM }}" >> .env
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+
+          # Projects DB
+          echo "PROJECTS_DB_USER=${{ secrets.PROJECTS_DB_USER }}" >> .env
+          echo "PROJECTS_DB_PASSWORD=${{ secrets.PROJECTS_DB_PASSWORD }}" >> .env
+          echo "PROJECTS_DB_NAME=${{ secrets.PROJECTS_DB_NAME }}" >> .env
+          echo "PROJECTS_DB_PORT=${{ secrets.PROJECTS_DB_PORT }}" >> .env
+
+          # Communities DB
+          echo "COMMUNITIES_DB_USER=${{ secrets.COMMUNITIES_DB_USER }}" >> .env
+          echo "COMMUNITIES_DB_PASSWORD=${{ secrets.COMMUNITIES_DB_PASSWORD }}" >> .env
+          echo "COMMUNITIES_DB_NAME=${{ secrets.COMMUNITIES_DB_NAME }}" >> .env
+          echo "COMMUNITIES_DB_PORT=${{ secrets.COMMUNITIES_DB_PORT }}" >> .env
+
+          # Services DB
+          echo "SERVICES_DB_USER=${{ secrets.SERVICES_DB_USER }}" >> .env
+          echo "SERVICES_DB_PASSWORD=${{ secrets.SERVICES_DB_PASSWORD }}" >> .env
+          echo "SERVICES_DB_NAME=${{ secrets.SERVICES_DB_NAME }}" >> .env
+          echo "SERVICES_DB_PORT=${{ secrets.SERVICES_DB_PORT }}" >> .env
+          echo "MERCADOPAGO_ACCESS_TOKEN=${{ secrets.MERCADOPAGO_ACCESS_TOKEN }}" >> .env
+          echo "MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}" >> .env
+          echo "MERCADOPAGO_WEBHOOK_SECRET=${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}" >> .env
+          echo "MERCADOPAGO_SELLER_COLLECTOR_ID=${{ secrets.MERCADOPAGO_SELLER_COLLECTOR_ID }}" >> .env
+
+          # Nexo DB
+          echo "NEXO_DB_USER=${{ secrets.NEXO_DB_USER }}" >> .env
+          echo "NEXO_DB_PASSWORD=${{ secrets.NEXO_DB_PASSWORD }}" >> .env
+          echo "NEXO_DB_NAME=${{ secrets.NEXO_DB_NAME }}" >> .env
+          echo "NEXO_DB_PORT=${{ secrets.NEXO_DB_PORT }}" >> .env
+
+          # Memberships DB
+          echo "MEMBERSHIPS_DB_USER=${{ secrets.MEMBERSHIPS_DB_USER }}" >> .env
+          echo "MEMBERSHIPS_DB_PASSWORD=${{ secrets.MEMBERSHIPS_DB_PASSWORD }}" >> .env
+          echo "MEMBERSHIPS_DB_NAME=${{ secrets.MEMBERSHIPS_DB_NAME }}" >> .env
+          echo "MEMBERSHIPS_DB_PORT=${{ secrets.MEMBERSHIPS_DB_PORT }}" >> .env
+          echo "MERCADOPAGO_BACK_URL=${{ secrets.MERCADOPAGO_BACK_URL }}" >> .env
+          echo "MERCADOPAGO_NOTIFICATION_URL=${{ secrets.MERCADOPAGO_NOTIFICATION_URL }}" >> .env
+          echo "MERCADOPAGO_CURRENCY_ID=${{ secrets.MERCADOPAGO_CURRENCY_ID }}" >> .env
 
       - name: Docker compose build
         run: docker compose -f docker-compose.yml build
@@ -47,3 +97,23 @@ jobs:
       - name: Run linter for Users service
         run: |
           docker compose -f docker-compose.yml run --rm --no-deps users npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Projects service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps projects npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Communities service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps communities npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Services service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps services npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Nexo service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps nexo npm run lint --max-warnings=0 || exit 1
+
+      - name: Run linter for Memberships service
+        run: |
+          docker compose -f docker-compose.yml run --rm --no-deps memberships npm run lint --max-warnings=0 || exit 1
