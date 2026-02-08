@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nexo
+  name: nexo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexo
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nexo
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo
+          name: nexo
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexo-secrets
+                  key: DATABASE_URL
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nexo-secrets
+                  key: OPENAI_API_KEY
+          resources: {}
+status: {}

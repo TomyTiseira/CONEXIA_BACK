@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: api-gateway
+  name: api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: api-gateway
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/api-gateway
+          name: api-gateway
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: PORT
+              value: "3000"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secrets
+                  key: JWT_SECRET
+            - name: CORS_ORIGINS
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secrets
+                  key: CORS_ORIGINS
+          resources: {}
+status: {}

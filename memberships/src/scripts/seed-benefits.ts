@@ -6,11 +6,15 @@ dotenv.config();
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_DATABASE || 'membership_db',
+  ...(process.env.DATABASE_URL
+    ? { url: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432', 10),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_DATABASE || 'membership_db',
+      }),
   entities: [Benefit],
   synchronize: false,
 });
@@ -100,9 +104,6 @@ const benefits = [
 
 async function seedBenefits() {
   console.log('🔄 Inicializando conexión a base de datos...');
-  console.log(
-    `📍 DB Config: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`,
-  );
 
   await AppDataSource.initialize();
   console.log('✅ Conexión a base de datos establecida');

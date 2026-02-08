@@ -37,11 +37,15 @@ import { ServicesModule } from './services/services.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: envs.dbHost,
-      port: parseInt(envs.dbPort),
-      username: envs.dbUsername,
-      password: envs.dbPassword,
-      database: envs.dbDatabase,
+      ...(envs.databaseUrl
+        ? { url: envs.databaseUrl, ssl: { rejectUnauthorized: true } }
+        : {
+            host: envs.dbHost,
+            port: parseInt(envs.dbPort),
+            username: envs.dbUsername,
+            password: envs.dbPassword,
+            database: envs.dbDatabase,
+          }),
       entities: [
         Service,
         ServiceCategory,

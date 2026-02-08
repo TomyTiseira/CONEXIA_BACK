@@ -1,16 +1,20 @@
 import * as dotenv from 'dotenv';
-import { Rubro } from 'src/shared/entities/rubro.entity';
+import { Rubro } from '../shared/entities/rubro.entity';
 import { DataSource } from 'typeorm';
 
 dotenv.config();
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_DATABASE || 'projects_db',
+  ...(process.env.DATABASE_URL
+    ? { url: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true } }
+    : {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432', 10),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_DATABASE || 'projects_db',
+      }),
   entities: [Rubro],
   synchronize: false,
   logging: false,
