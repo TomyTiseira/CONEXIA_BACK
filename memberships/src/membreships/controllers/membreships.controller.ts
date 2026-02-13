@@ -118,24 +118,9 @@ export class MembershipsController {
     );
   }
 
-  @MessagePattern('cancelSubscription')
-  cancelSubscription(
-    @Payload()
-    data: {
-      userId: number;
-      userEmail: string;
-      reason?: string;
-    },
-  ) {
-    return this.membershipsService.cancelSubscription(
-      data.userId,
-      data.userEmail,
-      { reason: data.reason },
-    );
-  }
-
-  @MessagePattern('processPendingCancellations')
-  processPendingCancellations() {
-    return this.membershipsService.processPendingCancellations();
+  // Cancel user subscription
+  @MessagePattern('cancelMySubscription')
+  cancelMySubscription(@Payload() data: { userId: number }) {
+    return this.membershipsService.cancelMySubscription(data.userId);
   }
 }

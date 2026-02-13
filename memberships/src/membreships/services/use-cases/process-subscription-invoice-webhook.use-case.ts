@@ -105,14 +105,14 @@ export class ProcessSubscriptionInvoiceWebhookUseCase {
     if (!subscription) return;
 
     const now = new Date();
-    const currentEndDate = subscription.endDate || now;
+    const currentNextPayment = subscription.nextPaymentDate || now;
 
-    // Calcular nueva fecha de fin (extender desde la fecha actual de fin)
-    const newEndDate = new Date(currentEndDate);
+    // Calcular próxima fecha de pago (extender desde la fecha de pago actual)
+    const nextPaymentDate = new Date(currentNextPayment);
     if (subscription.billingCycle === BillingCycle.MONTHLY) {
-      newEndDate.setMonth(newEndDate.getMonth() + 1);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
     } else {
-      newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+      nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
     }
 
     // Actualizar suscripción
@@ -125,15 +125,12 @@ export class ProcessSubscriptionInvoiceWebhookUseCase {
         ? new Date(paymentInfo.date_approved)
         : now,
       startDate: subscription.startDate || now,
-      endDate: newEndDate,
-      nextPaymentDate: paymentInfo.next_payment_date
-        ? new Date(paymentInfo.next_payment_date)
-        : null,
+      nextPaymentDate,
       retryCount: 0,
     });
 
     this.logger.log(
-      `Suscripción ${subscriptionId} renovada exitosamente hasta ${newEndDate.toISOString()}`,
+      `Suscripción ${subscriptionId} renovada exitosamente. Próximo pago: ${nextPaymentDate.toISOString()}`,
     );
   }
 

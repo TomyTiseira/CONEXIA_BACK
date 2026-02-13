@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { CancelSubscriptionDto } from '../dto/cancel-subscription.dto';
 import { ContractPlanDto } from '../dto/contract-plan.dto';
 import { CreatePlanDto } from '../dto/create-plan.dto';
 import { TogglePlanDto } from '../dto/toggle-plan.dto';
 import { UpdatePlanDto } from '../dto/update-plan.dto';
-import { CancelSubscriptionUseCase } from './use-cases/cancel-subscription.use-case';
+import { CancelUserSubscriptionUseCase } from './use-cases/cancel-user-subscription.use-case';
 import { ContractPlanUseCase } from './use-cases/contract-plan.use-case';
 import { CreatePlanUseCase } from './use-cases/create-plan.use-case';
 import { DeletePlanUseCase } from './use-cases/delete-plan.use-case';
@@ -14,7 +13,6 @@ import { GetPlanByIdUseCase } from './use-cases/get-plan-by-id.use-case';
 import { GetPlansUseCase } from './use-cases/get-plans.use-case';
 import { GetUserPlanUseCase } from './use-cases/get-user-plan.use-case';
 import { HealthUseCase } from './use-cases/health.use-case';
-import { ProcessPendingCancellationsUseCase } from './use-cases/process-pending-cancellations.use-case';
 import { ProcessPreapprovalWebhookUseCase } from './use-cases/process-preapproval-webhook.use-case';
 import { ProcessSubscriptionInvoiceWebhookUseCase } from './use-cases/process-subscription-invoice-webhook.use-case';
 import { ProcessSubscriptionPaymentWebhookUseCase } from './use-cases/process-subscription-payment-webhook.use-case';
@@ -38,8 +36,7 @@ export class MembershipsService {
     private readonly processPreapprovalWebhookUC: ProcessPreapprovalWebhookUseCase,
     private readonly getUserPlanUC: GetUserPlanUseCase,
     private readonly getAdminMembershipMetricsUC: GetAdminMembershipMetricsUseCase,
-    private readonly cancelSubscriptionUC: CancelSubscriptionUseCase,
-    private readonly processPendingCancellationsUC: ProcessPendingCancellationsUseCase,
+    private readonly cancelUserSubscriptionUC: CancelUserSubscriptionUseCase,
   ) {}
 
   // Benefits catalog
@@ -114,16 +111,9 @@ export class MembershipsService {
     );
   }
 
-  async cancelSubscription(
-    userId: number,
-    userEmail: string,
-    dto: CancelSubscriptionDto,
-  ) {
-    return this.cancelSubscriptionUC.execute(userId, userEmail, dto);
-  }
-
-  async processPendingCancellations() {
-    return this.processPendingCancellationsUC.execute();
+  // Cancel user subscription
+  async cancelMySubscription(userId: number) {
+    return this.cancelUserSubscriptionUC.execute(userId);
   }
 
   // Admin metrics
