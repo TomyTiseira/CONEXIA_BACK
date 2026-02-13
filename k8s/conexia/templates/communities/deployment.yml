@@ -52,7 +52,7 @@ spec:
             - name: EMAIL_FROM
               value: "conexianoreply@gmail.com"
             - name: FRONTEND_URL
-              value: "http://localhost:3000"
+              value: "https://conexia-front.vercel.app"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
