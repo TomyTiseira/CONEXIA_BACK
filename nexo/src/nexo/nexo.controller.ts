@@ -1,14 +1,10 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { NexoService } from './nexo.service';
 import { ChatbotService } from './services/chatbot.service';
 
 @Controller()
 export class NexoController {
-  constructor(
-    private readonly nexoService: NexoService,
-    private readonly chatbotService: ChatbotService,
-  ) {}
+  constructor(private readonly chatbotService: ChatbotService) {}
 
   // Message patterns para chatbot
   @MessagePattern({ cmd: 'chatbot_initialize' })

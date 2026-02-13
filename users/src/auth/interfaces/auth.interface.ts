@@ -4,24 +4,42 @@ export interface JwtPayload {
   roleId: number;
   profileId: number;
   isProfileComplete: boolean | null;
-  type: 'access' | 'refresh';
+  type: 'access' | 'refresh' | 'onboarding';
   lastActivityAt?: string; // ISO string de la última actividad
   iat?: number;
   exp?: number;
 }
 
-export interface LoginResponse {
-  user: {
-    id: number;
-    email: string;
-    roleId: number;
-    profileId: number;
-    isProfileComplete: boolean | null;
-  };
-  accessToken: string;
-  refreshToken: string;
+export interface OnboardingTokenResponse {
+  onboardingToken: string;
   expiresIn: number;
 }
+
+export interface LoginUserData {
+  id: number;
+  email: string;
+  roleId: number;
+  profileId: number;
+  isProfileComplete: boolean | null;
+}
+
+export type LoginResponse =
+  | {
+      user: LoginUserData;
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+      next?: undefined;
+      onboardingToken?: undefined;
+    }
+  | {
+      user: LoginUserData;
+      onboardingToken: string;
+      expiresIn: number;
+      next: 'PROFILE_REQUIRED';
+      accessToken?: undefined;
+      refreshToken?: undefined;
+    };
 
 export interface RefreshTokenResponse {
   accessToken: string;

@@ -9,32 +9,30 @@ import {
 export class PostulationTransformService {
   transformToResponseDto(postulation: Postulation): PostulationResponseDto {
     // Transform answers if they exist
-    const answers: PostulationAnswerResponseDto[] = (postulation.answers || []).map(
-      (answer) => {
-        const response: PostulationAnswerResponseDto = {
-          questionId: answer.questionId,
-          questionText: answer.question?.questionText || '',
-        };
+    const answers: PostulationAnswerResponseDto[] = (
+      postulation.answers || []
+    ).map((answer) => {
+      const response: PostulationAnswerResponseDto = {
+        questionId: answer.questionId,
+        questionText: answer.question?.questionText || '',
+      };
 
-        if (answer.answerText) {
-          response.answerText = answer.answerText;
-        }
+      if (answer.answerText) {
+        response.answerText = answer.answerText;
+      }
 
-        if (answer.optionId) {
-          response.selectedOptionId = answer.optionId;
-          // Find the option text from the question's options
-          const question = postulation.role?.questions?.find(
-            (q) => q.id === answer.questionId,
-          );
-          const option = question?.options?.find(
-            (o) => o.id === answer.optionId,
-          );
-          response.selectedOptionText = option?.optionText || '';
-        }
+      if (answer.optionId) {
+        response.selectedOptionId = answer.optionId;
+        // Find the option text from the question's options
+        const question = postulation.role?.questions?.find(
+          (q) => q.id === answer.questionId,
+        );
+        const option = question?.options?.find((o) => o.id === answer.optionId);
+        response.selectedOptionText = option?.optionText || '';
+      }
 
-        return response;
-      },
-    );
+      return response;
+    });
 
     return {
       id: postulation.id,

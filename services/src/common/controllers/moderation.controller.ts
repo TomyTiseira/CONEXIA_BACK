@@ -6,15 +6,22 @@ import { ModerationListenerService } from '../services/moderation-listener.servi
 export class ModerationController {
   private readonly logger = new Logger(ModerationController.name);
 
-  constructor(private readonly moderationListenerService: ModerationListenerService) {}
+  constructor(
+    private readonly moderationListenerService: ModerationListenerService,
+  ) {}
 
   /**
    * Escucha el evento de usuario baneado
    */
   @EventPattern('user.banned')
-  async handleUserBanned(@Payload() data: { userId: number; bannedAt: Date; reason: string }): Promise<void> {
+  async handleUserBanned(
+    @Payload() data: { userId: number; bannedAt: Date; reason: string },
+  ): Promise<void> {
     this.logger.log(`Evento recibido: usuario ${data.userId} baneado`);
-    await this.moderationListenerService.handleUserBanned(data.userId);
+    await this.moderationListenerService.handleUserBanned(
+      data.userId,
+      data.reason,
+    );
   }
 
   /**
@@ -22,9 +29,17 @@ export class ModerationController {
    */
   @EventPattern('user.suspended')
   async handleUserSuspended(
-    @Payload() data: { userId: number; suspendedAt: Date; expiresAt: Date; reason: string },
+    @Payload()
+    data: {
+      userId: number;
+      suspendedAt: Date;
+      expiresAt: Date;
+      reason: string;
+    },
   ): Promise<void> {
-    this.logger.log(`Evento recibido: usuario ${data.userId} suspendido hasta ${data.expiresAt}`);
+    this.logger.log(
+      `Evento recibido: usuario ${data.userId} suspendido hasta ${data.expiresAt}`,
+    );
     await this.moderationListenerService.handleUserSuspended(data.userId);
   }
 
@@ -32,7 +47,9 @@ export class ModerationController {
    * Escucha el evento de usuario reactivado
    */
   @EventPattern('user.reactivated')
-  async handleUserReactivated(@Payload() data: { userId: number; reactivatedAt: Date }): Promise<void> {
+  async handleUserReactivated(
+    @Payload() data: { userId: number; reactivatedAt: Date },
+  ): Promise<void> {
     this.logger.log(`Evento recibido: usuario ${data.userId} reactivado`);
     await this.moderationListenerService.handleUserReactivated(data.userId);
   }
@@ -45,7 +62,9 @@ export class ModerationController {
     count: number;
     details: any[];
   }> {
-    this.logger.log(`Consulta recibida: verificar contrataciones activas de usuario ${data.userId}`);
+    this.logger.log(
+      `Consulta recibida: verificar contrataciones activas de usuario ${data.userId}`,
+    );
     return this.moderationListenerService.checkUserActiveHirings(data.userId);
   }
 }

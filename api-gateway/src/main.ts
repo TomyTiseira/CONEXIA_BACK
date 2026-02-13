@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -12,8 +12,6 @@ import { envs } from './config';
 async function bootstrap() {
   const logger = new Logger('ApiGateway');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  //const app = await NestFactory.create(AppModule);
 
   // Configurar como microservicio híbrido (HTTP + NATS)
   app.connectMicroservice<MicroserviceOptions>({
@@ -52,7 +50,14 @@ async function bootstrap() {
     prefix: '/uploads/publications/',
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: [
+      {
+        path: '',
+        method: RequestMethod.GET,
+      },
+    ],
+  });
 
   app.use(cookieParser());
 

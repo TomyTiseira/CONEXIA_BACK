@@ -139,10 +139,10 @@ export class CommentReportsService {
   async getActiveReports() {
     const reports =
       await this.commentReportRepository.findActiveReportsWithComments();
-    
+
     // Filtrar reportes huérfanos (comentario eliminado)
     return reports
-      .filter(report => report.comment != null)
+      .filter((report) => report.comment != null)
       .map((report) => ({
         id: report.id,
         reporterId: report.reporterId,
@@ -158,6 +158,20 @@ export class CommentReportsService {
         resourceTitle: null,
         resourceDescription: report.comment.content || null,
       }));
+  }
+
+  /**
+   * Obtiene TODOS los reportes (activos e inactivos)
+   * Para métricas del dashboard de moderación
+   */
+  async getAllReportsForMetrics() {
+    const reports = await this.commentReportRepository.find({
+      select: ['id', 'reason', 'isActive', 'createdAt'],
+    });
+    return reports.map((report) => ({
+      reason: report.reason,
+      isActive: report.isActive,
+    }));
   }
 
   /**

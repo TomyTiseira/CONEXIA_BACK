@@ -33,7 +33,6 @@ export class ProjectRole {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-
   @Column({ name: 'application_types', type: 'simple-array', nullable: true })
   applicationTypes: string[];
 

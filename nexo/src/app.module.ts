@@ -4,19 +4,22 @@ import { envs } from './config';
 import { Conversation } from './nexo/entities/conversation.entity';
 import { FaqEmbedding } from './nexo/entities/faq-embedding.entity';
 import { Message } from './nexo/entities/message.entity';
-import { Nexo } from './nexo/entities/nexo.entity';
 import { NexoModule } from './nexo/nexo.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: envs.dbHost,
-      port: parseInt(envs.dbPort),
-      username: envs.dbUsername,
-      password: envs.dbPassword,
-      database: envs.dbDatabase,
-      entities: [Nexo, FaqEmbedding, Conversation, Message],
+      ...(envs.databaseUrl
+        ? { url: envs.databaseUrl, ssl: { rejectUnauthorized: true } }
+        : {
+            host: envs.dbHost,
+            port: parseInt(envs.dbPort),
+            username: envs.dbUsername,
+            password: envs.dbPassword,
+            database: envs.dbDatabase,
+          }),
+      entities: [FaqEmbedding, Conversation, Message],
       synchronize: true,
     }),
     NexoModule,

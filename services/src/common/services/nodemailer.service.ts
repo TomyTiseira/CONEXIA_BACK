@@ -206,6 +206,35 @@ export class NodemailerService extends EmailService {
     });
   }
 
+  async sendClaimFinishedByModerationEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      reason: string;
+      frontendUrl?: string | null;
+    },
+  ): Promise<void> {
+    const frontendUrl = (claimData.frontendUrl || '').trim();
+    const claimUrl = frontendUrl
+      ? `${frontendUrl.replace(/\/$/, '')}/claims/${claimData.claimId}`
+      : `https://conexia.com/claims/${claimData.claimId}`;
+
+    await this.sendEmail({
+      to: recipientEmail,
+      subject: `Actualización importante sobre tu reclamo - ${claimData.hiringTitle}`,
+      html: this.generateClaimFinishedByModerationEmailHTML(recipientName, {
+        ...claimData,
+        claimUrl,
+      }),
+      text: this.generateClaimFinishedByModerationEmailText(recipientName, {
+        ...claimData,
+        claimUrl,
+      }),
+    });
+  }
+
   async sendServiceTerminatedByModerationEmail(
     clientEmail: string,
     clientName: string,
@@ -882,6 +911,107 @@ Este es un mensaje automático, por favor no respondas a este email.
     `;
   }
 
+  private generateClaimFinishedByModerationEmailHTML(
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      reason: string;
+      claimUrl: string;
+    },
+  ): string {
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f6f6;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="text-align: center; padding: 20px; background-color: #ff4953; border-radius: 5px; margin-bottom: 20px;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Actualización Importante</h1>
+          </div>
+
+          <p style="color: #333; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+
+          <p style="color: #666; font-size: 14px;">
+            Te informamos que tu reclamo asociado al servicio <strong>${claimData.hiringTitle}</strong> ha sido <strong>finalizado por nuestro equipo de moderación</strong>.
+          </p>
+
+          <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #ff4953; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">Detalles del Reclamo</h3>
+            <p style="margin: 5px 0; color: #666;"><strong>Servicio:</strong> ${claimData.hiringTitle}</p>
+            <p style="margin: 5px 0; color: #666;"><strong>ID del reclamo:</strong> ${claimData.claimId}</p>
+          </div>
+
+          <div style="background-color: #ffedee; padding: 20px; border-left: 4px solid #ff4953; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #bf373e; font-size: 14px;">
+              <strong>Motivo de la finalización:</strong>
+            </p>
+            <p style="margin: 0; color: #bf373e; font-size: 14px;">
+              ${claimData.reason}
+            </p>
+          </div>
+
+          <div style="background-color: #e8f5f5; padding: 20px; border-left: 4px solid #48a6a7; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0 0 10px 0; color: #2d6a6b; font-size: 14px;">
+              <strong>Información importante:</strong>
+            </p>
+            <ul style="margin: 0; padding-left: 20px; color: #2d6a6b; font-size: 14px;">
+              <li style="margin-bottom: 8px;">Los compromisos asociados a este reclamo también fueron <strong>finalizados por moderación</strong>.</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${claimData.claimUrl}" style="background-color: #48a6a7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+              Ver Reclamo
+            </a>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e1e4e4; margin: 30px 0;">
+
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center;">
+            Si tenés alguna pregunta o necesitás asistencia, contactanos en <a href="mailto:soporte@conexia.com" style="color: #48a6a7;">soporte@conexia.com</a>
+          </p>
+
+          <p style="color: #9fa7a7; font-size: 12px; text-align: center; margin-top: 10px;">
+            Este es un mensaje automático, por favor no respondas a este email.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  private generateClaimFinishedByModerationEmailText(
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      reason: string;
+      claimUrl: string;
+    },
+  ): string {
+    return `
+Actualización importante sobre tu reclamo
+
+Hola ${recipientName},
+
+Te informamos que tu reclamo asociado al servicio "${claimData.hiringTitle}" ha sido finalizado por nuestro equipo de moderación.
+
+DETALLES DEL RECLAMO:
+- Servicio: ${claimData.hiringTitle}
+- ID del reclamo: ${claimData.claimId}
+
+MOTIVO DE LA FINALIZACIÓN:
+${claimData.reason}
+
+INFORMACIÓN IMPORTANTE:
+✓ Los compromisos asociados a este reclamo también fueron finalizados por moderación.
+✓ Si tenés dudas o necesitás asistencia, contactanos en soporte@conexia.com
+
+Ver reclamo:
+${claimData.claimUrl}
+
+---
+Este es un mensaje automático, por favor no respondas a este email.
+    `;
+  }
+
   /**
    * Envía un email al proveedor cuando el cliente es baneado
    */
@@ -1301,18 +1431,6 @@ Este es un mensaje automático, por favor no respondas a este email.
     const typeLabel =
       complianceTypeLabels[complianceData.complianceType] ||
       complianceData.complianceType;
-
-    const evidenceSection =
-      complianceData.evidenceUrls && complianceData.evidenceUrls.length > 0
-        ? `
-      <div style="background-color: #f5f6f6; padding: 20px; border-left: 4px solid #48a6a7; margin: 20px 0;">
-        <h3 style="margin: 0 0 10px 0; color: #333;">Evidencia adjunta</h3>
-        <ul style="margin: 5px 0; padding-left: 20px; color: #666; font-size: 14px; line-height: 1.8;">
-          ${complianceData.evidenceUrls.map((url) => `<li><a href="${url}" style="color: #48a6a7;">${url}</a></li>`).join('')}
-        </ul>
-      </div>
-    `
-        : '';
 
     const notesSection = complianceData.userNotes
       ? `
@@ -1810,7 +1928,6 @@ Este es un mensaje automático, por favor no respondas a este email.
     // Para segundo rechazo, construir secciones especiales
     let reasonSection = '';
     let warningSection = '';
-    let nextStepsSection = '';
 
     if (complianceData.isSecondRejection && !complianceData.isOtherPartyEmail) {
       // Email para usuario responsable en segundo rechazo
@@ -2144,11 +2261,6 @@ Este es un mensaje automático, por favor no respondas a este email.
       </div>
     `
       : '';
-
-    const attemptBadge =
-      complianceData.attemptNumber > 1
-        ? `<span style="background-color: #ff9800; color: white; padding: 4px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-left: 10px;">INTENTO ${complianceData.attemptNumber}</span>`
-        : '';
 
     if (isResponsibleUser) {
       return `

@@ -23,6 +23,7 @@ import { UsersModule } from './users/users.module';
 import { VerificationModule } from './verification/verification.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { HealthCheckModule } from './health-check/health-check.module';
 
 @Module({
   imports: [
@@ -48,7 +49,8 @@ import { WebSocketModule } from './websocket/websocket.module';
     ModerationModule,
     MembershipsModule,
     DashboardModule,
-    WebSocketModule, // Módulo para notificaciones en tiempo real
+    WebSocketModule,
+    HealthCheckModule,
   ],
   controllers: [],
 })

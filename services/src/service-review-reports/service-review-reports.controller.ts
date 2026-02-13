@@ -3,8 +3,8 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
-    CreateServiceReviewReportDto,
-    GetServiceReviewReportsDto,
+  CreateServiceReviewReportDto,
+  GetServiceReviewReportsDto,
 } from './dto';
 import { ServiceReviewReport } from './entities/service-review-report.entity';
 import { CreateServiceReviewReportUseCase } from './services/use-cases/create-service-review-report.use-case';
@@ -25,10 +25,7 @@ export class ServiceReviewReportsController {
   async createReport(
     @Payload() payload: { userId: number; dto: CreateServiceReviewReportDto },
   ) {
-    return await this.createReportUseCase.execute(
-      payload.userId,
-      payload.dto,
-    );
+    return await this.createReportUseCase.execute(payload.userId, payload.dto);
   }
 
   @MessagePattern('get_service_review_reports')
@@ -50,6 +47,13 @@ export class ServiceReviewReportsController {
   async getActiveServiceReviewReports() {
     return await this.serviceReviewReportRepository.find({
       where: { isActive: true },
+    });
+  }
+
+  @MessagePattern('getAllServiceReviewReports')
+  async getAllServiceReviewReports() {
+    return await this.serviceReviewReportRepository.find({
+      select: ['reason', 'isActive'],
     });
   }
 }

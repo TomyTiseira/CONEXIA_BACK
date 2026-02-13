@@ -73,6 +73,11 @@ export class CommentReportsController {
     return await this.commentReportsService.getActiveReports();
   }
 
+  @MessagePattern('getAllCommentReports')
+  async getAllCommentReports() {
+    return await this.commentReportsService.getAllReportsForMetrics();
+  }
+
   @MessagePattern('softDeleteOldCommentReports')
   async softDeleteOldCommentReports(@Payload() data: { oneYearAgo: Date }) {
     return await this.commentReportsService.softDeleteOldReports(

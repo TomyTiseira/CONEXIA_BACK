@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GetMyClaimsDto } from '../dto/get-my-claims.dto';
 import { Claim } from '../entities/claim.entity';
 import { ClaimRole, ClaimStatus } from '../enums/claim.enum';
+import { Injectable } from '@nestjs/common/decorators/core/injectable.decorator';
 
 const VIRTUAL_CLAIM_STATUSES = {
   REQUIRES_RESPONSE: 'requires_response',
@@ -79,13 +79,13 @@ export class ClaimRepository {
     const hiring = (claim as any).hiring;
     if (!hiring) return null;
 
-    if (claim.claimantRole === 'client') {
+    if (claim.claimantRole === ClaimRole.CLIENT) {
       // claimant=client => respondent=provider (service owner)
       const providerId = hiring.service?.userId;
       if (Number(providerId) === normalizedUserId) return 'respondent';
     }
 
-    if (claim.claimantRole === 'provider') {
+    if (claim.claimantRole === ClaimRole.PROVIDER) {
       // claimant=provider => respondent=client
       const clientId = hiring.userId;
       if (Number(clientId) === normalizedUserId) return 'respondent';
@@ -417,13 +417,13 @@ export class ClaimRepository {
     status: ClaimStatus.RESOLVED | ClaimStatus.REJECTED,
     resolution: string,
     resolvedBy: number,
-    resolutionType?: string,
+    resolutionType?: string | null,
     partialAgreementDetails?: string,
   ): Promise<Claim | null> {
     await this.repository.update(id, {
       status,
       resolution,
-      resolutionType: resolutionType as any,
+      resolutionType: (resolutionType ?? null) as any,
       resolvedBy,
       resolvedAt: new Date(),
       ...(partialAgreementDetails && { partialAgreementDetails }),

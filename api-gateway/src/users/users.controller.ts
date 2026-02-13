@@ -11,6 +11,7 @@ import {
   Req,
   Res,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
@@ -22,6 +23,8 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
+import { OnboardingJwtGuard } from 'src/auth/guards/onboarding-jwt.guard';
+import { OnboardingOrSessionGuard } from 'src/auth/guards/onboarding-or-session.guard';
 import { AuthenticatedRequest } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from 'src/config';
 import { jwtConfig } from 'src/config/jwt.config';
@@ -71,7 +74,10 @@ export class UsersController {
   }
   @Get()
   @AutoRefreshAuth()
-  getUsers(@Query() getUsersDto: GetUsersDto, @User() user?: AuthenticatedUser) {
+  getUsers(
+    @Query() getUsersDto: GetUsersDto,
+    @User() user?: AuthenticatedUser,
+  ) {
     // Incluir el userId actual si está autenticado para excluirlo de los resultados
     const payload = {
       ...getUsersDto,
@@ -104,8 +110,7 @@ export class UsersController {
         ),
       )) as {
         data: {
-          accessToken: string;
-          refreshToken: string;
+          onboardingToken: string;
           expiresIn: number;
         };
         id: number;
@@ -114,15 +119,20 @@ export class UsersController {
         message: string;
       };
 
-      // Configurar cookies
-      res.cookie('access_token', result.data.accessToken, {
+      // Asegurar que NO quede sesión activa al verificar el email
+      res.clearCookie('access_token', {
         ...jwtConfig.cookieOptions,
-        maxAge: result.data.expiresIn * 1000,
+        maxAge: 0,
+      });
+      res.clearCookie('refresh_token', {
+        ...jwtConfig.cookieOptions,
+        maxAge: 0,
       });
 
-      res.cookie('refresh_token', result.data.refreshToken, {
+      // Cookie temporal solo para onboarding (crear perfil)
+      res.cookie('onboarding_token', result.data.onboardingToken, {
         ...jwtConfig.cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+        maxAge: result.data.expiresIn * 1000,
       });
 
       res.json({
@@ -134,6 +144,7 @@ export class UsersController {
             email: result.email,
             isValidate: result.isValidate,
           },
+          next: 'PROFILE_REQUIRED',
         },
       });
     } catch (error: unknown) {
@@ -144,6 +155,34 @@ export class UsersController {
         message: errorMessage,
       });
     }
+  }
+
+  // Endpoint de soporte para el frontend: permite validar que existe un onboarding_token válido
+  // (HttpOnly) y obtener datos mínimos para el flujo de creación de perfil.
+  @Get('onboarding/status')
+  @UseGuards(OnboardingJwtGuard)
+  getOnboardingStatus(@Req() req: AuthenticatedRequest) {
+    const user = req.user as unknown as {
+      id: number;
+      email: string;
+      roleId: number;
+      profileId: number;
+      isProfileComplete: boolean | null;
+    };
+
+    return {
+      success: true,
+      data: {
+        isOnboarding: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          roleId: user.roleId,
+          profileId: user.profileId,
+          isProfileComplete: user.isProfileComplete,
+        },
+      },
+    };
   }
 
   @Post('resend-verification')
@@ -284,7 +323,7 @@ export class UsersController {
   }
 
   @Post('profile')
-  @AuthRoles([ROLES.USER])
+  @UseGuards(OnboardingOrSessionGuard)
   @UseInterceptors(
     FileFieldsInterceptor(
       [
@@ -321,6 +360,7 @@ export class UsersController {
   )
   async createProfile(
     @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
     @UploadedFiles()
     files: {
       profilePicture?: Express.Multer.File[];
@@ -438,12 +478,61 @@ export class UsersController {
       }),
     };
 
-    // Retornamos el observable sin usar @Res()
-    return this.client.send('createProfile', payload).pipe(
-      catchError((error) => {
-        throw new RpcException(error);
-      }),
+    // 1) Crear perfil
+
+    const profile: any = await firstValueFrom(
+      this.client.send('createProfile', payload).pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      ),
     );
+
+    // 2) Si el perfil quedó completo, canjear onboarding_token por sesión real
+    const onboardingToken = (req as any)?.cookies?.onboarding_token as
+      | string
+      | undefined;
+
+    if (onboardingToken) {
+      try {
+        const session = (await firstValueFrom(
+          this.client.send('exchangeOnboardingToken', { onboardingToken }).pipe(
+            catchError((error) => {
+              throw new RpcException(error);
+            }),
+          ),
+        )) as {
+          success: boolean;
+          data: {
+            accessToken: string;
+            refreshToken: string;
+            expiresIn: number;
+          };
+        };
+
+        if (session?.data?.accessToken && session?.data?.refreshToken) {
+          res.cookie('access_token', session.data.accessToken, {
+            ...jwtConfig.cookieOptions,
+            maxAge: session.data.expiresIn * 1000,
+          });
+
+          res.cookie('refresh_token', session.data.refreshToken, {
+            ...jwtConfig.cookieOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          });
+
+          // Onboarding finalizado
+          res.clearCookie('onboarding_token', {
+            ...jwtConfig.cookieOptions,
+            maxAge: 0,
+          });
+        }
+      } catch {
+        // Si el perfil aún no está completo, mantenemos onboarding_token.
+      }
+    }
+
+    return profile;
   }
 
   @Patch('profile')

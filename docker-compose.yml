@@ -30,6 +30,7 @@ services:
     volumes:
       - ./users/src:/src/app/src
       - ./api-gateway/uploads:/src/app/uploads
+    command: npm run start:dev
     depends_on:
       users-db:
         condition: service_healthy
@@ -53,6 +54,8 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   users-db:
     build:
@@ -84,6 +87,7 @@ services:
     build: ./projects
     volumes:
       - ./projects/src:/src/app/src
+    command: npm run start:dev
     depends_on:
       projects-db:
         condition: service_healthy
@@ -101,6 +105,8 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   projects-db:
     build:
@@ -136,6 +142,7 @@ services:
     build: ./communities
     volumes:
       - ./communities/src:/src/app/src
+    command: npm run start:dev
     depends_on:
       communities-db:
         condition: service_healthy
@@ -154,6 +161,8 @@ services:
       - EMAIL_FROM=${EMAIL_FROM}
       - FRONTEND_URL=${FRONTEND_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   communities-db:
     build:
@@ -189,6 +198,7 @@ services:
     build: ./services
     volumes:
       - ./services/src:/src/app/src
+    command: npm run start:dev
     depends_on:
       services-db:
         condition: service_healthy
@@ -250,6 +260,7 @@ services:
     build: ./nexo
     volumes:
       - ./nexo/src:/src/app/src
+    command: npm run start:dev
     depends_on:
       nexo-db:
         condition: service_healthy
@@ -261,6 +272,8 @@ services:
       - DB_PASSWORD=${NEXO_DB_PASSWORD}
       - DB_DATABASE=${NEXO_DB_NAME}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   nexo-db:
     build:
@@ -292,6 +305,7 @@ services:
     build: ./memberships
     volumes:
       - ./memberships/src:/src/app/src
+    command: npm run start:dev
     depends_on:
       memberships-db:
         condition: service_healthy
@@ -313,6 +327,8 @@ services:
       - MERCADOPAGO_BACK_URL=${MERCADOPAGO_BACK_URL}
       - MERCADOPAGO_NOTIFICATION_URL=${MERCADOPAGO_NOTIFICATION_URL}
       - MERCADOPAGO_CURRENCY_ID=${MERCADOPAGO_CURRENCY_ID:-ARS}
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
 
   memberships-db:
     build:

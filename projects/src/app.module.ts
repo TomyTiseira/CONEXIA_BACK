@@ -23,7 +23,6 @@ import { RoleSkill } from './projects/entities/role-skill.entity';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports';
 import { Report } from './reports/entities/report.entity';
-import { SeedService } from './seed/seed.service';
 import { Rubro } from './shared/entities/rubro.entity';
 import { Skill } from './shared/entities/skill.entity';
 import { SharedModule } from './shared/shared.module';
@@ -32,11 +31,15 @@ import { SharedModule } from './shared/shared.module';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: envs.dbHost,
-      port: parseInt(envs.dbPort),
-      username: envs.dbUsername,
-      password: envs.dbPassword,
-      database: envs.dbDatabase,
+      ...(envs.databaseUrl
+        ? { url: envs.databaseUrl, ssl: { rejectUnauthorized: true } }
+        : {
+            host: envs.dbHost,
+            port: parseInt(envs.dbPort),
+            username: envs.dbUsername,
+            password: envs.dbPassword,
+            database: envs.dbDatabase,
+          }),
       entities: [
         Project,
         RoleSkill,
@@ -72,7 +75,6 @@ import { SharedModule } from './shared/shared.module';
       useClass: RpcExceptionInterceptor,
     },
     ModerationListenerService,
-    SeedService,
   ],
 })
 export class AppModule {}

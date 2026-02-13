@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ServiceReportInternalServerErrorException } from '../../../common/exceptions/service-report.exceptions';
-import { GetServiceReportsListDto, OrderByServiceReport } from '../../dtos/get-service-reports-list.dto';
+import {
+  GetServiceReportsListDto,
+  OrderByServiceReport,
+} from '../../dtos/get-service-reports-list.dto';
 import { ServiceReportsService } from '../service-reports.service';
 
 export interface ServiceWithReportsResponseDto {
@@ -21,7 +24,10 @@ export interface ServiceWithReportsPaginationInfo {
   hasPrev: boolean;
 }
 
-function calculatePagination(total: number, { page, limit }: { page: number; limit: number }): ServiceWithReportsPaginationInfo {
+function calculatePagination(
+  total: number,
+  { page, limit }: { page: number; limit: number },
+): ServiceWithReportsPaginationInfo {
   const totalPages = Math.ceil(total / limit);
   return {
     page,
@@ -40,22 +46,25 @@ export interface GetServicesWithReportsResponseDto {
 
 @Injectable()
 export class GetServicesWithReportsUseCase {
-  constructor(
-    private readonly serviceReportsService: ServiceReportsService,
-  ) {}
+  constructor(private readonly serviceReportsService: ServiceReportsService) {}
 
   async execute(
     getServiceReportsListDto: GetServiceReportsListDto,
   ): Promise<GetServicesWithReportsResponseDto> {
     try {
-      const { page = 1, limit = 10, orderBy = OrderByServiceReport.REPORT_COUNT } = getServiceReportsListDto;
+      const {
+        page = 1,
+        limit = 10,
+        orderBy = OrderByServiceReport.REPORT_COUNT,
+      } = getServiceReportsListDto;
 
       // Obtener servicios con conteo de reportes
-      const [services, total] = await this.serviceReportsService.getServicesWithReportCounts(
-        orderBy,
-        page,
-        limit,
-      );
+      const [services, total] =
+        await this.serviceReportsService.getServicesWithReportCounts(
+          orderBy,
+          page,
+          limit,
+        );
 
       // Calcular información de paginación
       const pagination = calculatePagination(total, { page, limit });
@@ -69,9 +78,9 @@ export class GetServicesWithReportsUseCase {
       if (error instanceof Error && 'status' in error) {
         throw error;
       }
-      
+
       throw new ServiceReportInternalServerErrorException(
-        'Error interno al obtener los servicios con reportes'
+        'Error interno al obtener los servicios con reportes',
       );
     }
   }

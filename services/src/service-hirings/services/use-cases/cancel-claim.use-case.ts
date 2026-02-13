@@ -170,7 +170,7 @@ export class CancelClaimUseCase {
       }
 
       // Email al moderador asignado (si existe).
-      const assignedModeratorEmail = (claim as any).assignedModeratorEmail;
+      const assignedModeratorEmail = claim.assignedModeratorEmail;
       if (assignedModeratorEmail) {
         const moderatorSubject = `Reclamo cancelado por el denunciante - ${serviceName}`;
         const moderatorText = `Hola,\n\nEl reclamo ID ${claim.id} sobre la contratación de "${serviceName}" ha sido cancelado por el denunciante (${claimantName}).\n\nNo se requiere ninguna acción adicional.\n\nSaludos,\nSistema de Reclamos`;

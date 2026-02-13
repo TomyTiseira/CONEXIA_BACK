@@ -1,6 +1,7 @@
 import {
   CallHandler,
   ExecutionContext,
+  HttpException,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
@@ -18,7 +19,28 @@ export class RpcExceptionInterceptor implements NestInterceptor {
           return throwError(() => error);
         }
 
-        // Para errores de validación o errores conocidos, los convertimos en RpcException
+        // Si es una HttpException (BadRequestException, NotFoundException, ForbiddenException, etc.)
+        if (error instanceof HttpException) {
+          const response = error.getResponse();
+          const status = error.getStatus();
+
+          return throwError(
+            () =>
+              new RpcException({
+                statusCode: status,
+                message:
+                  typeof response === 'string'
+                    ? response
+                    : (response as any).message || error.message,
+                error:
+                  typeof response === 'object' && 'error' in response
+                    ? (response as any).error
+                    : error.name,
+              }),
+          );
+        }
+
+        // Para errores de validación o errores conocidos
         if (
           error.name === 'ValidationError' ||
           error.name === 'QueryFailedError'
@@ -27,7 +49,7 @@ export class RpcExceptionInterceptor implements NestInterceptor {
             () =>
               new RpcException({
                 message: error.message || 'Validation failed',
-                status: 400,
+                statusCode: 400,
                 error: 'Bad Request',
               }),
           );
@@ -38,7 +60,7 @@ export class RpcExceptionInterceptor implements NestInterceptor {
           () =>
             new RpcException({
               message: error.message || 'Internal server error',
-              status: 500,
+              statusCode: 500,
               error: 'Internal Server Error',
             }),
         );

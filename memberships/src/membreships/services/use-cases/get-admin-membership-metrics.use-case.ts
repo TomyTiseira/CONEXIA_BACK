@@ -4,7 +4,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { firstValueFrom } from 'rxjs';
 import { Repository } from 'typeorm';
 import { NATS_SERVICE } from '../../../config';
-import { Subscription, SubscriptionStatus } from '../../entities/membreship.entity';
+import {
+  Subscription,
+  SubscriptionStatus,
+} from '../../entities/membreship.entity';
 import { Plan } from '../../entities/plan.entity';
 
 export class UsersByPlanDto {
@@ -66,7 +69,8 @@ export class GetAdminMembershipMetricsUseCase {
           })
           .getRawOne();
 
-        const freeUsersCount = totalGeneralUsers - parseInt(usersWithActivePlan.count || '0');
+        const freeUsersCount =
+          totalGeneralUsers - parseInt(usersWithActivePlan.count || '0');
 
         // Agregar plan Free al inicio del array
         if (freeUsersCount > 0) {

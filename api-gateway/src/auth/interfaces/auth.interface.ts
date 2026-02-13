@@ -9,9 +9,11 @@ export interface LoginResponse {
       profileId: number;
       isProfileComplete: boolean | null;
     };
-    accessToken: string;
-    refreshToken: string;
+    accessToken?: string;
+    refreshToken?: string;
+    onboardingToken?: string;
     expiresIn: number;
+    next?: 'PROFILE_REQUIRED';
   };
 }
 

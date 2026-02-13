@@ -33,6 +33,10 @@ export class AuthEventsGateway
   // Mapa de userId -> Set de socketIds (permite múltiples pestañas/dispositivos)
   private connectedUsers: Map<number, Set<string>> = new Map();
 
+  // Buffer simple: si el usuario no está conectado al momento del evento,
+  // guardamos la última notificación para enviarla al reconectar.
+  private pendingAccountNotifications: Map<number, any> = new Map();
+
   constructor(private readonly jwtService: JwtService) {}
 
   afterInit() {
@@ -118,6 +122,17 @@ export class AuthEventsGateway
         `✅ Usuario ${userId} conectado exitosamente (socket: ${client.id}, total conexiones: ${userSockets?.size || 1})`,
       );
 
+      const pending: any = this.pendingAccountNotifications.get(userId);
+      if (pending) {
+        this.server
+          .to(`user-${userId}`)
+          .emit('account-status-changed', pending);
+        this.pendingAccountNotifications.delete(userId);
+        this.logger.warn(
+          `📤 Notificación pendiente enviada a usuario ${userId} al reconectar`,
+        );
+      }
+
       this.logger.debug(
         `📊 Usuarios conectados actualmente: ${this.connectedUsers.size}`,
       );
@@ -179,6 +194,9 @@ export class AuthEventsGateway
       this.logger.warn(
         `⚠️ Usuario ${userId} NO tiene conexiones WebSocket activas - se aplicará tokensInvalidatedAt en próxima petición HTTP`,
       );
+
+      // Guardar para enviar cuando el usuario se conecte/reconecte.
+      this.pendingAccountNotifications.set(userId, payload);
     }
   }
 

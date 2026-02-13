@@ -45,7 +45,9 @@ export class RetryPaymentUseCase {
 
     // 2. Buscar el pago rechazado anterior
     const previousPayment = hiring.payments?.find(
-      (p) => p.paymentType === 'initial' && p.status === 'rejected',
+      (p) =>
+        p.paymentType === PaymentType.INITIAL &&
+        p.status === PaymentStatus.REJECTED,
     );
 
     if (!previousPayment) {

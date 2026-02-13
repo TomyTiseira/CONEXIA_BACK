@@ -1,0 +1,161 @@
+services:
+  nats-server:
+    image: nats:2.10.25-alpine3.21
+
+  api-gateway:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/api-gateway
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile.prod
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - PORT=${API_GATEWAY_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - NODE_ENV=${NODE_ENV}
+
+  users:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/users
+    build:
+      context: ./users
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${USERS_DB_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  projects:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/projects
+    build:
+      context: ./projects
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${PROJECTS_DB_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
+
+  communities:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/communities
+    build:
+      context: ./communities
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${COMMUNITIES_DB_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  services:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/services
+    build:
+      context: ./services
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${SERVICES_DB_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - API_BASE_URL=${API_BASE_URL}
+      - BASE_URL=http://localhost:${API_GATEWAY_PORT}
+      - NODE_ENV=${NODE_ENV}
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+      - MERCADOPAGO_PUBLIC_KEY=${MERCADOPAGO_PUBLIC_KEY}
+      - MERCADOPAGO_WEBHOOK_SECRET=${MERCADOPAGO_WEBHOOK_SECRET}
+      - MERCADOPAGO_SELLER_COLLECTOR_ID=${MERCADOPAGO_SELLER_COLLECTOR_ID}
+
+  nexo:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo
+    build:
+      context: ./nexo
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${NEXO_DB_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  memberships:
+    image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/memberships
+    build:
+      context: ./memberships
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - nats-server
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${MEMBERSHIPS_DB_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - MERCADOPAGO_ACCESS_TOKEN=${MERCADOPAGO_ACCESS_TOKEN}
+      - MERCADOPAGO_BACK_URL=${MERCADOPAGO_BACK_URL}
+      - MERCADOPAGO_NOTIFICATION_URL=${MERCADOPAGO_NOTIFICATION_URL}
+      - MERCADOPAGO_CURRENCY_ID=${MERCADOPAGO_CURRENCY_ID:-ARS}
+
+  # Ngrok para exponer el API Gateway y recibir webhooks de MercadoPago
+  # Configurado para fallar silenciosamente si el endpoint ya existe
+  ngrok:
+    image: ngrok/ngrok:3-alpine
+    restart: "no" # No reiniciar si falla por endpoint ocupado
+    command:
+      - "http"
+      - "api-gateway:8080"
+      - "--log"
+      - "stdout"
+      - "--host-header"
+      - "rewrite"
+      - "--pooling-enabled" # Permite load balancing con túneles existentes
+    ports:
+      - "4040:4040" # Puerto web UI de ngrok
+    depends_on:
+      - api-gateway
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    profiles:
+      - ngrok # Solo se ejecuta si se especifica: docker-compose --profile ngrok up

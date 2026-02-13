@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: projects
+  name: projects
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: projects
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: projects
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/projects
+          name: projects
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: projects-secrets
+                  key: DATABASE_URL
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: projects-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_SECURE
+              value: "false"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: projects-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: projects-secrets
+                  key: SMTP_PASS
+            - name: EMAIL_FROM
+              value: "jalyn.mclaughlin63@ethereal.email"
+            - name: FRONTEND_URL
+              value: "http://localhost:3000"
+          resources: {}
+status: {}

@@ -21,7 +21,13 @@ export class GetPostulationsUseCase {
     getPostulationsDto: GetPostulationsDto,
     currentUserId: number,
   ): Promise<GetPostulationsResponseDto> {
-    const { projectId, statusId, roleId, page = 1, limit = 10 } = getPostulationsDto;
+    const {
+      projectId,
+      statusId,
+      roleId,
+      page = 1,
+      limit = 10,
+    } = getPostulationsDto;
 
     // Verificar que el usuario sea el dueño del proyecto
     const project = await this.projectsService.getProjectById({

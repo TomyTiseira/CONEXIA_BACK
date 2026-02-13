@@ -3,6 +3,7 @@ import * as joi from 'joi';
 
 interface EnvVars {
   NATS_SERVERS: string[];
+  DATABASE_URL?: string;
   DB_HOST: string;
   DB_PORT: string;
   DB_USERNAME: string;
@@ -14,6 +15,7 @@ interface EnvVars {
 const envSchema = joi
   .object({
     NATS_SERVERS: joi.array().items(joi.string()).required(),
+    DATABASE_URL: joi.string().optional(),
     DB_HOST: joi.string().default('localhost'),
     DB_PORT: joi.string().default('5432'),
     DB_USERNAME: joi.string().default('postgres'),
@@ -25,6 +27,7 @@ const envSchema = joi
 
 const result = envSchema.validate({
   NATS_SERVERS: process.env.NATS_SERVERS?.split(',') || [],
+  DATABASE_URL: process.env.DATABASE_URL,
   DB_HOST: process.env.DB_HOST,
   DB_PORT: process.env.DB_PORT,
   DB_USERNAME: process.env.DB_USERNAME,
@@ -40,6 +43,7 @@ const envVars = result.value as EnvVars;
 
 export const envs = {
   natsServers: envVars.NATS_SERVERS,
+  databaseUrl: envVars.DATABASE_URL,
   dbHost: envVars.DB_HOST,
   dbPort: envVars.DB_PORT,
   dbUsername: envVars.DB_USERNAME,

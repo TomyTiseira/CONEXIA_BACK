@@ -27,7 +27,7 @@ export class ProcessPreapprovalWebhookUseCase {
       );
 
       // Obtener información del preapproval desde MercadoPago
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       let preapprovalData: any;
       try {
         preapprovalData =

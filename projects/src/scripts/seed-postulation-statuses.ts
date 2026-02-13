@@ -66,6 +66,26 @@ async function seedPostulationStatuses() {
       isFinal: true,
       displayOrder: 6,
     },
+    {
+      name: 'Cancelada por Moderación',
+      code: PostulationStatusCode.CANCELLED_BY_MODERATION,
+      description:
+        'Postulación cancelada porque el usuario o el dueño del proyecto fue baneado',
+      canTransitionToOthers: false,
+      canBeModified: false,
+      isFinal: true,
+      displayOrder: 7,
+    },
+    {
+      name: 'Cancelada por Suspensión',
+      code: PostulationStatusCode.CANCELLED_BY_SUSPENSION,
+      description:
+        'Postulación cancelada porque el usuario fue suspendido temporalmente',
+      canTransitionToOthers: false,
+      canBeModified: false,
+      isFinal: true,
+      displayOrder: 8,
+    },
   ];
 
   for (const statusData of statuses) {

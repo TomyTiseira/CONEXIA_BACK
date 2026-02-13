@@ -1,12 +1,12 @@
 import {
-    IsBoolean,
-    IsEnum,
-    IsNotEmpty,
-    IsNumber,
-    IsOptional,
-    IsString,
-    MaxLength,
-    Min,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
 } from 'class-validator';
 import { TimeUnit } from '../../services/enums/time-unit.enum';
 

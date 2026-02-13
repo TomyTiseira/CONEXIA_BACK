@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: memberships
+  name: memberships
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memberships
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: memberships
+    spec:
+      imagePullSecrets:
+        - name: gcr-json-key
+      containers:
+        - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/memberships
+          name: memberships
+          env:
+            - name: NATS_SERVERS
+              value: "nats://nats"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: DATABASE_URL
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              value: "587"
+            - name: SMTP_SECURE
+              value: "false"
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: SMTP_USER
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: SMTP_PASS
+            - name: EMAIL_FROM
+              value: "jalyn.mclaughlin63@ethereal.email"
+            - name: FRONTEND_URL
+              value: "http://localhost:3000"
+            - name: MERCADOPAGO_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: MERCADOPAGO_ACCESS_TOKEN
+            - name: MERCADOPAGO_BACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: MERCADOPAGO_BACK_URL
+            - name: MERCADOPAGO_NOTIFICATION_URL
+              valueFrom:
+                secretKeyRef:
+                  name: memberships-secrets
+                  key: MERCADOPAGO_NOTIFICATION_URL
+            - name: MERCADOPAGO_CURRENCY_ID
+              value: "ARS"
+          resources: {}
+status: {}

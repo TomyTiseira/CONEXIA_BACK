@@ -1,0 +1,21 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo',
+        '-f',
+        'nexo/Dockerfile.prod',
+        '--platform=linux/amd64',
+        'nexo',
+      ]
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo',
+      ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY

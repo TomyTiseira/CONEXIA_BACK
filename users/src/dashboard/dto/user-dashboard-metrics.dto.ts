@@ -11,6 +11,7 @@ export class PostulationMetricsDto {
   totalPostulations: number;
   acceptedPostulations: number;
   successRate: number; // Porcentaje de éxito
+  byStatus?: PostulationStatusBreakdown;
 }
 
 export class PostulationStatusBreakdown {
@@ -20,6 +21,7 @@ export class PostulationStatusBreakdown {
   aceptada: number;
   rechazada: number;
   cancelada: number;
+  cancelada_moderacion: number;
 }
 
 export class ReceivedPostulationsDto {

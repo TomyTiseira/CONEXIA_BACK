@@ -1,17 +1,17 @@
 import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { EmailService } from '../../../common/services/email.service';
 import { UsersClientService } from '../../../common/services/users-client.service';
 import { CreateClaimDto } from '../../dto/create-claim.dto';
 import { Claim } from '../../entities/claim.entity';
 import {
-    ClaimRole,
-    ClaimTypeLabels,
-    ClaimTypesByRole,
+  ClaimRole,
+  ClaimTypeLabels,
+  ClaimTypesByRole,
 } from '../../enums/claim.enum';
 import { ServiceHiringStatusCode } from '../../enums/service-hiring-status.enum';
 import { ClaimRepository } from '../../repositories/claim.repository';
@@ -143,7 +143,8 @@ export class CreateClaimUseCase {
   ): Promise<void> {
     try {
       // Obtener información del usuario reclamante (con profile para obtener name y lastName)
-      const claimant = await this.usersClient.getUserByIdWithRelations(claimantUserId);
+      const claimant =
+        await this.usersClient.getUserByIdWithRelations(claimantUserId);
       const claimantName = claimant?.profile
         ? `${claimant.profile.name} ${claimant.profile.lastName}`.trim()
         : 'Usuario';
@@ -157,7 +158,9 @@ export class CreateClaimUseCase {
         : 'Proveedor';
 
       // Obtener información del cliente (con profile)
-      const client = await this.usersClient.getUserByIdWithRelations(hiring.userId);
+      const client = await this.usersClient.getUserByIdWithRelations(
+        hiring.userId,
+      );
       const clientName = client?.profile
         ? `${client.profile.name} ${client.profile.lastName}`.trim()
         : 'Cliente';

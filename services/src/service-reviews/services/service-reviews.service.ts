@@ -29,7 +29,11 @@ export class ServiceReviewsService {
     return await this.createReviewUseCase.execute(userId, dto);
   }
 
-  async getReviews(serviceId: number, dto: GetServiceReviewsDto, userId?: number) {
+  async getReviews(
+    serviceId: number,
+    dto: GetServiceReviewsDto,
+    userId?: number,
+  ) {
     return await this.getReviewsUseCase.execute(serviceId, dto, userId);
   }
 
@@ -37,7 +41,11 @@ export class ServiceReviewsService {
     return await this.getReviewByIdUseCase.execute(reviewId, userId);
   }
 
-  async updateReview(userId: number, reviewId: number, dto: UpdateServiceReviewDto) {
+  async updateReview(
+    userId: number,
+    reviewId: number,
+    dto: UpdateServiceReviewDto,
+  ) {
     return await this.updateReviewUseCase.execute(userId, reviewId, dto);
   }
 
@@ -49,7 +57,11 @@ export class ServiceReviewsService {
     return await this.deleteReviewResponseUseCase.execute(userId, reviewId);
   }
 
-  async respondToReview(userId: number, reviewId: number, dto: RespondServiceReviewDto) {
+  async respondToReview(
+    userId: number,
+    reviewId: number,
+    dto: RespondServiceReviewDto,
+  ) {
     return await this.respondToReviewUseCase.execute(userId, reviewId, dto);
   }
 }

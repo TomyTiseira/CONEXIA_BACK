@@ -76,6 +76,20 @@ export abstract class EmailService {
   ): Promise<void>;
 
   /**
+   * Envía un email cuando un reclamo es finalizado por moderación (ej: usuario baneado)
+   */
+  abstract sendClaimFinishedByModerationEmail(
+    recipientEmail: string,
+    recipientName: string,
+    claimData: {
+      claimId: string;
+      hiringTitle: string;
+      reason: string;
+      frontendUrl?: string | null;
+    },
+  ): Promise<void>;
+
+  /**
    * Envía un email al cliente cuando su servicio contratado es terminado por moderación
    */
   abstract sendServiceTerminatedByModerationEmail(

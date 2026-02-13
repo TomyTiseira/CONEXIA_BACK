@@ -12,26 +12,11 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ClaimResolutionType, ClaimStatus } from '../enums/claim.enum';
 import { ComplianceType } from '../enums/compliance.enum';
-
-// Lista explícita de tipos de compliance válidos
-const VALID_COMPLIANCE_TYPES = [
-  'full_refund',
-  'partial_refund',
-  'payment_required',
-  'partial_payment',
-  'work_completion',
-  'work_revision',
-  'full_redelivery',
-  'corrected_delivery',
-  'additional_delivery',
-  'evidence_upload',
-  'confirmation_only',
-  'other',
-] as const;
 
 /**
  * DTO para definir un compliance individual al resolver un reclamo
@@ -77,12 +62,13 @@ export class ResolveClaimDto {
   })
   status: ClaimStatus.RESOLVED | ClaimStatus.REJECTED;
 
+  @ValidateIf((dto: ResolveClaimDto) => dto.status === ClaimStatus.RESOLVED)
   @IsNotEmpty({ message: 'El tipo de resolución es obligatorio' })
   @IsEnum(ClaimResolutionType, {
     message:
       'El tipo de resolución debe ser "client_favor", "provider_favor" o "partial_agreement"',
   })
-  resolutionType: ClaimResolutionType;
+  resolutionType?: ClaimResolutionType;
 
   @IsNotEmpty({ message: 'La resolución es obligatoria' })
   @IsString()

@@ -74,7 +74,7 @@ export class ServiceReportsService {
         page,
         limit,
       );
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener los reportes del servicio',
       );
@@ -99,7 +99,7 @@ export class ServiceReportsService {
         page,
         limit,
       );
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener los servicios con reportes',
       );
@@ -114,7 +114,7 @@ export class ServiceReportsService {
   async getReportCountByService(serviceId: number): Promise<number> {
     try {
       return this.serviceReportRepository.getReportCountByService(serviceId);
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al obtener el conteo de reportes del servicio',
       );
@@ -128,7 +128,7 @@ export class ServiceReportsService {
   async deleteReportsByService(serviceId: number): Promise<void> {
     try {
       await this.serviceReportRepository.deleteByService(serviceId);
-    } catch (error) {
+    } catch {
       throw new ServiceReportInternalServerErrorException(
         'Error interno al eliminar los reportes del servicio',
       );
@@ -155,6 +155,20 @@ export class ServiceReportsService {
       serviceId: report.serviceId,
       resourceTitle: report.service?.title || null,
       resourceDescription: report.service?.description || null,
+    }));
+  }
+
+  /**
+   * Obtiene TODOS los reportes (activos e inactivos) con información del servicio
+   * @returns Lista de todos los reportes con datos necesarios para métricas
+   */
+  async getAllReports() {
+    const reports = await this.serviceReportRepository['repository'].find({
+      select: ['id', 'reason', 'isActive', 'createdAt'],
+    });
+    return reports.map((report) => ({
+      reason: report.reason,
+      isActive: report.isActive,
     }));
   }
 

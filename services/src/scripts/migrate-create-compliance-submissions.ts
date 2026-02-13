@@ -131,7 +131,7 @@ async function migrate() {
     console.error('❌ Error en la migración:', error);
     try {
       await dataSource.destroy();
-    } catch (e) {
+    } catch {
       // Ignorar errores al cerrar conexión
     }
     process.exit(1);

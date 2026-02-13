@@ -29,7 +29,10 @@ export interface ServiceReportPaginationInfo {
   hasPrev: boolean;
 }
 
-function calculatePagination(total: number, { page, limit }: { page: number; limit: number }): ServiceReportPaginationInfo {
+function calculatePagination(
+  total: number,
+  { page, limit }: { page: number; limit: number },
+): ServiceReportPaginationInfo {
   const totalPages = Math.ceil(total / limit);
   return {
     page,
@@ -91,17 +94,23 @@ export class GetServiceReportsUseCase {
       const { page = 1, limit = 10, serviceId } = getServiceReportsDto;
 
       // Obtener reportes del servicio con paginación
-      const [reports, total] = await this.serviceReportsService.getServiceReports(
-        serviceId,
-        page,
-        limit,
-      );
+      const [reports, total] =
+        await this.serviceReportsService.getServiceReports(
+          serviceId,
+          page,
+          limit,
+        );
 
       // Obtener información de usuarios para cada reporte
-      const userIds = [...new Set(reports.map((report) => report.reporterId))] as number[];
+      const userIds = [
+        ...new Set(reports.map((report) => report.reporterId)),
+      ] as number[];
       const users = await this.usersClientService.getUsersByIds(userIds);
 
-      const transformedReports = transformServiceReportsWithUsers(reports, users);
+      const transformedReports = transformServiceReportsWithUsers(
+        reports,
+        users,
+      );
 
       // Calcular información de paginación
       const pagination = calculatePagination(total, { page, limit });
@@ -115,9 +124,9 @@ export class GetServiceReportsUseCase {
       if (error instanceof Error && 'status' in error) {
         throw error;
       }
-      
+
       throw new ServiceReportInternalServerErrorException(
-        'Error interno al obtener los reportes del servicio'
+        'Error interno al obtener los reportes del servicio',
       );
     }
   }

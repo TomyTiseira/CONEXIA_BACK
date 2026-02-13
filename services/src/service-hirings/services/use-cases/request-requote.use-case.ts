@@ -106,7 +106,7 @@ export class RequestRequoteUseCase {
     }
 
     // 13. Enviar notificación por email al proveedor
-    await this.sendRequoteNotification(updatedHiring, client, provider);
+    this.sendRequoteNotification(updatedHiring, client, provider);
 
     // 14. Log de la operación
     this.logger.log(
@@ -127,24 +127,12 @@ export class RequestRequoteUseCase {
     };
   }
 
-  private async sendRequoteNotification(
+  private sendRequoteNotification(
     hiring: any,
     client: any,
     provider: any,
-  ): Promise<void> {
+  ): void {
     try {
-      const clientName = `${client.name} ${client.lastName}`.trim();
-      const providerName = `${provider.name} ${provider.lastName}`.trim();
-
-      const notificationData = {
-        providerName,
-        clientName,
-        serviceTitle: hiring.service.title,
-        previousPrice: hiring.previousQuotedPrice,
-        hiringId: hiring.id,
-        serviceId: hiring.serviceId,
-      };
-
       // Enviar email al proveedor
       if (provider.email) {
         // TODO: Implementar método sendRequoteRequestedEmail en EmailService
