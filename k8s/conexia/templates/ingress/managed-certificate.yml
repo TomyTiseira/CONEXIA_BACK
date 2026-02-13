@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: conexia-certificate
+spec:
+  domains:
+    - api.34.36.140.43.nip.io
