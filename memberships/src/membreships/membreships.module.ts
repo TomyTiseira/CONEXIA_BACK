@@ -26,6 +26,7 @@ import { HealthUseCase } from './services/use-cases/health.use-case';
 import { ProcessPreapprovalWebhookUseCase } from './services/use-cases/process-preapproval-webhook.use-case';
 import { ProcessSubscriptionInvoiceWebhookUseCase } from './services/use-cases/process-subscription-invoice-webhook.use-case';
 import { ProcessSubscriptionPaymentWebhookUseCase } from './services/use-cases/process-subscription-payment-webhook.use-case';
+import { SubscriptionSchedulerService } from './services/subscription-scheduler.service';
 import { SyncPlanWithMercadoPagoUseCase } from './services/use-cases/sync-plan-with-mercadopago.use-case';
 import { TogglePlanUseCase } from './services/use-cases/toggle-plan.use-case';
 import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
@@ -59,6 +60,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     GetUserPlanUseCase,
     GetAdminMembershipMetricsUseCase,
     CancelUserSubscriptionUseCase,
+    SubscriptionSchedulerService,
   ],
   exports: [
     MembershipsService,

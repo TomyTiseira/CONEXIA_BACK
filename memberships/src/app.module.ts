@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { envs } from './config';
 import { Benefit } from './membreships/entities/benefit.entity';
@@ -10,6 +11,7 @@ import { NatsModule } from './transports/nats.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       ...(envs.databaseUrl
