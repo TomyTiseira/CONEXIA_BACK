@@ -50,7 +50,7 @@ spec:
                   name: users-secrets
                   key: SMTP_PASS
             - name: EMAIL_FROM
-              value: "jalyn.mclaughlin63@ethereal.email"
+              value: "conexianoreply@gmail.com"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

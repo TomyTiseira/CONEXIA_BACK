@@ -50,7 +50,7 @@ spec:
                   name: communities-secrets
                   key: SMTP_PASS
             - name: EMAIL_FROM
-              value: "jalyn.mclaughlin63@ethereal.email"
+              value: "conexianoreply@gmail.com"
             - name: FRONTEND_URL
               value: "http://localhost:3000"
             - name: OPENAI_API_KEY
