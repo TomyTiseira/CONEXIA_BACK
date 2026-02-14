@@ -16,8 +16,6 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
@@ -57,14 +55,6 @@ export class PublicationsController {
   @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden crear publicaciones
   @UseInterceptors(
     FilesInterceptor('media', 5, {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'publications'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
       limits: { fileSize: 50 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -128,14 +118,14 @@ export class PublicationsController {
       }
     }
 
-    // Procesar archivos múltiples
+    // Procesar archivos múltiples - convertir a base64 para enviar al microservicio
     const mediaArray =
       media && media.length > 0
         ? media.map((file, index) => ({
-            filename: file.filename,
-            fileUrl: `/uploads/publications/${file.filename}`,
-            fileType: file.mimetype,
-            fileSize: file.size,
+            fileData: file.buffer.toString('base64'),
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
             displayOrder: index + 1,
           }))
         : undefined;

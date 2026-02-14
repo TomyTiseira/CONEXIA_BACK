@@ -71,10 +71,10 @@ export class EditPublicationUseCase {
 
       // Validar máximo 1 video total
       const existingVideos = existingMedia.filter((m) =>
-        m.fileType.startsWith('video/'),
+        m.fileType?.startsWith('video/'),
       );
       const newVideos = updateDto.media.filter((m) =>
-        m.fileType.startsWith('video/'),
+        m.fileType?.startsWith('video/'),
       );
 
       if (existingVideos.length + newVideos.length > 1) {

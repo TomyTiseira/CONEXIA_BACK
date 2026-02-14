@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentReportsModule } from '../comment-reports/comment-reports.module';
 import { CommonModule } from '../common/common.module';
 import { NatsModule } from '../common/nats/nats.module';
+import { StorageModule } from '../common/storage.module';
 import { ContactsModule } from '../contacts/contacts.module';
 import { PublicationReportsModule } from '../publication-reports/publication-reports.module';
 import { MigrationController } from './controllers/migration.controller';
@@ -48,6 +49,7 @@ import { UserInfoService } from './services/user-info.service';
       PublicationMedia,
     ]),
     CommonModule,
+    StorageModule,
     ContactsModule,
     forwardRef(() => PublicationReportsModule),
     forwardRef(() => CommentReportsModule),
