@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { StorageModule } from '../common/storage.module';
 import { jwtConfig } from '../config/jwt.config';
 import { UserReview } from '../shared/entities/user-review.entity';
 import { SharedModule } from '../shared/shared.module';
@@ -16,6 +17,7 @@ import { UpdateProfileUseCase } from './service/use-cases/update-profile.use-cas
 @Module({
   imports: [
     SharedModule,
+    StorageModule,
     TypeOrmModule.forFeature([Profile, UserReview]),
     JwtModule.register(jwtConfig),
   ],

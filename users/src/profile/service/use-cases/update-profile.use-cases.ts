@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
+import { FileStorage } from '../../../common/domain/interfaces/file-storage.interface';
 import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import { UserRepository } from '../../../users/repository/users.repository';
@@ -18,6 +19,7 @@ export class UpdateProfileUseCase {
     private readonly userBaseService: UserBaseService,
     private readonly skillsValidationService: SkillsValidationService,
     private readonly profileSkillRepo: ProfileSkillRepository,
+    @Inject('FILE_STORAGE') private readonly fileStorage: FileStorage,
   ) {}
 
   async execute(dto: UpdateProfileDto) {
@@ -28,7 +30,56 @@ export class UpdateProfileUseCase {
     const profile = await this.profileRepo.findByUserId(userId);
     if (!profile) throw new UserNotFoundByIdException(userId);
 
-    // Validar imágenes (solo si se envían)
+    // Process file uploads if file data is provided
+    let profilePictureUrl: string | undefined;
+    let coverPictureUrl: string | undefined;
+
+    try {
+      if (dto.profilePictureData) {
+        const buffer = Buffer.from(dto.profilePictureData, 'base64');
+        const filename = this.generateFilename(
+          userId,
+          'profile',
+          dto.profilePictureOriginalName,
+        );
+        profilePictureUrl = await this.fileStorage.upload(
+          buffer,
+          filename,
+          dto.profilePictureMimetype,
+        );
+      } else if (dto.profilePicture !== undefined) {
+        // Keep existing value if provided (could be string or null)
+        profilePictureUrl = dto.profilePicture;
+      }
+
+      if (dto.coverPictureData) {
+        const buffer = Buffer.from(dto.coverPictureData, 'base64');
+        const filename = this.generateFilename(
+          userId,
+          'cover',
+          dto.coverPictureOriginalName,
+        );
+        coverPictureUrl = await this.fileStorage.upload(
+          buffer,
+          filename,
+          dto.coverPictureMimetype,
+        );
+      } else if (dto.coverPicture !== undefined) {
+        // Keep existing value if provided (could be string or null)
+        coverPictureUrl = dto.coverPicture;
+      }
+    } catch {
+      // If upload fails, clean up any uploaded files
+      if (profilePictureUrl) {
+        await this.fileStorage.delete(profilePictureUrl).catch(() => {});
+      }
+      if (coverPictureUrl) {
+        await this.fileStorage.delete(coverPictureUrl).catch(() => {});
+      }
+      throw new UserBadRequestException('Failed to upload images');
+    }
+
+    // Validar imágenes (solo si se envían como strings - legacy)
     if (dto.profilePicture && !this.isValidImage(dto.profilePicture)) {
       throw new UserBadRequestException(
         'Invalid profile picture format or size',
@@ -82,10 +133,10 @@ export class UpdateProfileUseCase {
     if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
     if (dto.country !== undefined) updateData.country = dto.country;
     if (dto.state !== undefined) updateData.state = dto.state;
-    if (dto.profilePicture !== undefined)
-      updateData.profilePicture = dto.profilePicture;
-    if (dto.coverPicture !== undefined)
-      updateData.coverPicture = dto.coverPicture;
+    if (profilePictureUrl !== undefined)
+      updateData.profilePicture = profilePictureUrl;
+    if (coverPictureUrl !== undefined)
+      updateData.coverPicture = coverPictureUrl;
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.experience !== undefined) updateData.experience = dto.experience;
     if (dto.socialLinks !== undefined) updateData.socialLinks = dto.socialLinks;
@@ -153,5 +204,18 @@ export class UpdateProfileUseCase {
     console.log('imageUrl', imageUrl);
     // Implementar validación de imagen si es necesario
     return true;
+  }
+
+  /**
+   * Generate a unique filename for uploaded files
+   */
+  private generateFilename(
+    userId: number,
+    type: 'profile' | 'cover',
+    originalName?: string,
+  ): string {
+    const timestamp = Date.now();
+    const extension = originalName ? originalName.split('.').pop() : 'jpg';
+    return `${type}-${userId}-${timestamp}.${extension}`;
   }
 }

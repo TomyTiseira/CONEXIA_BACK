@@ -2,6 +2,7 @@ import 'dotenv/config';
 import * as joi from 'joi';
 
 interface EnvVars {
+  NODE_ENV: string;
   NATS_SERVERS: string[];
   DATABASE_URL?: string;
   DB_HOST: string;
@@ -18,10 +19,14 @@ interface EnvVars {
   JWT_SECRET: string;
   ENCRYPTION_KEY: string;
   ALGORITHM: string;
+  GCS_PROJECT_ID?: string;
+  GCS_KEY_FILE?: string;
+  GCS_PROFILE_BUCKET?: string;
 }
 
 const envSchema = joi
   .object({
+    NODE_ENV: joi.string().default('development'),
     NATS_SERVERS: joi.array().items(joi.string()).required(),
     DATABASE_URL: joi.string().optional(),
     DB_HOST: joi.string().default('localhost'),
@@ -38,10 +43,27 @@ const envSchema = joi
     JWT_SECRET: joi.string().required(),
     ENCRYPTION_KEY: joi.string().required(),
     ALGORITHM: joi.string().required(),
+    // GCS configuration (required only in production)
+    GCS_PROJECT_ID: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
+    GCS_KEY_FILE: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
+    GCS_PROFILE_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
   })
   .unknown(true);
 
 const result = envSchema.validate({
+  NODE_ENV: process.env.NODE_ENV,
   NATS_SERVERS: process.env.NATS_SERVERS?.split(',') || [],
   DATABASE_URL: process.env.DATABASE_URL,
   DB_HOST: process.env.DB_HOST,
@@ -58,7 +80,11 @@ const result = envSchema.validate({
   JWT_SECRET: process.env.JWT_SECRET,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   ALGORITHM: process.env.ALGORITHM,
+  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
+  GCS_KEY_FILE: process.env.GCS_KEY_FILE,
+  GCS_PROFILE_BUCKET: process.env.GCS_PROFILE_BUCKET,
 });
+
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
 }
@@ -66,6 +92,7 @@ if (result.error) {
 const envVars = result.value as EnvVars;
 
 export const envs = {
+  nodeEnv: envVars.NODE_ENV,
   natsServers: envVars.NATS_SERVERS,
   databaseUrl: envVars.DATABASE_URL,
   dbHost: envVars.DB_HOST,
@@ -82,4 +109,9 @@ export const envs = {
   jwtSecret: envVars.JWT_SECRET,
   encryptionKey: envVars.ENCRYPTION_KEY,
   algorithm: envVars.ALGORITHM,
+  gcs: {
+    projectId: envVars.GCS_PROJECT_ID,
+    keyFile: envVars.GCS_KEY_FILE,
+    profileBucket: envVars.GCS_PROFILE_BUCKET,
+  },
 };

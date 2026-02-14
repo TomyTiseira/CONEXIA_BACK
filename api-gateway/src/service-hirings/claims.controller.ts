@@ -525,10 +525,7 @@ export class ClaimsController {
    */
   @Post('test/run-overdue-job')
   @AuthRoles([ROLES.MODERATOR, ROLES.ADMIN])
-  runOverdueCompliancesJob(@User() user: AuthenticatedUser) {
-    console.log(
-      `[ClaimsController] Usuario ${user.id} ejecutando job de compliances vencidos`,
-    );
+  runOverdueCompliancesJob() {
     return this.client.send('runOverdueCompliancesJob', {}).pipe(
       catchError((error) => {
         throw new RpcException(error);
@@ -542,10 +539,7 @@ export class ClaimsController {
    */
   @Post('test/run-deadline-reminders')
   @AuthRoles([ROLES.MODERATOR, ROLES.ADMIN])
-  runDeadlineRemindersJob(@User() user: AuthenticatedUser) {
-    console.log(
-      `[ClaimsController] Usuario ${user.id} ejecutando job de recordatorios de plazos`,
-    );
+  runDeadlineRemindersJob() {
     return this.client.send('runDeadlineRemindersJob', {}).pipe(
       catchError((error) => {
         throw new RpcException(error);

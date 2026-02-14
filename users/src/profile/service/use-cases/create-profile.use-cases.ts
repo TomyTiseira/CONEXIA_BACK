@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Inject, Injectable } from '@nestjs/common';
 import { UserBaseService } from 'src/common/services/user-base.service';
 import {
   UserBadRequestException,
   UserNotFoundByIdException,
 } from '../../../common/exceptions/user.exceptions';
+import { FileStorage } from '../../../common/domain/interfaces/file-storage.interface';
 import { ProfileSkillRepository } from '../../../shared/repository/profile-skill.repository';
 import { SkillsValidationService } from '../../../shared/services/skills-validation.service';
 import { UserRepository } from '../../../users/repository/users.repository';
@@ -18,6 +20,7 @@ export class CreateProfileUseCase {
     private readonly userBaseService: UserBaseService,
     private readonly skillsValidationService: SkillsValidationService,
     private readonly profileSkillRepo: ProfileSkillRepository,
+    @Inject('FILE_STORAGE') private readonly fileStorage: FileStorage,
   ) {}
 
   async execute(dto: CreateProfileDto) {
@@ -75,6 +78,55 @@ export class CreateProfileUseCase {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new UserNotFoundByIdException(userId);
 
+    // Process file uploads if file data is provided
+    let profilePictureUrl: string | undefined;
+    let coverPictureUrl: string | undefined;
+
+    try {
+      if (dto.profilePictureData) {
+        const buffer = Buffer.from(dto.profilePictureData, 'base64');
+        const filename = this.generateFilename(
+          userId,
+          'profile',
+          dto.profilePictureOriginalName,
+        );
+        profilePictureUrl = await this.fileStorage.upload(
+          buffer,
+          filename,
+          dto.profilePictureMimetype,
+        );
+      } else if (dto.profilePicture) {
+        // Keep existing URL if provided
+        profilePictureUrl = dto.profilePicture;
+      }
+
+      if (dto.coverPictureData) {
+        const buffer = Buffer.from(dto.coverPictureData, 'base64');
+        const filename = this.generateFilename(
+          userId,
+          'cover',
+          dto.coverPictureOriginalName,
+        );
+        coverPictureUrl = await this.fileStorage.upload(
+          buffer,
+          filename,
+          dto.coverPictureMimetype,
+        );
+      } else if (dto.coverPicture) {
+        // Keep existing URL if provided
+        coverPictureUrl = dto.coverPicture;
+      }
+    } catch {
+      // If upload fails, clean up any uploaded files
+      if (profilePictureUrl) {
+        await this.fileStorage.delete(profilePictureUrl).catch(() => {});
+      }
+      if (coverPictureUrl) {
+        await this.fileStorage.delete(coverPictureUrl).catch(() => {});
+      }
+      throw new UserBadRequestException('Failed to upload images');
+    }
+
     const existingProfile = await this.profileRepo.findByUserId(userId);
 
     // Si el perfil existe, verificar si está vacío (creado durante la verificación)
@@ -93,10 +145,22 @@ export class CreateProfileUseCase {
       }
 
       // Preparar datos para actualizar (excluir userId y skills que no son columnas de Profile)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { userId, skills, ...updateData } = dto;
+      const {
+        userId: _userId,
+        skills,
+        profilePictureData,
+        profilePictureMimetype,
+        profilePictureOriginalName,
+        coverPictureData,
+        coverPictureMimetype,
+        coverPictureOriginalName,
+        ...updateData
+      } = dto;
+
       const updatedProfile = await this.profileRepo.update(existingProfile.id, {
         ...updateData,
+        ...(profilePictureUrl && { profilePicture: profilePictureUrl }),
+        ...(coverPictureUrl && { coverPicture: coverPictureUrl }),
         birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
       });
 
@@ -124,6 +188,8 @@ export class CreateProfileUseCase {
 
     const newProfile = await this.profileRepo.create({
       ...dto,
+      ...(profilePictureUrl && { profilePicture: profilePictureUrl }),
+      ...(coverPictureUrl && { coverPicture: coverPictureUrl }),
       birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
     });
 
@@ -159,7 +225,7 @@ export class CreateProfileUseCase {
       profile.documentNumber,
     ];
 
-    // Verificar que todos los campos obligatorios estén presentes y no vacíos
+    // Ver ificar que todos los campos obligatorios estén presentes y no vacíos
     const allFieldsFilled = requiredFields.every(
       (field) => field !== null && field !== undefined && field.trim() !== '',
     );
@@ -169,5 +235,18 @@ export class CreateProfileUseCase {
       profile.documentTypeId !== null && profile.documentTypeId !== undefined;
 
     return allFieldsFilled && hasDocumentType;
+  }
+
+  /**
+   * Generate a unique filename for uploaded files
+   */
+  private generateFilename(
+    userId: number,
+    type: 'profile' | 'cover',
+    originalName?: string,
+  ): string {
+    const timestamp = Date.now();
+    const extension = originalName ? originalName.split('.').pop() : 'jpg';
+    return `${type}-${userId}-${timestamp}.${extension}`;
   }
 }
