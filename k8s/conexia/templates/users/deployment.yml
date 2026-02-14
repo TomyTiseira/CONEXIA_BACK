@@ -23,6 +23,8 @@ spec:
         - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/users
           name: users
           env:
+            - name: NODE_ENV
+              value: "production"
             - name: NATS_SERVERS
               value: "nats://nats"
             - name: DATABASE_URL
@@ -63,25 +65,48 @@ spec:
                   key: ENCRYPTION_KEY
             - name: ALGORITHM
               value: "aes-256-cbc"
+            - name: GCS_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: GCS_PROJECT_ID
+            - name: GCS_KEY_FILE
+              value: "/etc/gcs/key.json"
+            - name: GCS_PROFILE_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: users-secrets
+                  key: GCS_PROFILE_BUCKET
             - name: AWS_REGION
               valueFrom:
                 secretKeyRef:
                   name: users-secrets
                   key: AWS_REGION
+                  optional: true
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: users-secrets
                   key: AWS_ACCESS_KEY_ID
+                  optional: true
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: users-secrets
                   key: AWS_SECRET_ACCESS_KEY
+                  optional: true
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: users-secrets
                   key: OPENAI_API_KEY
+          volumeMounts:
+            - name: gcs-key
+              mountPath: /etc/gcs
+              readOnly: true
           resources: {}
+      volumes:
+        - name: gcs-key
+          secret:
+            secretName: gcs-key-secret
 status: {}
