@@ -82,6 +82,7 @@ export class ProcessSubscriptionSuccessUseCase {
         status: SubscriptionStatus.ACTIVE,
         paymentStatus: 'approved',
         startDate: now,
+        endDate: nextPaymentDate,
         nextPaymentDate,
       });
 

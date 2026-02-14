@@ -112,8 +112,8 @@ export class MembershipsService {
   }
 
   // Cancel user subscription
-  async cancelMySubscription(userId: number) {
-    return this.cancelUserSubscriptionUC.execute(userId);
+  async cancelMySubscription(userId: number, reason?: string) {
+    return this.cancelUserSubscriptionUC.execute(userId, reason);
   }
 
   // Admin metrics

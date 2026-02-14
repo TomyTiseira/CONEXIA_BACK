@@ -17,7 +17,10 @@ export class CancelUserSubscriptionUseCase {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  async execute(userId: number): Promise<{
+  async execute(
+    userId: number,
+    cancellationReason?: string,
+  ): Promise<{
     success: boolean;
     message: string;
     subscription: {
@@ -26,6 +29,8 @@ export class CancelUserSubscriptionUseCase {
       planId: number;
       planName: string;
       endDate: Date;
+      cancellationDate: Date;
+      cancellationReason: string | null;
       mercadoPagoSubscriptionId: string | null;
     };
   }> {
@@ -76,26 +81,44 @@ export class CancelUserSubscriptionUseCase {
       }
 
       // Actualizar estado en la base de datos
-      const endDate = new Date();
+      // La suscripción pasa a PENDING_CANCELLATION y mantiene el acceso
+      // hasta el final del ciclo de facturación actual (endDate/nextPaymentDate)
+      const cancellationDate = new Date();
+      const endDate =
+        activeSubscription.nextPaymentDate ||
+        activeSubscription.endDate ||
+        cancellationDate;
+
       await this.subscriptionRepository.update(activeSubscription.id, {
-        status: SubscriptionStatus.CANCELLED,
-        paymentStatus: 'cancelled',
+        status: SubscriptionStatus.PENDING_CANCELLATION,
+        cancellationDate,
+        cancellationReason: cancellationReason || null,
         endDate,
       });
 
       this.logger.log(
-        `✅ Suscripción ${activeSubscription.id} cancelada exitosamente`,
+        `✅ Suscripción ${activeSubscription.id} marcada como PENDING_CANCELLATION. ` +
+          `Beneficios activos hasta: ${endDate.toISOString()}`,
+      );
+
+      // TODO: Enviar correo/notificación confirmando la cancelación
+      // e informando que mantiene los beneficios hasta el final del ciclo vigente
+      this.logger.log(
+        `📧 Se debería enviar notificación al usuario ${userId} confirmando cancelación`,
       );
 
       return {
         success: true,
-        message: 'Suscripción cancelada exitosamente',
+        message:
+          'Suscripción cancelada. Mantendrás los beneficios hasta el final del ciclo actual.',
         subscription: {
           id: activeSubscription.id,
-          status: 'cancelled',
+          status: 'pending_cancellation',
           planId: activeSubscription.plan.id,
           planName: activeSubscription.plan.name,
           endDate,
+          cancellationDate,
+          cancellationReason: cancellationReason || null,
           mercadoPagoSubscriptionId:
             activeSubscription.mercadoPagoSubscriptionId,
         },

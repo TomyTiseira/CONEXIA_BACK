@@ -120,7 +120,10 @@ export class MembershipsController {
 
   // Cancel user subscription
   @MessagePattern('cancelMySubscription')
-  cancelMySubscription(@Payload() data: { userId: number }) {
-    return this.membershipsService.cancelMySubscription(data.userId);
+  cancelMySubscription(@Payload() data: { userId: number; reason?: string }) {
+    return this.membershipsService.cancelMySubscription(
+      data.userId,
+      data.reason,
+    );
   }
 }

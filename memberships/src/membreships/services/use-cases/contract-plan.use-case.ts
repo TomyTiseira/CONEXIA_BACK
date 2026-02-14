@@ -133,13 +133,16 @@ export class ContractPlanUseCase {
       // En redirect flow, solo actualizamos si MercadoPago devuelve un subscriptionId
       // De lo contrario, esperamos el webhook después del pago
       if (mpSubscriptionId) {
+        const calculatedNextPaymentDate =
+          status === 'authorized'
+            ? this.calculateNextPaymentDate(new Date(), dto.billingCycle)
+            : null;
+
         await this.subscriptionRepository.update(subscription.id, {
           mercadoPagoSubscriptionId: mpSubscriptionId,
           paymentStatus: status,
-          nextPaymentDate:
-            status === 'authorized'
-              ? this.calculateNextPaymentDate(new Date(), dto.billingCycle)
-              : null,
+          nextPaymentDate: calculatedNextPaymentDate,
+          endDate: calculatedNextPaymentDate || undefined,
           status:
             status === 'authorized'
               ? SubscriptionStatus.ACTIVE

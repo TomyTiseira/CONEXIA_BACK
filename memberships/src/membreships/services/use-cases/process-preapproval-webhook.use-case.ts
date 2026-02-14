@@ -88,10 +88,7 @@ export class ProcessPreapprovalWebhookUseCase {
       // Procesar según la acción
       if (action === 'created' || preapprovalData.status === 'authorized') {
         // La suscripción fue autorizada exitosamente
-        await this.activateSubscription(
-          subscription.id,
-          preapprovalId,
-        );
+        await this.activateSubscription(subscription.id, preapprovalId);
       } else if (preapprovalData.status === 'cancelled') {
         // La suscripción fue cancelada
         await this.cancelSubscription(subscription.id);
@@ -140,6 +137,7 @@ export class ProcessPreapprovalWebhookUseCase {
       paymentStatus: 'authorized',
       status: SubscriptionStatus.ACTIVE,
       startDate: now,
+      endDate: nextPaymentDate,
       nextPaymentDate,
     });
 

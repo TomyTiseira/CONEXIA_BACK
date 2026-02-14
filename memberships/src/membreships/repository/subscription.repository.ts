@@ -74,11 +74,18 @@ export class SubscriptionRepository {
 
   async findActiveByUserId(userId: number): Promise<Subscription | null> {
     return this.subscriptionRepository.findOne({
-      where: {
-        userId,
-        status: SubscriptionStatus.ACTIVE,
-        deletedAt: IsNull(),
-      },
+      where: [
+        {
+          userId,
+          status: SubscriptionStatus.ACTIVE,
+          deletedAt: IsNull(),
+        },
+        {
+          userId,
+          status: SubscriptionStatus.PENDING_CANCELLATION,
+          deletedAt: IsNull(),
+        },
+      ],
       relations: ['plan'],
       order: {
         createdAt: 'DESC',
