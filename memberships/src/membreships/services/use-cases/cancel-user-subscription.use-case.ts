@@ -41,12 +41,17 @@ export class CancelUserSubscriptionUseCase {
         throw new NotFoundException('No tienes una suscripción activa');
       }
 
-      // Verificar que no esté ya cancelada
-      if (activeSubscription.status === SubscriptionStatus.CANCELLED) {
+      // Verificar que no esté ya cancelada o con cancelación pendiente
+      if (
+        activeSubscription.status === SubscriptionStatus.CANCELLED ||
+        activeSubscription.status === SubscriptionStatus.PENDING_CANCELLATION
+      ) {
         this.logger.warn(
-          `⚠️ La suscripción ${activeSubscription.id} ya está cancelada`,
+          `⚠️ La suscripción ${activeSubscription.id} ya está cancelada o con cancelación pendiente`,
         );
-        throw new BadRequestException('La suscripción ya está cancelada');
+        throw new BadRequestException(
+          'La suscripción ya está cancelada o con cancelación pendiente',
+        );
       }
 
       this.logger.log(

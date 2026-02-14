@@ -126,6 +126,7 @@ export class ProcessSubscriptionInvoiceWebhookUseCase {
         : now,
       startDate: subscription.startDate || now,
       nextPaymentDate,
+      endDate: nextPaymentDate,
       retryCount: 0,
     });
 
