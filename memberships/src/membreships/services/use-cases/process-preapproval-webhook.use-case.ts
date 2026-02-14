@@ -91,7 +91,6 @@ export class ProcessPreapprovalWebhookUseCase {
         await this.activateSubscription(
           subscription.id,
           preapprovalId,
-          preapprovalData,
         );
       } else if (preapprovalData.status === 'cancelled') {
         // La suscripción fue cancelada
@@ -122,7 +121,6 @@ export class ProcessPreapprovalWebhookUseCase {
   private async activateSubscription(
     subscriptionId: number,
     preapprovalId: string,
-    preapprovalData: any,
   ): Promise<void> {
     this.logger.log(
       `✅ Activando suscripción ${subscriptionId} con preapproval ${preapprovalId}`,

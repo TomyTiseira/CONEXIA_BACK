@@ -124,7 +124,6 @@ export class ContractPlanUseCase {
         subscriptionId: mpSubscriptionId,
         initPoint,
         status,
-        nextPaymentDate,
       } = this.mercadoPagoService.createSubscription(
         mercadoPagoPlanId,
         userEmail,
