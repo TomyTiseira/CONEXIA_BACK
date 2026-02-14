@@ -59,11 +59,12 @@ export class GCSFileStorage implements FileStorage {
       // Return a promise that resolves when upload is complete
       return new Promise((resolve, reject) => {
         blobStream.on('error', (error) => {
-          reject(error);
+          reject(error instanceof Error ? error : new Error(String(error)));
         });
 
         blobStream.on('finish', () => {
-          resolve(path);
+          const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${path}`;
+          resolve(publicUrl);
         });
 
         blobStream.end(file);

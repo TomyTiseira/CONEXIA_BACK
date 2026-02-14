@@ -246,7 +246,10 @@ export class CreateProfileUseCase {
     originalName?: string,
   ): string {
     const timestamp = Date.now();
-    const extension = originalName ? originalName.split('.').pop() : 'jpg';
+    // Sanitize extension: only allow alphanumeric characters
+    const rawExtension = originalName ? originalName.split('.').pop() : 'jpg';
+    const extension =
+      rawExtension?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'jpg';
     return `${type}-${userId}-${timestamp}.${extension}`;
   }
 }

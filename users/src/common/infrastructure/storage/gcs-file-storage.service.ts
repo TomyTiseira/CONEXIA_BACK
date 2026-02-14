@@ -63,7 +63,8 @@ export class GCSFileStorage implements FileStorage {
         });
 
         blobStream.on('finish', () => {
-          resolve(path);
+          const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${path}`;
+          resolve(publicUrl);
         });
 
         blobStream.end(file);

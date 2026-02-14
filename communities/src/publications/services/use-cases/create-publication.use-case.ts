@@ -132,7 +132,10 @@ export class CreatePublicationUseCase {
     originalName: string,
   ): string {
     const timestamp = Date.now();
-    const extension = originalName.split('.').pop() || 'jpg';
+    // Sanitize extension: only allow alphanumeric characters
+    const rawExtension = originalName.split('.').pop() || 'jpg';
+    const extension =
+      rawExtension.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'jpg';
     return `publication-${publicationId}-${timestamp}.${extension}`;
   }
 
