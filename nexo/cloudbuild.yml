@@ -17,5 +17,14 @@ steps:
         'southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/nexo',
       ]
 
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args:
+      - rollout
+      - restart
+      - deployment/nexo
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=southamerica-west1'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=conexia'
+
 options:
   logging: CLOUD_LOGGING_ONLY
