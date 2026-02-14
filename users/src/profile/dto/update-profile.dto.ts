@@ -158,6 +158,31 @@ export class UpdateProfileDto {
   @IsOptional()
   coverPicture?: string;
 
+  // File upload support (receives file data as base64 from API Gateway)
+  @IsString({ message: 'profilePictureData must be a string' })
+  @IsOptional()
+  profilePictureData?: string; // base64 encoded file
+
+  @IsString({ message: 'profilePictureMimetype must be a string' })
+  @IsOptional()
+  profilePictureMimetype?: string;
+
+  @IsString({ message: 'profilePictureOriginalName must be a string' })
+  @IsOptional()
+  profilePictureOriginalName?: string;
+
+  @IsString({ message: 'coverPictureData must be a string' })
+  @IsOptional()
+  coverPictureData?: string; // base64 encoded file
+
+  @IsString({ message: 'coverPictureMimetype must be a string' })
+  @IsOptional()
+  coverPictureMimetype?: string;
+
+  @IsString({ message: 'coverPictureOriginalName must be a string' })
+  @IsOptional()
+  coverPictureOriginalName?: string;
+
   @IsArray()
   @IsNumber({}, { each: true, message: 'skills must be an array of numbers' })
   @ArrayMaxSize(20, { message: 'skills must have at most 20 items' })

@@ -19,8 +19,6 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Response } from 'express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { AutoRefreshAuth } from 'src/auth/decorators/auto-refresh-auth.decorator';
 import { OnboardingJwtGuard } from 'src/auth/guards/onboarding-jwt.guard';
@@ -331,15 +329,6 @@ export class UsersController {
         { name: 'coverPicture', maxCount: 1 },
       ],
       {
-        storage: diskStorage({
-          destination: join(process.cwd(), 'uploads'),
-          filename: (req, file, cb) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const name = uniqueSuffix + extname(file.originalname);
-            cb(null, name);
-          },
-        }),
         limits: { fileSize: 5 * 1024 * 1024 },
         fileFilter: (req, file, cb) => {
           const allowedTypes = ['image/jpeg', 'image/png'];
@@ -431,52 +420,45 @@ export class UsersController {
 
     // Validación manual de tipos de archivo
     const allowedTypes = ['image/jpeg', 'image/png'];
-    let isValid = true;
-    const filesToDelete: string[] = [];
 
     if (files.profilePicture?.[0]) {
       if (!allowedTypes.includes(files.profilePicture[0].mimetype)) {
-        isValid = false;
-      } else {
-        filesToDelete.push(files.profilePicture[0].path);
+        throw new RpcException({
+          status: 400,
+          message:
+            'Only images in JPEG or PNG format are allowed for profile picture.',
+        });
       }
     }
     if (files.coverPicture?.[0]) {
       if (!allowedTypes.includes(files.coverPicture[0].mimetype)) {
-        isValid = false;
-      } else {
-        filesToDelete.push(files.coverPicture[0].path);
+        throw new RpcException({
+          status: 400,
+          message:
+            'Only images in JPEG or PNG format are allowed for cover picture.',
+        });
       }
     }
 
-    if (!isValid) {
-      // Borra todos los archivos guardados
-      await Promise.all(
-        filesToDelete.map(async (filePath) => {
-          try {
-            await import('fs/promises').then((fs) => fs.unlink(filePath));
-          } catch {
-            // ignorar errores
-          }
-        }),
-      );
-      throw new RpcException({
-        status: 400,
-        message:
-          'Only images in JPEG or PNG format are allowed in both fields.',
-      });
-    }
-
-    const payload = {
+    // Prepare file data as base64 to send to Users microservice
+    const payload: any = {
       userId: req.user?.id,
       ...dto,
-      ...(files?.profilePicture?.[0]?.filename && {
-        profilePicture: files.profilePicture[0].filename,
-      }),
-      ...(files?.coverPicture?.[0]?.filename && {
-        coverPicture: files.coverPicture[0].filename,
-      }),
     };
+
+    if (files.profilePicture?.[0]) {
+      const file = files.profilePicture[0];
+      payload.profilePictureData = file.buffer.toString('base64');
+      payload.profilePictureMimetype = file.mimetype;
+      payload.profilePictureOriginalName = file.originalname;
+    }
+
+    if (files.coverPicture?.[0]) {
+      const file = files.coverPicture[0];
+      payload.coverPictureData = file.buffer.toString('base64');
+      payload.coverPictureMimetype = file.mimetype;
+      payload.coverPictureOriginalName = file.originalname;
+    }
 
     // 1) Crear perfil
 
@@ -544,15 +526,6 @@ export class UsersController {
         { name: 'coverPicture', maxCount: 1 },
       ],
       {
-        storage: diskStorage({
-          destination: join(process.cwd(), 'uploads'),
-          filename: (req, file, cb) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const name = uniqueSuffix + extname(file.originalname);
-            cb(null, name);
-          },
-        }),
         limits: { fileSize: 5 * 1024 * 1024 },
         fileFilter: (req, file, cb) => {
           const allowedTypes = ['image/jpeg', 'image/png'];
@@ -654,52 +627,45 @@ export class UsersController {
 
     // Validación manual de tipos de archivo
     const allowedTypes = ['image/jpeg', 'image/png'];
-    let isValid = true;
-    const filesToDelete: string[] = [];
 
     if (files.profilePicture?.[0]) {
       if (!allowedTypes.includes(files.profilePicture[0].mimetype)) {
-        isValid = false;
-      } else {
-        filesToDelete.push(files.profilePicture[0].path);
+        throw new RpcException({
+          status: 400,
+          message:
+            'Only images in JPEG or PNG format are allowed for profile picture.',
+        });
       }
     }
     if (files.coverPicture?.[0]) {
       if (!allowedTypes.includes(files.coverPicture[0].mimetype)) {
-        isValid = false;
-      } else {
-        filesToDelete.push(files.coverPicture[0].path);
+        throw new RpcException({
+          status: 400,
+          message:
+            'Only images in JPEG or PNG format are allowed for cover picture.',
+        });
       }
     }
 
-    if (!isValid) {
-      // Borra todos los archivos guardados
-      await Promise.all(
-        filesToDelete.map(async (filePath) => {
-          try {
-            await import('fs/promises').then((fs) => fs.unlink(filePath));
-          } catch {
-            // ignorar errores
-          }
-        }),
-      );
-      throw new RpcException({
-        status: 400,
-        message:
-          'Only images in JPEG or PNG format are allowed in both fields.',
-      });
-    }
-
-    const payload = {
+    // Prepare file data as base64 to send to Users microservice
+    const payload: any = {
       userId: req.user?.id,
       ...dto,
-      ...(files?.profilePicture?.[0]?.filename && {
-        profilePicture: files.profilePicture[0].filename,
-      }),
-      ...(files?.coverPicture?.[0]?.filename && {
-        coverPicture: files.coverPicture[0].filename,
-      }),
     };
+
+    if (files.profilePicture?.[0]) {
+      const file = files.profilePicture[0];
+      payload.profilePictureData = file.buffer.toString('base64');
+      payload.profilePictureMimetype = file.mimetype;
+      payload.profilePictureOriginalName = file.originalname;
+    }
+
+    if (files.coverPicture?.[0]) {
+      const file = files.coverPicture[0];
+      payload.coverPictureData = file.buffer.toString('base64');
+      payload.coverPictureMimetype = file.mimetype;
+      payload.coverPictureOriginalName = file.originalname;
+    }
 
     return this.client.send('updateProfile', payload).pipe(
       catchError((error) => {

@@ -1,8 +1,6 @@
 import { envs } from './envs';
 import { CookieOptions } from 'express';
 
-console.log(process.env.NODE_ENV);
-
 export const jwtConfig = {
   secret: envs.jwtSecret,
   signOptions: {

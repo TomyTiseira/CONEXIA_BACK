@@ -317,7 +317,6 @@ export class ReviewDeliveryUseCase {
   private transformToDto(
     delivery: DeliverySubmission,
   ): DeliverySubmissionResponseDto {
-    // ⚠️ CRÍTICO: Mapear attachments con URLs completas
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
     const attachments =

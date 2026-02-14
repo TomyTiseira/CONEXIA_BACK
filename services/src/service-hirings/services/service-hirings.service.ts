@@ -353,7 +353,6 @@ export class ServiceHiringsService {
     const hiringIsCompleted =
       hiring.status.code === ServiceHiringStatusCode.COMPLETED;
 
-    // ⚠️ CRÍTICO: Usar BASE_URL del entorno para URLs completas
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
     return {
