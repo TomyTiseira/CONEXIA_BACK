@@ -196,9 +196,9 @@ export class UpdateProfileUseCase {
     );
 
     console.log('[UPDATE PROFILE] Profile updated in DB:', {
-      profileId: updatedProfile.id,
-      profilePicture: updatedProfile.profilePicture,
-      coverPicture: updatedProfile.coverPicture,
+      profileId: updatedProfile?.id,
+      profilePicture: updatedProfile?.profilePicture,
+      coverPicture: updatedProfile?.coverPicture,
     });
 
     // Actualizar habilidades si se proporcionan
