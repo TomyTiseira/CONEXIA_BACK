@@ -204,14 +204,6 @@ export class PublicationsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FilesInterceptor('media', 5, {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'publications'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
       limits: { fileSize: 50 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -276,15 +268,15 @@ export class PublicationsController {
       }
     }
 
-    // Procesar nuevos archivos si los hay
+    // Procesar nuevos archivos si los hay - convertir a base64
     const newMediaArray =
       media && media.length > 0
         ? media.map((file, index) => ({
-            filename: file.filename,
-            fileUrl: `/uploads/publications/${file.filename}`,
-            fileType: file.mimetype,
-            fileSize: file.size,
-            displayOrder: index + 1, // Se reordenará en el backend
+            fileData: file.buffer.toString('base64'),
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            displayOrder: index + 1,
           }))
         : undefined;
 
