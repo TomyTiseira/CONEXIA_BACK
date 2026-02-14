@@ -55,11 +55,10 @@ export class GCSFileStorage implements FileStorage {
         resumable: false,
         metadata: {
           contentType: mimetype,
-          cacheControl: 'public, max-age=3600',
+          cacheControl: 'public, max-age=31536000',
         },
-        // Make files publicly readable on upload
-        // This requires the bucket to have uniform bucket-level access enabled
-        predefinedAcl: 'publicRead',
+        // No predefinedAcl when uniform bucket-level access is enabled
+        // Public access is managed at bucket level via IAM
       });
 
       // Return a promise that resolves when upload is complete
