@@ -74,5 +74,5 @@ spec:
       volumes:
         - name: gcs-key
           secret:
-            secretName: gcs-key
+            secretName: gcs-key-secret
 status: {}
