@@ -653,8 +653,18 @@ export class UsersController {
       ...dto,
     };
 
+    console.log('[API GATEWAY UPDATE] Has files?', {
+      hasProfilePicture: !!files.profilePicture?.[0],
+      hasCoverPicture: !!files.coverPicture?.[0],
+    });
+    console.log('[API GATEWAY UPDATE] DTO keys:', Object.keys(dto));
+
     if (files.profilePicture?.[0]) {
       const file = files.profilePicture[0];
+      console.log('[API GATEWAY UPDATE] Processing profilePicture:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+      });
       payload.profilePictureData = file.buffer.toString('base64');
       payload.profilePictureMimetype = file.mimetype;
       payload.profilePictureOriginalName = file.originalname;
@@ -662,10 +672,22 @@ export class UsersController {
 
     if (files.coverPicture?.[0]) {
       const file = files.coverPicture[0];
+      console.log('[API GATEWAY UPDATE] Processing coverPicture:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+      });
       payload.coverPictureData = file.buffer.toString('base64');
       payload.coverPictureMimetype = file.mimetype;
       payload.coverPictureOriginalName = file.originalname;
     }
+
+    console.log('[API GATEWAY UPDATE] Final payload:', {
+      userId: payload.userId,
+      hasProfilePictureData: !!payload.profilePictureData,
+      profilePicture: payload.profilePicture,
+      hasCoverPictureData: !!payload.coverPictureData,
+      coverPicture: payload.coverPicture,
+    });
 
     return this.client.send('updateProfile', payload).pipe(
       catchError((error) => {

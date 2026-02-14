@@ -23,6 +23,17 @@ export class UpdateProfileUseCase {
   ) {}
 
   async execute(dto: UpdateProfileDto) {
+    // Log incoming data
+    console.log('[UPDATE PROFILE USE CASE] Received DTO:', {
+      userId: dto.userId,
+      hasProfilePictureData: !!dto.profilePictureData,
+      profilePicture: dto.profilePicture,
+      profilePictureOriginalName: dto.profilePictureOriginalName,
+      hasCoverPictureData: !!dto.coverPictureData,
+      coverPicture: dto.coverPicture,
+      coverPictureOriginalName: dto.coverPictureOriginalName,
+    });
+
     // Obtener userId
     const userId = dto.userId;
 
@@ -37,16 +48,24 @@ export class UpdateProfileUseCase {
     try {
       if (dto.profilePictureData) {
         const buffer = Buffer.from(dto.profilePictureData, 'base64');
+        console.log('[UPDATE PROFILE] Generating filename for profile picture');
+        console.log('[UPDATE PROFILE] userId:', userId);
+        console.log(
+          '[UPDATE PROFILE] originalName:',
+          dto.profilePictureOriginalName,
+        );
         const filename = this.generateFilename(
           userId,
           'profile',
           dto.profilePictureOriginalName,
         );
+        console.log('[UPDATE PROFILE] Generated filename:', filename);
         profilePictureUrl = await this.fileStorage.upload(
           buffer,
           filename,
           dto.profilePictureMimetype,
         );
+        console.log('[UPDATE PROFILE] Upload returned URL:', profilePictureUrl);
       } else if (dto.profilePicture !== undefined) {
         // Keep existing value if provided (could be string or null)
         profilePictureUrl = dto.profilePicture;
@@ -54,16 +73,24 @@ export class UpdateProfileUseCase {
 
       if (dto.coverPictureData) {
         const buffer = Buffer.from(dto.coverPictureData, 'base64');
+        console.log('[UPDATE PROFILE] Generating filename for cover picture');
+        console.log('[UPDATE PROFILE] userId:', userId);
+        console.log(
+          '[UPDATE PROFILE] originalName:',
+          dto.coverPictureOriginalName,
+        );
         const filename = this.generateFilename(
           userId,
           'cover',
           dto.coverPictureOriginalName,
         );
+        console.log('[UPDATE PROFILE] Generated filename:', filename);
         coverPictureUrl = await this.fileStorage.upload(
           buffer,
           filename,
           dto.coverPictureMimetype,
         );
+        console.log('[UPDATE PROFILE] Upload returned URL:', coverPictureUrl);
       } else if (dto.coverPicture !== undefined) {
         // Keep existing value if provided (could be string or null)
         coverPictureUrl = dto.coverPicture;
@@ -133,10 +160,20 @@ export class UpdateProfileUseCase {
     if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
     if (dto.country !== undefined) updateData.country = dto.country;
     if (dto.state !== undefined) updateData.state = dto.state;
-    if (profilePictureUrl !== undefined)
+    if (profilePictureUrl !== undefined) {
+      console.log(
+        '[UPDATE PROFILE] Setting profilePicture in updateData:',
+        profilePictureUrl,
+      );
       updateData.profilePicture = profilePictureUrl;
-    if (coverPictureUrl !== undefined)
+    }
+    if (coverPictureUrl !== undefined) {
+      console.log(
+        '[UPDATE PROFILE] Setting coverPicture in updateData:',
+        coverPictureUrl,
+      );
       updateData.coverPicture = coverPictureUrl;
+    }
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.experience !== undefined) updateData.experience = dto.experience;
     if (dto.socialLinks !== undefined) updateData.socialLinks = dto.socialLinks;
@@ -145,10 +182,24 @@ export class UpdateProfileUseCase {
       updateData.certifications = dto.certifications;
 
     // Actualizar el perfil
+    console.log('[UPDATE PROFILE] Updating profile with data:', {
+      profileId: profile.id,
+      updatingProfilePicture: updateData.profilePicture !== undefined,
+      profilePictureValue: updateData.profilePicture,
+      updatingCoverPicture: updateData.coverPicture !== undefined,
+      coverPictureValue: updateData.coverPicture,
+    });
+
     const updatedProfile = await this.profileRepo.update(
       profile.id,
       updateData,
     );
+
+    console.log('[UPDATE PROFILE] Profile updated in DB:', {
+      profileId: updatedProfile.id,
+      profilePicture: updatedProfile.profilePicture,
+      coverPicture: updatedProfile.coverPicture,
+    });
 
     // Actualizar habilidades si se proporcionan
     if (dto.skills !== undefined) {

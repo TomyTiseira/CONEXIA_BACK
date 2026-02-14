@@ -42,6 +42,11 @@ export class GCSFileStorage implements FileStorage {
    */
   async upload(file: Buffer, path: string, mimetype: string): Promise<string> {
     try {
+      console.log('[GCS] Starting upload:', {
+        path,
+        mimetype,
+        size: file.length,
+      });
       const bucket = this.storage.bucket(this.bucketName);
       const blob = bucket.file(path);
 
@@ -60,19 +65,20 @@ export class GCSFileStorage implements FileStorage {
       // Return a promise that resolves when upload is complete
       return new Promise((resolve, reject) => {
         blobStream.on('error', (error) => {
-          console.error('GCS upload error:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
+          console.error('[GCS] Upload error:', error);
+          console.error('[GCS] Error details:', JSON.stringify(error, null, 2));
           reject(error);
         });
 
         blobStream.on('finish', () => {
+          console.log('[GCS] Upload successful:', path);
           resolve(path);
         });
 
         blobStream.end(file);
       });
     } catch (error) {
-      console.error('GCS upload error (outer catch):', error);
+      console.error('[GCS] Upload error (outer catch):', error);
       throw new RpcException('Failed to upload file to Google Cloud Storage.');
     }
   }
