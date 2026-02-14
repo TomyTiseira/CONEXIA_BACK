@@ -25,3 +25,6 @@ steps:
     env:
       - 'CLOUDSDK_COMPUTE_REGION=southamerica-west1'
       - 'CLOUDSDK_CONTAINER_CLUSTER=conexia'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
