@@ -14,6 +14,7 @@ export enum SubscriptionStatus {
   PENDING_PAYMENT = 'pending_payment', // Esperando pago
   ACTIVE = 'active', // Suscripción activa
   PAYMENT_FAILED = 'payment_failed', // Pago fallido
+  PENDING_CANCELLATION = 'pending_cancellation', // Pendiente de cancelación
   CANCELLED = 'cancelled', // Cancelada por el usuario
   EXPIRED = 'expired', // Expirada por falta de renovación
   REPLACED = 'replaced', // Reemplazada por una nueva suscripción
@@ -146,6 +147,13 @@ export class Subscription {
   // Suscripción que esta reemplaza (si es un upgrade/downgrade)
   @Column({ name: 'replaces_subscription_id', type: 'int', nullable: true })
   replacesSubscriptionId: number | null;
+
+  // Información de cancelación
+  @Column({ name: 'cancellation_date', type: 'timestamp', nullable: true })
+  cancellationDate: Date | null;
+
+  @Column({ name: 'cancellation_reason', type: 'text', nullable: true })
+  cancellationReason: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -69,21 +69,21 @@ export class ProcessSubscriptionSuccessUseCase {
 
       // 4. Actualizar la suscripción
       const now = new Date();
-      const endDate = new Date(now);
+      const nextPaymentDate = new Date(now);
 
-      // Calcular fecha de fin según el ciclo
+      // Calcular próxima fecha de pago según el ciclo
       if (subscription.billingCycle === BillingCycle.MONTHLY) {
-        endDate.setMonth(endDate.getMonth() + 1);
+        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       } else if (subscription.billingCycle === BillingCycle.ANNUAL) {
-        endDate.setFullYear(endDate.getFullYear() + 1);
+        nextPaymentDate.setFullYear(nextPaymentDate.getFullYear() + 1);
       }
 
       await this.subscriptionRepository.update(subscription.id, {
         status: SubscriptionStatus.ACTIVE,
         paymentStatus: 'approved',
         startDate: now,
-        endDate: endDate,
-        nextPaymentDate: endDate,
+        endDate: nextPaymentDate,
+        nextPaymentDate,
       });
 
       this.logger.log(

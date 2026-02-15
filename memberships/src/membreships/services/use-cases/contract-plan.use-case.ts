@@ -124,7 +124,6 @@ export class ContractPlanUseCase {
         subscriptionId: mpSubscriptionId,
         initPoint,
         status,
-        nextPaymentDate,
       } = this.mercadoPagoService.createSubscription(
         mercadoPagoPlanId,
         userEmail,
@@ -134,19 +133,21 @@ export class ContractPlanUseCase {
       // En redirect flow, solo actualizamos si MercadoPago devuelve un subscriptionId
       // De lo contrario, esperamos el webhook después del pago
       if (mpSubscriptionId) {
+        const calculatedNextPaymentDate =
+          status === 'authorized'
+            ? this.calculateNextPaymentDate(new Date(), dto.billingCycle)
+            : null;
+
         await this.subscriptionRepository.update(subscription.id, {
           mercadoPagoSubscriptionId: mpSubscriptionId,
           paymentStatus: status,
-          nextPaymentDate: nextPaymentDate ? new Date(nextPaymentDate) : null,
+          nextPaymentDate: calculatedNextPaymentDate,
+          endDate: calculatedNextPaymentDate || undefined,
           status:
             status === 'authorized'
               ? SubscriptionStatus.ACTIVE
               : SubscriptionStatus.PENDING_PAYMENT,
           startDate: status === 'authorized' ? new Date() : undefined,
-          endDate:
-            status === 'authorized'
-              ? this.calculateEndDate(new Date(), dto.billingCycle)
-              : undefined,
         });
 
         this.logger.log(
@@ -194,15 +195,18 @@ export class ContractPlanUseCase {
     }
   }
 
-  private calculateEndDate(startDate: Date, billingCycle: BillingCycle): Date {
-    const endDate = new Date(startDate);
+  private calculateNextPaymentDate(
+    startDate: Date,
+    billingCycle: BillingCycle,
+  ): Date {
+    const nextDate = new Date(startDate);
 
     if (billingCycle === BillingCycle.MONTHLY) {
-      endDate.setMonth(endDate.getMonth() + 1);
+      nextDate.setMonth(nextDate.getMonth() + 1);
     } else {
-      endDate.setFullYear(endDate.getFullYear() + 1);
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
     }
 
-    return endDate;
+    return nextDate;
   }
 }
