@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { FileStorage } from '../../../common/domain/interfaces/file-storage.interface';
 import {
   PublicationNotFoundException,
   PublicationNotOwnerException,
 } from 'src/common/exceptions/publications.exceptions';
 import { UpdatePublicationDto } from '../../dto/update-publication.dto';
+import { PublicationMedia } from '../../entities/publication-media.entity';
 import { PublicationTransformerHelper } from '../../helpers/publication-transformer.helper';
 import { PublicationMediaRepository } from '../../repositories/publication-media.repository';
 import { PublicationRepository } from '../../repositories/publication.repository';
@@ -13,6 +15,7 @@ export class EditPublicationUseCase {
   constructor(
     private readonly publicationRepository: PublicationRepository,
     private readonly publicationMediaRepository: PublicationMediaRepository,
+    @Inject('FILE_STORAGE') private readonly fileStorage: FileStorage,
   ) {}
 
   async execute(
@@ -71,10 +74,10 @@ export class EditPublicationUseCase {
 
       // Validar máximo 1 video total
       const existingVideos = existingMedia.filter((m) =>
-        m.fileType.startsWith('video/'),
+        m.fileType?.startsWith('video/'),
       );
       const newVideos = updateDto.media.filter((m) =>
-        m.fileType.startsWith('video/'),
+        (m.fileType || m.mimeType)?.startsWith('video/'),
       );
 
       if (existingVideos.length + newVideos.length > 1) {
@@ -87,19 +90,57 @@ export class EditPublicationUseCase {
           ? Math.max(...existingMedia.map((m) => m.displayOrder))
           : 0;
 
-      // Crear entidades de media
-      const mediaEntities = updateDto.media.map((mediaFile, index) => {
-        return this.publicationMediaRepository.create({
+      // Procesar archivos - distinguir entre base64 y URLs ya procesadas
+      const mediaEntities: PublicationMedia[] = [];
+
+      for (const [index, mediaFile] of updateDto.media.entries()) {
+        let fileUrl: string;
+        let filename: string;
+        let fileType: string;
+        let fileSize: number;
+
+        // Si tiene fileData (base64), procesarlo y subirlo
+        if (mediaFile.fileData) {
+          const buffer = Buffer.from(mediaFile.fileData, 'base64');
+          filename = this.generateFilename(
+            id,
+            mediaFile.originalName || 'file',
+          );
+          fileUrl = await this.fileStorage.upload(
+            buffer,
+            filename,
+            mediaFile.mimeType || 'image/jpeg',
+          );
+          fileType = mediaFile.mimeType || 'image/jpeg';
+          fileSize = mediaFile.size || buffer.length;
+        }
+        // Si tiene fileUrl (ya procesado/legacy), usarlo directamente
+        else if (mediaFile.fileUrl) {
+          fileUrl = mediaFile.fileUrl;
+          filename = mediaFile.filename || '';
+          fileType = mediaFile.fileType || 'image/jpeg';
+          fileSize = mediaFile.fileSize || 0;
+        }
+        // Si no tiene ni fileData ni fileUrl, saltar
+        else {
+          continue;
+        }
+
+        const mediaEntity = this.publicationMediaRepository.create({
           publicationId: id,
-          filename: mediaFile.filename,
-          fileUrl: mediaFile.fileUrl,
-          fileType: mediaFile.fileType,
-          fileSize: mediaFile.fileSize,
+          filename,
+          fileUrl,
+          fileType,
+          fileSize,
           displayOrder: maxOrder + index + 1,
         });
-      });
 
-      await this.publicationMediaRepository.save(mediaEntities);
+        mediaEntities.push(mediaEntity);
+      }
+
+      if (mediaEntities.length > 0) {
+        await this.publicationMediaRepository.save(mediaEntities);
+      }
       delete dataToUpdate.media;
     }
 
@@ -123,5 +164,17 @@ export class EditPublicationUseCase {
 
     // Aplicar transformer para evitar duplicación de datos
     return PublicationTransformerHelper.transformPublication(updated);
+  }
+
+  private generateFilename(
+    publicationId: number,
+    originalName: string,
+  ): string {
+    const timestamp = Date.now();
+    // Sanitize extension: only allow alphanumeric characters
+    const rawExtension = originalName.split('.').pop() || 'jpg';
+    const extension =
+      rawExtension.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'jpg';
+    return `publication-${publicationId}-${timestamp}.${extension}`;
   }
 }

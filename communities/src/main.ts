@@ -27,4 +27,7 @@ async function bootstrap() {
   await app.listen();
   logger.log('Publications microservice is running');
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error starting microservice:', err);
+  process.exit(1);
+});

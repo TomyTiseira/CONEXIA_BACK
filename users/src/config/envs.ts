@@ -49,11 +49,7 @@ const envSchema = joi
       then: joi.string().required(),
       otherwise: joi.string().optional(),
     }),
-    GCS_KEY_FILE: joi.string().when('NODE_ENV', {
-      is: 'production',
-      then: joi.string().required(),
-      otherwise: joi.string().optional(),
-    }),
+    GCS_KEY_FILE: joi.string().optional().allow(''),
     GCS_PROFILE_BUCKET: joi.string().when('NODE_ENV', {
       is: 'production',
       then: joi.string().required(),

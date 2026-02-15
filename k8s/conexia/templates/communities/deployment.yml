@@ -23,6 +23,8 @@ spec:
         - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/communities
           name: communities
           env:
+            - name: NODE_ENV
+              value: "production"
             - name: NATS_SERVERS
               value: "nats://nats"
             - name: DATABASE_URL
@@ -58,5 +60,19 @@ spec:
                 secretKeyRef:
                   name: communities-secrets
                   key: OPENAI_API_KEY
+            - name: GCS_PROJECT_ID
+              value: "conexia-486401"
+            - name: GCS_KEY_FILE
+              value: "/etc/gcs/key.json"
+            - name: GCS_PUBLICATIONS_BUCKET
+              value: "conexia-publications-media"
+          volumeMounts:
+            - name: gcs-key
+              mountPath: /etc/gcs
+              readOnly: true
           resources: {}
+      volumes:
+        - name: gcs-key
+          secret:
+            secretName: gcs-key-secret
 status: {}

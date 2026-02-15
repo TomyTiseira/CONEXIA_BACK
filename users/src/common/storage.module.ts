@@ -22,16 +22,13 @@ const fileStorageProvider = {
     if (isProduction) {
       // Production: Use Google Cloud Storage
       // Validate required GCS configuration
-      if (!envs.gcs.projectId || !envs.gcs.keyFile || !envs.gcs.profileBucket) {
-        throw new RpcException(
-          'GCS configuration is required in production. Please set GCS_PROJECT_ID, GCS_KEY_FILE, and GCS_PROFILE_BUCKET',
-        );
+      if (!envs.gcs.projectId || !envs.gcs.profileBucket) {
+        throw new RpcException('GCS configuration is required in production');
       }
 
-      console.log('Using Google Cloud Storage for file uploads');
       return new GCSFileStorage(
         envs.gcs.projectId,
-        envs.gcs.keyFile,
+        envs.gcs.keyFile || '',
         envs.gcs.profileBucket,
       );
     } else {

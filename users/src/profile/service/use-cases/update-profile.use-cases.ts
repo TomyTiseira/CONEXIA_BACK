@@ -200,8 +200,8 @@ export class UpdateProfileUseCase {
     return allFieldsFilled && hasDocumentType;
   }
 
-  private isValidImage(imageUrl: string): boolean {
-    console.log('imageUrl', imageUrl);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private isValidImage(_imageUrl: string): boolean {
     // Implementar validación de imagen si es necesario
     return true;
   }
@@ -215,7 +215,10 @@ export class UpdateProfileUseCase {
     originalName?: string,
   ): string {
     const timestamp = Date.now();
-    const extension = originalName ? originalName.split('.').pop() : 'jpg';
+    // Sanitize extension: only allow alphanumeric characters
+    const rawExtension = originalName ? originalName.split('.').pop() : 'jpg';
+    const extension =
+      rawExtension?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'jpg';
     return `${type}-${userId}-${timestamp}.${extension}`;
   }
 }
