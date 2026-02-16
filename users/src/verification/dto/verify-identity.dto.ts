@@ -6,16 +6,28 @@ export class VerifyIdentityDto {
 
   @IsNotEmpty({ message: 'Document image is required' })
   documentImage: {
-    path: string;
-    filename: string;
-    mimetype: string;
+    // New base64 approach (for API Gateway)
+    fileData?: string; // base64 encoded image
+    originalName?: string;
+    mimeType?: string;
+
+    // Legacy path approach (for backwards compatibility)
+    path?: string;
+    filename?: string;
+    mimetype?: string;
   };
 
   @IsNotEmpty({ message: 'Face image is required' })
   faceImage: {
-    path: string;
-    filename: string;
-    mimetype: string;
+    // New base64 approach (for API Gateway)
+    fileData?: string; // base64 encoded image
+    originalName?: string;
+    mimeType?: string;
+
+    // Legacy path approach (for backwards compatibility)
+    path?: string;
+    filename?: string;
+    mimetype?: string;
   };
 
   @IsOptional()

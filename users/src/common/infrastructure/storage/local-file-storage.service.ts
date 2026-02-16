@@ -15,8 +15,8 @@ import { FileStorage } from '../../domain/interfaces/file-storage.interface';
 export class LocalFileStorage implements FileStorage {
   private readonly uploadDir: string;
 
-  constructor() {
-    this.uploadDir = join(process.cwd(), 'uploads');
+  constructor(baseDir: string = 'uploads') {
+    this.uploadDir = join(process.cwd(), baseDir);
   }
 
   /**
@@ -56,5 +56,18 @@ export class LocalFileStorage implements FileStorage {
     // For local storage, we just return the filename
     // The frontend will prepend IMAGE_URL to construct the full URL
     return path;
+  }
+
+  /**
+   * Gets a "signed URL" for local storage
+   * In development, this just returns the path since there's no security risk
+   *
+   * @param path - The path/key of the file
+   * @returns Promise with the file path
+   */
+  getSignedUrl(path: string): Promise<string> {
+    // In local development, just return the path
+    // No security needed for local files
+    return Promise.resolve(path);
   }
 }
