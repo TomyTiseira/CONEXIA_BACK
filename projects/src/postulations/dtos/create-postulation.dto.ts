@@ -48,6 +48,18 @@ export class CreatePostulationDto {
   cvSize?: number;
 
   @IsOptional()
+  @IsString()
+  cvData?: string;
+
+  @IsOptional()
+  @IsString()
+  cvOriginalName?: string;
+
+  @IsOptional()
+  @IsString()
+  cvMimetype?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PostulationAnswerDto)

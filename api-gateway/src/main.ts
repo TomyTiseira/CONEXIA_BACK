@@ -45,11 +45,6 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // Servir archivos de CV específicamente
-  app.useStaticAssets(join(process.cwd(), 'uploads', 'cv'), {
-    prefix: '/uploads/cv/',
-  });
-
   // Servir archivos de publicaciones específicamente
   app.useStaticAssets(join(process.cwd(), 'uploads', 'publications'), {
     prefix: '/uploads/publications/',

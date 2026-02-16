@@ -20,6 +20,7 @@ interface EnvVars {
   GCS_PROJECT_ID?: string;
   GCS_KEY_FILE?: string;
   GCS_PROJECT_FILES_BUCKET?: string;
+  GCS_CV_DOCUMENTS_BUCKET?: string;
 }
 
 const envSchema = joi
@@ -54,6 +55,11 @@ const envSchema = joi
       then: joi.required(),
       otherwise: joi.optional(),
     }),
+    GCS_CV_DOCUMENTS_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.required(),
+      otherwise: joi.optional(),
+    }),
   })
   .unknown(true);
 
@@ -76,6 +82,7 @@ const result = envSchema.validate({
   GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
   GCS_KEY_FILE: process.env.GCS_KEY_FILE,
   GCS_PROJECT_FILES_BUCKET: process.env.GCS_PROJECT_FILES_BUCKET,
+  GCS_CV_DOCUMENTS_BUCKET: process.env.GCS_CV_DOCUMENTS_BUCKET,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -103,5 +110,6 @@ export const envs = {
     projectId: envVars.GCS_PROJECT_ID || '',
     keyFile: envVars.GCS_KEY_FILE || '',
     projectFilesBucket: envVars.GCS_PROJECT_FILES_BUCKET || '',
+    cvDocumentsBucket: envVars.GCS_CV_DOCUMENTS_BUCKET || '',
   },
 };

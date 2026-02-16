@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import {
   AlreadyAppliedToRoleException,
@@ -19,6 +19,7 @@ import { PostulationStatusCode } from '../../enums/postulation-status.enum';
 import { PostulationRepository } from '../../repositories/postulation.repository';
 import { PostulationStatusService } from '../postulation-status.service';
 import { PostulationValidationService } from '../postulation-validation.service';
+import { FileStorage } from '../../../common/domain/interfaces/file-storage.interface';
 
 @Injectable()
 export class CreatePostulationUseCase {
@@ -28,6 +29,8 @@ export class CreatePostulationUseCase {
     private readonly postulationStatusService: PostulationStatusService,
     private readonly projectRepository: ProjectRepository,
     private readonly usersClientService: UsersClientService,
+    @Inject('CV_FILE_STORAGE')
+    private readonly cvFileStorage: FileStorage,
   ) {}
 
   async execute(
@@ -186,18 +189,43 @@ export class CreatePostulationUseCase {
     }
 
     // Validar CV si es requerido
-    if (hasCV && !createPostulationDto.cvUrl) {
+    if (hasCV && !createPostulationDto.cvUrl && !createPostulationDto.cvData) {
       throw new InvalidApplicationTypesException(
         createPostulationDto.roleId,
         'CV is required for this role',
       );
     }
 
+    // Process CV upload if CV data is provided
+    let cvUrl: string | undefined = createPostulationDto.cvUrl;
+    let cvFilename: string | undefined = createPostulationDto.cvFilename;
+    let cvSize: number | undefined = createPostulationDto.cvSize;
+
+    try {
+      if (createPostulationDto.cvData) {
+        const buffer = Buffer.from(createPostulationDto.cvData, 'base64');
+        const timestamp = Date.now();
+        const filename = this.generateCvFilename(
+          currentUserId,
+          timestamp,
+          createPostulationDto.cvOriginalName,
+        );
+
+        cvUrl = await this.cvFileStorage.upload(
+          buffer,
+          filename,
+          createPostulationDto.cvMimetype || 'application/pdf',
+        );
+        cvFilename = createPostulationDto.cvOriginalName;
+        cvSize = buffer.length;
+      }
+    } catch {
+      throw new RpcException('Failed to upload CV file');
+    }
+
     // Validar tamaño del CV si viene
-    if (createPostulationDto.cvSize) {
-      this.postulationValidationService.validateCvFileSize(
-        createPostulationDto.cvSize,
-      );
+    if (cvSize) {
+      this.postulationValidationService.validateCvFileSize(cvSize);
     }
 
     // Validar respuestas si se requieren preguntas
@@ -247,9 +275,9 @@ export class CreatePostulationUseCase {
       projectId: role.projectId,
       roleId: createPostulationDto.roleId,
       statusId: initialStatus.id,
-      cvUrl: createPostulationDto.cvUrl,
-      cvFilename: createPostulationDto.cvFilename,
-      cvSize: createPostulationDto.cvSize,
+      cvUrl,
+      cvFilename,
+      cvSize,
       // Campos para inversores
       investorAmount: createPostulationDto.investorAmount,
       investorMessage: createPostulationDto.investorMessage,
@@ -308,5 +336,17 @@ export class CreatePostulationUseCase {
     } catch {
       throw new InvalidUserRoleException(currentUserId);
     }
+  }
+
+  /**
+   * Generate a unique filename for CV uploads
+   */
+  private generateCvFilename(
+    userId: number,
+    timestamp: number,
+    originalName?: string,
+  ): string {
+    const extension = originalName ? originalName.split('.').pop() : 'pdf';
+    return `cv-${userId}-${timestamp}.${extension}`;
   }
 }

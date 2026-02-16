@@ -103,7 +103,7 @@ export class AuthEventsGateway
           .emit('account-status-changed', pending);
         this.pendingAccountNotifications.delete(userId);
       }
-    } catch (error: unknown) {
+    } catch {
       client.disconnect();
     }
   }

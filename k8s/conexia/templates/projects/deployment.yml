@@ -64,6 +64,8 @@ spec:
               value: "/etc/gcs/key.json"
             - name: GCS_PROJECT_FILES_BUCKET
               value: "conexia-project-files"
+            - name: GCS_CV_DOCUMENTS_BUCKET
+              value: "conexia-cv-documents"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs
