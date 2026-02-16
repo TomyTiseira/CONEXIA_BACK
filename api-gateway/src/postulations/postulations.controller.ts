@@ -15,9 +15,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { diskStorage, memoryStorage } from 'multer';
-import { extname, join } from 'path';
-import { catchError } from 'rxjs';
+import { memoryStorage } from 'multer';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
@@ -136,15 +134,7 @@ export class PostulationsController {
   @Post(':postulationId/submit-evaluation')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evaluation', maxCount: 1 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'evaluations'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const name = uniqueSuffix + extname(file.originalname);
-          cb(null, name);
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -202,54 +192,18 @@ export class PostulationsController {
 
     // Add evaluation file data if uploaded
     if (files.evaluation?.[0]) {
-      // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'image/png',
-        'image/jpeg',
-        'image/jpg',
-      ];
       const evaluationFile = files.evaluation[0];
-      if (!allowedTypes.includes(evaluationFile.mimetype)) {
-        // Delete uploaded file
-        try {
-          const fs = await import('fs/promises');
-          if (evaluationFile.path) {
-            await fs.unlink(evaluationFile.path);
-          }
-        } catch {
-          // ignore errors
-        }
-        throw new RpcException({
-          status: 400,
-          message: 'Only PDF, PNG and JPG files are allowed for evaluation',
-        });
-      }
 
-      payload.submitEvaluationDto.evaluationFileUrl = `/uploads/evaluations/${evaluationFile.filename}`;
-      payload.submitEvaluationDto.evaluationFilename =
+      // Convert file buffer to base64
+      const base64Data = evaluationFile.buffer.toString('base64');
+
+      payload.submitEvaluationDto.evaluationData = base64Data;
+      payload.submitEvaluationDto.evaluationOriginalName =
         evaluationFile.originalname;
-      payload.submitEvaluationDto.evaluationFileSize = evaluationFile.size;
-      payload.submitEvaluationDto.evaluationFileMimetype =
-        evaluationFile.mimetype;
+      payload.submitEvaluationDto.evaluationMimetype = evaluationFile.mimetype;
     }
 
-    return this.client.send('submitEvaluation', payload).pipe(
-      catchError(async (error) => {
-        // In case of error, delete uploaded file
-        if (files.evaluation?.[0]) {
-          try {
-            const uploadedPath = files.evaluation?.[0]?.path;
-            if (uploadedPath) {
-              await import('fs/promises').then((fs) => fs.unlink(uploadedPath));
-            }
-          } catch {
-            // ignore errors
-          }
-        }
-        throw new RpcException(error);
-      }),
-    );
+    return this.client.send('submitEvaluation', payload);
   }
 
   @AuthRoles([ROLES.USER])

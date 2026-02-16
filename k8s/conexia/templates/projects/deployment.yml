@@ -66,6 +66,8 @@ spec:
               value: "conexia-project-files"
             - name: GCS_CV_DOCUMENTS_BUCKET
               value: "conexia-cv-documents"
+            - name: GCS_EVALUATION_FILES_BUCKET
+              value: "conexia-evaluation-files"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs
