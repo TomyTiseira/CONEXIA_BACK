@@ -8,24 +8,49 @@ import {
   Req,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { Type } from 'class-transformer';
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { catchError, firstValueFrom } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { AuthenticatedRequest } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 
+// DTO for image data
+class ImageDataDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
 // DTO for new base64 approach
 class VerifyIdentityPayloadDto {
-  documentImage: {
-    fileData: string; // base64
-    originalName: string;
-    mimeType: string;
-  };
-  faceImage: {
-    fileData: string; // base64
-    originalName: string;
-    mimeType: string;
-  };
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ImageDataDto)
+  documentImage: ImageDataDto;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ImageDataDto)
+  faceImage: ImageDataDto;
+
+  @IsString()
+  @IsOptional()
   documentType?: string;
 }
 
