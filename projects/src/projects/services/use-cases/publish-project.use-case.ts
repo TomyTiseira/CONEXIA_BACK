@@ -200,8 +200,7 @@ export class PublishProjectUseCase {
         // Update evaluation with uploaded file URL
         role.evaluation.fileUrl = fileUrl;
         role.evaluation.fileName = role.evaluation.evaluationFile.originalName;
-        role.evaluation.fileMimeType =
-          role.evaluation.evaluationFile.mimeType;
+        role.evaluation.fileMimeType = role.evaluation.evaluationFile.mimeType;
 
         // Remove temporary field
         delete (role.evaluation as any).evaluationFile;
