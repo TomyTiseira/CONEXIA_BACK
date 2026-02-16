@@ -22,6 +22,8 @@ interface UpdateSubscriptionData {
   paymentMethodType?: string | null;
   cardLastFourDigits?: string | null;
   cardBrand?: string | null;
+  cancellationDate?: Date | null;
+  cancellationReason?: string | null;
 }
 
 @Injectable()
@@ -72,11 +74,18 @@ export class SubscriptionRepository {
 
   async findActiveByUserId(userId: number): Promise<Subscription | null> {
     return this.subscriptionRepository.findOne({
-      where: {
-        userId,
-        status: SubscriptionStatus.ACTIVE,
-        deletedAt: IsNull(),
-      },
+      where: [
+        {
+          userId,
+          status: SubscriptionStatus.ACTIVE,
+          deletedAt: IsNull(),
+        },
+        {
+          userId,
+          status: SubscriptionStatus.PENDING_CANCELLATION,
+          deletedAt: IsNull(),
+        },
+      ],
       relations: ['plan'],
       order: {
         createdAt: 'DESC',
@@ -133,6 +142,19 @@ export class SubscriptionRepository {
         status: SubscriptionStatus.ACTIVE,
       })
       .andWhere('subscription.endDate < :currentDate', { currentDate })
+      .getMany();
+  }
+
+  async findPendingCancellations(): Promise<Subscription[]> {
+    const currentDate = new Date();
+
+    return this.subscriptionRepository
+      .createQueryBuilder('subscription')
+      .leftJoinAndSelect('subscription.plan', 'plan')
+      .where('subscription.status = :status', {
+        status: SubscriptionStatus.PENDING_CANCELLATION,
+      })
+      .andWhere('subscription.endDate <= :currentDate', { currentDate })
       .getMany();
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  BillingCycle,
   Subscription,
   SubscriptionStatus,
 } from '../../entities/membreship.entity';
@@ -87,11 +88,7 @@ export class ProcessPreapprovalWebhookUseCase {
       // Procesar según la acción
       if (action === 'created' || preapprovalData.status === 'authorized') {
         // La suscripción fue autorizada exitosamente
-        await this.activateSubscription(
-          subscription.id,
-          preapprovalId,
-          preapprovalData,
-        );
+        await this.activateSubscription(subscription.id, preapprovalId);
       } else if (preapprovalData.status === 'cancelled') {
         // La suscripción fue cancelada
         await this.cancelSubscription(subscription.id);
@@ -121,21 +118,26 @@ export class ProcessPreapprovalWebhookUseCase {
   private async activateSubscription(
     subscriptionId: number,
     preapprovalId: string,
-    preapprovalData: any,
   ): Promise<void> {
     this.logger.log(
       `✅ Activando suscripción ${subscriptionId} con preapproval ${preapprovalId}`,
     );
 
-    const nextPaymentDate = preapprovalData.next_payment_date
-      ? new Date(preapprovalData.next_payment_date)
-      : null;
+    const subscription =
+      await this.subscriptionRepository.findById(subscriptionId);
+
+    const now = new Date();
+    const nextPaymentDate = this.calculateNextPaymentDate(
+      now,
+      subscription?.billingCycle,
+    );
 
     await this.subscriptionRepository.update(subscriptionId, {
       mercadoPagoSubscriptionId: preapprovalId,
       paymentStatus: 'authorized',
       status: SubscriptionStatus.ACTIVE,
-      startDate: new Date(),
+      startDate: now,
+      endDate: nextPaymentDate,
       nextPaymentDate,
     });
 
@@ -165,5 +167,20 @@ export class ProcessPreapprovalWebhookUseCase {
     });
 
     this.logger.log(`⏸️ Suscripción ${subscriptionId} pausada`);
+  }
+
+  private calculateNextPaymentDate(
+    fromDate: Date,
+    billingCycle?: BillingCycle,
+  ): Date {
+    const nextDate = new Date(fromDate);
+
+    if (billingCycle === BillingCycle.MONTHLY) {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    } else {
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+    }
+
+    return nextDate;
   }
 }

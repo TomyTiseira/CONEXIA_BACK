@@ -17,4 +17,7 @@ async function bootstrap() {
   await app.listen();
   console.log('Services microservice is listening on NATS');
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error starting Services microservice:', err);
+  process.exit(1);
+});

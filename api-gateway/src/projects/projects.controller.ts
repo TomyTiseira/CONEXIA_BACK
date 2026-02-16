@@ -7,7 +7,6 @@ import {
   Param,
   Post,
   Query,
-  Req,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
@@ -15,14 +14,11 @@ import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
 import { RequiresActiveAccount } from 'src/auth/decorators/requires-active-account.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
-import {
-  AuthenticatedRequest,
-  AuthenticatedUser,
-} from 'src/common/interfaces/authenticatedRequest.interface';
+import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { GetProjectsDto } from './dtos/get-projects.dto';
-import { PublishProjectDto } from './dtos/publish-project.dto';
+import { ApplicationType, PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -39,7 +35,7 @@ export class ProjectsController {
 
   @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden publicar proyectos
   @Post('publish')
-  async publishProject(
+  publishProject(
     @Body() publishProjectDto: PublishProjectDto,
     @User() user: AuthenticatedUser,
   ) {

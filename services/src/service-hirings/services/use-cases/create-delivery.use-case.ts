@@ -222,7 +222,6 @@ export class CreateDeliveryUseCase {
 
     // 6. Crear registros de attachments si hay archivos
     if (files && files.length > 0) {
-
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
       const attachmentsData = files.map((file, index) => ({

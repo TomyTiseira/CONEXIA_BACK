@@ -185,4 +185,23 @@ export class MembershipsController {
       }),
     );
   }
+
+  // Cancel user subscription
+  @Delete('me/subscription')
+  @AuthRoles([ROLES.USER])
+  cancelMySubscription(
+    @User() user: AuthenticatedUser,
+    @Body() body?: { reason?: string },
+  ) {
+    return this.client
+      .send('cancelMySubscription', {
+        userId: user.id,
+        reason: body?.reason,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
 }

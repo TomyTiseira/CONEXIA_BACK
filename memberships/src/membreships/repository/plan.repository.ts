@@ -107,7 +107,7 @@ export class PlanRepository {
   async findFreePlan(): Promise<Plan | null> {
     const plan = await this.repo.findOne({
       where: {
-        name: 'Free',
+        monthlyPrice: 0,
         deletedAt: IsNull(),
       },
     });

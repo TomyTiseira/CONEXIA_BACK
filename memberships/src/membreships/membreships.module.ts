@@ -13,6 +13,7 @@ import { PlanRepository } from './repository/plan.repository';
 import { SubscriptionRepository } from './repository/subscription.repository';
 import { MembershipsService } from './services/membreships.service';
 import { MercadoPagoService } from './services/mercado-pago.service';
+import { CancelUserSubscriptionUseCase } from './services/use-cases/cancel-user-subscription.use-case';
 import { ContractPlanUseCase } from './services/use-cases/contract-plan.use-case';
 import { CreatePlanUseCase } from './services/use-cases/create-plan.use-case';
 import { DeletePlanUseCase } from './services/use-cases/delete-plan.use-case';
@@ -57,6 +58,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     SyncPlanWithMercadoPagoUseCase,
     GetUserPlanUseCase,
     GetAdminMembershipMetricsUseCase,
+    CancelUserSubscriptionUseCase,
   ],
   exports: [
     MembershipsService,
