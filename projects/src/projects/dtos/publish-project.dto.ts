@@ -13,6 +13,40 @@ import {
 } from 'class-validator';
 import { ValidateNested, IsEnum, ValidateIf } from 'class-validator';
 
+/**
+ * DTO for uploading project image as base64
+ */
+export class ProjectImageDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
+/**
+ * DTO for uploading evaluation files as base64
+ */
+export class EvaluationFileDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
 export class PublishProjectDto {
   @IsNumber({}, { message: 'userId must be a number' })
   @IsPositive({ message: 'userId must be a positive number' })
@@ -54,6 +88,13 @@ export class PublishProjectDto {
   @IsBoolean({ message: 'requiresInvestor must be a boolean' })
   requiresInvestor?: boolean;
 
+  // New base64 approach for project image
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProjectImageDto)
+  imageFile?: ProjectImageDto;
+
+  // Legacy URL approach (for backward compatibility)
   @IsString({ message: 'image must be a string' })
   @IsOptional()
   image?: string;
@@ -104,6 +145,13 @@ export class RoleEvaluationCreateDto {
   @IsString({ message: 'link must be a string' })
   link?: string;
 
+  // New base64 approach for evaluation file
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EvaluationFileDto)
+  evaluationFile?: EvaluationFileDto;
+
+  // Legacy approach (for backward compatibility)
   @IsOptional()
   @IsString({ message: 'fileUrl must be a string' })
   fileUrl?: string;

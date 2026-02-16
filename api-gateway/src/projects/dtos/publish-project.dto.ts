@@ -13,7 +13,47 @@ import {
 } from 'class-validator';
 import { ValidateNested, IsEnum, ValidateIf } from 'class-validator';
 
+/**
+ * DTO for uploading project image as base64
+ */
+export class ProjectImageDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
+/**
+ * DTO for uploading evaluation files as base64
+ */
+export class EvaluationFileDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
 export class PublishProjectDto {
+  @IsNumber({}, { message: 'userId must be a number' })
+  @IsPositive({ message: 'userId must be a positive number' })
+  @IsNotEmpty({ message: 'userId is required' })
+  @Transform(({ value }) => Number(value))
+  userId: number;
+
   @IsString({ message: 'title must be a string' })
   @IsNotEmpty({ message: 'title is required' })
   title: string;
@@ -24,7 +64,6 @@ export class PublishProjectDto {
 
   @IsNumber({}, { message: 'categoryId must be a number' })
   @IsPositive({ message: 'categoryId must be a positive number' })
-  @Transform(({ value }) => Number(value))
   categoryId: number;
 
   @IsOptional()
@@ -42,26 +81,25 @@ export class PublishProjectDto {
   location?: number;
 
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return value;
-  })
+  @IsBoolean({ message: 'requiresPartner must be a boolean' })
   requiresPartner?: boolean;
 
-  // Flag indicating the project requires an investor
   @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return value;
-  })
+  @IsBoolean({ message: 'requiresInvestor must be a boolean' })
   requiresInvestor?: boolean;
 
-  // Roles definitions
-  @IsArray()
+  // New base64 approach for project image
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProjectImageDto)
+  imageFile?: ProjectImageDto;
+
+  // Legacy URL approach (for backward compatibility)
+  @IsString({ message: 'image must be a string' })
+  @IsOptional()
+  image?: string;
+
+  @IsArray({ message: 'roles must be an array' })
   @ArrayMinSize(1, { message: 'At least one role is required' })
   @ValidateNested({ each: true })
   @Type(() => RoleCreateDto)
@@ -95,11 +133,6 @@ export class OptionCreateDto {
 
   @IsOptional()
   @IsBoolean({ message: 'isCorrect must be a boolean' })
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return value;
-  })
   isCorrect?: boolean;
 }
 
@@ -112,6 +145,13 @@ export class RoleEvaluationCreateDto {
   @IsString({ message: 'link must be a string' })
   link?: string;
 
+  // New base64 approach for evaluation file
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EvaluationFileDto)
+  evaluationFile?: EvaluationFileDto;
+
+  // Legacy approach (for backward compatibility)
   @IsOptional()
   @IsString({ message: 'fileUrl must be a string' })
   fileUrl?: string;

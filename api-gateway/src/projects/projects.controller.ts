@@ -8,16 +8,8 @@ import {
   Post,
   Query,
   Req,
-  UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { plainToInstance } from 'class-transformer';
-import { validate, ValidationError } from 'class-validator';
-import { promises as fs } from 'fs';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
 import { catchError } from 'rxjs';
 import { ROLES } from 'src/auth/constants/role-ids';
 import { AuthRoles } from 'src/auth/decorators/auth-roles.decorator';
@@ -30,7 +22,7 @@ import {
 import { NATS_SERVICE } from '../config';
 import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { GetProjectsDto } from './dtos/get-projects.dto';
-import { ApplicationType, PublishProjectDto } from './dtos/publish-project.dto';
+import { PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
@@ -47,164 +39,13 @@ export class ProjectsController {
 
   @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden publicar proyectos
   @Post('publish')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'image', maxCount: 1 },
-        { name: 'evaluationFiles', maxCount: 20 },
-      ],
-      {
-        storage: diskStorage({
-          destination: (req, file, cb) => {
-            const base = join(process.cwd(), 'uploads', 'projects');
-            // images -> uploads/projects/images
-            // evaluation files -> uploads/projects/evaluation
-            let dest: string;
-            if (file.fieldname === 'image') dest = join(base, 'images');
-            else if (file.fieldname === 'evaluationFiles')
-              dest = join(base, 'evaluation');
-            else dest = base;
-            // ensure destination exists
-            fs.mkdir(dest, { recursive: true })
-              .then(() => cb(null, dest))
-              .catch((err) => cb(err, dest));
-          },
-          filename: (req, file, cb) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const name = uniqueSuffix + extname(file.originalname);
-            cb(null, name);
-          },
-        }),
-        limits: { fileSize: 5 * 1024 * 1024 },
-        fileFilter: (req, file, cb) => {
-          const allowedImageTypes = ['image/jpeg', 'image/png'];
-          const allowedEvaluationTypes = [
-            'image/jpeg',
-            'image/png',
-            'application/pdf',
-          ];
-
-          if (file.fieldname === 'image') {
-            if (allowedImageTypes.includes(file.mimetype)) cb(null, true);
-            else
-              cb(
-                new RpcException({
-                  status: 400,
-                  message:
-                    'Only images in JPEG or PNG format are allowed for project image.',
-                }),
-                false,
-              );
-          } else if (file.fieldname === 'evaluationFiles') {
-            if (allowedEvaluationTypes.includes(file.mimetype)) cb(null, true);
-            else
-              cb(
-                new RpcException({
-                  status: 400,
-                  message:
-                    'Only images (JPEG/PNG) or PDF are allowed for evaluation files.',
-                }),
-                false,
-              );
-          } else cb(null, true);
-        },
-      },
-    ),
-  )
   async publishProject(
-    @Req() req: AuthenticatedRequest,
-    @UploadedFiles()
-    files: {
-      image?: Express.Multer.File[];
-      evaluationFiles?: Express.Multer.File[];
-    } = {},
+    @Body() publishProjectDto: PublishProjectDto,
     @User() user: AuthenticatedUser,
   ) {
-    const body = (req.body as { [key: string]: any }) ?? {};
-
-    // Common parsing helper: if nested objects/arrays are sent as JSON strings in multipart
-    const parsedBody: any = { ...body };
-    if (typeof parsedBody.roles === 'string') {
-      try {
-        const parsed = JSON.parse(parsedBody.roles) as unknown;
-        // Narrow the parsed value before assigning to avoid unsafe `any` assignment
-        if (Array.isArray(parsed)) {
-          parsedBody.roles = parsed as Array<Record<string, unknown>>;
-        } else {
-          parsedBody.roles = parsed as Record<string, unknown>;
-        }
-      } catch {
-        // keep as-is; validation will catch it
-      }
-    }
-
-    // Attach evaluation files metadata to corresponding roles (by index)
-    const evalFiles = files.evaluationFiles ?? [];
-    if (Array.isArray(parsedBody.roles)) {
-      type RoleWithEvaluation = {
-        evaluation?: {
-          fileUrl?: string;
-          fileName?: string;
-          fileSize?: number;
-          fileMimeType?: string;
-        };
-        [key: string]: unknown;
-      };
-
-      for (let i = 0; i < parsedBody.roles.length; i++) {
-        const role = parsedBody.roles[i] as RoleWithEvaluation;
-        const file = evalFiles[i];
-        if (file) {
-          role.evaluation = role.evaluation ?? {};
-          role.evaluation.fileUrl = file.filename;
-          role.evaluation.fileName = file.originalname;
-          role.evaluation.fileSize = file.size;
-          role.evaluation.fileMimeType = file.mimetype;
-        }
-      }
-    }
-
-    // Now transform and validate after attaching file metadata
-    const dto = plainToInstance(PublishProjectDto, parsedBody);
-    const errors = await validate(dto);
-
-    if (errors.length > 0) {
-      const format = (err: ValidationError): any => {
-        const out: any = { property: err.property };
-        if (err.constraints && Object.keys(err.constraints).length > 0)
-          out.constraints = err.constraints;
-        if (err.children && err.children.length > 0)
-          out.children = err.children.map((c) => format(c));
-        return out;
-      };
-
-      // Clean up uploaded files on validation error
-      const filesToDelete = [
-        ...(files.image?.map((f) => f.path) ?? []),
-        ...(files.evaluationFiles?.map((f) => f.path) ?? []),
-      ];
-      await Promise.all(
-        filesToDelete.map(async (filePath) => {
-          try {
-            await import('fs/promises').then((fs) => fs.unlink(filePath));
-          } catch {
-            // ignore
-          }
-        }),
-      );
-
-      throw new RpcException({
-        status: 400,
-        message: 'Validation failed',
-        errors: errors.map((e) => format(e)),
-      });
-    }
-
     const payload = {
-      ...dto,
+      ...publishProjectDto,
       userId: user.id,
-      image: files?.image?.[0]?.filename,
     };
 
     return this.client.send('publishProject', payload).pipe(
