@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../common/common.module';
+import { StorageModule } from '../common/storage.module';
 import { Claim } from '../service-hirings/entities/claim.entity';
 import { ServiceHiring } from '../service-hirings/entities/service-hiring.entity';
 import { ServiceHiringsModule } from '../service-hirings/service-hirings.module';
@@ -33,6 +34,7 @@ import { GetUserServiceMetricsUseCase } from './services/use-cases/metrics/get-u
       Claim,
     ]),
     CommonModule,
+    StorageModule,
     forwardRef(() => ServiceHiringsModule),
     forwardRef(() => ServiceReviewsModule),
     forwardRef(() => ServiceReportsModule),

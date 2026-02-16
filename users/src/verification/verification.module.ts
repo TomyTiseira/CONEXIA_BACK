@@ -9,9 +9,13 @@ import { VerificationRepository } from './repository/verification.repository';
 import { AwsService } from './services/aws.service';
 import { VerificationGuardService } from './services/verification-guard.service';
 import { VerificationService } from './services/verification.service';
+import { VerificationStorageModule } from './verification-storage.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserVerification, User, Profile])],
+  imports: [
+    TypeOrmModule.forFeature([UserVerification, User, Profile]),
+    VerificationStorageModule,
+  ],
   controllers: [VerificationController, VerificationGuardController],
   providers: [
     VerificationService,

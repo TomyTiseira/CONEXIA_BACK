@@ -34,4 +34,13 @@ export interface FileStorage {
    * @returns The public URL to access the file
    */
   getPublicUrl(path: string): string;
+
+  /**
+   * Gets a signed URL for secure, temporary access to a file
+   *
+   * @param path - The path/key of the file
+   * @param expirationMinutes - How long the URL should be valid (default: 60 minutes)
+   * @returns Promise with a signed URL that expires after the specified time
+   */
+  getSignedUrl(path: string, expirationMinutes?: number): Promise<string>;
 }

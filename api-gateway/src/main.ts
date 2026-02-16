@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { RpcCustomExceptionFilter } from './common/exceptions/rpc-custom-exception.filter';
@@ -12,6 +13,10 @@ import { envs } from './config';
 async function bootstrap() {
   const logger = new Logger('ApiGateway');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Aumentar el límite de body size para imágenes en base64
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // Configurar como microservicio híbrido (HTTP + NATS)
   app.connectMicroservice<MicroserviceOptions>({
