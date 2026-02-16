@@ -18,7 +18,7 @@ import { AuthenticatedUser } from 'src/common/interfaces/authenticatedRequest.in
 import { NATS_SERVICE } from '../config';
 import { DeleteProjectDto } from './dtos/delete-project.dto';
 import { GetProjectsDto } from './dtos/get-projects.dto';
-import { PublishProjectDto } from './dtos/publish-project.dto';
+import { ApplicationType, PublishProjectDto } from './dtos/publish-project.dto';
 
 @Controller('projects')
 export class ProjectsController {
