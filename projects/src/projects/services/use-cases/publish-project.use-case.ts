@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { FileStorage } from '../../../common/domain/interfaces/file-storage.interface';
 import {
   CategoryNotFoundException,
   CollaborationTypeNotFoundException,
@@ -26,6 +27,8 @@ export class PublishProjectUseCase {
     private readonly projectRepository: ProjectRepository,
     private readonly usersClientService: UsersClientService,
     private readonly membershipsClientService: MembershipsClientService,
+    @Inject('FILE_STORAGE')
+    private readonly fileStorage: FileStorage,
   ) {}
 
   async execute(projectData: PublishProjectDto) {
@@ -126,6 +129,28 @@ export class PublishProjectUseCase {
       }
     }
 
+    // Process project image: base64 → upload → URL
+    let projectImageUrl: string | undefined;
+
+    if (projectData.imageFile) {
+      // New base64 approach
+      const buffer = Buffer.from(projectData.imageFile.fileData, 'base64');
+      const timestamp = Date.now();
+      const extension = this.getExtensionFromMimeType(
+        projectData.imageFile.mimeType,
+      );
+      const filename = `project-${projectData.userId}-${timestamp}.${extension}`;
+
+      projectImageUrl = await this.fileStorage.upload(
+        buffer,
+        filename,
+        projectData.imageFile.mimeType,
+      );
+    } else if (projectData.image) {
+      // Legacy URL approach
+      projectImageUrl = projectData.image;
+    }
+
     // Preparar datos del proyecto para creación
     const projectToCreate = {
       userId: projectData.userId,
@@ -137,7 +162,7 @@ export class PublishProjectUseCase {
         : undefined,
       endDate: projectData.endDate ? new Date(projectData.endDate) : undefined,
       locationId: projectData.location || undefined,
-      image: projectData.image || undefined,
+      image: projectImageUrl || undefined,
       requiresPartner: projectData.requiresPartner || false,
       requiresInvestor: projectData.requiresInvestor || false,
     };
@@ -147,6 +172,40 @@ export class PublishProjectUseCase {
 
     // Preparar roles a crear (roles definidos por el usuario + roles automáticos)
     const rolesToCreate = [...projectData.roles];
+
+    // Process evaluation files for each role
+    for (let i = 0; i < rolesToCreate.length; i++) {
+      const role = rolesToCreate[i];
+      if (
+        role.evaluation?.evaluationFile &&
+        role.applicationTypes?.includes(ApplicationType.EVALUATION)
+      ) {
+        // New base64 approach
+        const buffer = Buffer.from(
+          role.evaluation.evaluationFile.fileData,
+          'base64',
+        );
+        const timestamp = Date.now();
+        const extension = this.getExtensionFromMimeType(
+          role.evaluation.evaluationFile.mimeType,
+        );
+        const filename = `evaluation-${projectData.userId}-${timestamp}-${i}.${extension}`;
+
+        const fileUrl = await this.fileStorage.upload(
+          buffer,
+          filename,
+          role.evaluation.evaluationFile.mimeType,
+        );
+
+        // Update evaluation with uploaded file URL
+        role.evaluation.fileUrl = fileUrl;
+        role.evaluation.fileName = role.evaluation.evaluationFile.originalName;
+        role.evaluation.fileMimeType = role.evaluation.evaluationFile.mimeType;
+
+        // Remove temporary field
+        delete (role.evaluation as any).evaluationFile;
+      }
+    }
 
     // Agregar rol automático para Inversor si el proyecto lo requiere
     if (projectData.requiresInvestor) {
@@ -181,5 +240,21 @@ export class PublishProjectUseCase {
     }
 
     return projectWithRelations;
+  }
+
+  /**
+   * Helper para obtener extensión de archivo desde MIME type
+   */
+  private getExtensionFromMimeType(mimeType: string): string {
+    const mimeMap: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+      'application/pdf': 'pdf',
+    };
+
+    return mimeMap[mimeType] || 'jpg';
   }
 }

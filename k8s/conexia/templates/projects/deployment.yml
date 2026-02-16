@@ -23,6 +23,8 @@ spec:
         - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/projects
           name: projects
           env:
+            - name: NODE_ENV
+              value: "production"
             - name: NATS_SERVERS
               value: "nats://nats"
             - name: DATABASE_URL
@@ -53,5 +55,22 @@ spec:
               value: "conexianoreply@gmail.com"
             - name: FRONTEND_URL
               value: "https://conexia-front.vercel.app"
+            - name: GCS_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: projects-secrets
+                  key: GCS_PROJECT_ID
+            - name: GCS_KEY_FILE
+              value: "/etc/gcs/key.json"
+            - name: GCS_PROJECT_FILES_BUCKET
+              value: "conexia-project-files"
+          volumeMounts:
+            - name: gcs-key
+              mountPath: /etc/gcs
+              readOnly: true
           resources: {}
+      volumes:
+        - name: gcs-key
+          secret:
+            secretName: gcs-key-secret
 status: {}
