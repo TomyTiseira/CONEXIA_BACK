@@ -56,10 +56,7 @@ spec:
             - name: FRONTEND_URL
               value: "https://conexia-front.vercel.app"
             - name: API_BASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: services-secrets
-                  key: API_BASE_URL
+              value: https://api.34.36.140.43.nip.io
             - name: MERCADOPAGO_ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -70,11 +67,6 @@ spec:
                 secretKeyRef:
                   name: services-secrets
                   key: MERCADOPAGO_PUBLIC_KEY
-            - name: MERCADOPAGO_WEBHOOK_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: services-secrets
-                  key: MERCADOPAGO_WEBHOOK_SECRET
             - name: MERCADOPAGO_SELLER_COLLECTOR_ID
               valueFrom:
                 secretKeyRef:
