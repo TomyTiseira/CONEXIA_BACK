@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -10,8 +10,26 @@ import {
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { TimeUnit } from './time-unit.enum';
+
+/**
+ * DTO para subir imágenes en base64
+ */
+export class ServiceImageDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
 
 export class CreateServiceDto {
   @IsString()
@@ -49,6 +67,15 @@ export class CreateServiceDto {
   })
   timeUnit: TimeUnit;
 
+  // New base64 approach
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5, { message: 'Maximum 5 images allowed' })
+  @ValidateNested({ each: true })
+  @Type(() => ServiceImageDto)
+  imageFiles?: ServiceImageDto[];
+
+  // Legacy URL approach (for backward compatibility)
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(5, { message: 'Maximum 5 images allowed' })

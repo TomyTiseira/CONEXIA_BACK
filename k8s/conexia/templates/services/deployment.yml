@@ -23,6 +23,8 @@ spec:
         - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/services
           name: services
           env:
+            - name: NODE_ENV
+              value: "production"
             - name: NATS_SERVERS
               value: "nats://nats"
             - name: DATABASE_URL
@@ -78,5 +80,19 @@ spec:
                 secretKeyRef:
                   name: services-secrets
                   key: MERCADOPAGO_SELLER_COLLECTOR_ID
+            - name: GCS_PROJECT_ID
+              value: "conexia-486401"
+            - name: GCS_KEY_FILE
+              value: "/etc/gcs/key.json"
+            - name: GCS_SERVICE_IMAGES_BUCKET
+              value: "conexia-service-images"
+          volumeMounts:
+            - name: gcs-key
+              mountPath: /etc/gcs
+              readOnly: true
           resources: {}
+      volumes:
+        - name: gcs-key
+          secret:
+            secretName: gcs-key-secret
 status: {}

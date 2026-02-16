@@ -9,8 +9,27 @@ import {
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TimeUnit } from '../enums/time-unit.enum';
+
+/**
+ * DTO for image data (new base64 approach)
+ */
+export class ServiceImageDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
 
 export class CreateServiceDto {
   @IsString()
@@ -43,6 +62,15 @@ export class CreateServiceDto {
   })
   timeUnit: TimeUnit;
 
+  // New base64 approach
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5, { message: 'Maximum 5 images allowed' })
+  @ValidateNested({ each: true })
+  @Type(() => ServiceImageDto)
+  imageFiles?: ServiceImageDto[];
+
+  // Legacy URL approach (for backward compatibility)
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(5, { message: 'Maximum 5 images allowed' })

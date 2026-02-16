@@ -2,6 +2,7 @@ import 'dotenv/config';
 import * as joi from 'joi';
 
 interface EnvVars {
+  NODE_ENV: string;
   NATS_SERVERS: string[];
   DATABASE_URL?: string;
   DB_HOST: string;
@@ -16,10 +17,14 @@ interface EnvVars {
   SMTP_PASS: string;
   EMAIL_FROM: string;
   FRONTEND_URL: string;
+  GCS_PROJECT_ID?: string;
+  GCS_KEY_FILE?: string;
+  GCS_SERVICE_IMAGES_BUCKET?: string;
 }
 
 const envSchema = joi
   .object({
+    NODE_ENV: joi.string().default('development'),
     NATS_SERVERS: joi.array().items(joi.string()).required(),
     DATABASE_URL: joi.string().optional(),
     DB_HOST: joi.string().default('localhost'),
@@ -34,10 +39,22 @@ const envSchema = joi
     SMTP_PASS: joi.string().required(),
     EMAIL_FROM: joi.string().required(),
     FRONTEND_URL: joi.string().required(),
+    GCS_PROJECT_ID: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.required(),
+      otherwise: joi.optional(),
+    }),
+    GCS_KEY_FILE: joi.string().optional(),
+    GCS_SERVICE_IMAGES_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.required(),
+      otherwise: joi.optional(),
+    }),
   })
   .unknown(true);
 
 const result = envSchema.validate({
+  NODE_ENV: process.env.NODE_ENV,
   NATS_SERVERS: process.env.NATS_SERVERS?.split(',') || [],
   DATABASE_URL: process.env.DATABASE_URL,
   DB_HOST: process.env.DB_HOST,
@@ -52,6 +69,9 @@ const result = envSchema.validate({
   SMTP_PASS: process.env.SMTP_PASS,
   EMAIL_FROM: process.env.EMAIL_FROM,
   FRONTEND_URL: process.env.FRONTEND_URL,
+  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
+  GCS_KEY_FILE: process.env.GCS_KEY_FILE,
+  GCS_SERVICE_IMAGES_BUCKET: process.env.GCS_SERVICE_IMAGES_BUCKET,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -60,6 +80,7 @@ if (result.error) {
 const envVars = result.value as EnvVars;
 
 export const envs = {
+  nodeEnv: envVars.NODE_ENV,
   natsServers: envVars.NATS_SERVERS,
   databaseUrl: envVars.DATABASE_URL,
   dbHost: envVars.DB_HOST,
@@ -74,4 +95,9 @@ export const envs = {
   smtpPass: envVars.SMTP_PASS,
   emailFrom: envVars.EMAIL_FROM,
   frontendUrl: envVars.FRONTEND_URL,
+  gcs: {
+    projectId: envVars.GCS_PROJECT_ID,
+    keyFile: envVars.GCS_KEY_FILE,
+    serviceImagesBucket: envVars.GCS_SERVICE_IMAGES_BUCKET,
+  },
 };
