@@ -29,16 +29,32 @@ export class GCSFileStorage implements FileStorage {
     mimetype: string,
   ): Promise<string> {
     const bucket = this.storage.bucket(this.bucketName);
-    const file = bucket.file(filename);
+    const blob = bucket.file(filename);
 
-    await file.save(buffer, {
+    // Create a write stream to upload the file
+    const blobStream = blob.createWriteStream({
+      resumable: false,
       metadata: {
         contentType: mimetype,
+        cacheControl: 'public, max-age=31536000',
       },
-      public: true,
+      // No predefinedAcl when uniform bucket-level access is enabled
+      // Public access is managed at bucket level via IAM
     });
 
-    return this.getPublicUrl(filename);
+    // Return a promise that resolves when upload is complete
+    return new Promise((resolve, reject) => {
+      blobStream.on('error', (error) => {
+        reject(error instanceof Error ? error : new Error(String(error)));
+      });
+
+      blobStream.on('finish', () => {
+        const publicUrl = this.getPublicUrl(filename);
+        resolve(publicUrl);
+      });
+
+      blobStream.end(buffer);
+    });
   }
 
   async delete(filename: string): Promise<void> {
