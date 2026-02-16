@@ -122,8 +122,6 @@ export class ProjectsController {
     @User() user: AuthenticatedUser,
   ) {
     const body = (req.body as { [key: string]: any }) ?? {};
-
-    // Common parsing helper: if nested objects/arrays are sent as JSON strings in multipart
     const parsedBody: any = { ...body };
     if (typeof parsedBody.roles === 'string') {
       try {
