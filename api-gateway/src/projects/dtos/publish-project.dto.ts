@@ -48,13 +48,6 @@ export class EvaluationFileDto {
 }
 
 export class PublishProjectDto {
-  @IsNumber({}, { message: 'userId must be a number' })
-  @IsPositive({ message: 'userId must be a positive number' })
-  @IsNotEmpty({ message: 'userId is required' })
-  @Transform(({ value }) => Number(value))
-  userId: number;
-
-  @IsString({ message: 'title must be a string' })
   @IsNotEmpty({ message: 'title is required' })
   title: string;
 
