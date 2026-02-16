@@ -45,36 +45,22 @@ export class AuthEventsGateway
 
   handleConnection(client: Socket) {
     try {
-      this.logger.debug(`🔌 Intento de conexión - Socket ID: ${client.id}`);
-
       // ✅ EXTRAER TOKEN DE LAS COOKIES (igual que MessagingGateway)
       const cookies = client.handshake.headers.cookie;
 
       if (!cookies) {
-        this.logger.warn(
-          `❌ Conexión rechazada - sin cookies (socket: ${client.id})`,
-        );
         client.disconnect();
         return;
       }
-
-      this.logger.debug(`🍪 Cookies recibidas: ${cookies.substring(0, 50)}...`);
 
       // Parsear cookies y extraer access_token
       const parsedCookies = cookie.parse(cookies) as Record<string, string>;
       const token = parsedCookies['access_token'] || parsedCookies['jwt'];
 
       if (!token) {
-        this.logger.warn(
-          `❌ Conexión rechazada - sin token en cookies (socket: ${client.id})`,
-        );
         client.disconnect();
         return;
       }
-
-      this.logger.debug(
-        `🔑 Token extraído de cookies (primeros 20 chars): ${token.substring(0, 20)}...`,
-      );
 
       // Verificar y decodificar token
       let payload: { sub: number };
@@ -84,21 +70,13 @@ export class AuthEventsGateway
         });
       } catch {
         // Error de verificación del token
-        this.logger.warn(
-          `❌ Conexión rechazada - token inválido (socket: ${client.id})`,
-        );
         client.disconnect();
         return;
       }
 
       const userId = payload.sub;
 
-      this.logger.debug(`🔓 Token decodificado - userId: ${userId}`);
-
       if (!userId) {
-        this.logger.warn(
-          `❌ Conexión rechazada - token sin userId (socket: ${client.id})`,
-        );
         client.disconnect();
         return;
       }
@@ -118,30 +96,14 @@ export class AuthEventsGateway
       // Guardar userId en el socket para acceso posterior
       (client.data as Record<string, any>).userId = userId;
 
-      this.logger.log(
-        `✅ Usuario ${userId} conectado exitosamente (socket: ${client.id}, total conexiones: ${userSockets?.size || 1})`,
-      );
-
       const pending: any = this.pendingAccountNotifications.get(userId);
       if (pending) {
         this.server
           .to(`user-${userId}`)
           .emit('account-status-changed', pending);
         this.pendingAccountNotifications.delete(userId);
-        this.logger.warn(
-          `📤 Notificación pendiente enviada a usuario ${userId} al reconectar`,
-        );
       }
-
-      this.logger.debug(
-        `📊 Usuarios conectados actualmente: ${this.connectedUsers.size}`,
-      );
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(
-        `Error en autenticación WebSocket (socket: ${client.id}): ${errorMessage}`,
-      );
       client.disconnect();
     }
   }
@@ -156,13 +118,6 @@ export class AuthEventsGateway
 
         if (userSockets.size === 0) {
           this.connectedUsers.delete(userId);
-          this.logger.log(
-            `Usuario ${userId} desconectado completamente (socket: ${client.id})`,
-          );
-        } else {
-          this.logger.log(
-            `Socket ${client.id} desconectado, usuario ${userId} aún tiene ${userSockets.size} conexión(es) activa(s)`,
-          );
         }
       }
     }
@@ -173,28 +128,12 @@ export class AuthEventsGateway
    * Método público llamado por ModerationEventsController
    */
   public notifyUserAccountChange(userId: number, payload: any) {
-    this.logger.warn(
-      `🚨 INTENTANDO NOTIFICAR a usuario ${userId} - Tipo: ${payload.type}`,
-    );
-
     const userSockets = this.connectedUsers.get(userId);
-    this.logger.debug(
-      `🔍 Conexiones del usuario ${userId}: ${userSockets?.size || 0}`,
-    );
 
     if (userSockets && userSockets.size > 0) {
       // Enviar a todas las sesiones del usuario (múltiples pestañas/dispositivos)
       this.server.to(`user-${userId}`).emit('account-status-changed', payload);
-
-      this.logger.warn(
-        `📤 NOTIFICACIÓN ENVIADA a usuario ${userId} (${userSockets.size} sesión(es) activa(s))`,
-      );
-      this.logger.warn(`📦 Payload enviado: ${JSON.stringify(payload)}`);
     } else {
-      this.logger.warn(
-        `⚠️ Usuario ${userId} NO tiene conexiones WebSocket activas - se aplicará tokensInvalidatedAt en próxima petición HTTP`,
-      );
-
       // Guardar para enviar cuando el usuario se conecte/reconecte.
       this.pendingAccountNotifications.set(userId, payload);
     }

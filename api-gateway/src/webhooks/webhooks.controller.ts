@@ -75,85 +75,22 @@ export class WebhooksController {
       // Agregar header para omitir página de verificación de ngrok
       res.setHeader('ngrok-skip-browser-warning', 'true');
 
-      console.log('🔔 MercadoPago Webhook received:', {
-        query,
-        body,
-        headers: {
-          'x-signature': headers['x-signature'],
-          'x-request-id': headers['x-request-id'],
-        },
-      });
-
-      console.log('📊 RAW WEBHOOK DATA:', {
-        'query keys': Object.keys(query),
-        'body keys': Object.keys(body || {}),
-        'query.id': query.id,
-        'query.topic': query.topic,
-        'query[data.id]': query['data.id'],
-        'body.type': body?.type,
-        'body.topic': body?.topic,
-        'body.action': body?.action,
-        'body.data': body?.data,
-        'full query': JSON.stringify(query),
-        'full body': JSON.stringify(body),
-      });
-
       // 1. Validar firma de seguridad (solo en producción)
       const isDevelopment = envs.nodeEnv === 'development';
-
-      console.log('🔧 Environment check:', {
-        NODE_ENV: envs.nodeEnv,
-        isDevelopment,
-      });
 
       if (!isDevelopment) {
         const isValidSignature = this.validateWebhookSignature(query, headers);
         if (!isValidSignature) {
-          console.error('❌ Invalid webhook signature');
           return res.status(401).json({ error: 'Invalid signature' });
         }
-        console.log('✅ Webhook signature validated');
-      } else {
-        console.log('🔧 Development mode: Skipping signature validation');
       }
 
       // 2. Detectar tipo de webhook basado en el ID recibido
       const webhookId = query['data.id'] || body.data?.id || query.id;
       const webhookType = query.type || body.type || query.topic || body.topic;
 
-      console.log('🔍 Analyzing webhook:', {
-        webhookId,
-        webhookType,
-        query,
-        body,
-        idPattern: webhookId?.match(/^(\d+)-/)
-          ? 'preference_format'
-          : 'payment_format',
-        action: body.action,
-      });
-
-      console.log('🎯 WEBHOOK TYPE DETECTION:', {
-        webhookType,
-        'webhookType === payment': webhookType === 'payment',
-        'typeof webhookType': typeof webhookType,
-        isSubscriptionAuthorizedPayment:
-          webhookType === 'subscription_authorized_payment',
-        isSubscriptionPreapproval: webhookType === 'subscription_preapproval',
-        isPreapproval: webhookType === 'preapproval',
-        isMerchantOrder: webhookType === 'merchant_order',
-        isPlanSuscripciones:
-          webhookType === 'subscription' ||
-          webhookType === 'plan' ||
-          String(webhookType).includes('subscription') ||
-          String(webhookType).includes('preapproval'),
-      });
-
       // Ignorar webhooks de merchant_order (no son pagos reales)
       if (webhookType === 'merchant_order') {
-        console.log(
-          '🚫 Ignoring merchant_order webhook - not a payment:',
-          webhookId,
-        );
         return res.status(200).json({
           status: 'ok',
           message: 'Merchant order webhook acknowledged but not processed',
@@ -164,20 +101,7 @@ export class WebhooksController {
       const isPaymentWebhook = webhookType === 'payment';
       const isSimplePaymentId = webhookId && !webhookId.includes('-');
 
-      console.log('🔎 Payment webhook validation:', {
-        isPaymentWebhook,
-        isSimplePaymentId,
-        webhookId,
-        willProcess: isPaymentWebhook && isSimplePaymentId,
-      });
-
       if (isPaymentWebhook && isSimplePaymentId) {
-        console.log('💰 Processing PAYMENT webhook:', {
-          paymentId: webhookId,
-          action: body.action,
-          live_mode: body.live_mode,
-        });
-
         // Verificar si es un pago de suscripción (verificando external_reference)
         // Por ahora, enviamos a ambos microservicios para que procesen si aplica
 
@@ -188,115 +112,40 @@ export class WebhooksController {
             action: body.action,
             webhookData: body,
           })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Payment webhook processed by services microservice:',
-                result,
-              ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing payment webhook in services:',
-                error,
-              ),
-          });
+          .subscribe();
 
         // Enviar a microservicio de memberships (procesará si es suscripción)
         this.client
           .send('processSubscriptionPaymentWebhook', {
             paymentId: parseInt(webhookId, 10),
           })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Payment webhook processed by memberships microservice:',
-                result,
-              ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing payment webhook in memberships (might not be a subscription):',
-                error,
-              ),
-          });
-
-        console.log(
-          '📤 Payment webhook sent to both services and memberships microservices',
-        );
+          .subscribe();
       } else if (webhookType === 'subscription_authorized_payment') {
         // Procesar webhooks de FACTURAS DE SUSCRIPCIÓN (authorized_payments)
-        console.log('📅 Processing SUBSCRIPTION INVOICE webhook:', {
-          authorizedPaymentId: webhookId,
-          action: body.action,
-          live_mode: body.live_mode,
-        });
-
         // Enviar a microservicio de memberships
         this.client
           .send('processSubscriptionInvoiceWebhook', {
             authorizedPaymentId: webhookId,
           })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Subscription invoice webhook processed by memberships:',
-                result,
-              ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing subscription invoice webhook:',
-                error,
-              ),
-          });
-
-        console.log(
-          '📤 Subscription invoice webhook sent to memberships microservice',
-        );
+          .subscribe();
       } else if (
         webhookType === 'subscription_preapproval' ||
         webhookType === 'preapproval'
       ) {
         // Procesar webhooks de SUSCRIPCIONES CREADAS (preapproval)
-        console.log(
-          '🎉 Processing PREAPPROVAL (subscription created) webhook:',
-          {
-            preapprovalId: webhookId,
-            action: body.action,
-            live_mode: body.live_mode,
-            webhookType,
-          },
-        );
-
         // Enviar a microservicio de memberships
         this.client
           .send('processPreapprovalWebhook', {
             preapprovalId: webhookId,
             action: body.action,
           })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Preapproval webhook processed by memberships:',
-                result,
-              ),
-            error: (error) =>
-              console.error('❌ Error processing preapproval webhook:', error),
-          });
-
-        console.log('📤 Preapproval webhook sent to memberships microservice');
+          .subscribe();
       } else if (
         webhookType === 'payment' &&
         webhookId &&
         webhookId.includes('-')
       ) {
         // 4. Procesar webhooks de PREFERENCIAS (ID con formato collector-preference)
-        console.log(
-          '📋 Processing PREFERENCE webhook (might contain payment info):',
-          {
-            preferenceId: webhookId,
-            action: body.action,
-          },
-        );
-
         // Enviar a microservicio para procesar preferencia y obtener pagos relacionados
         this.client
           .send('process_preference_webhook', {
@@ -304,37 +153,9 @@ export class WebhooksController {
             action: body.action,
             webhookData: body,
           })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Preference webhook processed successfully:',
-                result,
-              ),
-            error: (error) =>
-              console.error('❌ Error processing preference webhook:', error),
-          });
-
-        console.log('📤 Preference webhook sent to services microservice');
+          .subscribe();
       } else {
-        console.error(
-          '⚠️ Webhook ignored - not a recognized payment/preference update:',
-          {
-            type: webhookType,
-            id: webhookId,
-            action: body.action,
-            'query.type': query.type,
-            'body.type': body?.type,
-            'query.topic': query.topic,
-            'body.topic': body?.topic,
-            'query[data.id]': query['data.id'],
-            'body.data.id': body?.data?.id,
-            'query.id': query.id,
-            fullQuery: JSON.stringify(query),
-            fullBody: JSON.stringify(body),
-          },
-        );
-
-        // 🔥 FALLBACK: Intentar detectar si hay un ID de pago válido de todas formas
+        // FALLBACK: Intentar detectar si hay un ID de pago válido de todas formas
         // PERO ignorar merchant_orders que ya fueron filtrados arriba
         const possiblePaymentId = webhookId || query.id || body.id;
         if (
@@ -342,11 +163,6 @@ export class WebhooksController {
           /^\d+$/.test(String(possiblePaymentId)) &&
           webhookType !== 'merchant_order'
         ) {
-          console.log(
-            '🔄 FALLBACK: Detected numeric ID, attempting to process as payment:',
-            possiblePaymentId,
-          );
-
           // Enviar a microservicio de servicios
           this.client
             .send('process_payment_webhook', {
@@ -354,40 +170,14 @@ export class WebhooksController {
               action: body.action,
               webhookData: body,
             })
-            .subscribe({
-              next: (result) =>
-                console.log(
-                  '✅ Fallback payment webhook processed by services microservice:',
-                  result,
-                ),
-              error: (error) =>
-                console.error(
-                  '❌ Error processing fallback payment webhook in services:',
-                  error,
-                ),
-            });
+            .subscribe();
 
           // Enviar a microservicio de memberships (procesará si es suscripción)
           this.client
             .send('processSubscriptionPaymentWebhook', {
               paymentId: parseInt(String(possiblePaymentId), 10),
             })
-            .subscribe({
-              next: (result) =>
-                console.log(
-                  '✅ Fallback payment webhook processed by memberships microservice:',
-                  result,
-                ),
-              error: (error) =>
-                console.error(
-                  '❌ Error processing fallback payment webhook in memberships:',
-                  error,
-                ),
-            });
-
-          console.log(
-            '📤 Fallback payment webhook sent to both services and memberships microservices',
-          );
+            .subscribe();
         }
       }
 
@@ -396,9 +186,7 @@ export class WebhooksController {
         status: 'ok',
         message: 'Webhook processed successfully',
       });
-    } catch (error) {
-      console.error('❌ Error processing webhook:', error);
-
+    } catch {
       // Responder 200 para evitar reintentos
       return res.status(200).json({
         status: 'error',
@@ -416,7 +204,6 @@ export class WebhooksController {
       const xRequestId = headers['x-request-id'];
 
       if (!xSignature || !xRequestId) {
-        console.error('Missing signature headers');
         return false;
       }
 
@@ -432,7 +219,6 @@ export class WebhooksController {
       });
 
       if (!ts || !hash) {
-        console.error('Invalid signature format');
         return false;
       }
 
@@ -443,7 +229,6 @@ export class WebhooksController {
       // Generar HMAC SHA256
       const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
       if (!secret) {
-        console.error('MERCADOPAGO_WEBHOOK_SECRET not configured');
         return false;
       }
 
@@ -452,18 +237,8 @@ export class WebhooksController {
         .update(manifest)
         .digest('hex');
 
-      const isValid = generatedHash === hash;
-
-      console.log('🔐 Signature validation:', {
-        manifest,
-        expectedHash: hash,
-        generatedHash,
-        isValid,
-      });
-
-      return isValid;
-    } catch (error) {
-      console.error('Error validating signature:', error);
+      return generatedHash === hash;
+    } catch {
       return false;
     }
   }
