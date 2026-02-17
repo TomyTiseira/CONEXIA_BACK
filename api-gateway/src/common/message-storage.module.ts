@@ -38,8 +38,9 @@ const messageStorageProvider = {
       );
     } else {
       // Development: Use local filesystem
+      // Store in uploads/messages to match static file serving
       console.log('[MessageStorage] Using local file storage for messages');
-      return new LocalFileStorage('messages');
+      return new LocalFileStorage('uploads/messages');
     }
   },
 };

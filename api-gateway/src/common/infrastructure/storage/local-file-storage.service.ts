@@ -32,7 +32,18 @@ export class LocalFileStorage implements FileStorage {
     // Write file
     await fs.writeFile(fullPath, file);
 
-    // Return the relative path for backwards compatibility
+    // Return the relative path - if uploadDir is already 'uploads/something',
+    // extract the part after 'uploads' to build correct URL
+    const uploadsDirIndex = this.uploadDir.indexOf('uploads');
+    if (uploadsDirIndex !== -1) {
+      // Extract relative path from 'uploads' onwards
+      const relativePath = this.uploadDir.substring(uploadsDirIndex + 'uploads'.length);
+      // Combine with the file path
+      const finalPath = relativePath ? `${relativePath}/${path}` : path;
+      return `/uploads${finalPath}`;
+    }
+    
+    // Fallback for backwards compatibility
     return `/uploads/${path}`;
   }
 

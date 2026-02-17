@@ -37,7 +37,7 @@ const messageStorageProvider = {
     } else {
       // Development: Use local filesystem
       console.log('Using local file storage for message uploads');
-      return new LocalFileStorage('uploads/messages');
+      return new LocalFileStorage('messages');
     }
   },
 };
