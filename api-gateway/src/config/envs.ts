@@ -28,9 +28,9 @@ const envSchema = joi
     GCS_MESSAGES_BUCKET: joi.string().when('NODE_ENV', {
       is: 'production',
       then: joi.string().required(),
-  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
-  GCS_KEY_FILE: process.env.GCS_KEY_FILE,
-  GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
+          GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
+          GCS_KEY_FILE: process.env.GCS_KEY_FILE,
+          GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
       otherwise: joi.string().optional(),
     }),
   })

@@ -12,7 +12,7 @@ export interface FileStorage {
   /**
    * Uploads a file to storage
    * @param file - File buffer to upload
-   * @param path - Storage path/filename  
+   * @param path - Storage path/filename
    * @param mimetype - MIME type of the file (optional)
    * @returns Public URL or path to the uploaded file
    */
