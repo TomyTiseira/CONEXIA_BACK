@@ -191,6 +191,16 @@ export class PostulationsController {
       },
     };
 
+    console.log('📨 Received evaluation submission request:', {
+      postulationId: Number(postulationId),
+      userId: user.id,
+      hasEvaluationFile: !!files.evaluation?.[0],
+      evaluationFileName: files.evaluation?.[0]?.originalname,
+      evaluationFileSize: files.evaluation?.[0]?.size,
+      evaluationMimetype: files.evaluation?.[0]?.mimetype,
+      bodyKeys: Object.keys(body),
+    });
+
     // Add evaluation file data if uploaded
     if (files.evaluation?.[0]) {
       const evaluationFile = files.evaluation[0];
@@ -198,11 +208,24 @@ export class PostulationsController {
       // Convert file buffer to base64
       const base64Data = evaluationFile.buffer.toString('base64');
 
+      console.log('📤 Converted file to base64:', {
+        originalSize: evaluationFile.size,
+        base64Length: base64Data.length,
+      });
+
       payload.submitEvaluationDto.evaluationData = base64Data;
       payload.submitEvaluationDto.evaluationOriginalName =
         evaluationFile.originalname;
       payload.submitEvaluationDto.evaluationMimetype = evaluationFile.mimetype;
+    } else {
+      console.log('⚠️  No evaluation file received');
     }
+
+    console.log('📤 Sending to projects microservice:', {
+      postulationId: payload.submitEvaluationDto.postulationId,
+      hasEvaluationData: !!payload.submitEvaluationDto.evaluationData,
+      evaluationDataLength: payload.submitEvaluationDto.evaluationData?.length,
+    });
 
     return this.client.send('submitEvaluation', payload);
   }

@@ -93,8 +93,19 @@ export class SubmitEvaluationUseCase {
     let evaluationFilename: string | undefined;
     let evaluationSize: number | undefined;
 
+    console.log('📁 Processing evaluation submission:', {
+      postulationId: submitEvaluationDto.postulationId,
+      hasEvaluationData: !!submitEvaluationDto.evaluationData,
+      hasEvaluationLink: !!submitEvaluationDto.evaluationLink,
+      hasEvaluationDescription: !!submitEvaluationDto.evaluationDescription,
+      evaluationOriginalName: submitEvaluationDto.evaluationOriginalName,
+      evaluationMimetype: submitEvaluationDto.evaluationMimetype,
+      evaluationDataLength: submitEvaluationDto.evaluationData?.length,
+    });
+
     try {
       if (submitEvaluationDto.evaluationData) {
+        console.log('📤 Uploading evaluation file to GCS...');
         const buffer = Buffer.from(
           submitEvaluationDto.evaluationData,
           'base64',
@@ -105,15 +116,27 @@ export class SubmitEvaluationUseCase {
         );
         const filename = `evaluation-${submitEvaluationDto.userId}-${submitEvaluationDto.postulationId}-${timestamp}.${extension}`;
 
+        console.log('📤 Uploading file:', {
+          filename,
+          bufferSize: buffer.length,
+          mimetype: submitEvaluationDto.evaluationMimetype,
+        });
+
         evaluationUrl = await this.evaluationFileStorage.upload(
           buffer,
           filename,
           submitEvaluationDto.evaluationMimetype || 'application/pdf',
         );
+
         evaluationFilename = submitEvaluationDto.evaluationOriginalName;
         evaluationSize = buffer.length;
+
+        console.log('✅ File uploaded successfully:', evaluationUrl);
+      } else {
+        console.log('⏭️  No evaluation file to upload');
       }
-    } catch {
+    } catch (error) {
+      console.error('❌ Failed to upload evaluation file:', error);
       throw new RpcException('Failed to upload evaluation file');
     }
 

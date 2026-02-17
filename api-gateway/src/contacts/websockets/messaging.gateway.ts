@@ -10,7 +10,6 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import * as cookie from 'cookie';
-import { extname } from 'path';
 import { Server, Socket } from 'socket.io';
 import { FileStorage } from '../../common/domain/interfaces/file-storage.interface';
 
@@ -127,13 +126,14 @@ export class MessagingGateway
   }
 
   @SubscribeMessage('sendMessage')
-  handleSendMessage(
+  async handleSendMessage(
     @MessageBody()
     data: {
       conversationId: number;
       receiverId: number;
       type: 'text' | 'image' | 'pdf';
       content: string;
+      fileName?: string;
     },
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
@@ -147,7 +147,10 @@ export class MessagingGateway
       if (data.type !== 'text' && data.content) {
         const base64Match = data.content.match(/^data:([^;]+);base64,(.+)$/);
 
-        if (base64Match) { con extensión correcta
+        if (base64Match) {
+          const mimeType = base64Match[1];
+          const fileData = base64Match[2];
+
           const extension =
             data.type === 'image'
               ? mimeType.includes('png')
@@ -162,12 +165,12 @@ export class MessagingGateway
           const buffer = Buffer.from(fileData, 'base64');
 
           // Upload to storage (GCS in prod, local in dev)
-          fileUrl = await this.messageStorage.upload(buffer, fileName, mimeType);
-          processedFileName = data.fileName || `file${extension}`er);
-
-          // URL pública igual que en REST
-          fileUrl = `/uploads/messages/${mimeType.startsWith('image/') ? 'images' : 'pdfs'}/${fileName}`;
-          processedFileName = fileName;
+          fileUrl = await this.messageStorage.upload(
+            buffer,
+            fileName,
+            mimeType,
+          );
+          processedFileName = data.fileName || `file${extension}`;
           processedFileSize = buffer.length;
         }
       }
