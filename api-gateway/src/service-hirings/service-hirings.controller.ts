@@ -14,9 +14,10 @@ import {
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 import { catchError } from 'rxjs';
+import { FileStorage } from '../common/domain/interfaces/file-storage.interface';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { RequiresActiveAccount } from '../auth/decorators/requires-active-account.decorator';
@@ -39,7 +40,11 @@ import {
 @Controller('service-hirings')
 @UseFilters(RpcExceptionFilter)
 export class ServiceHiringsController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    @Inject('DELIVERY_FILE_STORAGE')
+    private readonly deliveryStorage: FileStorage,
+  ) {}
 
   @Post()
   @RequiresActiveAccount([ROLES.USER]) // ⭐ Usuarios suspendidos no pueden solicitar cotizaciones
@@ -376,16 +381,7 @@ export class ServiceHiringsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FilesInterceptor('attachments', 10, {
-      storage: diskStorage({
-        destination: './uploads/deliveries',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 20 * 1024 * 1024, // 20MB por archivo
       },
@@ -432,7 +428,7 @@ export class ServiceHiringsController {
       },
     }),
   )
-  createDelivery(
+  async Delivery(
     @User() user: AuthenticatedUser,
     @Param('hiringId') hiringId: number,
     @Body() body: any,
@@ -476,12 +472,48 @@ export class ServiceHiringsController {
       }
     }
 
+    // Subir archivos a GCS y obtener URLs
+    const uploadedFiles: Array<{
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+    }> = [];
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const filename = `deliveries/${hiringId}/${timestamp}-${randomSuffix}${extension}`;
+
+        try {
+          const fileUrl = await this.deliveryStorage.upload(
+            file.buffer,
+            filename,
+            file.mimetype,
+          );
+
+          uploadedFiles.push({
+            fileUrl,
+            fileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+          });
+        } catch (error) {
+          throw new BadRequestException(
+            `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          );
+        }
+      }
+    }
+
     return this.client
       .send('createDelivery', {
         hiringId: +hiringId,
         serviceOwnerId: user.id,
         deliveryDto,
-        files: files || [], // Enviar array de archivos
+        uploadedFiles,
       })
       .pipe(
         catchError((error) => {
