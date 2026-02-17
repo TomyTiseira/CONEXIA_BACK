@@ -32,7 +32,12 @@ export class MessagingController {
     @Inject('MESSAGE_FILE_STORAGE')
     private readonly messageStorage: FileStorage,
   ) {}
-memoryStorage(),
+
+  @Post('send')
+  @AuthRoles([ROLES.USER])
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
       fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -60,8 +65,7 @@ memoryStorage(),
     if (file) {
       const isImage = file.mimetype.startsWith('image/');
       const folder = isImage ? 'images' : 'pdfs';
-      const uniqueSuffix =
-        Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const filename = `${folder}/${uniqueSuffix}${extname(file.originalname)}`;
 
       fileUrl = await this.messageStorage.upload(
@@ -75,11 +79,7 @@ memoryStorage(),
       currentUserId: user.id,
       receiverId: body.receiverId,
       type: body.type,
-      content: body.type === 'text' ? body.content : fileUrltext'
-          ? body.content
-          : file
-            ? `/uploads/messages/${file.mimetype.startsWith('image/') ? 'images' : 'pdfs'}/${file.filename}`
-            : undefined,
+      content: body.type === 'text' ? body.content : fileUrl,
       fileName: file?.originalname,
       fileSize: file?.size,
     };

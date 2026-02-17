@@ -15,8 +15,8 @@ import { FileStorage } from '../../domain/interfaces/file-storage.interface';
 export class LocalFileStorage implements FileStorage {
   private readonly uploadDir: string;
 
-  constructor() {
-    this.uploadDir = join(process.cwd(), 'uploads', 'publications');
+  constructor(baseDir: string = 'publications') {
+    this.uploadDir = join(process.cwd(), 'uploads', baseDir);
   }
 
   /**

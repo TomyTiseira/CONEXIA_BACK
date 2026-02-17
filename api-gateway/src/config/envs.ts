@@ -28,9 +28,6 @@ const envSchema = joi
     GCS_MESSAGES_BUCKET: joi.string().when('NODE_ENV', {
       is: 'production',
       then: joi.string().required(),
-          GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
-          GCS_KEY_FILE: process.env.GCS_KEY_FILE,
-          GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
       otherwise: joi.string().optional(),
     }),
   })
@@ -42,6 +39,9 @@ const result = envSchema.validate({
   JWT_SECRET: process.env.JWT_SECRET,
   CORS_ORIGINS: process.env.CORS_ORIGINS?.split(',') || [],
   NODE_ENV: process.env.NODE_ENV,
+  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
+  GCS_KEY_FILE: process.env.GCS_KEY_FILE,
+  GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
