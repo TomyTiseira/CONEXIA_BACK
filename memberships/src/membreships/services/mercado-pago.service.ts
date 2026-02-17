@@ -61,15 +61,6 @@ export class MercadoPagoService {
   constructor() {
     const accessToken = envs.mercadoPagoAccessToken;
 
-    // DEBUG: Logs de verificación
-    this.logger.log(
-      `🔑 Access Token (primeros 30 chars): ${accessToken?.substring(0, 30)}...`,
-    );
-    this.logger.log(
-      `🌍 Currency ID configurado: ${envs.mercadoPagoCurrencyId}`,
-    );
-    this.logger.log(`🔗 Back URL configurado: ${envs.mercadoPagoBackUrl}`);
-
     if (!accessToken) {
       this.logger.error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
       throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado');
@@ -247,14 +238,6 @@ export class MercadoPagoService {
       const backUrl = envs.mercadoPagoBackUrl;
       const frequency = billingCycle === BillingCycle.MONTHLY ? 1 : 12;
       const frequencyType = 'months';
-
-      // DEBUG: Log para verificar el valor de backUrl
-      this.logger.log(`🔍 DEBUG - backUrl value: "${backUrl}"`);
-      this.logger.log(`🔍 DEBUG - backUrl type: ${typeof backUrl}`);
-      this.logger.log(
-        `🔍 DEBUG - envs.mercadoPagoBackUrl: "${envs.mercadoPagoBackUrl}"`,
-      );
-
       const notificationUrl = envs.mercadoPagoNotificationUrl;
 
       const planData = {
@@ -272,10 +255,6 @@ export class MercadoPagoService {
 
       this.logger.log(
         `Creando plan de suscripción en MercadoPago: ${planName}`,
-      );
-      this.logger.log(
-        `🔍 DEBUG - Full planData:`,
-        JSON.stringify(planData, null, 2),
       );
       const response = await this.preApprovalPlan.create({ body: planData });
 
@@ -317,21 +296,12 @@ export class MercadoPagoService {
       const notificationUrl = envs.mercadoPagoNotificationUrl;
 
       this.logger.log(`🔄 Actualizando plan ${planId} en MercadoPago`);
-      this.logger.log(`🔍 DEBUG - backUrl para actualización: "${backUrl}"`);
-      this.logger.log(
-        `🔍 DEBUG - notificationUrl para actualización: "${notificationUrl}"`,
-      );
 
       const updateData = {
         reason: `${planName} - ${billingCycle === BillingCycle.MONTHLY ? 'Mensual' : 'Anual'}`,
         back_url: `${backUrl}/subscriptions/success`,
         notification_url: notificationUrl,
       };
-
-      this.logger.log(
-        `🔍 DEBUG - Update data:`,
-        JSON.stringify(updateData, null, 2),
-      );
 
       const response = await this.preApprovalPlan.update({
         id: planId,
@@ -401,9 +371,6 @@ export class MercadoPagoService {
       };
 
       this.logger.log(
-        `🔍 DEBUG - Token Data completo: ${JSON.stringify(tokenData, null, 2)}`,
-      );
-      this.logger.log(
         `Card token validado. Site ID: ${tokenData.site_id || 'N/A'}`,
       );
 
@@ -462,10 +429,6 @@ export class MercadoPagoService {
         `Creando suscripción en MercadoPago para usuario ${userEmail}`,
       );
       this.logger.log(
-        `🔍 CRITICAL DEBUG - backUrl en createSubscription: "${backUrl}"`,
-      );
-      this.logger.log(`🔍 CRITICAL DEBUG - Plan ID: "${mercadoPagoPlanId}"`);
-      this.logger.log(
         `� USANDO REDIRECT FLOW - El usuario ingresará la tarjeta en MercadoPago`,
       );
 
@@ -492,9 +455,6 @@ export class MercadoPagoService {
       );
       this.logger.log(`🔔 Notification URL incluida: ${notificationUrl}`);
       this.logger.log(`🔗 URL completa: ${finalInitPoint}`);
-      this.logger.warn(
-        `⚠️ IMPORTANTE: El back_url se pasa como parámetro, pero MercadoPago puede usar el del plan. Si ves ngrok, el plan ${mercadoPagoPlanId} tiene ngrok hardcodeado.`,
-      );
 
       return {
         subscriptionId: '', // Se creará después del pago
