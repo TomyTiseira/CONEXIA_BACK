@@ -59,7 +59,7 @@ spec:
                   name: memberships-secrets
                   key: MERCADOPAGO_ACCESS_TOKEN
             - name: MERCADOPAGO_BACK_URL
-              value: https://api.34.36.140.43.nip.io/
+              value: https://conexia-front.vercel.app
             - name: MERCADOPAGO_NOTIFICATION_URL
               value: https://api.34.36.140.43.nip.io/api/webhooks/mercadopago
             - name: MERCADOPAGO_CURRENCY_ID
