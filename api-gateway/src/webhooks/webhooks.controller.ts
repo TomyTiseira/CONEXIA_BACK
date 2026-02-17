@@ -106,7 +106,7 @@ export class WebhooksController {
         // Procesar webhooks de forma síncrona con timeout de 10 segundos
         try {
           // Enviar a microservicio de servicios y esperar respuesta
-          await firstValueFrom(
+          const servicesResult = await firstValueFrom(
             this.client
               .send('process_payment_webhook', {
                 paymentId: webhookId,
@@ -116,6 +116,10 @@ export class WebhooksController {
               .pipe(
                 timeout(10000),
                 catchError((error) => {
+                  console.error(
+                    `[WEBHOOK] Error processing payment ${webhookId} in services:`,
+                    error.message,
+                  );
                   return of({
                     success: false,
                     error: error.message,
@@ -125,8 +129,15 @@ export class WebhooksController {
               ),
           );
 
+          if (servicesResult && !servicesResult.success) {
+            console.error(
+              `[WEBHOOK] Services microservice returned error for payment ${webhookId}:`,
+              servicesResult.error,
+            );
+          }
+
           // Enviar a microservicio de memberships (procesará si es suscripción)
-          await firstValueFrom(
+          const membershipsResult = await firstValueFrom(
             this.client
               .send('processSubscriptionPaymentWebhook', {
                 paymentId: parseInt(webhookId, 10),
@@ -134,6 +145,10 @@ export class WebhooksController {
               .pipe(
                 timeout(10000),
                 catchError((error) => {
+                  console.error(
+                    `[WEBHOOK] Error processing payment ${webhookId} in memberships:`,
+                    error.message,
+                  );
                   return of({
                     success: false,
                     error: error.message,
@@ -142,7 +157,18 @@ export class WebhooksController {
                 }),
               ),
           );
-        } catch {
+
+          if (membershipsResult && !membershipsResult.success) {
+            console.error(
+              `[WEBHOOK] Memberships microservice returned error for payment ${webhookId}:`,
+              membershipsResult.error,
+            );
+          }
+        } catch (error) {
+          console.error(
+            `[WEBHOOK] Critical error processing payment webhook ${webhookId}:`,
+            error,
+          );
           // Continuar para retornar 200 y que MercadoPago reintente después
         }
       } else if (webhookType === 'subscription_authorized_payment') {

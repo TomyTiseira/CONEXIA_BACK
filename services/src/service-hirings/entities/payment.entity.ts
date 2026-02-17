@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -75,6 +76,7 @@ export class Payment {
   @Column({ nullable: true })
   deliverySubmissionId: number; // ID de la entrega asociada (para rastrear desde webhook)
 
+  @Index('idx_payment_mercadopago_id') // 🔥 Índice para búsqueda rápida en webhooks
   @Column({ nullable: true })
   mercadoPagoPaymentId: string;
 

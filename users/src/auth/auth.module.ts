@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MockEmailService } from 'src/common/services/mock-email.service';
+import { MockEmailService } from '../common/services/mock-email.service';
 import { EmailService } from '../common/services/email.service';
 import { NodemailerService } from '../common/services/nodemailer.service';
 import { SharedModule } from '../shared/shared.module';
