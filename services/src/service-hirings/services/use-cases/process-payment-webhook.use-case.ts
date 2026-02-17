@@ -337,34 +337,13 @@ export class ProcessPaymentWebhookUseCase {
       }
     }
 
-    // Estrategia 3: Buscar el pago PENDING más reciente (fallback)
-    console.log('🔍 Looking for recent pending payment as fallback...');
-    const recentPayments =
-      await this.paymentRepository.findRecentPendingPayments(3);
-
-    if (recentPayments && recentPayments.length > 0) {
-      // Filtrar por monto si está disponible para mayor precisión
-      let candidatePayment = recentPayments[0];
-
-      if (mpPayment?.transaction_amount) {
-        const matchingPayment = recentPayments.find(
-          (p) => Math.abs(p.amount - mpPayment.transaction_amount) < 0.01,
-        );
-        if (matchingPayment) {
-          candidatePayment = matchingPayment;
-          console.log(
-            `✅ Found payment matching amount: ${candidatePayment.id}`,
-          );
-        }
-      }
-
-      console.log(
-        `✅ Using recent pending payment: ${candidatePayment.id} for hiring ${candidatePayment.hiringId}`,
-      );
-      return candidatePayment;
-    }
-
+    // ⚠️ NO FALLBACK: El fallback era peligroso porque podía procesar pagos incorrectos
+    // Si llegamos aquí, el webhook no pertenece a este microservicio o hay un problema
     console.warn('❌ No payment found with any strategy');
+    console.warn(
+      '   This webhook might be for a different microservice (memberships)',
+    );
+    console.warn('   Or the external_reference format is incorrect');
     return null;
   }
 

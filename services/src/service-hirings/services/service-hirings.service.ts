@@ -20,6 +20,7 @@ import {
 } from '../dto';
 import { NegotiateServiceHiringDto } from '../dto/negotiate-service-hiring.dto';
 import { DeliveryStatus } from '../entities/delivery-submission.entity';
+import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 import { ServiceHiringRepository } from '../repositories/service-hiring.repository';
 import { MercadoPagoService } from './mercado-pago.service';
 import { PaymentModalityService } from './payment-modality.service';
@@ -43,7 +44,6 @@ import { RequestRequoteUseCase } from './use-cases/request-requote.use-case';
 import { RetryPaymentUseCase } from './use-cases/retry-payment.use-case';
 import { ReviewDeliveryUseCase } from './use-cases/review-delivery.use-case';
 import { UpdateDeliveryUseCase } from './use-cases/update-delivery.use-case';
-import { ServiceHiringStatusCode } from '../enums/service-hiring-status.enum';
 
 @Injectable()
 export class ServiceHiringsService {
@@ -245,7 +245,9 @@ export class ServiceHiringsService {
     return this.retryPaymentUseCase.execute(hiringId);
   }
 
-  async processPaymentWebhook(paymentId: string): Promise<void> {
+  async processPaymentWebhook(
+    paymentId: string,
+  ): Promise<{ success: boolean; message?: string }> {
     return this.processPaymentWebhookUseCase.execute(paymentId);
   }
 
