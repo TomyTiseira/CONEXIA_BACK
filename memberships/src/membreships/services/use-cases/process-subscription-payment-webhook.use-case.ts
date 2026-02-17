@@ -20,7 +20,9 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  async execute(paymentId: number): Promise<void> {
+  async execute(
+    paymentId: number,
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       this.logger.log(`Procesando webhook de pago ${paymentId}`);
 
@@ -29,7 +31,7 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
 
       if (!paymentData.external_reference) {
         this.logger.warn(`Pago ${paymentId} no tiene external_reference`);
-        return;
+        return { success: false, message: 'No external_reference' };
       }
 
       // Verificar si el external_reference es del formato de services (hiring_X_payment_Y)
@@ -38,21 +40,27 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
         this.logger.log(
           `Pago ${paymentId} es de un servicio (${paymentData.external_reference}), ignorando en memberships`,
         );
-        return;
+        return {
+          success: true,
+          message: 'Payment belongs to services microservice',
+        };
       }
 
-      // Intentar obtener la suscripción por external_reference (ID numérico)
-      const subscriptionId = parseInt(paymentData.external_reference, 10);
-
-      // Verificar que el subscriptionId sea un número válido
-      if (isNaN(subscriptionId)) {
-        // Si no es un número, puede ser un UUID de MercadoPago
-        // En este caso, deberíamos esperar el webhook de preapproval
+      // Verificar que el external_reference sea COMPLETAMENTE numérico (no UUID)
+      // UUIDs pueden empezar con dígitos: 0474bfc7-... → parseInt da 474 ❌
+      if (!/^\d+$/.test(paymentData.external_reference)) {
+        // Es un UUID de MercadoPago, esperar el webhook de preapproval
         this.logger.log(
-          `external_reference no es un ID numérico (${paymentData.external_reference}). Esperando webhook de preapproval para activar la suscripción.`,
+          `external_reference es UUID (${paymentData.external_reference}). Esperando webhook de preapproval para activar la suscripción.`,
         );
-        return;
+        return {
+          success: true,
+          message: 'Waiting for preapproval webhook (UUID)',
+        };
       }
+
+      // Ahora sí, parsear el ID numérico
+      const subscriptionId = parseInt(paymentData.external_reference, 10);
 
       // Obtener la suscripción
       const subscription =
@@ -84,6 +92,10 @@ export class ProcessSubscriptionPaymentWebhookUseCase {
       this.logger.log(
         `Webhook procesado exitosamente para suscripción ${subscriptionId}`,
       );
+      return {
+        success: true,
+        message: 'Subscription payment webhook processed successfully',
+      };
     } catch (error) {
       this.logger.error(
         `Error al procesar webhook de pago ${paymentId}:`,

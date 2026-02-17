@@ -85,7 +85,9 @@ export class MembershipsService {
     return this.contractPlanUC.execute(userId, userEmail, userRole, dto);
   }
 
-  async processSubscriptionPaymentWebhook(paymentId: number) {
+  async processSubscriptionPaymentWebhook(
+    paymentId: number,
+  ): Promise<{ success: boolean; message?: string }> {
     return this.processSubscriptionPaymentWebhookUC.execute(paymentId);
   }
 
