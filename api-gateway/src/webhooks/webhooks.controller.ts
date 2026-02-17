@@ -14,6 +14,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
+import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { envs } from '../config/envs';
 import { NATS_SERVICE } from '../config/service';
 
@@ -64,7 +65,7 @@ export class WebhooksController {
       forbidNonWhitelisted: false, // No rechazar campos adicionales
     }),
   )
-  handleMercadoPagoWebhook(
+  async handleMercadoPagoWebhook(
     @Query() query: MercadoPagoWebhookQuery,
     @Body() body: MercadoPagoWebhookDto,
     @Headers() headers: Record<string, string>,
@@ -102,58 +103,115 @@ export class WebhooksController {
       const isSimplePaymentId = webhookId && !webhookId.includes('-');
 
       if (isPaymentWebhook && isSimplePaymentId) {
-        // Verificar si es un pago de suscripción (verificando external_reference)
-        // Por ahora, enviamos a ambos microservicios para que procesen si aplica
+        // Procesar webhooks de forma síncrona con timeout de 10 segundos
+        try {
+          // Enviar a microservicio de servicios y esperar respuesta
+          await firstValueFrom(
+            this.client
+              .send('process_payment_webhook', {
+                paymentId: webhookId,
+                action: body.action,
+                webhookData: body,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  return of({
+                    success: false,
+                    error: error.message,
+                    microservice: 'services',
+                  });
+                }),
+              ),
+          );
 
-        // Enviar a microservicio de servicios
-        this.client
-          .send('process_payment_webhook', {
-            paymentId: webhookId,
-            action: body.action,
-            webhookData: body,
-          })
-          .subscribe();
-
-        // Enviar a microservicio de memberships (procesará si es suscripción)
-        this.client
-          .send('processSubscriptionPaymentWebhook', {
-            paymentId: parseInt(webhookId, 10),
-          })
-          .subscribe();
+          // Enviar a microservicio de memberships (procesará si es suscripción)
+          await firstValueFrom(
+            this.client
+              .send('processSubscriptionPaymentWebhook', {
+                paymentId: parseInt(webhookId, 10),
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  return of({
+                    success: false,
+                    error: error.message,
+                    microservice: 'memberships',
+                  });
+                }),
+              ),
+          );
+        } catch {
+          // Continuar para retornar 200 y que MercadoPago reintente después
+        }
       } else if (webhookType === 'subscription_authorized_payment') {
         // Procesar webhooks de FACTURAS DE SUSCRIPCIÓN (authorized_payments)
-        // Enviar a microservicio de memberships
-        this.client
-          .send('processSubscriptionInvoiceWebhook', {
-            authorizedPaymentId: webhookId,
-          })
-          .subscribe();
+        try {
+          // Enviar a microservicio de memberships y esperar respuesta
+          await firstValueFrom(
+            this.client
+              .send('processSubscriptionInvoiceWebhook', {
+                authorizedPaymentId: webhookId,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  return of({ success: false, error: error.message });
+                }),
+              ),
+          );
+        } catch {
+          // Continuar
+        }
       } else if (
         webhookType === 'subscription_preapproval' ||
         webhookType === 'preapproval'
       ) {
         // Procesar webhooks de SUSCRIPCIONES CREADAS (preapproval)
-        // Enviar a microservicio de memberships
-        this.client
-          .send('processPreapprovalWebhook', {
-            preapprovalId: webhookId,
-            action: body.action,
-          })
-          .subscribe();
+        try {
+          // Enviar a microservicio de memberships y esperar respuesta
+          await firstValueFrom(
+            this.client
+              .send('processPreapprovalWebhook', {
+                preapprovalId: webhookId,
+                action: body.action,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  return of({ success: false, error: error.message });
+                }),
+              ),
+          );
+        } catch {
+          // Continuar
+        }
       } else if (
         webhookType === 'payment' &&
         webhookId &&
         webhookId.includes('-')
       ) {
         // 4. Procesar webhooks de PREFERENCIAS (ID con formato collector-preference)
-        // Enviar a microservicio para procesar preferencia y obtener pagos relacionados
-        this.client
-          .send('process_preference_webhook', {
-            preferenceId: webhookId,
-            action: body.action,
-            webhookData: body,
-          })
-          .subscribe();
+        try {
+          // Enviar a microservicio para procesar preferencia y esperar respuesta
+          await firstValueFrom(
+            this.client
+              .send('process_preference_webhook', {
+                preferenceId: webhookId,
+                action: body.action,
+                webhookData: body,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  return of({ success: false, error: error.message });
+                }),
+              ),
+          );
+        } catch {
+          // Continuar
+        }
       } else {
         // FALLBACK: Intentar detectar si hay un ID de pago válido de todas formas
         // PERO ignorar merchant_orders que ya fueron filtrados arriba
@@ -163,25 +221,43 @@ export class WebhooksController {
           /^\d+$/.test(String(possiblePaymentId)) &&
           webhookType !== 'merchant_order'
         ) {
-          // Enviar a microservicio de servicios
-          this.client
-            .send('process_payment_webhook', {
-              paymentId: String(possiblePaymentId),
-              action: body.action,
-              webhookData: body,
-            })
-            .subscribe();
+          try {
+            // Enviar a microservicio de servicios y esperar respuesta
+            await firstValueFrom(
+              this.client
+                .send('process_payment_webhook', {
+                  paymentId: String(possiblePaymentId),
+                  action: body.action,
+                  webhookData: body,
+                })
+                .pipe(
+                  timeout(10000),
+                  catchError((error) => {
+                    return of({ success: false, error: error.message });
+                  }),
+                ),
+            );
 
-          // Enviar a microservicio de memberships (procesará si es suscripción)
-          this.client
-            .send('processSubscriptionPaymentWebhook', {
-              paymentId: parseInt(String(possiblePaymentId), 10),
-            })
-            .subscribe();
+            // Enviar a microservicio de memberships (procesará si es suscripción)
+            await firstValueFrom(
+              this.client
+                .send('processSubscriptionPaymentWebhook', {
+                  paymentId: parseInt(String(possiblePaymentId), 10),
+                })
+                .pipe(
+                  timeout(10000),
+                  catchError((error) => {
+                    return of({ success: false, error: error.message });
+                  }),
+                ),
+            );
+          } catch {
+            // Continuar
+          }
         }
       }
 
-      // 4. Responder 200 OK inmediatamente
+      // 4. Responder 200 OK después de procesar
       return res.status(200).json({
         status: 'ok',
         message: 'Webhook processed successfully',
