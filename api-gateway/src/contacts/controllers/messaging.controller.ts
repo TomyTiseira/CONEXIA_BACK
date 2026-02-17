@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   ParseIntPipe,
   Post,
@@ -12,12 +13,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { existsSync, mkdirSync } from 'fs';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { ROLES } from '../../auth/constants/role-ids';
 import { AuthRoles } from '../../auth/decorators/auth-roles.decorator';
 import { User } from '../../auth/decorators/user.decorator';
+import { FileStorage } from '../../common/domain/interfaces/file-storage.interface';
 import { AuthenticatedUser } from '../../common/interfaces/authenticatedRequest.interface';
 import { MarkMessagesReadDto } from '../dto/mark-messages-read.dto';
 import { InvalidFileTypeException } from '../exceptions/messaging.exceptions';
@@ -26,30 +27,12 @@ import { MessagingService } from '../services/messaging.service';
 @Controller('messaging')
 @AuthRoles([ROLES.USER])
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) {}
-
-  @Post('send-message')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          const uploadPath = file.mimetype.startsWith('image/')
-            ? join(process.cwd(), 'uploads', 'messages', 'images')
-            : join(process.cwd(), 'uploads', 'messages', 'pdfs');
-
-          // Crear el directorio si no existe
-          if (!existsSync(uploadPath)) {
-            mkdirSync(uploadPath, { recursive: true });
-          }
-
-          cb(null, uploadPath);
-        },
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+  constructor(
+    private readonly messagingService: MessagingService,
+    @Inject('MESSAGE_FILE_STORAGE')
+    private readonly messageStorage: FileStorage,
+  ) {}
+memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
       fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -71,12 +54,28 @@ export class MessagingController {
     @UploadedFile() file: Express.Multer.File,
     @User() user: AuthenticatedUser,
   ) {
+    let fileUrl: string | undefined;
+
+    // Upload file to storage if present
+    if (file) {
+      const isImage = file.mimetype.startsWith('image/');
+      const folder = isImage ? 'images' : 'pdfs';
+      const uniqueSuffix =
+        Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const filename = `${folder}/${uniqueSuffix}${extname(file.originalname)}`;
+
+      fileUrl = await this.messageStorage.upload(
+        file.buffer,
+        filename,
+        file.mimetype,
+      );
+    }
+
     const messageData = {
       currentUserId: user.id,
       receiverId: body.receiverId,
       type: body.type,
-      content:
-        body.type === 'text'
+      content: body.type === 'text' ? body.content : fileUrltext'
           ? body.content
           : file
             ? `/uploads/messages/${file.mimetype.startsWith('image/') ? 'images' : 'pdfs'}/${file.filename}`

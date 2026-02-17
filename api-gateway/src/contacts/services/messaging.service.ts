@@ -191,7 +191,13 @@ export class MessagingService {
         return res.status(404).json({ message: 'File not found' });
       }
 
-      // Construir la ruta absoluta del archivo
+      // Si es una URL de GCS (comienza con https://storage.googleapis.com/),
+      // redirigir directamente a la URL pública
+      if (messageInfo.fileUrl.startsWith('https://storage.googleapis.com/')) {
+        return res.redirect(messageInfo.fileUrl);
+      }
+
+      // Para archivos locales, servirlos desde el filesystem
       const filePath = join(process.cwd(), messageInfo.fileUrl);
 
       // Verificar que el archivo existe
