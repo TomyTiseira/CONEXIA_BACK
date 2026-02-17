@@ -126,4 +126,10 @@ export class MembershipsController {
       data.reason,
     );
   }
+
+  // Update all MercadoPago plans (admin only)
+  @MessagePattern('updateMercadoPagoPlans')
+  updateMercadoPagoPlans() {
+    return this.membershipsService.updateMercadoPagoPlans();
+  }
 }

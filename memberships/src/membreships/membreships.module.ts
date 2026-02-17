@@ -28,6 +28,7 @@ import { ProcessSubscriptionInvoiceWebhookUseCase } from './services/use-cases/p
 import { ProcessSubscriptionPaymentWebhookUseCase } from './services/use-cases/process-subscription-payment-webhook.use-case';
 import { SyncPlanWithMercadoPagoUseCase } from './services/use-cases/sync-plan-with-mercadopago.use-case';
 import { TogglePlanUseCase } from './services/use-cases/toggle-plan.use-case';
+import { UpdateMercadoPagoPlansUseCase } from './services/use-cases/update-mercadopago-plans.use-case';
 import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
 
 @Module({
@@ -56,6 +57,7 @@ import { UpdatePlanUseCase } from './services/use-cases/update-plan.use-case';
     ProcessSubscriptionInvoiceWebhookUseCase,
     ProcessPreapprovalWebhookUseCase,
     SyncPlanWithMercadoPagoUseCase,
+    UpdateMercadoPagoPlansUseCase,
     GetUserPlanUseCase,
     GetAdminMembershipMetricsUseCase,
     CancelUserSubscriptionUseCase,

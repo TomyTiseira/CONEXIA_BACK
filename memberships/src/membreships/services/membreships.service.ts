@@ -17,6 +17,7 @@ import { ProcessPreapprovalWebhookUseCase } from './use-cases/process-preapprova
 import { ProcessSubscriptionInvoiceWebhookUseCase } from './use-cases/process-subscription-invoice-webhook.use-case';
 import { ProcessSubscriptionPaymentWebhookUseCase } from './use-cases/process-subscription-payment-webhook.use-case';
 import { TogglePlanUseCase } from './use-cases/toggle-plan.use-case';
+import { UpdateMercadoPagoPlansUseCase } from './use-cases/update-mercadopago-plans.use-case';
 import { UpdatePlanUseCase } from './use-cases/update-plan.use-case';
 
 @Injectable()
@@ -37,6 +38,7 @@ export class MembershipsService {
     private readonly getUserPlanUC: GetUserPlanUseCase,
     private readonly getAdminMembershipMetricsUC: GetAdminMembershipMetricsUseCase,
     private readonly cancelUserSubscriptionUC: CancelUserSubscriptionUseCase,
+    private readonly updateMercadoPagoPlansUC: UpdateMercadoPagoPlansUseCase,
   ) {}
 
   // Benefits catalog
@@ -119,5 +121,10 @@ export class MembershipsService {
   // Admin metrics
   async getAdminMetrics() {
     return this.getAdminMembershipMetricsUC.execute();
+  }
+
+  // Update all MercadoPago plans
+  async updateMercadoPagoPlans() {
+    return this.updateMercadoPagoPlansUC.execute();
   }
 }

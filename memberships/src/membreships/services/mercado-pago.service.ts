@@ -303,6 +303,56 @@ export class MercadoPagoService {
   }
 
   /**
+   * Actualiza un plan de suscripción existente en MercadoPago
+   */
+  async updateSubscriptionPlan(
+    planId: string,
+    planName: string,
+    planDescription: string,
+    price: number,
+    billingCycle: BillingCycle,
+  ): Promise<{ planId: string }> {
+    try {
+      const backUrl = envs.mercadoPagoBackUrl;
+      const notificationUrl = envs.mercadoPagoNotificationUrl;
+
+      this.logger.log(`🔄 Actualizando plan ${planId} en MercadoPago`);
+      this.logger.log(`🔍 DEBUG - backUrl para actualización: "${backUrl}"`);
+      this.logger.log(
+        `🔍 DEBUG - notificationUrl para actualización: "${notificationUrl}"`,
+      );
+
+      const updateData = {
+        reason: `${planName} - ${billingCycle === BillingCycle.MONTHLY ? 'Mensual' : 'Anual'}`,
+        back_url: `${backUrl}/subscriptions/success`,
+        notification_url: notificationUrl,
+      };
+
+      this.logger.log(
+        `🔍 DEBUG - Update data:`,
+        JSON.stringify(updateData, null, 2),
+      );
+
+      const response = await this.preApprovalPlan.update({
+        id: planId,
+        updatePreApprovalPlanRequest: updateData,
+      });
+
+      this.logger.log(`✅ Plan ${planId} actualizado exitosamente`);
+
+      return {
+        planId: response.id || planId,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error al actualizar plan ${planId} en MercadoPago: ${error.message}`,
+        error,
+      );
+      throw new Error(`Error al actualizar plan: ${error.message}`);
+    }
+  }
+
+  /**
    * Obtiene el init_point de un plan para suscripción directa
    */
   getPlanInitPoint(planId: string): string {
@@ -412,6 +462,10 @@ export class MercadoPagoService {
         `Creando suscripción en MercadoPago para usuario ${userEmail}`,
       );
       this.logger.log(
+        `🔍 CRITICAL DEBUG - backUrl en createSubscription: "${backUrl}"`,
+      );
+      this.logger.log(`🔍 CRITICAL DEBUG - Plan ID: "${mercadoPagoPlanId}"`);
+      this.logger.log(
         `� USANDO REDIRECT FLOW - El usuario ingresará la tarjeta en MercadoPago`,
       );
 
@@ -438,6 +492,9 @@ export class MercadoPagoService {
       );
       this.logger.log(`🔔 Notification URL incluida: ${notificationUrl}`);
       this.logger.log(`🔗 URL completa: ${finalInitPoint}`);
+      this.logger.warn(
+        `⚠️ IMPORTANTE: El back_url se pasa como parámetro, pero MercadoPago puede usar el del plan. Si ves ngrok, el plan ${mercadoPagoPlanId} tiene ngrok hardcodeado.`,
+      );
 
       return {
         subscriptionId: '', // Se creará después del pago
