@@ -22,7 +22,9 @@ export class ProcessPaymentWebhookUseCase {
     private readonly mercadoPagoService: MercadoPagoService,
   ) {}
 
-  async execute(paymentId: string): Promise<void> {
+  async execute(
+    paymentId: string,
+  ): Promise<{ success: boolean; message?: string }> {
     try {
       console.log(`🔔 Processing webhook for payment ID: ${paymentId}`);
       console.log(`⏰ Webhook received at: ${new Date().toISOString()}`);
@@ -61,7 +63,10 @@ export class ProcessPaymentWebhookUseCase {
         console.log(
           '🔍 Payment not found - this should be resolved with test vendor credentials',
         );
-        return;
+        return {
+          success: false,
+          message: 'Payment not found in MercadoPago API',
+        };
       }
 
       // Buscar el pago en nuestra base de datos usando múltiples estrategias
@@ -71,7 +76,11 @@ export class ProcessPaymentWebhookUseCase {
         console.error(
           `❌ No payment found to process webhook for MP payment ID: ${paymentId}`,
         );
-        return;
+        console.error(`   External reference: ${mpPayment.external_reference}`);
+        console.error(`   Transaction amount: ${mpPayment.transaction_amount}`);
+        console.error(`   Status: ${mpPayment.status}`);
+        console.error(`   THIS WILL PREVENT THE HIRING STATUS FROM UPDATING`);
+        return { success: false, message: 'Payment not found in database' };
       }
 
       // 🔥 MEJORADO: Chequeo de idempotencia más robusto
@@ -84,10 +93,30 @@ export class ProcessPaymentWebhookUseCase {
           `   MercadoPago Payment ID: ${payment.mercadoPagoPaymentId}`,
         );
         console.log(`   Skipping duplicate webhook processing`);
-        return;
+        return {
+          success: true,
+          message: 'Payment already processed (idempotency)',
+        };
       }
 
       console.log(`🔄 Processing payment ${payment.id} with status PENDING...`);
+
+      // 🔥 DOUBLE CHECK: Volver a verificar el estado después del bloqueo
+      // MercadoPago puede enviar webhooks duplicados rápidamente
+      const freshPayment = await this.paymentRepository.findById(payment.id);
+      if (freshPayment && freshPayment.status !== PaymentStatus.PENDING) {
+        console.log(
+          `⚠️ Payment ${payment.id} status changed to ${freshPayment.status} while waiting for lock`,
+        );
+        console.log(
+          `   Another webhook may have processed this payment already`,
+        );
+        console.log(`   Skipping duplicate webhook processing`);
+        return {
+          success: true,
+          message: 'Payment processed by another webhook',
+        };
+      }
 
       // Procesar según el estado del pago
       if (this.mercadoPagoService.isPaymentApproved(mpPayment)) {
@@ -105,6 +134,10 @@ export class ProcessPaymentWebhookUseCase {
         `✅ Webhook processed successfully for payment ${payment.id}`,
       );
       console.log(`⏰ Processing completed at: ${new Date().toISOString()}`);
+      return {
+        success: true,
+        message: 'Payment webhook processed successfully',
+      };
     } catch (error) {
       console.error('Error processing payment webhook:', error);
       throw new RpcException(
@@ -287,14 +320,18 @@ export class ProcessPaymentWebhookUseCase {
     }
 
     // Estrategia 2: Buscar por external_reference (más confiable en Checkout Pro)
+    // Formato: hiring_{hiringId}_payment_{paymentId}
     if (mpPayment?.external_reference) {
-      const externalRefMatch =
-        mpPayment.external_reference.match(/hiring_(\d+)/);
+      const externalRefMatch = mpPayment.external_reference.match(
+        /hiring_(\d+)_payment_(\d+)/,
+      );
       if (externalRefMatch) {
-        const paymentIdFromRef = parseInt(externalRefMatch[1]);
+        const paymentIdFromRef = parseInt(externalRefMatch[2]); // Extraer paymentId, no hiringId
         payment = await this.paymentRepository.findById(paymentIdFromRef);
         if (payment) {
-          console.log(`✅ Found payment by external_reference: ${payment.id}`);
+          console.log(
+            `✅ Found payment by external_reference: ${payment.id} (from ${mpPayment.external_reference})`,
+          );
           return payment;
         }
       }
