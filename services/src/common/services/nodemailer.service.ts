@@ -219,7 +219,7 @@ export class NodemailerService extends EmailService {
     const frontendUrl = (claimData.frontendUrl || '').trim();
     const claimUrl = frontendUrl
       ? `${frontendUrl.replace(/\/$/, '')}/claims/${claimData.claimId}`
-      : `https://conexia.com/claims/${claimData.claimId}`;
+      : `https://conexia.com/claims/my-claims?${claimData.claimId}`;
 
     await this.sendEmail({
       to: recipientEmail,

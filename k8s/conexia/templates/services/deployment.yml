@@ -78,6 +78,8 @@ spec:
               value: "/etc/gcs/key.json"
             - name: GCS_SERVICE_IMAGES_BUCKET
               value: "conexia-service-images"
+            - name: ADMIN_EMAIL
+              value: "conexia.contact@gmail.com"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs
