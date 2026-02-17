@@ -14,6 +14,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
+import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { envs } from '../config/envs';
 import { NATS_SERVICE } from '../config/service';
 
@@ -64,7 +65,7 @@ export class WebhooksController {
       forbidNonWhitelisted: false, // No rechazar campos adicionales
     }),
   )
-  handleMercadoPagoWebhook(
+  async handleMercadoPagoWebhook(
     @Query() query: MercadoPagoWebhookQuery,
     @Body() body: MercadoPagoWebhookDto,
     @Headers() headers: Record<string, string>,
@@ -178,50 +179,71 @@ export class WebhooksController {
           live_mode: body.live_mode,
         });
 
-        // Verificar si es un pago de suscripción (verificando external_reference)
-        // Por ahora, enviamos a ambos microservicios para que procesen si aplica
+        // Procesar webhooks de forma síncrona con timeout de 10 segundos
+        try {
+          // Enviar a microservicio de servicios y esperar respuesta
+          const servicesResult = await firstValueFrom(
+            this.client
+              .send('process_payment_webhook', {
+                paymentId: webhookId,
+                action: body.action,
+                webhookData: body,
+              })
+              .pipe(
+                timeout(10000), // 10 segundos timeout
+                catchError((error) => {
+                  console.error(
+                    '❌ Error processing payment webhook in services:',
+                    error.message,
+                  );
+                  return of({
+                    success: false,
+                    error: error.message,
+                    microservice: 'services',
+                  });
+                }),
+              ),
+          );
 
-        // Enviar a microservicio de servicios
-        this.client
-          .send('process_payment_webhook', {
-            paymentId: webhookId,
-            action: body.action,
-            webhookData: body,
-          })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Payment webhook processed by services microservice:',
-                result,
-              ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing payment webhook in services:',
-                error,
-              ),
-          });
+          console.log(
+            '✅ Payment webhook processed by services microservice:',
+            servicesResult,
+          );
 
-        // Enviar a microservicio de memberships (procesará si es suscripción)
-        this.client
-          .send('processSubscriptionPaymentWebhook', {
-            paymentId: parseInt(webhookId, 10),
-          })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Payment webhook processed by memberships microservice:',
-                result,
+          // Enviar a microservicio de memberships (procesará si es suscripción)
+          const membershipsResult = await firstValueFrom(
+            this.client
+              .send('processSubscriptionPaymentWebhook', {
+                paymentId: parseInt(webhookId, 10),
+              })
+              .pipe(
+                timeout(10000), // 10 segundos timeout
+                catchError((error) => {
+                  console.error(
+                    '❌ Error processing payment webhook in memberships (might not be a subscription):',
+                    error.message,
+                  );
+                  return of({
+                    success: false,
+                    error: error.message,
+                    microservice: 'memberships',
+                  });
+                }),
               ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing payment webhook in memberships (might not be a subscription):',
-                error,
-              ),
-          });
+          );
 
-        console.log(
-          '📤 Payment webhook sent to both services and memberships microservices',
-        );
+          console.log(
+            '✅ Payment webhook processed by memberships microservice:',
+            membershipsResult,
+          );
+
+          console.log(
+            '📤 Payment webhook processed by both services and memberships microservices',
+          );
+        } catch (error) {
+          console.error('❌ Critical error processing payment webhook:', error);
+          // Continuar para retornar 200 y que MercadoPago reintente después
+        }
       } else if (webhookType === 'subscription_authorized_payment') {
         // Procesar webhooks de FACTURAS DE SUSCRIPCIÓN (authorized_payments)
         console.log('📅 Processing SUBSCRIPTION INVOICE webhook:', {
@@ -230,26 +252,38 @@ export class WebhooksController {
           live_mode: body.live_mode,
         });
 
-        // Enviar a microservicio de memberships
-        this.client
-          .send('processSubscriptionInvoiceWebhook', {
-            authorizedPaymentId: webhookId,
-          })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Subscription invoice webhook processed by memberships:',
-                result,
+        try {
+          // Enviar a microservicio de memberships y esperar respuesta
+          const result = await firstValueFrom(
+            this.client
+              .send('processSubscriptionInvoiceWebhook', {
+                authorizedPaymentId: webhookId,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  console.error(
+                    '❌ Error processing subscription invoice webhook:',
+                    error.message,
+                  );
+                  return of({ success: false, error: error.message });
+                }),
               ),
-            error: (error) =>
-              console.error(
-                '❌ Error processing subscription invoice webhook:',
-                error,
-              ),
-          });
+          );
+
+          console.log(
+            '✅ Subscription invoice webhook processed by memberships:',
+            result,
+          );
+        } catch (error) {
+          console.error(
+            '❌ Critical error processing subscription invoice:',
+            error,
+          );
+        }
 
         console.log(
-          '📤 Subscription invoice webhook sent to memberships microservice',
+          '📤 Subscription invoice webhook processed by memberships microservice',
         );
       } else if (
         webhookType === 'subscription_preapproval' ||
@@ -266,23 +300,37 @@ export class WebhooksController {
           },
         );
 
-        // Enviar a microservicio de memberships
-        this.client
-          .send('processPreapprovalWebhook', {
-            preapprovalId: webhookId,
-            action: body.action,
-          })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Preapproval webhook processed by memberships:',
-                result,
+        try {
+          // Enviar a microservicio de memberships y esperar respuesta
+          const result = await firstValueFrom(
+            this.client
+              .send('processPreapprovalWebhook', {
+                preapprovalId: webhookId,
+                action: body.action,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  console.error(
+                    '❌ Error processing preapproval webhook:',
+                    error.message,
+                  );
+                  return of({ success: false, error: error.message });
+                }),
               ),
-            error: (error) =>
-              console.error('❌ Error processing preapproval webhook:', error),
-          });
+          );
 
-        console.log('📤 Preapproval webhook sent to memberships microservice');
+          console.log(
+            '✅ Preapproval webhook processed by memberships:',
+            result,
+          );
+        } catch (error) {
+          console.error('❌ Critical error processing preapproval:', error);
+        }
+
+        console.log(
+          '📤 Preapproval webhook processed by memberships microservice',
+        );
       } else if (
         webhookType === 'payment' &&
         webhookId &&
@@ -297,24 +345,36 @@ export class WebhooksController {
           },
         );
 
-        // Enviar a microservicio para procesar preferencia y obtener pagos relacionados
-        this.client
-          .send('process_preference_webhook', {
-            preferenceId: webhookId,
-            action: body.action,
-            webhookData: body,
-          })
-          .subscribe({
-            next: (result) =>
-              console.log(
-                '✅ Preference webhook processed successfully:',
-                result,
+        try {
+          // Enviar a microservicio para procesar preferencia y esperar respuesta
+          const result = await firstValueFrom(
+            this.client
+              .send('process_preference_webhook', {
+                preferenceId: webhookId,
+                action: body.action,
+                webhookData: body,
+              })
+              .pipe(
+                timeout(10000),
+                catchError((error) => {
+                  console.error(
+                    '❌ Error processing preference webhook:',
+                    error.message,
+                  );
+                  return of({ success: false, error: error.message });
+                }),
               ),
-            error: (error) =>
-              console.error('❌ Error processing preference webhook:', error),
-          });
+          );
 
-        console.log('📤 Preference webhook sent to services microservice');
+          console.log('✅ Preference webhook processed successfully:', result);
+        } catch (error) {
+          console.error(
+            '❌ Critical error processing preference webhook:',
+            error,
+          );
+        }
+
+        console.log('📤 Preference webhook processed by services microservice');
       } else {
         console.error(
           '⚠️ Webhook ignored - not a recognized payment/preference update:',
@@ -347,51 +407,68 @@ export class WebhooksController {
             possiblePaymentId,
           );
 
-          // Enviar a microservicio de servicios
-          this.client
-            .send('process_payment_webhook', {
-              paymentId: String(possiblePaymentId),
-              action: body.action,
-              webhookData: body,
-            })
-            .subscribe({
-              next: (result) =>
-                console.log(
-                  '✅ Fallback payment webhook processed by services microservice:',
-                  result,
+          try {
+            // Enviar a microservicio de servicios y esperar respuesta
+            const servicesResult = await firstValueFrom(
+              this.client
+                .send('process_payment_webhook', {
+                  paymentId: String(possiblePaymentId),
+                  action: body.action,
+                  webhookData: body,
+                })
+                .pipe(
+                  timeout(10000),
+                  catchError((error) => {
+                    console.error(
+                      '❌ Error processing fallback payment webhook in services:',
+                      error.message,
+                    );
+                    return of({ success: false, error: error.message });
+                  }),
                 ),
-              error: (error) =>
-                console.error(
-                  '❌ Error processing fallback payment webhook in services:',
-                  error,
-                ),
-            });
+            );
 
-          // Enviar a microservicio de memberships (procesará si es suscripción)
-          this.client
-            .send('processSubscriptionPaymentWebhook', {
-              paymentId: parseInt(String(possiblePaymentId), 10),
-            })
-            .subscribe({
-              next: (result) =>
-                console.log(
-                  '✅ Fallback payment webhook processed by memberships microservice:',
-                  result,
+            console.log(
+              '✅ Fallback payment webhook processed by services microservice:',
+              servicesResult,
+            );
+
+            // Enviar a microservicio de memberships (procesará si es suscripción)
+            const membershipsResult = await firstValueFrom(
+              this.client
+                .send('processSubscriptionPaymentWebhook', {
+                  paymentId: parseInt(String(possiblePaymentId), 10),
+                })
+                .pipe(
+                  timeout(10000),
+                  catchError((error) => {
+                    console.error(
+                      '❌ Error processing fallback payment webhook in memberships:',
+                      error.message,
+                    );
+                    return of({ success: false, error: error.message });
+                  }),
                 ),
-              error: (error) =>
-                console.error(
-                  '❌ Error processing fallback payment webhook in memberships:',
-                  error,
-                ),
-            });
+            );
+
+            console.log(
+              '✅ Fallback payment webhook processed by memberships microservice:',
+              membershipsResult,
+            );
+          } catch (error) {
+            console.error(
+              '❌ Critical error processing fallback payment webhook:',
+              error,
+            );
+          }
 
           console.log(
-            '📤 Fallback payment webhook sent to both services and memberships microservices',
+            '📤 Fallback payment webhook processed by both services and memberships microservices',
           );
         }
       }
 
-      // 4. Responder 200 OK inmediatamente
+      // 4. Responder 200 OK después de procesar
       return res.status(200).json({
         status: 'ok',
         message: 'Webhook processed successfully',

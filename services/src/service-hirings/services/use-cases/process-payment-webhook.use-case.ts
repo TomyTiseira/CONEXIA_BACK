@@ -25,6 +25,7 @@ export class ProcessPaymentWebhookUseCase {
   async execute(paymentId: string): Promise<void> {
     try {
       console.log(`🔔 Processing webhook for payment ID: ${paymentId}`);
+      console.log(`⏰ Webhook received at: ${new Date().toISOString()}`);
 
       // Obtener información del pago desde MercadoPago PRIMERO
       // En Checkout Pro, el payment_id solo existe después del checkout completo
@@ -73,24 +74,37 @@ export class ProcessPaymentWebhookUseCase {
         return;
       }
 
-      // Si el pago ya fue procesado, no hacer nada
+      // 🔥 MEJORADO: Chequeo de idempotencia más robusto
       if (payment.status !== PaymentStatus.PENDING) {
         console.log(
-          `Payment ${payment.id} already processed with status: ${payment.status}`,
+          `⚠️ Payment ${payment.id} already processed with status: ${payment.status}`,
         );
+        console.log(`   Processed at: ${payment.processedAt}`);
+        console.log(
+          `   MercadoPago Payment ID: ${payment.mercadoPagoPaymentId}`,
+        );
+        console.log(`   Skipping duplicate webhook processing`);
         return;
       }
 
+      console.log(`🔄 Processing payment ${payment.id} with status PENDING...`);
+
       // Procesar según el estado del pago
       if (this.mercadoPagoService.isPaymentApproved(mpPayment)) {
+        console.log(`✅ Payment approved - updating hiring status`);
         await this.approvePayment(payment, mpPayment);
       } else if (this.mercadoPagoService.isPaymentRejected(mpPayment)) {
+        console.log(`❌ Payment rejected - updating hiring status`);
         await this.rejectPayment(payment, mpPayment);
       } else if (this.mercadoPagoService.isPaymentPending(mpPayment)) {
+        console.log(`⏳ Payment still pending - updating details`);
         await this.updatePaymentAsPending(payment, mpPayment);
       }
 
-      console.log(`Webhook processed successfully for payment ${payment.id}`);
+      console.log(
+        `✅ Webhook processed successfully for payment ${payment.id}`,
+      );
+      console.log(`⏰ Processing completed at: ${new Date().toISOString()}`);
     } catch (error) {
       console.error('Error processing payment webhook:', error);
       throw new RpcException(
@@ -127,19 +141,8 @@ export class ProcessPaymentWebhookUseCase {
       return;
     }
 
-    // 🔥 CRÍTICO: Si el hiring está en PAYMENT_PENDING, actualizarlo con los datos del pago
-    if (hiring.status?.code === ServiceHiringStatusCode.PAYMENT_PENDING) {
-      console.log(
-        `✅ Payment confirmed for hiring ${hiring.id} - transitioning from PAYMENT_PENDING to APPROVED`,
-      );
-
-      await this.hiringRepository.update(hiring.id, {
-        paymentId: mpPayment.id.toString(),
-        paymentStatus: mpPayment.status,
-        paymentStatusDetail: mpPayment.status_detail,
-        paidAt: new Date(),
-      });
-    }
+    // 🔥 OPTIMIZADO: Determinar el nuevo estado y actualizar en una sola operación
+    let newStatusCode: ServiceHiringStatusCode;
 
     // Si es pago de delivery (FULL, FINAL o DELIVERABLE), verificar si debe completarse
     if (
@@ -158,50 +161,48 @@ export class ProcessPaymentWebhookUseCase {
 
         if (pendingDeliverables > 0) {
           // Aún quedan entregables pendientes, volver a APPROVED
-          const approvedStatus = await this.statusService.getStatusByCode(
-            ServiceHiringStatusCode.APPROVED,
-          );
-
-          await this.hiringRepository.update(payment.hiringId, {
-            statusId: approvedStatus.id,
-            respondedAt: new Date(),
-          });
-
+          newStatusCode = ServiceHiringStatusCode.APPROVED;
           console.log(
-            `Payment ${payment.id} approved. Hiring ${payment.hiringId} updated to APPROVED status. Pending deliverables: ${pendingDeliverables}`,
+            `Payment ${payment.id} approved. Hiring ${payment.hiringId} will transition to APPROVED. Pending deliverables: ${pendingDeliverables}`,
           );
-          return;
+        } else {
+          // Es el último DELIVERABLE, marcar como COMPLETED
+          newStatusCode = ServiceHiringStatusCode.COMPLETED;
+          console.log(
+            `Payment ${payment.id} approved (last deliverable). Hiring ${payment.hiringId} will transition to COMPLETED`,
+          );
         }
+      } else {
+        // Si es FULL o FINAL, marcar como COMPLETED
+        newStatusCode = ServiceHiringStatusCode.COMPLETED;
+        console.log(
+          `Payment ${payment.id} approved (${payment.paymentType}). Hiring ${payment.hiringId} will transition to COMPLETED`,
+        );
       }
-
-      // Si es FULL, FINAL, o es el último DELIVERABLE, marcar como COMPLETED
-      const completedStatus = await this.statusService.getStatusByCode(
-        ServiceHiringStatusCode.COMPLETED,
-      );
-
-      await this.hiringRepository.update(payment.hiringId, {
-        statusId: completedStatus.id,
-        respondedAt: new Date(),
-      });
-
-      console.log(
-        `Payment ${payment.id} approved and hiring ${payment.hiringId} updated to COMPLETED status (${payment.paymentType} payment)`,
-      );
     } else {
       // Si es pago inicial (INITIAL), mantener en APPROVED
-      const approvedStatus = await this.statusService.getStatusByCode(
-        ServiceHiringStatusCode.APPROVED,
-      );
-
-      await this.hiringRepository.update(payment.hiringId, {
-        statusId: approvedStatus.id,
-        respondedAt: new Date(),
-      });
-
+      newStatusCode = ServiceHiringStatusCode.APPROVED;
       console.log(
-        `Payment ${payment.id} approved and hiring ${payment.hiringId} updated to APPROVED status (initial payment)`,
+        `Payment ${payment.id} approved (initial payment). Hiring ${payment.hiringId} will transition to APPROVED`,
       );
     }
+
+    // Obtener el status correspondiente
+    const newStatus = await this.statusService.getStatusByCode(newStatusCode);
+
+    // 🔥 CRÍTICO: Actualizar hiring con estado Y datos de pago en UNA SOLA operación
+    await this.hiringRepository.update(hiring.id, {
+      statusId: newStatus.id,
+      paymentId: mpPayment.id.toString(),
+      paymentStatus: mpPayment.status,
+      paymentStatusDetail: mpPayment.status_detail,
+      paidAt: new Date(),
+      respondedAt: new Date(),
+    });
+
+    console.log(
+      `✅ Hiring ${hiring.id} successfully transitioned from ${hiring.status?.code} to ${newStatusCode}`,
+    );
   }
 
   private async rejectPayment(payment, mpPayment): Promise<void> {
