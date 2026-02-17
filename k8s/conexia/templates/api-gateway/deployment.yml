@@ -23,6 +23,8 @@ spec:
         - image: southamerica-west1-docker.pkg.dev/conexia-486401/conexia-registry/api-gateway
           name: api-gateway
           env:
+            - name: NODE_ENV
+              value: "production"
             - name: NATS_SERVERS
               value: "nats://nats"
             - name: PORT
@@ -37,5 +39,26 @@ spec:
                 secretKeyRef:
                   name: api-gateway-secrets
                   key: CORS_ORIGINS
+            - name: MERCADOPAGO_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: api-gateway-secrets
+                  key: MERCADOPAGO_WEBHOOK_SECRET
+            - name: GCS_PROJECT_ID
+              value: "conexia-486401"
+            - name: GCS_KEY_FILE
+              value: "/etc/gcs/key.json"
+            - name: GCS_MESSAGES_BUCKET
+              value: "conexia-messages-files"
+            - name: GCS_DELIVERY_ATTACHMENTS_BUCKET
+              value: "conexia-delivery-attachments"
+          volumeMounts:
+            - name: gcs-key
+              mountPath: /etc/gcs
+              readOnly: true
           resources: {}
+      volumes:
+        - name: gcs-key
+          secret:
+            secretName: gcs-key-secret
 status: {}

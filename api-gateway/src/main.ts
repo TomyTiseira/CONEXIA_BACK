@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { RpcCustomExceptionFilter } from './common/exceptions/rpc-custom-exception.filter';
@@ -13,11 +14,16 @@ async function bootstrap() {
   const logger = new Logger('ApiGateway');
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Aumentar el límite de body size para imágenes en base64
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
   // Configurar como microservicio híbrido (HTTP + NATS)
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.NATS,
     options: {
       servers: envs.natsServers,
+      maxPayload: 10 * 1024 * 1024, // 10MB
     },
   });
 
@@ -38,11 +44,6 @@ async function bootstrap() {
   // Servir archivos estáticos ANTES del prefijo global
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
-  });
-
-  // Servir archivos de CV específicamente
-  app.useStaticAssets(join(process.cwd(), 'uploads', 'cv'), {
-    prefix: '/uploads/cv/',
   });
 
   // Servir archivos de publicaciones específicamente

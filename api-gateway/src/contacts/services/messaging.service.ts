@@ -26,15 +26,6 @@ export class MessagingService {
 
       // Si el mensaje se guardó correctamente, enviarlo por WebSocket
       if (result && result.messageId) {
-        // Generar URL absoluta para archivos
-        const baseUrl =
-          process.env.API_BASE_URL ||
-          `http://localhost:${process.env.PORT || 8080}`;
-        const fileUrl =
-          data.type !== 'text' && data.content
-            ? `${baseUrl}/api/messaging/messages/${result.messageId}/file`
-            : null;
-
         // Determinar el tipo MIME correcto
         const mimeType =
           data.type === 'image'
@@ -49,7 +40,7 @@ export class MessagingService {
           senderId: data.currentUserId,
           receiverId: data.receiverId,
           type: data.type,
-          content: fileUrl,
+          content: data.content, // Use the actual file URL (GCS or local) directly
           fileName: data.fileName,
           fileSize: data.fileSize,
           mimeType: mimeType,
@@ -191,7 +182,13 @@ export class MessagingService {
         return res.status(404).json({ message: 'File not found' });
       }
 
-      // Construir la ruta absoluta del archivo
+      // Si es una URL de GCS (comienza con https://storage.googleapis.com/),
+      // redirigir directamente a la URL pública
+      if (messageInfo.fileUrl.startsWith('https://storage.googleapis.com/')) {
+        return res.redirect(messageInfo.fileUrl);
+      }
+
+      // Para archivos locales, servirlos desde el filesystem
       const filePath = join(process.cwd(), messageInfo.fileUrl);
 
       // Verificar que el archivo existe

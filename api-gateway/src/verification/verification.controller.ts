@@ -6,123 +6,114 @@ import {
   Param,
   Post,
   Req,
-  UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { promises as fs } from 'fs';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { Type } from 'class-transformer';
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { catchError, firstValueFrom } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { AuthenticatedRequest } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config';
 
+// DTO for image data
+class ImageDataDto {
+  @IsString()
+  @IsNotEmpty()
+  fileData: string; // base64
+
+  @IsString()
+  @IsNotEmpty()
+  originalName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType: string;
+}
+
+// DTO for new base64 approach
+class VerifyIdentityPayloadDto {
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ImageDataDto)
+  documentImage: ImageDataDto;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ImageDataDto)
+  faceImage: ImageDataDto;
+
+  @IsString()
+  @IsOptional()
+  documentType?: string;
+}
+
 @Controller('verification')
 export class VerificationController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
+  /**
+   * New base64 approach - clean architecture
+   */
   @Post('compare')
   @AuthRoles([ROLES.USER])
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'documentImage', maxCount: 1 },
-        { name: 'faceImage', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: join(process.cwd(), 'uploads', 'verification'),
-          filename: (req, file, cb) => {
-            const uniqueSuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const name = uniqueSuffix + extname(file.originalname);
-            cb(null, name);
-          },
-        }),
-        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
-        fileFilter: (req, file, cb) => {
-          const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-          if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-          } else {
-            cb(
-              new RpcException({
-                status: 400,
-                message:
-                  'Solo se permiten imágenes en formato JPEG, JPG o PNG.',
-              }),
-              false,
-            );
-          }
-        },
-      },
-    ),
-  )
   async verifyIdentity(
     @Req() req: AuthenticatedRequest,
-    @UploadedFiles()
-    files: {
-      documentImage?: Express.Multer.File[];
-      faceImage?: Express.Multer.File[];
-    },
-    @Body() body: { documentType?: string },
+    @Body() payload: VerifyIdentityPayloadDto,
   ) {
     try {
-      // Validar que se subieron ambas imágenes
-      if (!files.documentImage || !files.faceImage) {
-        // Limpiar archivos si se subieron
-        await this.cleanupFiles(files);
-
+      // Validar que se proporcionaron ambas imágenes
+      if (!payload.documentImage?.fileData || !payload.faceImage?.fileData) {
         throw new RpcException({
           status: 400,
           message:
-            'Debe subir ambas imágenes: documento de identidad y foto del rostro.',
+            'Debe proporcionar ambas imágenes: documento de identidad y foto del rostro.',
         });
       }
 
-      const documentImage = files.documentImage[0];
-      const faceImage = files.faceImage[0];
-
       // Preparar payload para el microservicio
-      const payload = {
+      const microservicePayload = {
         userId: req.user?.id,
         documentImage: {
-          path: documentImage.path,
-          filename: documentImage.filename,
-          mimetype: documentImage.mimetype,
+          fileData: payload.documentImage.fileData,
+          originalName: payload.documentImage.originalName,
+          mimeType: payload.documentImage.mimeType,
         },
         faceImage: {
-          path: faceImage.path,
-          filename: faceImage.filename,
-          mimetype: faceImage.mimetype,
+          fileData: payload.faceImage.fileData,
+          originalName: payload.faceImage.originalName,
+          mimeType: payload.faceImage.mimeType,
         },
-        documentType: body.documentType || 'DNI',
+        documentType: payload.documentType || 'DNI',
       };
 
       // Enviar al microservicio
       const result = await firstValueFrom(
-        this.client.send('verifyIdentity', payload).pipe(
+        this.client.send('verifyIdentity', microservicePayload).pipe(
           catchError((error) => {
             throw new RpcException(error);
           }),
         ),
       );
 
-      // Limpiar archivos después del procesamiento
-      await this.cleanupFiles(files);
-
       return {
         success: true,
         data: result,
       };
     } catch (error) {
-      // Limpiar archivos en caso de error
-      await this.cleanupFiles(files);
-
-      throw error;
+      if (error instanceof RpcException) {
+        throw error;
+      }
+      throw new RpcException({
+        status: 500,
+        message: error.message || 'Error en la verificación de identidad',
+      });
     }
   }
 
@@ -160,33 +151,5 @@ export class VerificationController {
           throw new RpcException(error);
         }),
       );
-  }
-
-  /**
-   * Helper para limpiar archivos subidos
-   */
-  private async cleanupFiles(files: {
-    documentImage?: Express.Multer.File[];
-    faceImage?: Express.Multer.File[];
-  }): Promise<void> {
-    const filesToDelete: string[] = [];
-
-    if (files.documentImage?.[0]?.path) {
-      filesToDelete.push(files.documentImage[0].path);
-    }
-    if (files.faceImage?.[0]?.path) {
-      filesToDelete.push(files.faceImage[0].path);
-    }
-
-    await Promise.all(
-      filesToDelete.map(async (filePath) => {
-        try {
-          await fs.unlink(filePath);
-        } catch (error) {
-          // Ignorar errores al eliminar archivos
-          console.error(`Error deleting file ${filePath}:`, error);
-        }
-      }),
-    );
   }
 }

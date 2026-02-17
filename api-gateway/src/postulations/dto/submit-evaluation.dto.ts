@@ -1,22 +1,18 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class SubmitEvaluationDto {
   // Evaluation file fields
   @IsOptional()
-  @IsString({ message: 'evaluationFileUrl must be a string' })
-  evaluationFileUrl?: string;
+  @IsString({ message: 'evaluationData must be a string' })
+  evaluationData?: string; // Base64 encoded file data
 
   @IsOptional()
-  @IsString({ message: 'evaluationFilename must be a string' })
-  evaluationFilename?: string;
+  @IsString({ message: 'evaluationOriginalName must be a string' })
+  evaluationOriginalName?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'evaluationFileSize must be a number' })
-  evaluationFileSize?: number;
-
-  @IsOptional()
-  @IsString({ message: 'evaluationFileMimetype must be a string' })
-  evaluationFileMimetype?: string;
+  @IsString({ message: 'evaluationMimetype must be a string' })
+  evaluationMimetype?: string;
 
   // Optional link to external evaluation (e.g., GitHub repo, deployed app)
   @IsOptional()

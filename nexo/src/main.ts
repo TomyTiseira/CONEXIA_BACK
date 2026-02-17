@@ -13,6 +13,7 @@ async function bootstrap() {
       transport: Transport.NATS,
       options: {
         servers: envs.natsServers,
+        maxPayload: 10 * 1024 * 1024, // 10MB
       },
     },
   );

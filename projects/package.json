@@ -26,6 +26,7 @@
     "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/mapped-types": "*",

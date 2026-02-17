@@ -10,6 +10,7 @@ async function bootstrap() {
       transport: Transport.NATS,
       options: {
         servers: envs.natsServers,
+        maxPayload: 10 * 1024 * 1024, // 10MB
       },
     },
   );
@@ -17,4 +18,7 @@ async function bootstrap() {
   await app.listen();
   console.log('Services microservice is listening on NATS');
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error starting Services microservice:', err);
+  process.exit(1);
+});

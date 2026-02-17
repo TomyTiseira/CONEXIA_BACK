@@ -7,6 +7,10 @@ interface EnvVars {
   JWT_SECRET: string;
   CORS_ORIGINS?: string[];
   NODE_ENV: string;
+  GCS_PROJECT_ID?: string;
+  GCS_KEY_FILE?: string;
+  GCS_MESSAGES_BUCKET?: string;
+  GCS_DELIVERY_ATTACHMENTS_BUCKET?: string;
 }
 
 const envSchema = joi
@@ -16,6 +20,22 @@ const envSchema = joi
     JWT_SECRET: joi.string().required(),
     CORS_ORIGINS: joi.array().items(joi.string()).optional(),
     NODE_ENV: joi.string().default('development'),
+    GCS_PROJECT_ID: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
+    GCS_KEY_FILE: joi.string().optional().allow(''),
+    GCS_MESSAGES_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
+    GCS_DELIVERY_ATTACHMENTS_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
   })
   .unknown(true);
 
@@ -25,6 +45,10 @@ const result = envSchema.validate({
   JWT_SECRET: process.env.JWT_SECRET,
   CORS_ORIGINS: process.env.CORS_ORIGINS?.split(',') || [],
   NODE_ENV: process.env.NODE_ENV,
+  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID,
+  GCS_KEY_FILE: process.env.GCS_KEY_FILE,
+  GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
+  GCS_DELIVERY_ATTACHMENTS_BUCKET: process.env.GCS_DELIVERY_ATTACHMENTS_BUCKET,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -35,6 +59,12 @@ const envVars = result.value as EnvVars;
 export const envs = {
   natsServers: envVars.NATS_SERVERS,
   port: envVars.PORT,
+  gcs: {
+    projectId: envVars.GCS_PROJECT_ID,
+    keyFile: envVars.GCS_KEY_FILE,
+    messagesBucket: envVars.GCS_MESSAGES_BUCKET,
+    deliveryAttachmentsBucket: envVars.GCS_DELIVERY_ATTACHMENTS_BUCKET,
+  },
   jwtSecret: envVars.JWT_SECRET,
   corsOrigins: envVars.CORS_ORIGINS || [],
   nodeEnv: envVars.NODE_ENV,

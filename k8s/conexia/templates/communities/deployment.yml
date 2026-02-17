@@ -66,6 +66,8 @@ spec:
               value: "/etc/gcs/key.json"
             - name: GCS_PUBLICATIONS_BUCKET
               value: "conexia-publications-media"
+            - name: GCS_MESSAGES_BUCKET
+              value: "conexia-messages-files"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs

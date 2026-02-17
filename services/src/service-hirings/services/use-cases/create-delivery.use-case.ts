@@ -31,7 +31,12 @@ export class CreateDeliveryUseCase {
     hiringId: number,
     serviceOwnerId: number,
     createDto: CreateDeliveryDto,
-    files?: any[], // Array de archivos Multer
+    uploadedFiles?: Array<{
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+    }>,
   ): Promise<DeliverySubmissionResponseDto> {
     // 1. Obtener la contratación con sus relaciones
     const hiring = await this.serviceHiringRepository.findById(hiringId, [
@@ -204,34 +209,30 @@ export class CreateDeliveryUseCase {
     // 5. Crear la entrega
     // ⚠️ IMPORTANTE: Mantener attachmentPath y attachmentSize por retrocompatibilidad
     // Si solo hay 1 archivo, guardarlo también en los campos antiguos
-    const firstFile = files && files.length > 0 ? files[0] : null;
+    const firstFile =
+      uploadedFiles && uploadedFiles.length > 0 ? uploadedFiles[0] : null;
 
     const delivery = await this.deliveryRepository.create({
       hiringId,
       deliverableId: deliverableId || undefined,
       deliveryType,
       content: createDto.content,
-      attachmentPath: firstFile
-        ? `/uploads/deliveries/${firstFile.filename}`
-        : undefined,
-      attachmentSize: firstFile ? firstFile.size : undefined,
+      attachmentPath: firstFile ? firstFile.fileUrl : undefined,
+      attachmentSize: firstFile ? firstFile.fileSize : undefined,
       price,
       status: DeliveryStatus.DELIVERED,
       deliveredAt: new Date(),
     });
 
     // 6. Crear registros de attachments si hay archivos
-    if (files && files.length > 0) {
-
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-
-      const attachmentsData = files.map((file, index) => ({
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      const attachmentsData = uploadedFiles.map((file, index) => ({
         deliveryId: delivery.id,
-        filePath: `/uploads/deliveries/${file.filename}`,
-        fileUrl: `${baseUrl}/uploads/deliveries/${file.filename}`, // URL completa
-        fileName: file.originalname,
-        fileSize: file.size,
-        mimeType: file.mimetype,
+        filePath: file.fileUrl, // Usar la URL como path también para compatibilidad
+        fileUrl: file.fileUrl, // URL completa del archivo (GCS o local)
+        fileName: file.fileName,
+        fileSize: file.fileSize,
+        mimeType: file.mimeType,
         orderIndex: index,
       }));
 

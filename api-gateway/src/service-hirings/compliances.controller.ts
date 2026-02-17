@@ -13,12 +13,13 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { catchError, firstValueFrom } from 'rxjs';
 import { ROLES, ROLES_IDS } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
+import { FileStorage } from '../common/domain/interfaces/file-storage.interface';
 import { AuthenticatedUser } from '../common/interfaces/authenticatedRequest.interface';
 import { NATS_SERVICE } from '../config/service';
 
@@ -28,7 +29,11 @@ import { NATS_SERVICE } from '../config/service';
  */
 @Controller('compliances')
 export class CompliancesController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    @Inject('DELIVERY_FILE_STORAGE')
+    private readonly deliveryStorage: FileStorage,
+  ) {}
 
   /**
    * GET /compliances
@@ -99,14 +104,7 @@ export class CompliancesController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evidence', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'compliances'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -132,11 +130,22 @@ export class CompliancesController {
     @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
     @User() user?: AuthenticatedUser,
   ) {
-    // Procesar archivos subidos
+    // Upload files to storage (GCS in prod, local in dev)
     const uploadedFiles = files?.evidence || [];
-    const fileUrls = uploadedFiles.map(
-      (file) => `/uploads/compliances/${file.filename}`,
-    );
+    const fileUrls: string[] = [];
+
+    for (const file of uploadedFiles) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const extension = extname(file.originalname);
+      const filename = `compliances/${id}/${uniqueSuffix}${extension}`;
+
+      const fileUrl = await this.deliveryStorage.upload(
+        file.buffer,
+        filename,
+        file.mimetype,
+      );
+      fileUrls.push(fileUrl);
+    }
 
     // Combinar URLs de evidencia
     const existingUrls = evidenceUrls

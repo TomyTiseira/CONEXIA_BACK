@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { Multer } from 'multer';
 import {
   ContractServiceDto,
   CreateDeliveryDto,
@@ -274,14 +273,19 @@ export class ServiceHiringsController {
       hiringId: number;
       serviceOwnerId: number;
       deliveryDto: CreateDeliveryDto;
-      files?: Multer.File[]; // Array de archivos
+      uploadedFiles?: Array<{
+        fileUrl: string;
+        fileName: string;
+        fileSize: number;
+        mimeType: string;
+      }>;
     },
   ) {
     return this.serviceHiringsService.createDelivery(
       data.hiringId,
       data.serviceOwnerId,
       data.deliveryDto,
-      data.files,
+      data.uploadedFiles,
     );
   }
 

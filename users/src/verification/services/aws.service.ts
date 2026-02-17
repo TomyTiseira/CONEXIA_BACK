@@ -4,7 +4,6 @@ import {
 } from '@aws-sdk/client-rekognition';
 import { Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import * as fs from 'fs/promises';
 import { createWorker } from 'tesseract.js';
 
 @Injectable()
@@ -27,22 +26,22 @@ export class AwsService {
 
   /**
    * Compara dos rostros usando AWS Rekognition
-   * @param sourceImagePath - Ruta a la imagen del documento
-   * @param targetImagePath - Ruta a la imagen del rostro del usuario
+   * @param sourceImageBuffer - Buffer de la imagen del documento
+   * @param targetImageBuffer - Buffer de la imagen del rostro del usuario
    * @returns Porcentaje de similitud
    */
   async compareFaces(
-    sourceImagePath: string,
-    targetImagePath: string,
+    sourceImageBuffer: Buffer,
+    targetImageBuffer: Buffer,
   ): Promise<number> {
     try {
       this.logger.log(
-        `Comparing faces: ${sourceImagePath} vs ${targetImagePath}`,
+        `Comparing faces using buffers (${sourceImageBuffer.length} bytes vs ${targetImageBuffer.length} bytes)`,
       );
 
-      // Leer las imágenes como bytes
-      const sourceImageBytes = await fs.readFile(sourceImagePath);
-      const targetImageBytes = await fs.readFile(targetImagePath);
+      // Usar los buffers directamente
+      const sourceImageBytes = sourceImageBuffer;
+      const targetImageBytes = targetImageBuffer;
 
       const command = new CompareFacesCommand({
         SourceImage: { Bytes: sourceImageBytes },
@@ -82,14 +81,14 @@ export class AwsService {
 
   /**
    * Extrae texto de un documento usando Tesseract OCR
-   * @param imagePath - Ruta a la imagen del documento
+   * @param imageBuffer - Buffer de la imagen del documento
    * @returns Texto extraído del documento
    */
-  async extractTextFromDocument(imagePath: string): Promise<string> {
+  async extractTextFromDocument(imageBuffer: Buffer): Promise<string> {
     let worker;
     try {
       this.logger.log(
-        `Extracting text from document using Tesseract: ${imagePath}`,
+        `Extracting text from document using Tesseract (${imageBuffer.length} bytes)`,
       );
 
       // Crear worker de Tesseract
@@ -101,8 +100,8 @@ export class AwsService {
         },
       });
 
-      // Realizar OCR
-      const { data } = await worker.recognize(imagePath);
+      // Realizar OCR desde buffer
+      const { data } = await worker.recognize(imageBuffer);
       const extractedText = data.text;
 
       this.logger.log(`Extracted text length: ${extractedText.length}`);

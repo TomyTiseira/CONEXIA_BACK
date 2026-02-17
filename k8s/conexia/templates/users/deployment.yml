@@ -77,6 +77,8 @@ spec:
                 secretKeyRef:
                   name: users-secrets
                   key: GCS_PROFILE_BUCKET
+            - name: GCS_VERIFICATION_BUCKET
+              value: "conexia-verification-documents"
             - name: AWS_REGION
               valueFrom:
                 secretKeyRef:

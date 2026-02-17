@@ -24,6 +24,8 @@ import { GetPostulationsByUserUseCase } from './services/use-cases/get-postulati
 import { GetPostulationsUseCase } from './services/use-cases/get-postulations.use-case';
 import { RejectPostulationUseCase } from './services/use-cases/reject-postulation.use-case';
 import { SubmitEvaluationUseCase } from './services/use-cases/submit-evaluation.use-case';
+import { CvStorageModule } from './cv-storage.module';
+import { EvaluationStorageModule } from './evaluation-storage.module';
 
 @Module({
   controllers: [PostulationsController],
@@ -54,6 +56,8 @@ import { SubmitEvaluationUseCase } from './services/use-cases/submit-evaluation.
     ]),
     SharedModule,
     CommonModule,
+    CvStorageModule,
+    EvaluationStorageModule,
     forwardRef(() => ProjectsModule),
   ],
   exports: [PostulationsService, PostulationRepository],

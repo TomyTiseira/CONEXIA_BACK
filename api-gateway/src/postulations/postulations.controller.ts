@@ -15,8 +15,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
 import { catchError } from 'rxjs';
 import { ROLES } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
@@ -45,15 +44,7 @@ export class PostulationsController {
   @Post('apply')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'cv', maxCount: 1 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'cv'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const name = uniqueSuffix + extname(file.originalname);
-          cb(null, name);
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
       fileFilter: (req, file, cb) => {
         const allowedTypes = ['application/pdf'];
@@ -131,42 +122,20 @@ export class PostulationsController {
 
     // Add CV data if file was uploaded (fileFilter already validated PDF type)
     if (files.cv?.[0]) {
-      payload.createPostulationDto.cvUrl = `/uploads/cv/${files.cv[0].filename}`;
-      payload.createPostulationDto.cvFilename = files.cv[0].originalname;
-      payload.createPostulationDto.cvSize = files.cv[0].size;
+      payload.createPostulationDto.cvData =
+        files.cv[0].buffer.toString('base64');
+      payload.createPostulationDto.cvOriginalName = files.cv[0].originalname;
+      payload.createPostulationDto.cvMimetype = files.cv[0].mimetype;
     }
 
-    return this.client.send('createPostulation', payload).pipe(
-      catchError(async (error) => {
-        // In case of error, delete uploaded file
-        if (files.cv?.[0]) {
-          try {
-            const uploadedPath = files.cv?.[0]?.path;
-            if (uploadedPath) {
-              await import('fs/promises').then((fs) => fs.unlink(uploadedPath));
-            }
-          } catch {
-            // ignore errors
-          }
-        }
-        throw new RpcException(error);
-      }),
-    );
+    return this.client.send('createPostulation', payload);
   }
 
   @AuthRoles([ROLES.USER])
   @Post(':postulationId/submit-evaluation')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evaluation', maxCount: 1 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'evaluations'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const name = uniqueSuffix + extname(file.originalname);
-          cb(null, name);
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -222,56 +191,43 @@ export class PostulationsController {
       },
     };
 
+    console.log('📨 Received evaluation submission request:', {
+      postulationId: Number(postulationId),
+      userId: user.id,
+      hasEvaluationFile: !!files.evaluation?.[0],
+      evaluationFileName: files.evaluation?.[0]?.originalname,
+      evaluationFileSize: files.evaluation?.[0]?.size,
+      evaluationMimetype: files.evaluation?.[0]?.mimetype,
+      bodyKeys: Object.keys(body),
+    });
+
     // Add evaluation file data if uploaded
     if (files.evaluation?.[0]) {
-      // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'image/png',
-        'image/jpeg',
-        'image/jpg',
-      ];
       const evaluationFile = files.evaluation[0];
-      if (!allowedTypes.includes(evaluationFile.mimetype)) {
-        // Delete uploaded file
-        try {
-          const fs = await import('fs/promises');
-          if (evaluationFile.path) {
-            await fs.unlink(evaluationFile.path);
-          }
-        } catch {
-          // ignore errors
-        }
-        throw new RpcException({
-          status: 400,
-          message: 'Only PDF, PNG and JPG files are allowed for evaluation',
-        });
-      }
 
-      payload.submitEvaluationDto.evaluationFileUrl = `/uploads/evaluations/${evaluationFile.filename}`;
-      payload.submitEvaluationDto.evaluationFilename =
+      // Convert file buffer to base64
+      const base64Data = evaluationFile.buffer.toString('base64');
+
+      console.log('📤 Converted file to base64:', {
+        originalSize: evaluationFile.size,
+        base64Length: base64Data.length,
+      });
+
+      payload.submitEvaluationDto.evaluationData = base64Data;
+      payload.submitEvaluationDto.evaluationOriginalName =
         evaluationFile.originalname;
-      payload.submitEvaluationDto.evaluationFileSize = evaluationFile.size;
-      payload.submitEvaluationDto.evaluationFileMimetype =
-        evaluationFile.mimetype;
+      payload.submitEvaluationDto.evaluationMimetype = evaluationFile.mimetype;
+    } else {
+      console.log('⚠️  No evaluation file received');
     }
 
-    return this.client.send('submitEvaluation', payload).pipe(
-      catchError(async (error) => {
-        // In case of error, delete uploaded file
-        if (files.evaluation?.[0]) {
-          try {
-            const uploadedPath = files.evaluation?.[0]?.path;
-            if (uploadedPath) {
-              await import('fs/promises').then((fs) => fs.unlink(uploadedPath));
-            }
-          } catch {
-            // ignore errors
-          }
-        }
-        throw new RpcException(error);
-      }),
-    );
+    console.log('📤 Sending to projects microservice:', {
+      postulationId: payload.submitEvaluationDto.postulationId,
+      hasEvaluationData: !!payload.submitEvaluationDto.evaluationData,
+      evaluationDataLength: payload.submitEvaluationDto.evaluationData?.length,
+    });
+
+    return this.client.send('submitEvaluation', payload);
   }
 
   @AuthRoles([ROLES.USER])

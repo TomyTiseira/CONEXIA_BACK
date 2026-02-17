@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { FileStorage } from '../../common/domain/interfaces/file-storage.interface';
 import { Profile } from '../../profile/entities/profile.entity';
 import { User } from '../../shared/entities/user.entity';
 import {
@@ -24,6 +25,8 @@ export class VerificationService {
     private readonly profileRepository: Repository<Profile>,
     private readonly verificationRepository: VerificationRepository,
     private readonly awsService: AwsService,
+    @Inject('VERIFICATION_FILE_STORAGE')
+    private readonly fileStorage: FileStorage,
   ) {}
 
   /**
@@ -77,12 +80,83 @@ export class VerificationService {
     let similarityScore = 0;
     let errorMessage: string | null = null;
 
+    // Process and upload files - keep buffers for AWS processing
+    let documentImagePath: string;
+    let faceImagePath: string;
+    let documentImageBuffer: Buffer;
+    let faceImageBuffer: Buffer;
+
+    try {
+      // Process document image
+      if (documentImage.fileData) {
+        // New base64 approach - upload to storage
+        this.logger.log('Processing document image from base64');
+        documentImageBuffer = Buffer.from(documentImage.fileData, 'base64');
+        const timestamp = Date.now();
+        const extension = this.getExtensionFromMimeType(
+          documentImage.mimeType || 'image/jpeg',
+        );
+        const filename = `document-${userId}-${timestamp}.${extension}`;
+
+        documentImagePath = await this.fileStorage.upload(
+          documentImageBuffer,
+          filename,
+          documentImage.mimeType || 'image/jpeg',
+        );
+        this.logger.log(`Document image uploaded: ${documentImagePath}`);
+      } else if (documentImage.path) {
+        // Legacy path approach - read from filesystem
+        const fs = await import('fs/promises');
+        documentImageBuffer = await fs.readFile(documentImage.path);
+        documentImagePath = documentImage.path;
+      } else {
+        throw new RpcException({
+          status: 400,
+          message: 'Document image must have either fileData (base64) or path',
+        });
+      }
+
+      // Process face image
+      if (faceImage.fileData) {
+        // New base64 approach - upload to storage
+        this.logger.log('Processing face image from base64');
+        faceImageBuffer = Buffer.from(faceImage.fileData, 'base64');
+        const timestamp = Date.now();
+        const extension = this.getExtensionFromMimeType(
+          faceImage.mimeType || 'image/jpeg',
+        );
+        const filename = `face-${userId}-${timestamp}.${extension}`;
+
+        faceImagePath = await this.fileStorage.upload(
+          faceImageBuffer,
+          filename,
+          faceImage.mimeType || 'image/jpeg',
+        );
+        this.logger.log(`Face image uploaded: ${faceImagePath}`);
+      } else if (faceImage.path) {
+        // Legacy path approach - read from filesystem
+        const fs = await import('fs/promises');
+        faceImageBuffer = await fs.readFile(faceImage.path);
+        faceImagePath = faceImage.path;
+      } else {
+        throw new RpcException({
+          status: 400,
+          message: 'Face image must have either fileData (base64) or path',
+        });
+      }
+    } catch (error) {
+      this.logger.error('Error processing images:', error);
+      throw new RpcException({
+        status: 500,
+        message: `Failed to process images: ${error.message}`,
+      });
+    }
+
     try {
       // Paso 1: Extraer texto del documento usando Textract
       this.logger.log('Step 1: Extracting text from document');
-      const extractedText = await this.awsService.extractTextFromDocument(
-        documentImage.path,
-      );
+      const extractedText =
+        await this.awsService.extractTextFromDocument(documentImageBuffer);
 
       // Paso 2: Buscar el número de documento en el texto extraído
       this.logger.log('Step 2: Searching for document number');
@@ -119,8 +193,8 @@ export class VerificationService {
       // Paso 4: Comparar rostros usando Rekognition
       this.logger.log('Step 4: Comparing faces');
       similarityScore = await this.awsService.compareFaces(
-        documentImage.path,
-        faceImage.path,
+        documentImageBuffer,
+        faceImageBuffer,
       );
 
       // Paso 5: Validar el umbral de similitud
@@ -228,5 +302,20 @@ export class VerificationService {
       isVerified: user.verified || false,
       latestVerification,
     };
+  }
+
+  /**
+   * Helper para obtener extensión de archivo desde MIME type
+   */
+  private getExtensionFromMimeType(mimeType: string): string {
+    const mimeMap: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+    };
+
+    return mimeMap[mimeType] || 'jpg';
   }
 }

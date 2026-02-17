@@ -74,4 +74,7 @@ async function migrate() {
   }
 }
 
-migrate();
+migrate().catch((err) => {
+  console.error('Unhandled error in migrate:', err);
+  process.exit(1);
+});

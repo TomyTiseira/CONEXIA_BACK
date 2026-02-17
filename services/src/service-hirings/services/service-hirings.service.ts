@@ -319,13 +319,18 @@ export class ServiceHiringsService {
     hiringId: number,
     serviceOwnerId: number,
     deliveryDto: CreateDeliveryDto,
-    files?: any[], // Array de archivos
+    uploadedFiles?: Array<{
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+    }>,
   ): Promise<DeliverySubmissionResponseDto> {
     return this.createDeliveryUseCase.execute(
       hiringId,
       serviceOwnerId,
       deliveryDto,
-      files,
+      uploadedFiles,
     );
   }
 

@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { StorageModule } from '../common/storage.module';
 import { PostulationStatus } from '../postulations/entities/postulation-status.entity';
 import { Postulation } from '../postulations/entities/postulation.entity';
 import { PostulationsModule } from '../postulations/postulations.module';
@@ -73,6 +74,7 @@ import { GetProjectPostulationsStatsUseCase } from './services/use-cases/stats/g
       PostulationStatus,
     ]),
     SharedModule,
+    StorageModule,
     forwardRef(() => PostulationsModule),
     forwardRef(() => ReportsModule),
   ],

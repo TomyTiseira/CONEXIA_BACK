@@ -12,19 +12,15 @@ export class SubmitEvaluationDto {
   // Evaluation file fields
   @IsOptional()
   @IsString()
-  evaluationFileUrl?: string;
+  evaluationData?: string; // Base64 encoded file data
 
   @IsOptional()
   @IsString()
-  evaluationFilename?: string;
-
-  @IsOptional()
-  @IsNumber()
-  evaluationFileSize?: number;
+  evaluationOriginalName?: string;
 
   @IsOptional()
   @IsString()
-  evaluationFileMimetype?: string;
+  evaluationMimetype?: string;
 
   // Optional link to external evaluation (e.g., GitHub repo, deployed app)
   @IsOptional()

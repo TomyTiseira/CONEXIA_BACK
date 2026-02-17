@@ -97,4 +97,33 @@ export class GCSFileStorage implements FileStorage {
     // using: https://storage.googleapis.com/{bucket}/{path}
     return path;
   }
+
+  /**
+   * Gets a signed URL for secure, temporary access to files
+   * Used for sensitive data like verification documents
+   *
+   * @param path - The path/key of the file in GCS
+   * @param expirationMinutes - How long the URL should be valid (default: 60 minutes)
+   * @returns Promise with a signed URL that expires after the specified time
+   */
+  async getSignedUrl(
+    path: string,
+    expirationMinutes: number = 60,
+  ): Promise<string> {
+    try {
+      const bucket = this.storage.bucket(this.bucketName);
+      const file = bucket.file(path);
+
+      const [signedUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + expirationMinutes * 60 * 1000, // Convert minutes to milliseconds
+      });
+
+      return signedUrl;
+    } catch (error) {
+      console.error('[GCS] Error generating signed URL:', error);
+      throw new RpcException('Failed to generate signed URL for file access.');
+    }
+  }
 }

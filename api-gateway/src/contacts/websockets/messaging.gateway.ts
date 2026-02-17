@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
@@ -10,9 +10,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import * as cookie from 'cookie';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { Server, Socket } from 'socket.io';
+import { FileStorage } from '../../common/domain/interfaces/file-storage.interface';
 
 interface AuthenticatedSocket extends Socket {
   userId?: number;
@@ -33,7 +32,11 @@ export class MessagingGateway
   private readonly logger = new Logger(MessagingGateway.name);
   private connectedUsers = new Map<number, string>(); // userId -> socketId
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @Inject('MESSAGE_FILE_STORAGE')
+    private readonly messageStorage: FileStorage,
+  ) {}
 
   handleConnection(client: AuthenticatedSocket) {
     try {
@@ -123,13 +126,14 @@ export class MessagingGateway
   }
 
   @SubscribeMessage('sendMessage')
-  handleSendMessage(
+  async handleSendMessage(
     @MessageBody()
     data: {
       conversationId: number;
       receiverId: number;
       type: 'text' | 'image' | 'pdf';
       content: string;
+      fileName?: string;
     },
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
@@ -147,30 +151,26 @@ export class MessagingGateway
           const mimeType = base64Match[1];
           const fileData = base64Match[2];
 
-          // Generar nombre de archivo
           const extension =
             data.type === 'image'
               ? mimeType.includes('png')
                 ? '.png'
                 : '.jpg'
               : '.pdf';
-          const fileName = `file_${Date.now()}${extension}`;
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const fileName = `${data.type === 'image' ? 'images' : 'pdfs'}/${uniqueSuffix}${extension}`;
 
-          // Calcula la carpeta
-          const folder = mimeType.startsWith('image/')
-            ? join(process.cwd(), 'uploads', 'messages', 'images')
-            : join(process.cwd(), 'uploads', 'messages', 'pdfs');
-          if (!existsSync(folder)) {
-            mkdirSync(folder, { recursive: true });
-          }
-          const filePath = join(folder, fileName);
-          // Escribe el archivo
+          // Convert base64 to buffer
           const buffer = Buffer.from(fileData, 'base64');
-          writeFileSync(filePath, buffer);
 
-          // URL pública igual que en REST
-          fileUrl = `/uploads/messages/${mimeType.startsWith('image/') ? 'images' : 'pdfs'}/${fileName}`;
-          processedFileName = fileName;
+          // Upload to storage (GCS in prod, local in dev)
+          fileUrl = await this.messageStorage.upload(
+            buffer,
+            fileName,
+            mimeType,
+          );
+          processedFileName = data.fileName || `file${extension}`;
           processedFileSize = buffer.length;
         }
       }
