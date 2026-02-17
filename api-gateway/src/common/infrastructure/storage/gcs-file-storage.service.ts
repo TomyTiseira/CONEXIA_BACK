@@ -45,6 +45,10 @@ export class GCSFileStorage implements FileStorage {
       const bucket = this.storage.bucket(this.bucketName);
       const blob = bucket.file(path);
 
+      console.log(
+        `[GCS] Uploading file to bucket: ${this.bucketName}, path: ${path}`,
+      );
+
       // Upload file
       await blob.save(file, {
         metadata: {
@@ -53,15 +57,35 @@ export class GCSFileStorage implements FileStorage {
         },
       });
 
+      console.log(
+        '[GCS] File uploaded successfully, attempting to make public...',
+      );
+
       // Make file publicly readable
-      await blob.makePublic();
+      try {
+        await blob.makePublic();
+        console.log('[GCS] File made public successfully');
+      } catch (publicError) {
+        console.warn(
+          '[GCS] Could not make file public (file will still be accessible if bucket is public):',
+          publicError.message,
+        );
+      }
 
       // Return public URL
       const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${path}`;
+      console.log('[GCS] Returning public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('[GCS] Upload error:', error);
-      throw new RpcException('Failed to upload file to Google Cloud Storage.');
+      console.error('[GCS] Error details:', {
+        message: error.message,
+        code: error.code,
+        errors: error.errors,
+      });
+      throw new RpcException(
+        `Failed to upload file to Google Cloud Storage: ${error.message}`,
+      );
     }
   }
 
