@@ -50,6 +50,8 @@ spec:
               value: "/etc/gcs/key.json"
             - name: GCS_MESSAGES_BUCKET
               value: "conexia-messages-files"
+            - name: GCS_DELIVERY_ATTACHMENTS_BUCKET
+              value: "conexia-delivery-attachments"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs
