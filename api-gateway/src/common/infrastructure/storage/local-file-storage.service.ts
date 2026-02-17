@@ -37,12 +37,14 @@ export class LocalFileStorage implements FileStorage {
     const uploadsDirIndex = this.uploadDir.indexOf('uploads');
     if (uploadsDirIndex !== -1) {
       // Extract relative path from 'uploads' onwards
-      const relativePath = this.uploadDir.substring(uploadsDirIndex + 'uploads'.length);
+      const relativePath = this.uploadDir.substring(
+        uploadsDirIndex + 'uploads'.length,
+      );
       // Combine with the file path
       const finalPath = relativePath ? `${relativePath}/${path}` : path;
       return `/uploads${finalPath}`;
     }
-    
+
     // Fallback for backwards compatibility
     return `/uploads/${path}`;
   }
