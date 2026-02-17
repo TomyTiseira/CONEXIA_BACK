@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage, memoryStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname } from 'path';
 import { catchError } from 'rxjs';
 import { FileStorage } from '../common/domain/interfaces/file-storage.interface';
@@ -578,16 +578,7 @@ export class ServiceHiringsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FilesInterceptor('attachments', 10, {
-      storage: diskStorage({
-        destination: './uploads/deliveries',
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 20 * 1024 * 1024, // 20MB por archivo
       },
@@ -628,7 +619,7 @@ export class ServiceHiringsController {
       },
     }),
   )
-  updateDelivery(
+  async updateDelivery(
     @User() user: AuthenticatedUser,
     @Param('deliveryId') deliveryId: number,
     @Body() body: any,
@@ -638,12 +629,48 @@ export class ServiceHiringsController {
       content: body.content as string,
     };
 
+    // Subir archivos a GCS y obtener URLs
+    const uploadedFiles: Array<{
+      fileUrl: string;
+      fileName: string;
+      fileSize: number;
+      mimeType: string;
+    }> = [];
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const filename = `deliveries/${deliveryId}/${timestamp}-${randomSuffix}${extension}`;
+
+        try {
+          const fileUrl = await this.deliveryStorage.upload(
+            file.buffer,
+            filename,
+            file.mimetype,
+          );
+
+          uploadedFiles.push({
+            fileUrl,
+            fileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+          });
+        } catch (error) {
+          throw new BadRequestException(
+            `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          );
+        }
+      }
+    }
+
     return this.client
       .send('updateDelivery', {
         deliveryId: +deliveryId,
         serviceOwnerId: user.id,
         updateDto,
-        files: files || [],
+        uploadedFiles,
       })
       .pipe(
         catchError((error) => {

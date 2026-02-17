@@ -45,32 +45,22 @@ export class GCSFileStorage implements FileStorage {
       const bucket = this.storage.bucket(this.bucketName);
       const blob = bucket.file(path);
 
-      // Create a write stream to upload the file
-      const blobStream = blob.createWriteStream({
-        resumable: false,
+      // Upload file
+      await blob.save(file, {
         metadata: {
           contentType: mimetype,
           cacheControl: 'public, max-age=31536000',
         },
-        // No predefinedAcl when uniform bucket-level access is enabled
-        // Public access is managed at bucket level via IAM
       });
 
-      // Return a promise that resolves when upload is complete
-      return new Promise((resolve, reject) => {
-        blobStream.on('error', (error) => {
-          reject(error);
-        });
+      // Make file publicly readable
+      await blob.makePublic();
 
-        blobStream.on('finish', () => {
-          const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${path}`;
-          resolve(publicUrl);
-        });
-
-        blobStream.end(file);
-      });
+      // Return public URL
+      const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${path}`;
+      return publicUrl;
     } catch (error) {
-      console.error('[GCS] Upload error (outer catch):', error);
+      console.error('[GCS] Upload error:', error);
       throw new RpcException('Failed to upload file to Google Cloud Storage.');
     }
   }
