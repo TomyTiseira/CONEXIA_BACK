@@ -274,10 +274,10 @@ export class ServiceHiringsController {
       serviceOwnerId: number;
       deliveryDto: CreateDeliveryDto;
       uploadedFiles?: Array<{
-        fileUrl?: string;
-        fileName?: string;
-        fileSize?: number;
-        mimeType?: string;
+        fileUrl: string;
+        fileName: string;
+        fileSize: number;
+        mimeType: string;
       }>;
     },
   ) {
