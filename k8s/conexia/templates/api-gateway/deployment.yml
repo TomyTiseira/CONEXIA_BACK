@@ -52,6 +52,8 @@ spec:
               value: "conexia-messages-files"
             - name: GCS_DELIVERY_ATTACHMENTS_BUCKET
               value: "conexia-delivery-attachments"
+            - name: GCS_CLAIMS_EVIDENCE_BUCKET
+              value: "conexia-claims-evidence"
           volumeMounts:
             - name: gcs-key
               mountPath: /etc/gcs

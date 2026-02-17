@@ -12,9 +12,10 @@ import {
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { catchError } from 'rxjs';
+import { FileStorage } from '../common/domain/interfaces/file-storage.interface';
 import { ROLES, ROLES_IDS } from '../auth/constants/role-ids';
 import { AuthRoles } from '../auth/decorators/auth-roles.decorator';
 import { User } from '../auth/decorators/user.decorator';
@@ -33,7 +34,10 @@ import {
  */
 @Controller('claims')
 export class ClaimsController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    @Inject('CLAIMS_FILE_STORAGE') private readonly fileStorage: FileStorage,
+  ) {}
 
   /**
    * GET /claims/my-claims
@@ -82,14 +86,7 @@ export class ClaimsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evidence', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'claims'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo por archivo
       fileFilter: (req, file, cb) => {
         // Permitir imágenes, PDFs y documentos
@@ -116,16 +113,49 @@ export class ClaimsController {
       },
     }),
   )
-  createClaim(
+  async createClaim(
     @User() user: AuthenticatedUser,
     @Body() createClaimDto: CreateClaimDto,
     @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
   ) {
-    // Agregar las URLs de las evidencias al DTO si existen
+    // Subir evidencias a GCS si existen
     if (files && files.evidence && files.evidence.length > 0) {
-      createClaimDto.evidenceUrls = files.evidence.map(
-        (file) => `/uploads/claims/${file.filename}`,
-      );
+      const uploadedFiles: {
+        fileUrl: string;
+        fileName: string;
+        fileSize: number;
+        mimeType: string;
+      }[] = [];
+
+      for (const file of files.evidence) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const fileName = `${timestamp}-${randomSuffix}${extension}`;
+        const filePath = `claims/evidence/${fileName}`;
+
+        try {
+          const fileUrl = await this.fileStorage.upload(
+            file.buffer,
+            filePath,
+            file.mimetype,
+          );
+
+          uploadedFiles.push({
+            fileUrl,
+            fileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+          });
+        } catch (error) {
+          throw new RpcException({
+            status: 500,
+            message: `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          });
+        }
+      }
+
+      createClaimDto.evidenceUrls = uploadedFiles.map((f) => f.fileUrl);
     }
 
     return this.client
@@ -222,14 +252,7 @@ export class ClaimsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evidenceFiles', maxCount: 5 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'claims'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -254,15 +277,40 @@ export class ClaimsController {
       },
     }),
   )
-  submitRespondentObservations(
+  async submitRespondentObservations(
     @User() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body('observations') observations: string,
     @UploadedFiles() files?: { evidenceFiles?: Express.Multer.File[] },
   ) {
-    const evidenceUrls = (files?.evidenceFiles || []).map(
-      (file) => `/uploads/claims/${file.filename}`,
-    );
+    let evidenceUrls: string[] | null = null;
+
+    // Subir evidencias a GCS si existen
+    if (files?.evidenceFiles && files.evidenceFiles.length > 0) {
+      evidenceUrls = [];
+
+      for (const file of files.evidenceFiles) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const fileName = `${timestamp}-${randomSuffix}${extension}`;
+        const filePath = `claims/observations/${fileName}`;
+
+        try {
+          const fileUrl = await this.fileStorage.upload(
+            file.buffer,
+            filePath,
+            file.mimetype,
+          );
+          evidenceUrls.push(fileUrl);
+        } catch (error) {
+          throw new RpcException({
+            status: 500,
+            message: `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          });
+        }
+      }
+    }
 
     return this.client
       .send('submitRespondentObservations', {
@@ -270,7 +318,7 @@ export class ClaimsController {
         userId: user.id,
         dto: {
           observations,
-          evidenceUrls: evidenceUrls.length ? evidenceUrls : null,
+          evidenceUrls,
         },
       })
       .pipe(
@@ -288,14 +336,7 @@ export class ClaimsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evidence', maxCount: 5 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'compliances'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -320,16 +361,41 @@ export class ClaimsController {
       },
     }),
   )
-  submitComplianceByClaim(
+  async submitComplianceByClaim(
     @User() user: AuthenticatedUser,
     @Param('claimId') claimId: string,
     @Param('complianceId') complianceId: string,
     @Body('description') description: string,
     @UploadedFiles() files?: { evidence?: Express.Multer.File[] },
   ) {
-    const evidenceUrls = (files?.evidence || []).map(
-      (file) => `/uploads/compliances/${file.filename}`,
-    );
+    let evidenceUrls: string[] | null = null;
+
+    // Subir evidencias a GCS si existen
+    if (files?.evidence && files.evidence.length > 0) {
+      evidenceUrls = [];
+
+      for (const file of files.evidence) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const fileName = `${timestamp}-${randomSuffix}${extension}`;
+        const filePath = `claims/compliances/${fileName}`;
+
+        try {
+          const fileUrl = await this.fileStorage.upload(
+            file.buffer,
+            filePath,
+            file.mimetype,
+          );
+          evidenceUrls.push(fileUrl);
+        } catch (error) {
+          throw new RpcException({
+            status: 500,
+            message: `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          });
+        }
+      }
+    }
 
     return this.client
       .send('submitComplianceByClaim', {
@@ -337,7 +403,7 @@ export class ClaimsController {
         complianceId,
         userId: String(user.id),
         userNotes: description || null,
-        evidenceUrls: evidenceUrls.length ? evidenceUrls : null,
+        evidenceUrls,
       })
       .pipe(
         catchError((error) => {
@@ -431,14 +497,7 @@ export class ClaimsController {
   @AuthRoles([ROLES.USER])
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'evidence', maxCount: 5 }], {
-      storage: diskStorage({
-        destination: join(process.cwd(), 'uploads', 'claims'),
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB máximo por archivo
       fileFilter: (req, file, cb) => {
         // Permitir imágenes, PDFs, documentos, videos y GIFs
@@ -467,7 +526,7 @@ export class ClaimsController {
       },
     }),
   )
-  updateClaim(
+  async updateClaim(
     @User() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() body: { clarificationResponse?: string },
@@ -480,11 +539,33 @@ export class ClaimsController {
       updateDto.clarificationResponse = body.clarificationResponse;
     }
 
-    // Agregar las URLs de las nuevas evidencias si existen
+    // Subir evidencias a GCS si existen
     if (files && files.evidence && files.evidence.length > 0) {
-      updateDto.clarificationEvidenceUrls = files.evidence.map(
-        (file) => `/uploads/claims/${file.filename}`,
-      );
+      const uploadedUrls: string[] = [];
+
+      for (const file of files.evidence) {
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const extension = extname(file.originalname);
+        const fileName = `${timestamp}-${randomSuffix}${extension}`;
+        const filePath = `claims/clarifications/${fileName}`;
+
+        try {
+          const fileUrl = await this.fileStorage.upload(
+            file.buffer,
+            filePath,
+            file.mimetype,
+          );
+          uploadedUrls.push(fileUrl);
+        } catch (error) {
+          throw new RpcException({
+            status: 500,
+            message: `Error al subir el archivo ${file.originalname}: ${error.message}`,
+          });
+        }
+      }
+
+      updateDto.clarificationEvidenceUrls = uploadedUrls;
     }
 
     return this.client

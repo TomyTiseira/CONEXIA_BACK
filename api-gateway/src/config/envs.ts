@@ -11,6 +11,7 @@ interface EnvVars {
   GCS_KEY_FILE?: string;
   GCS_MESSAGES_BUCKET?: string;
   GCS_DELIVERY_ATTACHMENTS_BUCKET?: string;
+  GCS_CLAIMS_EVIDENCE_BUCKET?: string;
 }
 
 const envSchema = joi
@@ -36,6 +37,11 @@ const envSchema = joi
       then: joi.string().required(),
       otherwise: joi.string().optional(),
     }),
+    GCS_CLAIMS_EVIDENCE_BUCKET: joi.string().when('NODE_ENV', {
+      is: 'production',
+      then: joi.string().required(),
+      otherwise: joi.string().optional(),
+    }),
   })
   .unknown(true);
 
@@ -49,6 +55,7 @@ const result = envSchema.validate({
   GCS_KEY_FILE: process.env.GCS_KEY_FILE,
   GCS_MESSAGES_BUCKET: process.env.GCS_MESSAGES_BUCKET,
   GCS_DELIVERY_ATTACHMENTS_BUCKET: process.env.GCS_DELIVERY_ATTACHMENTS_BUCKET,
+  GCS_CLAIMS_EVIDENCE_BUCKET: process.env.GCS_CLAIMS_EVIDENCE_BUCKET,
 });
 if (result.error) {
   throw new Error(`Config validation error: ${result.error.message}`);
@@ -64,6 +71,7 @@ export const envs = {
     keyFile: envVars.GCS_KEY_FILE,
     messagesBucket: envVars.GCS_MESSAGES_BUCKET,
     deliveryAttachmentsBucket: envVars.GCS_DELIVERY_ATTACHMENTS_BUCKET,
+    claimsEvidenceBucket: envVars.GCS_CLAIMS_EVIDENCE_BUCKET,
   },
   jwtSecret: envVars.JWT_SECRET,
   corsOrigins: envVars.CORS_ORIGINS || [],
