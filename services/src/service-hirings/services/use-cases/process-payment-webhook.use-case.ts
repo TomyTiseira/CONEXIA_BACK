@@ -47,7 +47,7 @@ export class ProcessPaymentWebhookUseCase {
         });
 
         // Investigar el problema de pagos fantasma
-        this.debugPaymentCreationIssue(paymentId);
+        this.debugPaymentCreationIssue();
 
         // Ejecutar diagnóstico específico para pagos fantasma
         // Phantom payment diagnostics - using test vendor credentials should resolve this
@@ -283,7 +283,7 @@ export class ProcessPaymentWebhookUseCase {
     }
   }
 
-  private debugPaymentCreationIssue(paymentId: string): void {
+  private debugPaymentCreationIssue(): void {
     // Placeholder for debugging - can be removed in production
   }
 
@@ -320,7 +320,7 @@ export class ProcessPaymentWebhookUseCase {
           approvedAt: new Date(),
         });
       }
-    } catch (error) {
+    } catch {
       // No re-throw para no bloquear el procesamiento del webhook
     }
   }

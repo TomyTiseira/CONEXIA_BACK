@@ -84,7 +84,7 @@ export class RetryPaymentUseCase {
       await this.mercadoPagoService.createPreference(preference);
 
     // 4. Crear nuevo registro de pago
-    const newPayment = await this.paymentRepository.create({
+    await this.paymentRepository.create({
       hiringId: hiring.id,
       amount: hiring.quotedPrice,
       paymentType: PaymentType.INITIAL,
