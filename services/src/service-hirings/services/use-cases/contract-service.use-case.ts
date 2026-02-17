@@ -43,12 +43,6 @@ export class ContractServiceUseCase {
         amountToPay = Math.round(Number(hiring.quotedPrice) * 0.25);
         paymentType = PaymentType.INITIAL;
         itemDescription = `Anticipo (25%) - Total del servicio: $${hiring.quotedPrice}`;
-
-        console.log('💰 Calculating initial payment (25%):', {
-          totalPrice: hiring.quotedPrice,
-          initialPayment: amountToPay,
-          remainingPayment: Number(hiring.quotedPrice) - amountToPay,
-        });
       } else if (
         hiring.paymentModality?.code === PaymentModalityCode.BY_DELIVERABLES
       ) {
@@ -65,13 +59,6 @@ export class ContractServiceUseCase {
         status: PaymentStatus.PENDING,
         paymentMethod: contractDto.paymentMethod,
         paymentType: paymentType,
-      });
-
-      console.log('📝 Payment record created:', {
-        paymentId: payment.id,
-        amount: payment.amount,
-        totalAmount: payment.totalAmount,
-        paymentType: payment.paymentType,
       });
 
       // Crear preferencia de MercadoPago
@@ -103,16 +90,6 @@ export class ContractServiceUseCase {
         },
       };
 
-      console.log('🔍 MercadoPago Preference Created:', {
-        external_reference: preference.external_reference,
-        notification_url: preference.notification_url,
-        amount: amountToPay,
-        paymentType: paymentType,
-        totalAmount: hiring.quotedPrice,
-        frontendUrl: process.env.FRONTEND_URL,
-        apiBaseUrl: process.env.API_BASE_URL,
-      });
-
       const preferenceResponse =
         await this.mercadoPagoService.createPreference(preference);
 
@@ -130,15 +107,6 @@ export class ContractServiceUseCase {
         statusId: paymentPendingStatus.id,
         preferenceId: preferenceResponse.id,
         paymentStatus: 'pending',
-      });
-
-      console.log('⏳ Hiring status changed to PAYMENT_PENDING:', {
-        hiringId: hiring.id,
-        preferenceId: preferenceResponse.id,
-        paymentId: payment.id,
-        status: 'PAYMENT_PENDING',
-        message:
-          'Esperando confirmación de pago desde el webhook de MercadoPago',
       });
 
       return {

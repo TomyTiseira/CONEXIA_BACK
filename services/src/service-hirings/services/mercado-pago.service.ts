@@ -66,14 +66,6 @@ export class MercadoPagoService {
     if (!this.accessToken) {
       throw new Error('MERCADOPAGO_ACCESS_TOKEN is required');
     }
-
-    // Log para debugging
-    console.log('MercadoPago Configuration:', {
-      isProduction: this.isProduction,
-      isSandbox: this.isSandbox,
-      tokenType: this.accessToken?.startsWith('TEST-') ? 'TEST' : 'PROD',
-      nodeEnv: process.env.NODE_ENV,
-    });
   }
 
   async createPreference(
@@ -136,18 +128,6 @@ export class MercadoPagoService {
     const url = useProductionUrl
       ? preferenceResponse.init_point
       : preferenceResponse.sandbox_init_point;
-
-    console.log('MercadoPago Init Point Selection:', {
-      isProduction: this.isProduction,
-      isTestVendorCredentials: this.isTestVendorCredentials,
-      useProductionUrl,
-      sandboxUrl: preferenceResponse.sandbox_init_point,
-      productionUrl: preferenceResponse.init_point,
-      selectedUrl: url,
-      reason: useProductionUrl
-        ? 'Using production URL with test vendor credentials'
-        : 'Using sandbox URL',
-    });
 
     return url;
   }

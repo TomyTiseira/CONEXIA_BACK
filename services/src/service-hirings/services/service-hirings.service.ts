@@ -252,24 +252,11 @@ export class ServiceHiringsService {
   }
 
   processPreferenceWebhook(preferenceId: string): void {
-    console.log('📋 Processing preference webhook:', { preferenceId });
-    console.log(
-      'ℹ️ With test vendor credentials, preference webhooks should work correctly',
-    );
-
     try {
       // Con las nuevas credenciales de vendedor de prueba, los webhooks de preferencia
       // deberían funcionar correctamente. Por ahora, solo logueamos la información.
-      console.log('✅ Preference webhook received for ID:', preferenceId);
-
       // TODO: Implementar lógica específica de preferencias si es necesario
       // Por ahora, los webhooks de pago son más importantes
-
-      console.log('✅ Preference webhook processing completed:', {
-        preferenceId,
-        message:
-          'Using test vendor credentials should resolve phantom payment issues',
-      });
     } catch (error) {
       console.error('❌ Error processing preference webhook:', {
         preferenceId,
@@ -290,12 +277,6 @@ export class ServiceHiringsService {
       preference_id?: string;
     },
   ): Promise<any> {
-    console.log('💰 Processing payment status update:', {
-      userId,
-      hiringId,
-      paymentStatusDto,
-    });
-
     // Verificar que el payment_id corresponda a un pago real
     const paymentDetails = await this.mercadoPagoService.getPayment(
       paymentStatusDto.payment_id,

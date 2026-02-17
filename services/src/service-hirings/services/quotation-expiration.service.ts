@@ -11,8 +11,6 @@ export class QuotationExpirationService {
   ) {}
 
   async checkExpiredQuotations() {
-    console.log('Checking for expired quotations...');
-
     try {
       // Obtener el estado "expired"
       const expiredStatus = await this.statusService.getStatusByCode(
@@ -23,10 +21,6 @@ export class QuotationExpirationService {
       const result = await this.hiringRepository.markExpiredQuotations(
         expiredStatus.id,
       );
-
-      if (result > 0) {
-        console.log(`Marked ${result} quotations as expired`);
-      }
 
       return result;
     } catch (error) {

@@ -224,7 +224,6 @@ export class ServiceHiringsController {
       webhookData: any;
     },
   ) {
-    console.log('🔔 Processing payment webhook in services:', data);
     return this.serviceHiringsService.processPaymentWebhook(data.paymentId);
   }
 
@@ -237,7 +236,6 @@ export class ServiceHiringsController {
       webhookData: any;
     },
   ) {
-    console.log('📋 Processing preference webhook in services:', data);
     return this.serviceHiringsService.processPreferenceWebhook(
       data.preferenceId,
     );
@@ -258,7 +256,6 @@ export class ServiceHiringsController {
       };
     },
   ) {
-    console.log('💰 Updating payment status from frontend:', data);
     return this.serviceHiringsService.updatePaymentStatus(
       data.userId,
       data.hiringId,

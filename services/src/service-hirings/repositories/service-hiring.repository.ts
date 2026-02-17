@@ -366,13 +366,6 @@ export class ServiceHiringRepository {
       targetCode = 'in_progress';
     }
 
-    console.log('🔄 Recalculating hiring status:', {
-      hiringId,
-      deliveriesCount: deliveries.length,
-      latestStatuses: statuses,
-      newStatus: targetCode,
-    });
-
     // Update the hiring status if different
     await this.repository.query(
       `UPDATE service_hirings SET status_id = (SELECT id FROM service_hiring_statuses WHERE code = $1) WHERE id = $2`,

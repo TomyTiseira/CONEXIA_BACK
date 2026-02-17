@@ -116,14 +116,6 @@ export class ReviewDeliveryUseCase {
     // 1. Verificar si ya está en PENDING_PAYMENT (reintento)
     const isRetry = delivery.status === DeliveryStatus.PENDING_PAYMENT;
 
-    if (isRetry) {
-      console.log('🔄 Retry payment detected - will regenerate payment link:', {
-        deliveryId: delivery.id,
-        currentStatus: delivery.status,
-        previousPaymentId: delivery.mercadoPagoPaymentId,
-      });
-    }
-
     // 2. Actualizar estado a PENDING_PAYMENT (solo si no es reintento)
     let updatedDelivery: DeliverySubmission;
     if (!isRetry) {
@@ -171,14 +163,6 @@ export class ReviewDeliveryUseCase {
       itemDescription = `Pago por servicio ${hiring.service.title}`;
     }
 
-    console.log('💰 Payment calculation:', {
-      modalityCode: hiring.paymentModality?.code,
-      totalPrice: hiring.quotedPrice,
-      deliveryPrice: delivery.price,
-      calculatedAmount: paymentAmount,
-      title: itemTitle,
-    });
-
     // 4. Obtener o crear registro de pago
     const paymentType =
       hiring.paymentModality?.code === PaymentModalityCode.FULL_PAYMENT
@@ -194,13 +178,6 @@ export class ReviewDeliveryUseCase {
       payment = await this.paymentRepository.findById(
         parseInt(delivery.mercadoPagoPaymentId),
       );
-
-      if (payment) {
-        console.log('♻️ Reusing existing payment record:', {
-          paymentId: payment.id,
-          status: payment.status,
-        });
-      }
     }
 
     // Si no hay payment (primera vez o no se encontró el existente), crear uno nuevo
@@ -214,10 +191,6 @@ export class ReviewDeliveryUseCase {
         paymentType,
         deliverableId: delivery.deliverableId,
         deliverySubmissionId: delivery.id, // Guardar referencia a la entrega
-      });
-
-      console.log('🆕 Created new payment record:', {
-        paymentId: payment.id,
       });
     }
 
@@ -250,19 +223,6 @@ export class ReviewDeliveryUseCase {
     // 6. Actualizar la entrega con el payment ID para rastreo
     await this.deliveryRepository.update(delivery.id, {
       mercadoPagoPaymentId: payment.id.toString(),
-    });
-
-    console.log('⏳ Delivery marked as PENDING_PAYMENT:', {
-      deliveryId: delivery.id,
-      hiringId: delivery.hiringId,
-      deliverableId: delivery.deliverableId,
-      paymentId: payment.id,
-      paymentAmount: paymentAmount,
-      totalPrice: hiring.quotedPrice,
-      paymentType: paymentType,
-      externalReference: `hiring_${hiring.id}_payment_${payment.id}`,
-      paymentUrl: preference.init_point,
-      status: 'PENDING_PAYMENT - Waiting for payment confirmation',
     });
 
     // 5. Retornar la entrega actualizada con la URL de pago
@@ -302,14 +262,6 @@ export class ReviewDeliveryUseCase {
     await this.serviceHiringRepository.recalculateStatusFromDeliveries(
       hiring.id,
     );
-
-    console.log('🔄 Revision requested:', {
-      deliveryId: delivery.id,
-      hiringId: delivery.hiringId,
-      deliverableId: delivery.deliverableId,
-      notes,
-      action: 'recalculate_hiring_status',
-    });
 
     return { delivery: this.transformToDto(updatedDelivery) };
   }

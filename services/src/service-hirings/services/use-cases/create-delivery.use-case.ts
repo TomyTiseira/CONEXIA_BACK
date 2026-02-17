@@ -159,11 +159,6 @@ export class CreateDeliveryUseCase {
         }
 
         // ✅ Permitir re-entregar si el estado es REVISION_REQUESTED
-        console.log('✅ Re-entregando después de solicitud de revisión', {
-          deliverableId: createDto.deliverableId,
-          previousDeliveryId: existingDelivery.id,
-          previousStatus: existingDelivery.status,
-        });
       }
 
       deliveryType = DeliveryType.DELIVERABLE;
@@ -198,11 +193,6 @@ export class CreateDeliveryUseCase {
         }
 
         // ✅ Permitir re-entregar si el estado es REVISION_REQUESTED
-        console.log('✅ Re-entregando después de solicitud de revisión', {
-          hiringId,
-          previousDeliveryId: existingDelivery.id,
-          previousStatus: existingDelivery.status,
-        });
       }
     }
 
@@ -253,12 +243,6 @@ export class CreateDeliveryUseCase {
     await this.serviceHiringRepository.recalculateStatusFromDeliveries(
       hiringId,
     );
-
-    console.log('✅ Hiring status recalculated after delivery submission', {
-      hiringId,
-      deliveryId: delivery.id,
-      previousStatus: hiring.status.code,
-    });
 
     // 9. Cargar el delivery con sus attachments para retornar
     const deliveryWithAttachments = await this.deliveryRepository.findById(

@@ -39,10 +39,6 @@ export class RetryPaymentUseCase {
       );
     }
 
-    console.log(
-      `🔄 Retrying payment for hiring ${hiringId} (attempt ${hiring.retryCount + 1})`,
-    );
-
     // 2. Buscar el pago rechazado anterior
     const previousPayment = hiring.payments?.find(
       (p) =>
@@ -87,12 +83,6 @@ export class RetryPaymentUseCase {
     const preferenceResponse =
       await this.mercadoPagoService.createPreference(preference);
 
-    console.log(`✅ MercadoPago preference created for retry:`, {
-      preferenceId: preferenceResponse.id,
-      initPoint: this.mercadoPagoService.getInitPoint(preferenceResponse),
-      retryCount: hiring.retryCount + 1,
-    });
-
     // 4. Crear nuevo registro de pago
     const newPayment = await this.paymentRepository.create({
       hiringId: hiring.id,
@@ -102,10 +92,6 @@ export class RetryPaymentUseCase {
       mercadoPagoPreferenceId: preferenceResponse.id,
       createdAt: new Date(),
     });
-
-    console.log(
-      `💳 Created new payment record for retry: payment_id=${newPayment.id}`,
-    );
 
     // 5. Actualizar hiring a PAYMENT_PENDING y incrementar retryCount
     const paymentPendingStatus = await this.statusService.getStatusByCode(
@@ -119,10 +105,6 @@ export class RetryPaymentUseCase {
       paymentStatusDetail: `Reintento ${hiring.retryCount + 1}`,
       retryCount: hiring.retryCount + 1,
     });
-
-    console.log(
-      `✅ Hiring ${hiringId} transitioned to PAYMENT_PENDING (retry ${hiring.retryCount + 1})`,
-    );
 
     // 6. Retornar datos para redirección
     return {
