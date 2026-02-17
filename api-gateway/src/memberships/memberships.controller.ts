@@ -204,4 +204,15 @@ export class MembershipsController {
         }),
       );
   }
+
+  // Update MercadoPago plans (admin only)
+  @Post('update-mercadopago-plans')
+  @AuthRoles([ROLES.ADMIN])
+  updateMercadoPagoPlans() {
+    return this.client.send('updateMercadoPagoPlans', {}).pipe(
+      catchError((error) => {
+        throw new RpcException(error);
+      }),
+    );
+  }
 }
