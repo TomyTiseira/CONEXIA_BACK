@@ -10,6 +10,7 @@ import { envs, NATS_SERVICE } from 'src/config';
         transport: Transport.NATS,
         options: {
           servers: envs.natsServers,
+          maxPayload: 10 * 1024 * 1024, // 10MB
         },
       },
     ]),
