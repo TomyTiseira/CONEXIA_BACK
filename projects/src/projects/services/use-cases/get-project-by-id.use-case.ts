@@ -105,6 +105,10 @@ export class GetProjectByIdUseCase {
     // Buscar la postulación del usuario actual si existe
     let userPostulationStatus: string | null = null;
     let userEvaluationDeadline: Date | null = null;
+    let rolePostulationStatusMap = new Map<
+      number,
+      { code: string; name: string }
+    >();
     if (data.currentUserId && project.userId !== data.currentUserId) {
       const userPostulation =
         await this.postulationRepository.findByProjectAndUser(
@@ -115,6 +119,13 @@ export class GetProjectByIdUseCase {
         userPostulationStatus = userPostulation.status?.code || null;
         userEvaluationDeadline = userPostulation.evaluationDeadline || null;
       }
+
+      // Obtener el estado de la última postulación del usuario por cada rol
+      rolePostulationStatusMap =
+        await this.postulationRepository.findLatestByProjectAndUserPerRole(
+          project.id,
+          data.currentUserId,
+        );
     }
 
     // Construir la respuesta usando la función utilitaria
@@ -129,6 +140,7 @@ export class GetProjectByIdUseCase {
       userEvaluationDeadline,
       postulationsCount,
       rolesCount,
+      rolePostulationStatusMap,
     );
 
     // Verificar el estado de cuenta del dueño del proyecto

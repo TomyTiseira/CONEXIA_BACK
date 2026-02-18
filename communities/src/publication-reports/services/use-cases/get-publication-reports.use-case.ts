@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UsersService } from 'src/common/services/users.service';
 import { GetPublicationReportsDetailDto } from '../../dtos/get-publication-reports-detail.dto';
 import { PublicationReportsService } from '../publication-reports.service';
 
@@ -30,6 +31,7 @@ function calculatePagination(
 export class GetPublicationReportsUseCase {
   constructor(
     private readonly publicationReportsService: PublicationReportsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async execute(
@@ -45,11 +47,31 @@ export class GetPublicationReportsUseCase {
         limit,
       );
 
+    // Obtener información de los usuarios reportantes
+    const reporterIds = [...new Set(reports.map((r) => r.reporterId))].filter(
+      Boolean,
+    );
+    const reporters =
+      reporterIds.length > 0
+        ? await this.usersService.getUsersByIds(reporterIds)
+        : [];
+    const reporterMap = new Map(reporters.map((u) => [u.id, u]));
+
+    // Enriquecer reportes con nombre y apellido del reportante
+    const enrichedReports = reports.map((report) => {
+      const reporter = reporterMap.get(report.reporterId);
+      return {
+        ...report,
+        reporterName: reporter?.name ?? null,
+        reporterLastName: reporter?.lastName ?? null,
+      };
+    });
+
     // Calcular información de paginación
     const pagination = calculatePagination(total, { page, limit });
 
     return {
-      reports,
+      reports: enrichedReports,
       pagination,
     };
   }

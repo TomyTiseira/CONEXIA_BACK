@@ -29,6 +29,10 @@ export function transformProjectToDetailResponse(
   userEvaluationDeadline: Date | null = null,
   postulationsCount: number = 0,
   rolesCount: number = 0,
+  rolePostulationStatusMap: Map<
+    number,
+    { code: string; name: string }
+  > = new Map(),
 ): ProjectDetailResponse {
   // Obtener el ID del propietario desde cualquiera de las dos estructuras posibles
   const ownerId = ownerData.user?.id || ownerData.id || project.userId;
@@ -66,6 +70,9 @@ export function transformProjectToDetailResponse(
         }
       : null;
 
+    const userRolePostulationStatus =
+      rolePostulationStatusMap.get(role.id) ?? null;
+
     return {
       id: role.id,
       title: role.title,
@@ -81,6 +88,7 @@ export function transformProjectToDetailResponse(
       skills: roleSkills,
       questions: questions.length > 0 ? questions : undefined,
       evaluation,
+      userPostulationStatus: userRolePostulationStatus,
     };
   });
 

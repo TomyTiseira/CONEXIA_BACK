@@ -12,6 +12,8 @@ export interface ServiceReportResponseDto {
   createdAt: Date;
   serviceId: number;
   reporterId: number;
+  reporterName: string | null;
+  reporterLastName: string | null;
   reporter: {
     id: number;
     email: string;
@@ -58,12 +60,14 @@ function transformServiceReportsWithUsers(
       createdAt: report.createdAt,
       serviceId: report.serviceId,
       reporterId: report.reporterId,
+      reporterName: user?.profile?.name ?? null,
+      reporterLastName: user?.profile?.lastName ?? null,
       reporter: user
         ? {
             id: user.id,
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            firstName: user.profile?.name ?? user.firstName ?? 'N/A',
+            lastName: user.profile?.lastName ?? user.lastName ?? 'N/A',
           }
         : {
             id: report.reporterId,

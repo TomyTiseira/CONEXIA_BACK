@@ -225,6 +225,31 @@ export class PostulationRepository {
   }
 
   /**
+   * Obtiene la última postulación (con estado) de un usuario para cada rol de un proyecto.
+   * Devuelve un Map de roleId -> { code, name } del estado.
+   */
+  async findLatestByProjectAndUserPerRole(
+    projectId: number,
+    userId: number,
+  ): Promise<Map<number, { code: string; name: string }>> {
+    const postulations = await this.postulationRepository
+      .createQueryBuilder('postulation')
+      .leftJoinAndSelect('postulation.status', 'status')
+      .where('postulation.projectId = :projectId', { projectId })
+      .andWhere('postulation.userId = :userId', { userId })
+      .orderBy('postulation.createdAt', 'DESC')
+      .getMany();
+
+    const map = new Map<number, { code: string; name: string }>();
+    for (const p of postulations) {
+      if (p.roleId != null && !map.has(p.roleId) && p.status) {
+        map.set(p.roleId, { code: p.status.code, name: p.status.name });
+      }
+    }
+    return map;
+  }
+
+  /**
    * Cuenta las postulaciones de un proyecto específico
    */
   async countByProjectId(projectId: number): Promise<number> {
