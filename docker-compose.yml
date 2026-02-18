@@ -1,6 +1,7 @@
 services:
   nats-server:
     image: nats:2.10.25-alpine3.21
+    command: ["--max_payload", "10MB"]
     ports:
       - "4222:4222"
       - "8222:8222"

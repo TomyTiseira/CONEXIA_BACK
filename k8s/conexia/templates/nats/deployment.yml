@@ -20,5 +20,6 @@ spec:
       containers:
         - image: nats
           name: nats
+          args: ["--max_payload", "10MB"]
           resources: {}
 status: {}
