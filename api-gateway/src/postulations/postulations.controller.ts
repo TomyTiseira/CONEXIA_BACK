@@ -128,7 +128,12 @@ export class PostulationsController {
       payload.createPostulationDto.cvMimetype = files.cv[0].mimetype;
     }
 
-    return this.client.send('createPostulation', payload);
+    return this.client.send('createPostulation', payload).pipe(
+      catchError((error) => {
+        console.error('Error in createPostulation:', error);
+        throw new RpcException(error);
+      }),
+    );
   }
 
   @AuthRoles([ROLES.USER])
@@ -227,7 +232,12 @@ export class PostulationsController {
       evaluationDataLength: payload.submitEvaluationDto.evaluationData?.length,
     });
 
-    return this.client.send('submitEvaluation', payload);
+    return this.client.send('submitEvaluation', payload).pipe(
+      catchError((error) => {
+        console.error('Error in submitEvaluation:', error);
+        throw new RpcException(error);
+      }),
+    );
   }
 
   @AuthRoles([ROLES.USER])
